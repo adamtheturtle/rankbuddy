@@ -4,6 +4,7 @@ import SwiftUI
 /// The Questions section: a list of the account's questions with read-only detail.
 struct QuestionsScreen: View {
     @Environment(AccountStore.self) private var store
+    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         NavigationStack {
@@ -11,7 +12,7 @@ struct QuestionsScreen: View {
                 LoadableList(
                     title: "Questions",
                     emptyMessage: "No questions",
-                    load: { try await HackerRankClient(account: account).questions() },
+                    load: { try await HackerRankClient(account: account, session: session).questions() },
                     row: { QuestionRow(question: $0) },
                     detail: { QuestionDetailView(question: $0) }
                 )

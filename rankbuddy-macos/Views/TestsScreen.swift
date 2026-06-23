@@ -5,6 +5,7 @@ import SwiftUI
 /// view that also links to the test's candidates.
 struct TestsScreen: View {
     @Environment(AccountStore.self) private var store
+    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         NavigationStack {
@@ -12,7 +13,7 @@ struct TestsScreen: View {
                 LoadableList(
                     title: "Tests",
                     emptyMessage: "No tests",
-                    load: { try await HackerRankClient(account: account).tests() },
+                    load: { try await HackerRankClient(account: account, session: session).tests() },
                     row: { TestRow(test: $0) },
                     detail: { TestDetailView(test: $0, account: account) }
                 )

@@ -8,17 +8,32 @@ import SwiftUI
 @main
 struct RankBuddyApp: App {
     /// The app's single multi-account store, shared with every scene via the environment.
-    @State private var accountStore = AccountStore.rankBuddy()
+    @State private var accountStore: AccountStore
+    /// The session HackerRank clients use — the demo mock or the real shared session.
+    private let session: URLSession
+
+    init() {
+        // Demo mode (RANKBUDDY_DEMO=1) seeds a demo account and serves bundled fixtures,
+        // so the app shows populated views without a real token (#10).
+        let isDemo = ProcessInfo.processInfo.environment["RANKBUDDY_DEMO"] == "1"
+        session = isDemo ? .rankBuddyDemo : .shared
+        let store = isDemo
+            ? AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Demo (HackerRank)", token: "demo")])
+            : AccountStore.rankBuddy()
+        _accountStore = State(initialValue: store)
+    }
 
     var body: some Scene {
         Window("RankBuddy", id: WindowID.main) {
             ContentView()
                 .environment(accountStore)
+                .environment(\.hackerRankSession, session)
         }
 
         Settings {
             SettingsView()
                 .environment(accountStore)
+                .environment(\.hackerRankSession, session)
         }
     }
 }

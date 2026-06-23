@@ -13,9 +13,11 @@ extension AccountStore {
     /// as JSON; there is no legacy store to migrate from and no widget/cache side effects
     /// yet, so those `Config` hooks are no-ops.
     ///
-    /// - Parameter isTesting: when true the store seeds empty and skips all persistence,
-    ///   so UI tests never touch the real login Keychain.
-    static func rankBuddy(isTesting: Bool = false) -> AccountStore {
+    /// - Parameters:
+    ///   - isTesting: when true the store seeds from `seed` and skips all persistence, so
+    ///     UI tests and demo mode never touch the real login Keychain.
+    ///   - seed: the accounts to seed when `isTesting` is true (e.g. a demo account).
+    static func rankBuddy(isTesting: Bool = false, seed: [Account] = []) -> AccountStore {
         let logger = Logger(subsystem: "com.adamdangoor.rankbuddy", category: "accounts")
         let keychain = KeychainStore(service: "com.adamdangoor.rankbuddy", logger: logger)
         let config = Config(
@@ -26,7 +28,7 @@ extension AccountStore {
             encode: { accounts in try? JSONEncoder().encode(accounts) },
             decode: { data in (try? JSONDecoder().decode([Account].self, from: data)) ?? [] },
             isTestingMode: isTesting,
-            seedForTesting: { [] },
+            seedForTesting: { seed },
             migrateIfEmpty: { nil },
             onAccountsChanged: { _ in },
             onCurrentChanged: { _ in },

@@ -4,6 +4,7 @@ import SwiftUI
 /// The Interviews section: a list of the account's interviews with read-only detail.
 struct InterviewsScreen: View {
     @Environment(AccountStore.self) private var store
+    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         NavigationStack {
@@ -11,7 +12,7 @@ struct InterviewsScreen: View {
                 LoadableList(
                     title: "Interviews",
                     emptyMessage: "No interviews",
-                    load: { try await HackerRankClient(account: account).interviews() },
+                    load: { try await HackerRankClient(account: account, session: session).interviews() },
                     row: { InterviewRow(interview: $0) },
                     detail: { InterviewDetailView(interview: $0) }
                 )
