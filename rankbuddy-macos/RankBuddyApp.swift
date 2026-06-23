@@ -41,6 +41,10 @@ struct RankBuddyApp: App {
                 .environment(accountStore)
                 .environment(\.hackerRankSession, session)
         }
+
+        MenuBarExtra("RankBuddy", systemImage: "checklist") {
+            MenuBarContent()
+        }
     }
 }
 
