@@ -28,6 +28,14 @@ skip_schemes_validation: true
 report_exclude:
   - "rankbuddy-macosTests/**"
   - "rankbuddy-macosUITests/**"
+  # The minimal User/Team domain models (#4) model the /x/api/v3/users and
+  # /teams endpoints. They aren't surfaced in the read-only MVP UI yet (no
+  # users/teams view, and owner/team IDs aren't resolved to names yet), so
+  # Periphery would report them as unused. They are a deliberate, documented
+  # part of the D4 deliverable; excluded from the report until a view consumes
+  # them rather than deleting and re-adding the models.
+  - "rankbuddy-macos/Models/User.swift"
+  - "rankbuddy-macos/Models/Team.swift"
 
 # --- Retain rules: suppress this app's known false-positive sources ----------
 
