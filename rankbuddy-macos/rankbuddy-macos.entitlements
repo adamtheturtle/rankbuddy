@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- RankBuddy talks to the HackerRank for Work API over HTTPS. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Team-ID-prefixed App Group (not the bare "group." form): a notarized
+	     Developer-ID build embeds no provisioning profile, and macOS only
+	     authorizes a "group."-prefixed App Group when it's listed in the profile.
+	     The "<TeamID>.group." form is authorized by matching the team-ID prefix to
+	     the signing identity, so it needs no profile. Shared with a future widget. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>6L9H6Q8CUF.group.com.adamdangoor.rankbuddy</string>
+	</array>
+	<!-- No keychain-access-groups on purpose: it is a provisioning-profile-required
+	     entitlement, and a Developer-ID build embeds no profile, so declaring it makes
+	     AMFI refuse to launch the app. The account store uses the default access group
+	     implicitly (KeychainStore pins its own service string). -->
+</dict>
+</plist>
