@@ -1,10 +1,7 @@
 import SwiftUI
 
-/// The main window's root: a split view with a sidebar of the top-level
-/// sections and a detail pane.
-///
-/// The section lists and detail views are read-only and land per section in
-/// #5–#8; for now each section shows an empty state so the shell is navigable.
+/// The main window's root: a split view with a sidebar of the top-level sections and a
+/// detail pane that hosts the selected section's read-only list and detail views.
 struct ContentView: View {
     @State private var selection: SidebarSection? = .tests
 
@@ -18,7 +15,7 @@ struct ContentView: View {
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             if let selection {
-                SectionPlaceholderView(section: selection)
+                detailView(for: selection)
             } else {
                 ContentUnavailableView(
                     "Select a section",
@@ -27,8 +24,20 @@ struct ContentView: View {
             }
         }
     }
+
+    @ViewBuilder private func detailView(for section: SidebarSection) -> some View {
+        switch section {
+        case .tests:
+            TestsScreen()
+        case .questions:
+            QuestionsScreen()
+        case .interviews:
+            InterviewsScreen()
+        }
+    }
 }
 
 #Preview {
     ContentView()
+        .environment(AccountStore.rankBuddy(isTesting: true))
 }

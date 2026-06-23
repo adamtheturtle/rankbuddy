@@ -5,7 +5,6 @@ import SwiftUI
 /// Order is the display order, so the cases are deliberately not sorted.
 enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     case tests
-    case candidates
     case questions
     case interviews
 
@@ -17,7 +16,6 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     var title: String {
         switch self {
         case .tests: "Tests"
-        case .candidates: "Candidates"
         case .questions: "Questions"
         case .interviews: "Interviews"
         }
@@ -27,7 +25,6 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .tests: "checklist"
-        case .candidates: "person.2"
         case .questions: "questionmark.square"
         case .interviews: "person.crop.rectangle.stack"
         }
