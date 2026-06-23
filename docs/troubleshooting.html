@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Troubleshooting — RankBuddy</title>
+  <meta name="description" content="Common RankBuddy problems and how to resolve them.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap doc-page">
+    <p><a href="index.html">← RankBuddy</a></p>
+    <h1>Troubleshooting</h1>
+    <p class="note">This guide grows as the app stabilises. If your problem is not listed, please open an issue.</p>
+
+    <h2>“Invalid token” when adding an account</h2>
+    <ul>
+      <li>Check the token was copied in full, with no leading or trailing spaces.</li>
+      <li>Confirm the token belongs to a HackerRank for Work account with API access.</li>
+      <li>If your organisation uses a regional HackerRank endpoint, set the region or base-URL override in the account editor.</li>
+    </ul>
+
+    <h2>Lists are empty or slow to load</h2>
+    <ul>
+      <li>The HackerRank API is paginated and rate-limited; very large accounts take a moment to page through. RankBuddy backs off and retries automatically when the API asks it to.</li>
+      <li>Check your network connection.</li>
+    </ul>
+
+    <h2>The MCP server is not detected</h2>
+    <ul>
+      <li>Confirm the MCP client points at the correct RankBuddy MCP command (see the <a href="mcp-setup.html">MCP setup guide</a>).</li>
+      <li>Make sure you have configured at least one account in RankBuddy first.</li>
+    </ul>
+
+    <footer>
+      <div>
+        <p>RankBuddy is an independent project and is not affiliated with or endorsed by HackerRank.</p>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

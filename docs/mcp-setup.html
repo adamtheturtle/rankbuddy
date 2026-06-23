@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP setup — RankBuddy</title>
+  <meta name="description" content="Connect AI assistants to your HackerRank data through RankBuddy's built-in Model Context Protocol server.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap doc-page">
+    <p><a href="index.html">← RankBuddy</a></p>
+    <h1>MCP setup</h1>
+    <p class="note">The MCP server is in development. This page documents the intended setup and will be finalised when the feature ships.</p>
+
+    <h2>What it is</h2>
+    <p>RankBuddy bundles a local <a href="https://modelcontextprotocol.io/">Model Context Protocol</a> (MCP) server. It lets MCP-aware AI assistants read your HackerRank data through RankBuddy, reusing the account and token you have already configured in the app — so your token never has to be pasted into a separate tool.</p>
+
+    <h2>Connecting a client</h2>
+    <p>An MCP client is pointed at the RankBuddy MCP server command. The exact command and configuration snippet will be listed here on release. A typical MCP client configuration looks like this:</p>
+    <pre class="code"><code>{
+  "mcpServers": {
+    "rankbuddy": {
+      "command": "/path/to/rankbuddy-mcp"
+    }
+  }
+}</code></pre>
+
+    <h2>Security</h2>
+    <p>The MCP server runs locally on your Mac and uses the token stored in the macOS Keychain. It does not expose a network port to the internet.</p>
+
+    <footer>
+      <div>
+        <p>RankBuddy is an independent project and is not affiliated with or endorsed by HackerRank.</p>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

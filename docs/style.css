@@ -1,0 +1,230 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --text: #e7e9ee;
+  --muted: #9aa3b2;
+  --accent: #4b8bff;
+  --line: rgba(255, 255, 255, 0.08);
+  --hero-bg: #161b27;
+  --band-bg: #141a28;
+  --code-bg: #0b0e13;
+  --code-text: #e7e9ee;
+  --inline-code-bg: rgba(255, 255, 255, 0.06);
+}
+
+/* Honour the visitor's system appearance, the way the app honours macOS. */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fff;
+    --panel: #f5f6f8;
+    --text: #1b1e26;
+    --muted: #5b6472;
+    --accent: #2f55d4;
+    --line: rgba(0, 0, 0, 0.10);
+    --hero-bg: #f1f3fb;
+    --band-bg: #eef1fb;
+
+    /* Code blocks stay dark in both themes (reads cleanly, matches editors). */
+    --code-bg: #0b0e13;
+    --code-text: #e7e9ee;
+    --inline-code-bg: rgba(0, 0, 0, 0.06);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+
+.wrap { width: min(820px, 92vw); margin: 0 auto; }
+.wrap-wide { width: min(1080px, 92vw); margin: 0 auto; }
+
+/* --- Scroll-reveal animations --------------------------------------------- */
+
+/* Elements tagged .reveal start slightly lowered and transparent, then ease
+   into place when they scroll into view (the .is-visible class is toggled by
+   the IntersectionObserver in index.html). Guarded by prefers-reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible { opacity: 1; transform: none; }
+  .reveal[data-delay="1"] { transition-delay: .08s; }
+  .reveal[data-delay="2"] { transition-delay: .16s; }
+  .reveal[data-delay="3"] { transition-delay: .24s; }
+}
+
+/* Standalone document pages (e.g. the privacy policy) want vertical breathing room. */
+.doc-page { padding: 56px 0; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* --- Hero ----------------------------------------------------------------- */
+
+.hero {
+  padding: 72px 0 28px;
+  background: var(--hero-bg);
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+
+.hero-icon {
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1.1rem;
+  border-radius: 27px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.30);
+}
+
+.hero h1 { font-size: 2.6rem; margin: 0 0 .25em; letter-spacing: -0.02em; }
+
+.tagline { font-size: 1.2rem; color: var(--muted); margin: 0 auto 1.5em; max-width: 34em; }
+
+.cta {
+  margin: 0 0 1em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.note, .small { color: var(--muted); font-size: .9rem; }
+
+/* --- Buttons -------------------------------------------------------------- */
+
+.button {
+  display: inline-block;
+  padding: .7em 1.4em;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.button:hover { text-decoration: none; opacity: .92; }
+.button--ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.button .button-sub {
+  display: block;
+  font-size: .78rem;
+  font-weight: 400;
+  opacity: .85;
+  margin-top: 2px;
+}
+.button.is-disabled {
+  opacity: .55;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* --- Main content --------------------------------------------------------- */
+
+main { padding: 24px 0 0; }
+
+section { margin: 0 0 40px; }
+
+h2 { font-size: 1.4rem; margin: 0 0 .6em; }
+
+/* --- Feature grid --------------------------------------------------------- */
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 44px 48px;
+  margin: 32px auto 56px;
+}
+
+.feature h2 {
+  color: var(--text);
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 .5em;
+}
+.feature p { color: var(--muted); margin: 0; }
+
+@media (max-width: 880px) {
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .features-grid { grid-template-columns: 1fr; gap: 32px; }
+}
+
+ul { padding-left: 1.2em; }
+ul.features { list-style: none; padding: 0; display: grid; gap: 14px; }
+ul.features li {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+/* --- MCP band (headline feature) ----------------------------------------- */
+
+.band { padding: 56px 0; }
+
+.band-mcp {
+  background: var(--band-bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 .4em;
+}
+
+.band-title { font-size: 2rem; margin: 0 0 .3em; letter-spacing: -0.02em; }
+
+.lead { font-size: 1.15rem; color: var(--muted); max-width: 42em; margin: 0 0 1.6em; }
+
+/* --- Code ----------------------------------------------------------------- */
+
+.code {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 0;
+}
+.code code {
+  font: 14px/1.55 "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  color: var(--code-text);
+  background: none;
+  padding: 0;
+}
+code {
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: .9em;
+  background: var(--inline-code-bg);
+  padding: .1em .35em;
+  border-radius: 5px;
+}
+
+/* --- Footer --------------------------------------------------------------- */
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 28px 0 56px;
+  color: var(--muted);
+}
+footer a { color: var(--muted); }

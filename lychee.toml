@@ -1,0 +1,21 @@
+# Broken-link checker config for the RankBuddy website (docs/).
+
+# A dead link is the worst failure mode, so we fail on real 4xx/5xx. Treat any
+# 2xx as success and tolerate 429: popular hosts rate-limit anonymous HEAD/GET
+# requests and answer 429, which is not a broken link.
+accept = ["200..=299", "429"]
+
+# Be patient with slow/rate-limited hosts rather than flapping the build.
+max_retries = 3
+retry_wait_time = 2
+timeout = 20
+
+# Reduce 429s and bot-blocks by looking like a real browser.
+user_agent = "Mozilla/5.0 (compatible; lychee link checker)"
+
+# In CI lychee is given GITHUB_TOKEN so it resolves any github.com links via the
+# API rather than anonymous requests. The site currently links only to internal
+# pages and public docs, so no exclusions are needed yet. Add a release-asset or
+# custom-domain exclusion here if/when the site links to an asset that only
+# exists after a release is cut, or to a domain whose DNS/TLS is still
+# propagating.

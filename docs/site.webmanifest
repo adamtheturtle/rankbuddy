@@ -1,0 +1,11 @@
+{
+  "name": "RankBuddy",
+  "short_name": "RankBuddy",
+  "description": "A native macOS client for the HackerRank for Work API, with a built-in MCP server.",
+  "icons": [
+    { "src": "assets/app-icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "theme_color": "#2f55d4",
+  "background_color": "#0f1115",
+  "display": "browser"
+}

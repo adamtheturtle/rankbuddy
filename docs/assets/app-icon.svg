@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="RankBuddy">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4b8bff"/>
+      <stop offset="1" stop-color="#2f55d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="27" fill="url(#bg)"/>
+  <!-- A small ascending-rank bar chart, evoking leaderboards/scores. -->
+  <g fill="#fff" opacity="0.95">
+    <rect x="30" y="64" width="14" height="26" rx="3"/>
+    <rect x="53" y="50" width="14" height="40" rx="3"/>
+    <rect x="76" y="34" width="14" height="56" rx="3"/>
+  </g>
+</svg>

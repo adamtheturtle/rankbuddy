@@ -11,6 +11,10 @@ build/
 build_release/
 *.xcresult
 
+# Node tooling for the website (docs/). package-lock.json IS committed (below);
+# the installed tree is not.
+node_modules/
+
 # Swift Package Manager.
 # NOTE: Package.resolved is intentionally NOT ignored — it is committed so a
 # fresh checkout resolves the same package graph as CI (see docs/dependencies.md).
