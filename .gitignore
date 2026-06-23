@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Xcode — user-specific state
+xcuserdata/
+*.xcuserstate
+
+# Build output / intermediates (also excluded from the lint configs)
+DerivedData/
+build/
+build_release/
+*.xcresult
+
+# Swift Package Manager.
+# NOTE: Package.resolved is intentionally NOT ignored — it is committed so a
+# fresh checkout resolves the same package graph as CI (see docs/dependencies.md).
+.swiftpm/
+.build/

@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # Keep the actions used in workflows (actions/checkout, actions/cache,
+  # actions/upload-artifact, …) up to date. Dependabot opens a PR when a new
+  # version ships, including security fixes. No CI runner cost.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      # One PR per week for all actions bumps rather than one PR per action, to
+      # avoid unnecessary churn.
+      github-actions:
+        patterns:
+          - "*"
+
+  # NOTE: there is no Swift package ecosystem entry yet because the app target
+  # has no SwiftPM dependencies committed. Swift dependency updates (the shared
+  # buddy-kit foundation and its transitive packages) are owned by a documented
+  # MANUAL process — see docs/dependencies.md — because adopting a new buddy-kit
+  # release is a deliberate, reviewed step rather than an automated bump. Add a
+  # `package-ecosystem: swift` entry here only if/when that policy changes.
