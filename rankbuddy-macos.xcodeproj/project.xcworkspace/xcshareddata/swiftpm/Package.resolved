@@ -1,0 +1,51 @@
+{
+  "originHash" : "83b46cb0fefb40f12aaba6311cbe1a32c03ea5fb0e7c762e72340f1a5db2377f",
+  "pins" : [
+    {
+      "identity" : "buddy-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/buddy-kit",
+      "state" : {
+        "revision" : "0b1f5c3485bd4917cbb0b3585ed69f6edc4f36b0",
+        "version" : "0.2.1"
+      }
+    },
+    {
+      "identity" : "swift-concurrency-extras",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-concurrency-extras",
+      "state" : {
+        "revision" : "a90e2e40a7a840a853dd29e57cbef5dbb72c9d5b",
+        "version" : "1.4.0"
+      }
+    },
+    {
+      "identity" : "swiftui-flow",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tevelee/SwiftUI-Flow",
+      "state" : {
+        "revision" : "798364823cdfc6afb4aff43eff5a3ddbca89b54f",
+        "version" : "3.4.0"
+      }
+    },
+    {
+      "identity" : "swiftui-math",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gonzalezreal/swiftui-math",
+      "state" : {
+        "revision" : "0b5c2cfaaec8d6193db206f675048eeb5ce95f71",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "textual",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/textual",
+      "state" : {
+        "revision" : "d7e8e12f84e8b7eefd38996a663331f9ee9d8792",
+        "version" : "0.5.1"
+      }
+    }
+  ],
+  "version" : 3
+}
