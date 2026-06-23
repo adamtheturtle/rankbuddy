@@ -23,16 +23,20 @@ struct CandidateRow: View {
     let candidate: TestCandidate
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(candidate.fullName ?? candidate.email).font(.headline)
-            HStack(spacing: 8) {
-                Text(candidate.email)
-                if let score = candidate.score {
-                    Text("Score: \(score.formatted())")
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(candidate.fullName ?? candidate.email).font(.headline)
+                HStack(spacing: 8) {
+                    Text(candidate.email)
+                    if let score = candidate.score {
+                        Text("Score: \(score.formatted())")
+                    }
                 }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            Spacer()
+            candidate.integrityBadge
         }
     }
 }
@@ -53,6 +57,12 @@ struct CandidateDetailView: View {
                 OptionalRow("Started", DisplayFormat.date(candidate.attemptStartTime))
                 OptionalRow("Ended", DisplayFormat.date(candidate.attemptEndTime))
                 OptionalRow("Tags", DisplayFormat.list(candidate.tags))
+
+                if let report = candidate.reportURL, let url = URL(string: report) {
+                    Link(destination: url) {
+                        Label("Open report", systemImage: "doc.text")
+                    }
+                }
             }
 
             if let feedback = candidate.feedback, !feedback.isEmpty {

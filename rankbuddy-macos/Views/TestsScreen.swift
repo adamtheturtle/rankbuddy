@@ -31,18 +31,24 @@ struct TestRow: View {
     let test: Test
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(test.name).font(.headline)
-            HStack(spacing: 8) {
-                if let state = test.state {
-                    Text(state.capitalized)
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(test.name).font(.headline)
+                HStack(spacing: 8) {
+                    if let state = test.state {
+                        Text(state.capitalized)
+                    }
+                    if let start = DisplayFormat.date(test.startTime) {
+                        Text(start)
+                    }
                 }
-                if let start = DisplayFormat.date(test.startTime) {
-                    Text(start)
-                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            Spacer()
+            if test.enableProctoring == true {
+                StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .blue)
+            }
         }
     }
 }
