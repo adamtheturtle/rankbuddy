@@ -7,13 +7,18 @@ import SwiftUI
 /// scene for preferences and account management.
 @main
 struct RankBuddyApp: App {
+    /// The app's single multi-account store, shared with every scene via the environment.
+    @State private var accountStore = AccountStore.rankBuddy()
+
     var body: some Scene {
         Window("RankBuddy", id: WindowID.main) {
             ContentView()
+                .environment(accountStore)
         }
 
         Settings {
             SettingsView()
+                .environment(accountStore)
         }
     }
 }
