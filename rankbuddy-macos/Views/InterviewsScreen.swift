@@ -13,6 +13,7 @@ struct InterviewsScreen: View {
                     title: "Interviews",
                     emptyMessage: "No interviews",
                     load: { try await HackerRankClient(account: account, session: session).interviews() },
+                    searchableText: { "\($0.title ?? "") \($0.status)" },
                     row: { InterviewRow(interview: $0) },
                     detail: { InterviewDetailView(interview: $0) }
                 )

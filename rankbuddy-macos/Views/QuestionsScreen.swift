@@ -13,6 +13,7 @@ struct QuestionsScreen: View {
                     title: "Questions",
                     emptyMessage: "No questions",
                     load: { try await HackerRankClient(account: account, session: session).questions() },
+                    searchableText: { "\($0.name) \($0.type) \($0.tags?.joined(separator: " ") ?? "")" },
                     row: { QuestionRow(question: $0) },
                     detail: { QuestionDetailView(question: $0) }
                 )

@@ -11,6 +11,7 @@ struct CandidatesList: View {
             title: "Candidates",
             emptyMessage: "No candidates",
             load: { try await HackerRankClient(account: account, session: session).candidates(testID: testID) },
+            searchableText: { "\($0.fullName ?? "") \($0.email)" },
             row: { CandidateRow(candidate: $0) },
             detail: { CandidateDetailView(candidate: $0) }
         )

@@ -14,6 +14,7 @@ struct TestsScreen: View {
                     title: "Tests",
                     emptyMessage: "No tests",
                     load: { try await HackerRankClient(account: account, session: session).tests() },
+                    searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "")" },
                     row: { TestRow(test: $0) },
                     detail: { TestDetailView(test: $0, account: account) }
                 )
