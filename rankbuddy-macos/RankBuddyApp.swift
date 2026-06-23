@@ -11,6 +11,8 @@ struct RankBuddyApp: App {
     @State private var accountStore: AccountStore
     /// The session HackerRank clients use — the demo mock or the real shared session.
     private let session: URLSession
+    /// Command-palette presentation state, shared with the menu commands.
+    @State private var palette = PaletteModel()
 
     init() {
         // Demo mode (RANKBUDDY_DEMO=1) seeds a demo account and serves bundled fixtures,
@@ -28,6 +30,10 @@ struct RankBuddyApp: App {
             ContentView()
                 .environment(accountStore)
                 .environment(\.hackerRankSession, session)
+                .environment(palette)
+        }
+        .commands {
+            AppCommands(palette: palette)
         }
 
         Settings {

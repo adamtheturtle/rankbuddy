@@ -5,8 +5,11 @@ import SwiftUI
 struct ContentView: View {
     /// The selected section, persisted across launches (#19).
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
+    @Environment(PaletteModel.self) private var palette
 
     var body: some View {
+        @Bindable var palette = palette
+
         NavigationSplitView {
             List(SidebarSection.allCases, selection: sectionSelection) { section in
                 Label(section.title, systemImage: section.systemImage)
@@ -16,6 +19,9 @@ struct ContentView: View {
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             detailView(for: selection)
+        }
+        .sheet(isPresented: $palette.isPresented) {
+            CommandPaletteView(selection: $selection)
         }
     }
 
@@ -42,4 +48,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(AccountStore.rankBuddy(isTesting: true))
+        .environment(PaletteModel())
 }
