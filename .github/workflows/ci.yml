@@ -1,0 +1,182 @@
+name: CI
+
+# CI topology (mirrors the sibling PadBuddy repo):
+#
+# Cheap gates run on every push/PR (and nightly): they catch workflow, shell, and
+# Swift style regressions on 1x-billed Linux runners before anything reaches main.
+# The expensive macOS build+test lane is nightly/manual only — macOS runners bill
+# at 10x minutes, so a full compile is not paid for on every push.
+#
+# NOTE (bootstrap): the read-only MVP app target and its Fast/Full/TSan test plans
+# (#1, #26) do not exist yet, so the macOS lane is a single advisory build that is
+# allowed to fail. Once the scaffold lands shared test targets and test plans, this
+# becomes the matrixed Full/TSan/Release/macOS-15 topology described in #26 and the
+# advisory flag is removed.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC nightly
+  # Allow manually kicking off a run from the Actions tab when needed.
+  workflow_dispatch:
+
+# Cancel an in-progress run when a newer run starts on the same ref.
+# macOS runners bill at 10x minutes, so not paying for superseded builds matters.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: the validation jobs only read the checkout. No job here writes
+# to the repo, comments, or publishes, so the token gets read-only contents.
+permissions:
+  contents: read
+
+jobs:
+  # Lint the workflow files themselves: catches invalid syntax, bad expressions,
+  # and (via the runner's preinstalled shellcheck) bugs in embedded `run:`
+  # scripts. Runs on Linux — cheap, and unrelated to the macOS build.
+  actionlint:
+    name: Lint workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run actionlint
+        # Pin the version for reproducibility; the download script is fetched at
+        # the matching tag rather than from main.
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+        run: |
+          set -euo pipefail
+          bash <(curl -sSf "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") "$ACTIONLINT_VERSION"
+          ./actionlint -color
+
+  # Lint any standalone shell scripts. actionlint only covers shell embedded in
+  # workflow `run:` blocks, so scripts under the repo would otherwise go
+  # unchecked. shellcheck is preinstalled on the runner. The repo has no scripts
+  # yet, so the step finds them dynamically and no-ops cleanly when there are none
+  # rather than erroring on a missing path.
+  shellcheck:
+    name: Lint shell scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run shellcheck
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          files=( **/*.sh )
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No shell scripts to check."
+            exit 0
+          fi
+          printf 'Checking: %s\n' "${files[@]}"
+          shellcheck "${files[@]}"
+
+  # Swift style gate. Runs on every push/PR (and nightly) so a SwiftLint or
+  # SwiftFormat regression is caught before it lands on main. It runs on a 1x
+  # Linux runner (see the container note below), so there is no per-push macOS
+  # cost. Both tools run as prebuilt binaries at a pinned version so CI matches
+  # the local toolchain; bump these in lockstep with any local upgrade and with
+  # .swiftlint.yml / .swiftformat.
+  swift-lint:
+    name: SwiftLint & SwiftFormat
+    runs-on: ubuntu-latest
+    # The SwiftLint/SwiftFormat Linux binaries dlopen the Swift runtime and
+    # sourcekitd at launch; a bare ubuntu-latest runner ships no Swift, so they
+    # wouldn't start. The official Swift toolchain image supplies both. 6.2
+    # matches the Swift version the app target builds with, so the sourcekit
+    # SwiftLint parses with is the same one used locally.
+    container: swift:6.2
+    timeout-minutes: 10
+    # Inside a container GitHub runs `run:` steps with `sh` (dash), which rejects
+    # the `set -o pipefail` bashism the steps below rely on; the image ships bash,
+    # so pin it explicitly.
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # The full Swift image ships git but not the unzip/curl this job uses to
+      # fetch and unpack the pinned release binaries.
+      - name: Install fetch tools
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends curl unzip
+
+      - name: SwiftLint (strict)
+        env:
+          SWIFTLINT_VERSION: 0.63.3
+        run: |
+          set -euo pipefail
+          curl -sSfL -o swiftlint.zip "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/swiftlint_linux_amd64.zip"
+          unzip -o -q swiftlint.zip
+          chmod +x swiftlint
+          ./swiftlint version
+          ./swiftlint lint --strict --reporter github-actions-logging
+
+      - name: SwiftFormat (lint)
+        env:
+          SWIFTFORMAT_VERSION: 0.61.1
+        run: |
+          set -euo pipefail
+          curl -sSfL -o swiftformat.zip "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat_linux.zip"
+          # The Linux zip unpacks a binary named `swiftformat_linux` (the macOS
+          # zip used `swiftformat`).
+          unzip -o -q swiftformat.zip
+          chmod +x swiftformat_linux
+          ./swiftformat_linux --version
+          ./swiftformat_linux . --lint --reporter github-actions-log
+
+  build:
+    name: Build (advisory)
+    # The full macOS build is expensive (10x-billed minutes), so it stays
+    # nightly/manual only — push and pull_request events skip it and rely on the
+    # cheap gates above. `needs` makes it wait for the style gate so a nightly run
+    # fails fast on style before paying for the compile.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: swift-lint
+    # Bootstrap: advisory until the scaffold (#1) lands a shared scheme and the
+    # Fast/Full/TSan test plans (#26). A missing scheme/plan must not red the run
+    # while the app is still being stood up; flip this off once #1 + #26 land.
+    continue-on-error: true
+    # macos-26 is the newest hosted image; it ships Xcode 26.x, which honors
+    # SWIFT_DEFAULT_ACTOR_ISOLATION (Swift 6.2). macos-latest still maps to an
+    # older image whose Xcode silently ignores that setting.
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Pin an explicit Xcode rather than the image default, which drifts as Apple
+      # ships updates. 26.5 is the newest stable on the macos-26 image.
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.5.app
+          xcodebuild -version
+
+      - name: Show schemes
+        run: xcodebuild -list -project rankbuddy-macos.xcodeproj
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project rankbuddy-macos.xcodeproj \
+            -scheme rankbuddy-macos \
+            -destination 'platform=macOS' \
+            -derivedDataPath DerivedData \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
