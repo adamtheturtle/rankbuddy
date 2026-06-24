@@ -1,4 +1,6 @@
 import AppKit
+import BuddyAppKit
+import CommandPaletteKit
 import SwiftUI
 
 /// Shared state for the command palette, toggled from the menu/keyboard and observed by
@@ -9,172 +11,97 @@ final class PaletteModel {
     var isPresented = false
 }
 
-/// A command the palette can run: jump to a section or open another app destination.
-enum PaletteCommand: Identifiable, Hashable {
-    case section(SidebarSection)
-    case openSettings
+/// Builds the RankBuddy half of the ⌘K palette (#29): the app-specific candidates that the
+/// shared `CommandPaletteKit` package renders, ranks, and navigates. Only `CommandPaletteKit`
+/// and RankBuddy's own models are used — no CoderPad/PadBuddy types.
+enum RankBuddyPalette {
+    /// Candidates available without a network round-trip: the sidebar sections, the
+    /// configured accounts, and app commands. Section and command rows show on the empty
+    /// query; accounts are search-only so they don't crowd the default list.
+    @MainActor
+    static func staticCandidates(
+        store: AccountStore,
+        selection: Binding<SidebarSection>,
+        openSettings: @escaping @MainActor () -> Void
+    ) -> [PaletteResult] {
+        var results: [PaletteResult] = []
 
-    /// Every command, in the order they appear before any query narrows them.
-    static var all: [Self] {
-        SidebarSection.allCases.map(section) + [.openSettings]
+        for section in SidebarSection.allCases {
+            results.append(PaletteResult(
+                id: "section.\(section.id)",
+                title: section.title,
+                category: "Section",
+                systemImage: section.systemImage,
+                searchText: "\(section.title) section"
+            ) { selection.wrappedValue = section })
+        }
+
+        results.append(PaletteResult(
+            id: "command.settings",
+            title: "Open Settings",
+            category: "Command",
+            systemImage: "gearshape",
+            searchText: "Open Settings preferences accounts"
+        ) { openSettings() })
+
+        for account in store.accounts {
+            let isCurrent = account.id == store.currentAccountID
+            results.append(PaletteResult(
+                id: "account.\(account.id)",
+                title: account.label,
+                subtitle: isCurrent ? "Current account" : account.baseURL.host(),
+                category: "Account",
+                systemImage: "person.crop.circle",
+                searchText: "\(account.label) account \(account.baseURL.host() ?? "")",
+                showsOnlyWhenSearching: true
+            ) { store.currentAccountID = account.id })
+        }
+
+        return results
     }
 
-    var id: String {
-        switch self {
-        case let .section(section): "section.\(section.id)"
-        case .openSettings: "command.settings"
-        }
-    }
+    /// The current account's tests, loaded from the API and routed to open in the Tests
+    /// section. Search-only so they don't flood the empty palette, and tolerant of load
+    /// failure (an offline or token-less account simply contributes no test rows).
+    @MainActor
+    static func testCandidates(
+        store: AccountStore,
+        session: URLSession,
+        selection: Binding<SidebarSection>
+    ) async -> [PaletteResult] {
+        guard let account = store.currentAccount,
+              let tests = try? await HackerRankClient(account: account, session: session).tests()
+        else { return [] }
 
-    var title: String {
-        switch self {
-        case let .section(section): section.title
-        case .openSettings: "Open Settings"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case let .section(section): section.systemImage
-        case .openSettings: "gearshape"
-        }
-    }
-
-    /// Commands whose title matches `query`, ranked by a deterministic fuzzy score.
-    ///
-    /// Ties keep the declared order, so the ranking — and therefore the highlighted
-    /// result — stays stable as the query changes.
-    static func ranked(matching query: String) -> [Self] {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return all }
-
-        var scored: [ScoredCommand] = []
-        for (order, command) in all.enumerated() {
-            guard let score = FuzzyMatch.score(query: trimmed, in: command.title) else { continue }
-
-            scored.append(ScoredCommand(order: order, command: command, score: score))
-        }
-
-        // Higher score first; ties keep the declared order so the highlight stays stable.
-        scored.sort { lhs, rhs in
-            lhs.score == rhs.score ? lhs.order < rhs.order : lhs.score > rhs.score
-        }
-        return scored.map(\.command)
-    }
-}
-
-/// A palette command paired with its fuzzy score and declared order, used while ranking.
-private struct ScoredCommand {
-    let order: Int
-    let command: PaletteCommand
-    let score: Int
-}
-
-/// A small deterministic fuzzy matcher for ranking command-palette results.
-enum FuzzyMatch {
-    /// Returns a match score for `query` as a subsequence of `candidate`, or `nil` when
-    /// `candidate` doesn't contain the query's characters in order. Higher is better:
-    /// consecutive characters and word-start matches score more.
-    static func score(query: String, in candidate: String) -> Int? {
-        let needle = Array(query.lowercased())
-        let haystack = Array(candidate.lowercased())
-        guard !needle.isEmpty else { return 0 }
-
-        var score = 0
-        var needleIndex = 0
-        var previousMatch = -2
-        for (position, character) in haystack.enumerated() where needleIndex < needle.count {
-            guard character == needle[needleIndex] else { continue }
-
-            score += 1
-            if position == previousMatch + 1 { score += 2 } // consecutive-run bonus
-            if position == 0 || haystack[position - 1] == " " { score += 3 } // word-start bonus
-            previousMatch = position
-            needleIndex += 1
-        }
-        return needleIndex == needle.count ? score : nil
-    }
-}
-
-/// A command palette (⌘K) for jumping between sections and other app destinations,
-/// with fuzzy ranking and full keyboard navigation (↑/↓ to move, Return to run, Escape
-/// to dismiss).
-struct CommandPaletteView: View {
-    @Binding var selection: SidebarSection
-    @Environment(\.dismiss) private var dismiss
-    @State private var query = ""
-    @State private var highlighted: PaletteCommand.ID?
-    @FocusState private var fieldFocused: Bool
-
-    private var matches: [PaletteCommand] {
-        PaletteCommand.ranked(matching: query)
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            TextField("Search commands…", text: $query)
-                .textFieldStyle(.plain)
-                .font(.title3)
-                .padding(12)
-                .focused($fieldFocused)
-                .onKeyPress(.upArrow) { move(by: -1); return .handled }
-                .onKeyPress(.downArrow) { move(by: 1); return .handled }
-                .onKeyPress(.return) { run(highlightedCommand); return .handled }
-                .onKeyPress(.escape) { dismiss(); return .handled }
-
-            Divider()
-
-            List(matches, selection: $highlighted) { command in
-                Button {
-                    run(command)
-                } label: {
-                    Label(command.title, systemImage: command.systemImage)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .tag(command.id)
-            }
-        }
-        .frame(width: 440, height: 320)
-        .onAppear {
-            fieldFocused = true
-            highlighted = matches.first?.id
-        }
-        .onChange(of: query) {
-            // Keep a stable, valid highlight as the result set narrows.
-            if highlighted == nil || !matches.contains(where: { $0.id == highlighted }) {
-                highlighted = matches.first?.id
+        return tests.map { test in
+            PaletteResult(
+                id: "test.\(test.id)",
+                title: test.name,
+                subtitle: test.state?.capitalized,
+                category: "Test",
+                systemImage: "checklist",
+                searchText: "\(test.name) \(test.tags?.joined(separator: " ") ?? "") test",
+                showsOnlyWhenSearching: true
+            ) {
+                // Route through the same per-account key the Tests list restores from (#19),
+                // then switch to the section so the list opens that test's detail.
+                UserDefaults.standard.set(test.id, forKey: "selection.tests.\(account.id)")
+                selection.wrappedValue = .tests
             }
         }
     }
 
-    /// The command the highlight currently points at, falling back to the top match.
-    private var highlightedCommand: PaletteCommand? {
-        matches.first { $0.id == highlighted } ?? matches.first
-    }
-
-    /// Moves the highlight by `delta` rows, wrapping around the ends.
-    private func move(by delta: Int) {
-        guard !matches.isEmpty else { return }
-
-        let index = matches.firstIndex { $0.id == highlighted } ?? 0
-        let next = (index + delta + matches.count) % matches.count
-        highlighted = matches[next].id
-    }
-
-    private func run(_ command: PaletteCommand?) {
-        guard let command else { return }
-
-        switch command {
-        case let .section(section):
-            selection = section
-            dismiss()
-
-        case .openSettings:
-            dismiss()
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        }
+    /// Every candidate for the current state: the static entries plus the account's tests.
+    @MainActor
+    static func candidates(
+        store: AccountStore,
+        session: URLSession,
+        selection: Binding<SidebarSection>,
+        openSettings: @escaping @MainActor () -> Void
+    ) async -> [PaletteResult] {
+        var results = staticCandidates(store: store, selection: selection, openSettings: openSettings)
+        await results.append(contentsOf: testCandidates(store: store, session: session, selection: selection))
+        return results
     }
 }
 

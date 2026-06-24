@@ -1,3 +1,5 @@
+import AppKit
+import CommandPaletteKit
 import SwiftUI
 
 /// The main window's root: a split view with a sidebar of the top-level sections and a
@@ -6,6 +8,8 @@ struct ContentView: View {
     /// The selected section, persisted across launches (#19).
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
     @Environment(PaletteModel.self) private var palette
+    @Environment(AccountStore.self) private var store
+    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         @Bindable var palette = palette
@@ -21,7 +25,14 @@ struct ContentView: View {
             detailView(for: selection)
         }
         .sheet(isPresented: $palette.isPresented) {
-            CommandPaletteView(selection: $selection)
+            CommandPaletteView(placeholder: "Search RankBuddy…") {
+                await RankBuddyPalette.candidates(
+                    store: store,
+                    session: session,
+                    selection: $selection,
+                    openSettings: { NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) }
+                )
+            }
         }
     }
 

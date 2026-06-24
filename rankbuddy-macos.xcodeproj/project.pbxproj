@@ -10,6 +10,7 @@
 		66062D152FEB0FB800352492 /* BuddyAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D142FEB0FB800352492 /* BuddyAppKit */; };
 		66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D162FEB0FB800352492 /* BuddyDesignSystem */; };
 		66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
+		668CA7EB2FEC7BFA00420E24 /* CommandPaletteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 				66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */,
 				66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */,
 				66062D152FEB0FB800352492 /* BuddyAppKit in Frameworks */,
+				668CA7EB2FEC7BFA00420E24 /* CommandPaletteKit in Frameworks */,
 			);
 		};
 		662C2C522FEC525200FE99C0 /* Frameworks */ = {
@@ -96,6 +98,7 @@
 				66062D142FEB0FB800352492 /* BuddyAppKit */,
 				66062D162FEB0FB800352492 /* BuddyDesignSystem */,
 				66062D182FEB0FB800352492 /* PaginatedRESTClient */,
+				668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */,
 			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* rankbuddy-macos.app */;
@@ -152,6 +155,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				66062D132FEB0FB800352492 /* XCRemoteSwiftPackageReference "buddy-kit" */,
+				668CA7E92FEC7BFA00420E24 /* XCRemoteSwiftPackageReference "CommandPaletteKit" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -436,6 +440,7 @@
 		662C2C592FEC525200FE99C0 /* Debug configuration for PBXNativeTarget "rankbuddy-macosTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6L9H6Q8CUF;
@@ -451,7 +456,6 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/rankbuddy-macos.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/rankbuddy-macos";
 			};
 			name = Debug;
@@ -459,6 +463,7 @@
 		662C2C5A2FEC525200FE99C0 /* Release configuration for PBXNativeTarget "rankbuddy-macosTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6L9H6Q8CUF;
@@ -474,7 +479,6 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/rankbuddy-macos.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/rankbuddy-macos";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -518,6 +522,14 @@
 				version = 0.2.1;
 			};
 		};
+		668CA7E92FEC7BFA00420E24 /* XCRemoteSwiftPackageReference "CommandPaletteKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamtheturtle/CommandPaletteKit";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -535,6 +547,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 66062D132FEB0FB800352492 /* XCRemoteSwiftPackageReference "buddy-kit" */;
 			productName = PaginatedRESTClient;
+		};
+		668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 668CA7E92FEC7BFA00420E24 /* XCRemoteSwiftPackageReference "CommandPaletteKit" */;
+			productName = CommandPaletteKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
