@@ -31,14 +31,30 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
     let searchableText: (Item) -> String
     /// The ways the list can be ordered; the first is the default. Empty hides the menu.
     var sortOptions: [SortOption<Item>] = []
+    /// When set, the list owns its `NavigationStack` and restores/persists the selected
+    /// item across launches under this key (#19). Callers scope the key by account and
+    /// collection. `nil` (e.g. a list nested inside another stack) disables both.
+    var restorationKey: String?
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
     @State private var state: LoadState<[Item]> = .loading
     @State private var query = ""
     @State private var sortSelection: SortOption<Item>.ID?
+    /// The pushed-detail navigation path; only used (and bound) when `restorationKey` is set.
+    @State private var path: [Item] = []
+    /// Guards selection restoration to once per load cycle, so navigating back doesn't re-push.
+    @State private var didRestore = false
 
     var body: some View {
+        if restorationKey != nil {
+            NavigationStack(path: $path) { core }
+        } else {
+            core
+        }
+    }
+
+    private var core: some View {
         content
             .navigationTitle(title)
             .navigationDestination(for: Item.self, destination: detail)
@@ -65,9 +81,16 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
                 .keyboardShortcut("r", modifiers: .command)
                 .disabled(isLoading)
             }
-            .task { await reload() }
+            // Re-runs when the account-scoped key changes, clearing any stale restored
+            // pane before loading the new account's data (#19).
+            .task(id: restorationKey) {
+                didRestore = false
+                path = []
+                await reload()
+            }
             .onAppear { restoreSort() }
             .onChange(of: sortSelection) { persistSort() }
+            .onChange(of: path) { persistSelection() }
     }
 
     /// Where this list's chosen sort order is remembered between launches (#19). Keyed by
@@ -149,10 +172,37 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
     private func reload() async {
         state = .loading
         do {
-            state = try await .loaded(load())
+            let items = try await load()
+            state = .loaded(items)
+            restoreSelectionIfNeeded(items)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             state = .failed(message)
+        }
+    }
+
+    /// Re-opens the last-viewed item's detail once per load, if it still exists. A missing
+    /// item (deleted, or a different account) simply leaves the list at the top — no loops,
+    /// no blank pane (#19).
+    private func restoreSelectionIfNeeded(_ items: [Item]) {
+        guard let restorationKey, !didRestore, path.isEmpty else { return }
+
+        didRestore = true
+        guard let stored = UserDefaults.standard.string(forKey: restorationKey),
+              let item = items.first(where: { String(describing: $0.id) == stored })
+        else { return }
+
+        path = [item]
+    }
+
+    /// Remembers the currently selected item (the top of the path), or clears it on pop.
+    private func persistSelection() {
+        guard let restorationKey else { return }
+
+        if let selected = path.last {
+            UserDefaults.standard.set(String(describing: selected.id), forKey: restorationKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: restorationKey)
         }
     }
 }

@@ -7,22 +7,23 @@ struct QuestionsScreen: View {
     @Environment(\.hackerRankSession) private var session
 
     var body: some View {
-        NavigationStack {
-            if let account = store.currentAccount {
-                LoadableList(
-                    title: "Questions",
-                    emptyMessage: "No questions",
-                    load: { try await HackerRankClient(account: account, session: session).questions() },
-                    searchableText: { "\($0.name) \($0.type) \($0.tags?.joined(separator: " ") ?? "")" },
-                    sortOptions: [
-                        SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
-                        SortOption("Type") { $0.type.localizedStandardCompare($1.type) == .orderedAscending },
-                        SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") }
-                    ],
-                    row: { QuestionRow(question: $0) },
-                    detail: { QuestionDetailView(question: $0) }
-                )
-            } else {
+        if let account = store.currentAccount {
+            LoadableList(
+                title: "Questions",
+                emptyMessage: "No questions",
+                load: { try await HackerRankClient(account: account, session: session).questions() },
+                searchableText: { "\($0.name) \($0.type) \($0.tags?.joined(separator: " ") ?? "")" },
+                sortOptions: [
+                    SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
+                    SortOption("Type") { $0.type.localizedStandardCompare($1.type) == .orderedAscending },
+                    SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") }
+                ],
+                restorationKey: "selection.questions.\(account.id)",
+                row: { QuestionRow(question: $0) },
+                detail: { QuestionDetailView(question: $0) }
+            )
+        } else {
+            NavigationStack {
                 NoAccountView()
                     .navigationTitle("Questions")
             }

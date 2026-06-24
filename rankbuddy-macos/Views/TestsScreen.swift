@@ -8,22 +8,23 @@ struct TestsScreen: View {
     @Environment(\.hackerRankSession) private var session
 
     var body: some View {
-        NavigationStack {
-            if let account = store.currentAccount {
-                LoadableList(
-                    title: "Tests",
-                    emptyMessage: "No tests",
-                    load: { try await HackerRankClient(account: account, session: session).tests() },
-                    searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "")" },
-                    sortOptions: [
-                        SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
-                        SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
-                        SortOption("Start Time") { ($0.startTime ?? "") > ($1.startTime ?? "") }
-                    ],
-                    row: { TestRow(test: $0) },
-                    detail: { TestDetailView(test: $0, account: account) }
-                )
-            } else {
+        if let account = store.currentAccount {
+            LoadableList(
+                title: "Tests",
+                emptyMessage: "No tests",
+                load: { try await HackerRankClient(account: account, session: session).tests() },
+                searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "")" },
+                sortOptions: [
+                    SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
+                    SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
+                    SortOption("Start Time") { ($0.startTime ?? "") > ($1.startTime ?? "") }
+                ],
+                restorationKey: "selection.tests.\(account.id)",
+                row: { TestRow(test: $0) },
+                detail: { TestDetailView(test: $0, account: account) }
+            )
+        } else {
+            NavigationStack {
                 NoAccountView()
                     .navigationTitle("Tests")
             }

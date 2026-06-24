@@ -7,24 +7,25 @@ struct InterviewsScreen: View {
     @Environment(\.hackerRankSession) private var session
 
     var body: some View {
-        NavigationStack {
-            if let account = store.currentAccount {
-                LoadableList(
-                    title: "Interviews",
-                    emptyMessage: "No interviews",
-                    load: { try await HackerRankClient(account: account, session: session).interviews() },
-                    searchableText: { "\($0.title ?? "") \($0.status)" },
-                    sortOptions: [
-                        SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
-                        SortOption("Status") { $0.status.localizedStandardCompare($1.status) == .orderedAscending },
-                        SortOption("Title") {
-                            ($0.title ?? "").localizedStandardCompare($1.title ?? "") == .orderedAscending
-                        }
-                    ],
-                    row: { InterviewRow(interview: $0) },
-                    detail: { InterviewDetailView(interview: $0) }
-                )
-            } else {
+        if let account = store.currentAccount {
+            LoadableList(
+                title: "Interviews",
+                emptyMessage: "No interviews",
+                load: { try await HackerRankClient(account: account, session: session).interviews() },
+                searchableText: { "\($0.title ?? "") \($0.status)" },
+                sortOptions: [
+                    SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
+                    SortOption("Status") { $0.status.localizedStandardCompare($1.status) == .orderedAscending },
+                    SortOption("Title") {
+                        ($0.title ?? "").localizedStandardCompare($1.title ?? "") == .orderedAscending
+                    }
+                ],
+                restorationKey: "selection.interviews.\(account.id)",
+                row: { InterviewRow(interview: $0) },
+                detail: { InterviewDetailView(interview: $0) }
+            )
+        } else {
+            NavigationStack {
                 NoAccountView()
                     .navigationTitle("Interviews")
             }
