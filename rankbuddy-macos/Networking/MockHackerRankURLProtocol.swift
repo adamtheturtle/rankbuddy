@@ -9,6 +9,25 @@ import Foundation
 /// `nonisolated` because the URL loading system calls these methods on its own threads,
 /// not the main actor.
 final nonisolated class MockHackerRankURLProtocol: URLProtocol {
+    /// Which demo data the mock serves, selected by `RANKBUDDY_DEMO_SCENARIO` so the
+    /// app's empty/error states can be exercised without a live token (#10).
+    enum Scenario: String {
+        /// Populated lists, including a multi-page tests collection.
+        case success
+        /// Every collection is empty, to show the empty states.
+        case empty
+        /// A `401`, to show the authentication-failure state.
+        case unauthorized
+        /// A `200` with invalid JSON, to show the decode-failure state.
+        case malformed
+
+        /// The scenario selected by the environment, defaulting to `.success`.
+        static var current: Self {
+            let raw = ProcessInfo.processInfo.environment["RANKBUDDY_DEMO_SCENARIO"] ?? ""
+            return Self(rawValue: raw) ?? .success
+        }
+    }
+
     override static func canInit(with _: URLRequest) -> Bool {
         true
     }
@@ -18,15 +37,31 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     }
 
     override func startLoading() {
-        guard let url = request.url, let client else {
+        guard let url = request.url else {
             client?.urlProtocolDidFinishLoading(self)
             return
         }
 
-        let body = Self.body(for: url)
+        switch Scenario.current {
+        case .success:
+            respond(url: url, statusCode: 200, body: Self.body(for: url))
+        case .empty:
+            respond(url: url, statusCode: 200, body: #"{"data":[],"next":null}"#)
+        case .unauthorized:
+            respond(url: url, statusCode: 401, body: #"{"error":"Invalid or expired token"}"#)
+        case .malformed:
+            respond(url: url, statusCode: 200, body: "{ not valid json ")
+        }
+    }
+
+    override func stopLoading() {}
+
+    /// Sends a single complete response with the given status and JSON body.
+    private func respond(url: URL, statusCode: Int, body: String) {
+        guard let client else { return }
         guard let response = HTTPURLResponse(
             url: url,
-            statusCode: 200,
+            statusCode: statusCode,
             httpVersion: "HTTP/1.1",
             headerFields: ["Content-Type": "application/json"]
         ) else {
@@ -39,10 +74,9 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
         client.urlProtocolDidFinishLoading(self)
     }
 
-    override func stopLoading() {}
-
     /// Picks the fixture for a request path. Candidates are checked first because their
-    /// path also contains `/tests/`.
+    /// path also contains `/tests/`. The tests collection is paginated to exercise the
+    /// client's `next`-following path.
     private static func body(for url: URL) -> String {
         let path = url.path
         if path.contains("/candidates") {
@@ -55,24 +89,35 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
             return interviewsJSON
         }
         if path.contains("/tests") {
-            return testsJSON
+            let isSecondPage = url.query?.contains("offset=3") ?? false
+            return isSecondPage ? testsPage2JSON : testsPage1JSON
         }
         return #"{"data":[],"next":null}"#
     }
 
     // MARK: - Fixtures (deterministic demo data; no real personal data)
 
-    private static let testsJSON = #"""
+    private static let testsPage1JSON = #"""
     {"data":[
       {"id":"t1","unique_id":"backend-screen","name":"Backend Engineer Screen","state":"active",
        "starttime":"2026-05-01T09:00:00Z","endtime":"2026-06-01T09:00:00Z","duration":90,
        "languages":["python","go","java"],"cutoff_score":70,"tags":["backend","screening"],
-       "instructions":"Solve all questions within the time limit.","questions":["q1","q2"]},
+       "enable_proctoring":true,"instructions":"Solve all questions within the time limit.","questions":["q1","q2"]},
       {"id":"t2","unique_id":"frontend-takehome","name":"Frontend Take-Home","state":"active",
        "starttime":"2026-05-10T09:00:00Z","duration":120,"languages":["javascript","typescript"],
        "cutoff_score":65,"tags":["frontend"]},
       {"id":"t3","unique_id":"ds-quiz","name":"Data Structures Quiz","state":"archived",
        "duration":45,"languages":["cpp"],"cutoff_score":80,"tags":["algorithms","mcq"]}
+    ],"next":"https://www.hackerrank.com/x/api/v3/tests?limit=3&offset=3"}
+    """#
+
+    private static let testsPage2JSON = #"""
+    {"data":[
+      {"id":"t4","unique_id":"sre-screen","name":"SRE On-Call Screen","state":"active",
+       "starttime":"2026-05-15T09:00:00Z","duration":75,"languages":["python","bash"],
+       "cutoff_score":72,"tags":["sre","backend"],"draft":true},
+      {"id":"t5","unique_id":"ml-fundamentals","name":"ML Fundamentals","state":"active",
+       "duration":60,"languages":["python"],"cutoff_score":68,"tags":["ml"],"locked":true}
     ],"next":null}
     """#
 
