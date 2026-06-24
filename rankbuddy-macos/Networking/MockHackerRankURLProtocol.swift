@@ -132,9 +132,25 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
        "attempt_starttime":"2026-05-03T14:00:00Z","attempt_endtime":"2026-05-03T15:10:00Z"},
       {"id":"c3","email":"grace@example.com","full_name":"Grace Hopper","score":58.0,
        "percentage_score":58.0,"integrity_status":"review","plagiarism_status":true,
-       "attempt_starttime":"2026-05-04T08:30:00Z"}
+       "attempt_starttime":"2026-05-04T08:30:00Z"},
+      {"id":"c4","email":"katherine@example.com","full_name":"Katherine Johnson","score":74.0,
+       "percentage_score":74.0,"integrity_status":"clean","plagiarism_status":false,
+       "attempt_starttime":"2026-05-06T09:00:00Z","attempt_endtime":"2026-05-06T10:30:00Z",
+       "tags":["onsite","strong-math","follow-up"],
+       "feedback":"\#(longCandidateFeedback)"},
+      {"id":"c5","email":"noname@example.com"}
     ],"next":null}
     """#
+
+    /// A deliberately long, multi-sentence review used by one demo candidate to exercise
+    /// text wrapping in the detail view. Built from parts so no source line is over-long.
+    private static let longCandidateFeedback = [
+        "Solid grasp of the core algorithm and a clean, well-tested implementation.",
+        "Walked through time and space complexity unprompted.",
+        "Proposed a streaming variant for very large inputs.",
+        "Explained trade-offs between the hash-map and two-pointer approaches before committing.",
+        "Communication was clear throughout — recommend advancing to the onsite round."
+    ].joined(separator: " ")
 
     private static let questionsJSON = #"""
     {"data":[
