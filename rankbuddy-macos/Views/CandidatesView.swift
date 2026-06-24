@@ -38,6 +38,12 @@ struct CandidateRow: View {
             Spacer()
             candidate.integrityBadge
         }
+        .rowContextMenu(
+            copyLabel: "Copy Email",
+            copyText: candidate.email,
+            link: candidate.reportURL,
+            openLabel: "Open Report"
+        )
     }
 }
 

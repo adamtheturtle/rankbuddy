@@ -41,6 +41,7 @@ struct QuestionRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+        .rowContextMenu(copyLabel: "Copy Name", copyText: question.name)
     }
 }
 

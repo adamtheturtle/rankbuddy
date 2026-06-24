@@ -41,6 +41,11 @@ struct InterviewRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+        .rowContextMenu(
+            copyLabel: "Copy Title",
+            copyText: interview.title ?? "Interview \(interview.id)",
+            link: interview.url
+        )
     }
 }
 

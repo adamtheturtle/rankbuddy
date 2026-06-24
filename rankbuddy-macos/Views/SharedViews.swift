@@ -1,4 +1,48 @@
+import AppKit
 import SwiftUI
+
+/// Copies `text` to the general pasteboard.
+@MainActor
+func copyToPasteboard(_ text: String) {
+    NSPasteboard.general.clearContents()
+    NSPasteboard.general.setString(text, forType: .string)
+}
+
+extension View {
+    /// Adds a list-row context menu with a copy action and, when a web link is present,
+    /// open-in-browser and copy-link actions.
+    ///
+    /// - Parameters:
+    ///   - copyLabel: The menu title for copying `copyText` (e.g. "Copy Name").
+    ///   - copyText: The text placed on the pasteboard by the copy action.
+    ///   - link: An optional web URL string; when it parses, an open/copy-link pair is shown.
+    ///   - openLabel: The menu title for the open-in-browser action.
+    func rowContextMenu(
+        copyLabel: String,
+        copyText: String,
+        link: String? = nil,
+        openLabel: String = "Open in Browser"
+    ) -> some View {
+        let url = link.flatMap(URL.init(string:))
+        return contextMenu {
+            if let url {
+                Link(destination: url) {
+                    Label(openLabel, systemImage: "safari")
+                }
+                Button {
+                    copyToPasteboard(url.absoluteString)
+                } label: {
+                    Label("Copy Link", systemImage: "link")
+                }
+            }
+            Button {
+                copyToPasteboard(copyText)
+            } label: {
+                Label(copyLabel, systemImage: "doc.on.doc")
+            }
+        }
+    }
+}
 
 /// Shown when a section needs an account but none is configured.
 struct NoAccountView: View {

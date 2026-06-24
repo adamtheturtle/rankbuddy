@@ -50,6 +50,7 @@ struct TestRow: View {
                 StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .blue)
             }
         }
+        .rowContextMenu(copyLabel: "Copy Name", copyText: test.name)
     }
 }
 
