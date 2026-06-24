@@ -53,8 +53,8 @@ nonisolated struct Test: Codable, Hashable, Identifiable {
         case id
         case uniqueID = "unique_id"
         case name
-        case startTime = "starttime"
-        case endTime = "endtime"
+        case startTime = "start_time"
+        case endTime = "end_time"
         case duration
         case owner
         case instructions

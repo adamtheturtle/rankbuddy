@@ -3,8 +3,26 @@
 What RankBuddy relies on from the HackerRank for Work API, recorded here (without
 secrets) so the transport and models can be reasoned about and the mock fixtures can
 match. Derived from the public [`adamtheturtle/hackerrank`](https://github.com/adamtheturtle/hackerrank)
-Python client; **the exact contract should still be confirmed against a live account**
-(see #3) before the endpoint-specific UI is considered fully verified.
+Python client and **confirmed against a live HackerRank for Work account on 2026-06-24**
+(#3) for the read-only endpoints below.
+
+## Confirmed against a live account (2026-06-24)
+
+- **Auth/pagination:** `GET /x/api/v3/tests|questions|interviews` return `200` with the
+  envelope below (`data`, `total`, `page_total`, `offset`, absolute `next`/`previous`/
+  `first`/`last`). Pagination is offset/limit and `next` is absolute — as modelled.
+- **Ids are JSON strings** (e.g. `"2360707"`), so the models' `String` ids are correct.
+- **Dates** are ISO-8601 with a `+0000` zero-offset and no fractional seconds
+  (e.g. `2026-06-22T04:10:51+0000`); `DisplayFormat` parses this.
+- **Field-name correction:** tests expose **`start_time` / `end_time`** (not
+  `starttime` / `endtime` as the Python schema implied). The `Test` model was corrected.
+- **Unmodelled fields** are present and safely ignored (tests: `sections`, `permission`,
+  `test_type`; questions: `skills`, `test_case_count`, `leaked_data`; candidates: many).
+- **`integrity_status`** uses human strings like `"No Issues Detected"` live, not the
+  `clean`/`review` tokens the badge currently keys on (relevant to #14).
+- **Collection sizes are large** on a real account (this one: ~241 tests, ~9,720
+  questions, ~87,345 interviews). The client currently fetches *all* pages, so the
+  read-only lists must move to bounded/lazy paging before live use — tracked separately.
 
 ## Base URL and versioning
 
