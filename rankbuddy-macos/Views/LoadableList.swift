@@ -62,6 +62,7 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise")
                 }
+                .keyboardShortcut("r", modifiers: .command)
                 .disabled(isLoading)
             }
             .task { await reload() }

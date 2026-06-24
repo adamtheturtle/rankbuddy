@@ -73,11 +73,15 @@ struct TestDetailView: View {
                 OptionalRow("Unique ID", test.uniqueID)
                 OptionalRow("Duration", test.duration.map { "\($0) min" })
                 OptionalRow("Cutoff score", test.cutoffScore.map(String.init))
+                OptionalRow("Questions", test.questions.map { "\($0.count)" })
                 OptionalRow("Starts", DisplayFormat.date(test.startTime))
                 OptionalRow("Ends", DisplayFormat.date(test.endTime))
                 OptionalRow("Created", DisplayFormat.date(test.createdAt))
                 OptionalRow("Languages", DisplayFormat.list(test.languages))
                 OptionalRow("Tags", DisplayFormat.list(test.tags))
+                OptionalRow("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
+                OptionalRow("Locked", test.locked == true ? "Yes" : nil)
+                OptionalRow("Draft", test.draft == true ? "Yes" : nil)
             }
 
             Section {
