@@ -28,11 +28,13 @@ struct MockHackerRankServerTests {
         #expect(MockHackerRankURLProtocol.Scenario.current == .success)
     }
 
-    @Test func `scenario raw values map to the four cases`() {
+    @Test func `scenario raw values map to every case`() {
         #expect(MockHackerRankURLProtocol.Scenario(rawValue: "success") == .success)
         #expect(MockHackerRankURLProtocol.Scenario(rawValue: "empty") == .empty)
         #expect(MockHackerRankURLProtocol.Scenario(rawValue: "unauthorized") == .unauthorized)
         #expect(MockHackerRankURLProtocol.Scenario(rawValue: "malformed") == .malformed)
+        #expect(MockHackerRankURLProtocol.Scenario(rawValue: "throttling") == .throttled)
+        #expect(MockHackerRankURLProtocol.Scenario(rawValue: "server_error") == .serverError)
         #expect(MockHackerRankURLProtocol.Scenario(rawValue: "nonsense") == nil)
     }
 

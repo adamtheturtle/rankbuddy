@@ -20,6 +20,11 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
         case unauthorized
         /// A `200` with invalid JSON, to show the decode-failure state.
         case malformed
+        /// A persistent `429`, to show the rate-limited state after the transport's
+        /// retries are exhausted.
+        case throttled = "throttling"
+        /// A persistent `503`, to show the server-error state after retries are exhausted.
+        case serverError = "server_error"
 
         /// The scenario selected by the environment, defaulting to `.success`.
         static var current: Self {
@@ -45,25 +50,41 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
         switch Scenario.current {
         case .success:
             respond(url: url, statusCode: 200, body: Self.body(for: url))
+
         case .empty:
             respond(url: url, statusCode: 200, body: #"{"data":[],"next":null}"#)
+
         case .unauthorized:
             respond(url: url, statusCode: 401, body: #"{"error":"Invalid or expired token"}"#)
+
         case .malformed:
             respond(url: url, statusCode: 200, body: "{ not valid json ")
+
+        case .throttled:
+            // A `Retry-After` header is included so a transport that honours it backs off
+            // as it would against the live API.
+            respond(
+                url: url,
+                statusCode: 429,
+                body: #"{"error":"Rate limit exceeded"}"#,
+                extraHeaders: ["Retry-After": "1"]
+            )
+
+        case .serverError:
+            respond(url: url, statusCode: 503, body: #"{"error":"Service unavailable"}"#)
         }
     }
 
     override func stopLoading() {}
 
     /// Sends a single complete response with the given status and JSON body.
-    private func respond(url: URL, statusCode: Int, body: String) {
+    private func respond(url: URL, statusCode: Int, body: String, extraHeaders: [String: String] = [:]) {
         guard let client else { return }
         guard let response = HTTPURLResponse(
             url: url,
             statusCode: statusCode,
             httpVersion: "HTTP/1.1",
-            headerFields: ["Content-Type": "application/json"]
+            headerFields: ["Content-Type": "application/json"].merging(extraHeaders) { _, new in new }
         ) else {
             client.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
             return
