@@ -1,85 +1,47 @@
 name: Website
 
-# Cheap Linux checks for the landing page and docs (docs/). These are separate
-# from ci.yml so they can be path-gated: GitHub only supports `paths:` filters at
-# the workflow level, and ci.yml deliberately runs on every push. Keeping the
-# website checks here means a Swift-only change never spins these up, and a
-# docs-only change never pays for the macOS build.
 on:
   push:
-    branches: [main]
     paths:
-      - 'docs/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.htmlvalidate.json'
-      - '.stylelintrc.json'
-      - '.markdownlint.jsonc'
-      - 'lychee.toml'
-      - '.github/workflows/website.yml'
+      - ".github/workflows/website.yml"
+      - "docs/**"
+      - "package.json"
+      - "package-lock.json"
+      - "lychee.toml"
   pull_request:
     paths:
-      - 'docs/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.htmlvalidate.json'
-      - '.stylelintrc.json'
-      - '.markdownlint.jsonc'
-      - 'lychee.toml'
-      - '.github/workflows/website.yml'
+      - ".github/workflows/website.yml"
+      - "docs/**"
+      - "package.json"
+      - "package-lock.json"
+      - "lychee.toml"
   workflow_dispatch:
 
-# Cancel an in-progress run when a newer run starts on the same ref.
 concurrency:
-  group: website-${{ github.ref }}
+  group: website-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Least privilege: lychee resolves github.com links via the API using the
-# read-only token; nothing here writes to the repo.
 permissions:
   contents: read
 
 jobs:
-  # Validate the site's HTML, lint the stylesheet, and lint the Markdown docs.
-  # Tools and their pinned versions live in package.json; `npm ci` restores them
-  # from the committed lockfile so CI matches a local `npm ci && npm run lint`.
-  lint:
-    name: Lint docs (HTML/CSS/Markdown)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+  validate:
+    name: Validate website
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "24.6.0"
           cache: npm
 
-      - name: Install tooling
+      - name: Install website tooling
         run: npm ci
 
-      - name: Validate HTML (html-validate)
-        run: npm run lint:html
-
-      - name: Lint CSS (stylelint)
-        run: npm run lint:css
-
-      - name: Lint Markdown (markdownlint)
-        run: npm run lint:md
-
-  # Check that every link on the pages resolves. Config: lychee.toml. lychee-action
-  # passes the runner's GITHUB_TOKEN so github.com links resolve via the API.
-  links:
-    name: Check links (lychee)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Check links
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: "--config lychee.toml docs/"
+      - name: Validate HTML, CSS, Markdown, and links
+        run: npm run lint
