@@ -1,0 +1,31 @@
+{
+  "configurations" : [
+    {
+      "id" : "75A00000-0000-0000-0000-00000000075A",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "mainThreadCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:rankbuddy-macos.xcodeproj",
+      "identifier" : "000000000000000100000000",
+      "name" : "rankbuddy-macos"
+    },
+    "threadSanitizerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:rankbuddy-macos.xcodeproj",
+        "identifier" : "662C2C542FEC525200FE99C0",
+        "name" : "rankbuddy-macosTests"
+      }
+    }
+  ],
+  "version" : 1
+}

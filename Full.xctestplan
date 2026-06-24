@@ -1,0 +1,30 @@
+{
+  "configurations" : [
+    {
+      "id" : "FU000000-0000-0000-0000-0000000000FU",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:rankbuddy-macos.xcodeproj",
+      "identifier" : "000000000000000100000000",
+      "name" : "rankbuddy-macos"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:rankbuddy-macos.xcodeproj",
+        "identifier" : "662C2C542FEC525200FE99C0",
+        "name" : "rankbuddy-macosTests"
+      }
+    }
+  ],
+  "version" : 1
+}
