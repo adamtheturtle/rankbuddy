@@ -66,9 +66,30 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
                 .disabled(isLoading)
             }
             .task { await reload() }
-            .onAppear {
-                if sortSelection == nil { sortSelection = sortOptions.first?.id }
-            }
+            .onAppear { restoreSort() }
+            .onChange(of: sortSelection) { persistSort() }
+    }
+
+    /// Where this list's chosen sort order is remembered between launches (#19). Keyed by
+    /// title, so each collection keeps its own preference.
+    private var sortDefaultsKey: String {
+        "sort.\(title)"
+    }
+
+    /// Restores the saved sort order by label, falling back to the first option.
+    private func restoreSort() {
+        guard !sortOptions.isEmpty else { return }
+
+        let savedLabel = UserDefaults.standard.string(forKey: sortDefaultsKey)
+        let saved = sortOptions.first { $0.label == savedLabel }
+        sortSelection = (saved ?? sortOptions.first)?.id
+    }
+
+    /// Persists the current sort order by its stable label (the option ids are per-launch).
+    private func persistSort() {
+        guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return }
+
+        UserDefaults.standard.set(option.label, forKey: sortDefaultsKey)
     }
 
     @ViewBuilder private var content: some View {
