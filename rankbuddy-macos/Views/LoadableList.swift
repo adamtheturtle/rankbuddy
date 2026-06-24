@@ -104,6 +104,7 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
                     NavigationLink(value: item) { row(item) }
                 }
             }
+            .navigationSubtitle("\(visible.count) \(visible.count == 1 ? "item" : "items")")
         }
     }
 
