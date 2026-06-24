@@ -74,6 +74,7 @@ struct AccountRow: View {
                     .accessibilityLabel("Current account")
             }
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
