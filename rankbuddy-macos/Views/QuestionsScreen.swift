@@ -67,7 +67,12 @@ struct QuestionDetailView: View {
                 OptionalRow("Recommended duration", question.recommendedDuration.map { "\($0) min" })
                 OptionalRow("Created", DisplayFormat.date(question.createdAt))
                 OptionalRow("Languages", DisplayFormat.list(question.languages))
-                OptionalRow("Tags", DisplayFormat.list(question.tags))
+            }
+
+            if let tags = question.tags, !tags.isEmpty {
+                Section("Tags") {
+                    TagList(tags: tags)
+                }
             }
 
             if let statement = question.problemStatement, !statement.isEmpty {

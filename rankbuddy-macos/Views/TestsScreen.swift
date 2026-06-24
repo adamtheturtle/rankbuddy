@@ -79,10 +79,15 @@ struct TestDetailView: View {
                 OptionalRow("Ends", DisplayFormat.date(test.endTime))
                 OptionalRow("Created", DisplayFormat.date(test.createdAt))
                 OptionalRow("Languages", DisplayFormat.list(test.languages))
-                OptionalRow("Tags", DisplayFormat.list(test.tags))
                 OptionalRow("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
                 OptionalRow("Locked", test.locked == true ? "Yes" : nil)
                 OptionalRow("Draft", test.draft == true ? "Yes" : nil)
+            }
+
+            if let tags = test.tags, !tags.isEmpty {
+                Section("Tags") {
+                    TagList(tags: tags)
+                }
             }
 
             Section {

@@ -1,5 +1,27 @@
 import AppKit
+import Flow
 import SwiftUI
+
+/// Renders tags as wrapping pill chips. Renders nothing when there are no tags, so a
+/// detail form can drop the whole section for tagless items.
+struct TagList: View {
+    let tags: [String]?
+
+    var body: some View {
+        if let tags, !tags.isEmpty {
+            HFlow(spacing: 6) {
+                ForEach(tags, id: \.self) { tag in
+                    Text(tag)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.quaternary, in: Capsule())
+                        .accessibilityLabel("Tag: \(tag)")
+                }
+            }
+        }
+    }
+}
 
 /// Copies `text` to the general pasteboard.
 @MainActor

@@ -72,12 +72,17 @@ struct CandidateDetailView: View {
                 OptionalRow("Plagiarism", candidate.plagiarismStatus.map { $0 ? "Flagged" : "Clear" })
                 OptionalRow("Started", DisplayFormat.date(candidate.attemptStartTime))
                 OptionalRow("Ended", DisplayFormat.date(candidate.attemptEndTime))
-                OptionalRow("Tags", DisplayFormat.list(candidate.tags))
 
                 if let report = candidate.reportURL, let url = URL(string: report) {
                     Link(destination: url) {
                         Label("Open report", systemImage: "doc.text")
                     }
+                }
+            }
+
+            if let tags = candidate.tags, !tags.isEmpty {
+                Section("Tags") {
+                    TagList(tags: tags)
                 }
             }
 
