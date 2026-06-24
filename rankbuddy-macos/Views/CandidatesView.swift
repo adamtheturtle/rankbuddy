@@ -38,6 +38,7 @@ struct CandidateRow: View {
             Spacer()
             candidate.integrityBadge
         }
+        .accessibilityElement(children: .combine)
         .rowContextMenu(
             copyLabel: "Copy Email",
             copyText: candidate.email,

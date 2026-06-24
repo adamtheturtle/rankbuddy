@@ -41,6 +41,7 @@ struct InterviewRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .combine)
         .rowContextMenu(
             copyLabel: "Copy Title",
             copyText: interview.title ?? "Interview \(interview.id)",
