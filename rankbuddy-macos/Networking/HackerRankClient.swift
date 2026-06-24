@@ -41,7 +41,7 @@ struct HackerRankClient {
     func candidates(testID: String) async throws -> [TestCandidate] {
         try await rest.fetchAllPages(
             HackerRankPage<TestCandidate>.self,
-            path: "\(Self.apiV3)/tests/\(testID)/candidates"
+            path: "\(Self.apiV3)/tests/\(Self.pathSegment(testID))/candidates"
         )
     }
 
@@ -71,5 +71,11 @@ struct HackerRankClient {
         }
 
         _ = try await rest.performWithRetry(HackerRankPage<Test>.self, request: rest.authorizedGET(url))
+    }
+
+    private static func pathSegment(_ value: String) -> String {
+        var allowed = CharacterSet.urlPathAllowed
+        allowed.remove(charactersIn: "/?#[]@!$&'()*+,;=")
+        return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
     }
 }
