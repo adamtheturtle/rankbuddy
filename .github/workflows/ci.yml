@@ -188,3 +188,37 @@ jobs:
           name: build-${{ matrix.configuration }}-xcresult
           path: Build-${{ matrix.configuration }}.xcresult
           if-no-files-found: ignore
+
+  # Dead-code detection (#21). Periphery compiles the app, so it stays on the
+  # nightly/manual macOS lane like the build job. Advisory for now
+  # (continue-on-error): the repo keeps a clean Periphery baseline locally, and #21
+  # promotes this to a required gate once it has proven stable in CI. The pinned
+  # version matches the local Periphery so CI and local results agree.
+  dead-code:
+    name: Dead code (advisory)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: swift-lint
+    runs-on: macos-26
+    timeout-minutes: 25
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.5.app
+          xcodebuild -version
+
+      - name: Install Periphery
+        env:
+          PERIPHERY_VERSION: 3.7.4
+        run: |
+          set -euo pipefail
+          curl -sSfL -o periphery.zip "https://github.com/peripheryapp/periphery/releases/download/${PERIPHERY_VERSION}/periphery-${PERIPHERY_VERSION}.zip"
+          unzip -o -q periphery.zip
+          chmod +x periphery
+          ./periphery version
+
+      - name: Scan for unused code
+        run: ./periphery scan --strict
