@@ -7,11 +7,9 @@ name: CI
 # The expensive macOS build+test lane is nightly/manual only — macOS runners bill
 # at 10x minutes, so a full compile is not paid for on every push.
 #
-# NOTE (bootstrap): the read-only MVP app target and its Fast/Full/TSan test plans
-# (#1, #26) do not exist yet, so the macOS lane is a single advisory build that is
-# allowed to fail. Once the scaffold lands shared test targets and test plans, this
-# becomes the matrixed Full/TSan/Release/macOS-15 topology described in #26 and the
-# advisory flag is removed.
+# The app scheme exists, so scheduled/manual macOS builds are blocking and retain
+# result artifacts on failure. Dedicated Fast/Full/TSan test plans still need test
+# targets before they can replace the plain build lane.
 
 on:
   push:
@@ -43,7 +41,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Run actionlint
         # Pin the version for reproducibility; the download script is fetched at
@@ -66,7 +64,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Run shellcheck
         run: |
@@ -104,7 +102,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       # The full Swift image ships git but not the unzip/curl this job uses to
       # fetch and unpack the pinned release binaries.
@@ -139,25 +137,25 @@ jobs:
           ./swiftformat_linux . --lint --reporter github-actions-log
 
   build:
-    name: Build (advisory)
+    name: Build (${{ matrix.configuration }})
     # The full macOS build is expensive (10x-billed minutes), so it stays
     # nightly/manual only — push and pull_request events skip it and rely on the
     # cheap gates above. `needs` makes it wait for the style gate so a nightly run
     # fails fast on style before paying for the compile.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: swift-lint
-    # Bootstrap: advisory until the scaffold (#1) lands a shared scheme and the
-    # Fast/Full/TSan test plans (#26). A missing scheme/plan must not red the run
-    # while the app is still being stood up; flip this off once #1 + #26 land.
-    continue-on-error: true
-    # macos-26 is the newest hosted image; it ships Xcode 26.x, which honors
-    # SWIFT_DEFAULT_ACTOR_ISOLATION (Swift 6.2). macos-latest still maps to an
-    # older image whose Xcode silently ignores that setting.
+    # macos-26 is the supported runtime/toolchain image for this app target. Once
+    # the project lowers its deployment target, add a separate minimum-runtime
+    # matrix row without sharing DerivedData across rows.
     runs-on: macos-26
-    timeout-minutes: 20
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       # Pin an explicit Xcode rather than the image default, which drifts as Apple
       # ships updates. 26.5 is the newest stable on the macos-26 image.
@@ -169,14 +167,24 @@ jobs:
       - name: Show schemes
         run: xcodebuild -list -project rankbuddy-macos.xcodeproj
 
-      - name: Build
+      - name: Build ${{ matrix.configuration }}
         run: |
           set -o pipefail
           xcodebuild build \
             -project rankbuddy-macos.xcodeproj \
             -scheme rankbuddy-macos \
+            -configuration "${{ matrix.configuration }}" \
             -destination 'platform=macOS' \
-            -derivedDataPath DerivedData \
+            -derivedDataPath "DerivedData-${{ matrix.configuration }}" \
+            -resultBundlePath "Build-${{ matrix.configuration }}.xcresult" \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload build result
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.configuration }}-xcresult
+          path: Build-${{ matrix.configuration }}.xcresult
+          if-no-files-found: ignore
