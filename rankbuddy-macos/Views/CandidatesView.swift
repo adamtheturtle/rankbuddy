@@ -12,6 +12,15 @@ struct CandidatesList: View {
             emptyMessage: "No candidates",
             load: { try await HackerRankClient(account: account, session: session).candidates(testID: testID) },
             searchableText: { "\($0.fullName ?? "") \($0.email)" },
+            sortOptions: [
+                SortOption("Score") {
+                    ($0.score ?? -.greatestFiniteMagnitude) > ($1.score ?? -.greatestFiniteMagnitude)
+                },
+                SortOption("Name") {
+                    ($0.fullName ?? $0.email).localizedStandardCompare($1.fullName ?? $1.email) == .orderedAscending
+                },
+                SortOption("Recent") { ($0.attemptEndTime ?? "") > ($1.attemptEndTime ?? "") }
+            ],
             row: { CandidateRow(candidate: $0) },
             detail: { CandidateDetailView(candidate: $0) }
         )

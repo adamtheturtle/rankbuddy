@@ -14,6 +14,13 @@ struct InterviewsScreen: View {
                     emptyMessage: "No interviews",
                     load: { try await HackerRankClient(account: account, session: session).interviews() },
                     searchableText: { "\($0.title ?? "") \($0.status)" },
+                    sortOptions: [
+                        SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
+                        SortOption("Status") { $0.status.localizedStandardCompare($1.status) == .orderedAscending },
+                        SortOption("Title") {
+                            ($0.title ?? "").localizedStandardCompare($1.title ?? "") == .orderedAscending
+                        }
+                    ],
                     row: { InterviewRow(interview: $0) },
                     detail: { InterviewDetailView(interview: $0) }
                 )

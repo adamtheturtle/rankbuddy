@@ -7,20 +7,36 @@ enum LoadState<Value> {
     case failed(String)
 }
 
+/// A named way to order a list's items, shown in the list's sort menu.
+struct SortOption<Item>: Identifiable {
+    let id = UUID()
+    let label: String
+    /// A `sorted(by:)` predicate: returns true when `lhs` should come before `rhs`.
+    let areInIncreasingOrder: (Item, Item) -> Bool
+
+    init(_ label: String, by areInIncreasingOrder: @escaping (Item, Item) -> Bool) {
+        self.label = label
+        self.areInIncreasingOrder = areInIncreasingOrder
+    }
+}
+
 /// A list that loads its items asynchronously and renders loading, empty, and error
-/// states, with search and a refresh action. Each row pushes a detail view through the
-/// enclosing `NavigationStack`.
+/// states, with search, optional sorting, and a refresh action. Each row pushes a detail
+/// view through the enclosing `NavigationStack`.
 struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: View {
     let title: String
     let emptyMessage: String
     let load: () async throws -> [Item]
     /// The text a row is matched against when filtering by the search field.
     let searchableText: (Item) -> String
+    /// The ways the list can be ordered; the first is the default. Empty hides the menu.
+    var sortOptions: [SortOption<Item>] = []
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
     @State private var state: LoadState<[Item]> = .loading
     @State private var query = ""
+    @State private var sortSelection: SortOption<Item>.ID?
 
     var body: some View {
         content
@@ -28,6 +44,19 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
             .navigationDestination(for: Item.self, destination: detail)
             .searchable(text: $query, placement: .sidebar, prompt: "Search \(title)")
             .toolbar {
+                if !sortOptions.isEmpty {
+                    Menu {
+                        Picker("Sort By", selection: $sortSelection) {
+                            ForEach(sortOptions) { option in
+                                Text(option.label).tag(Optional(option.id))
+                            }
+                        }
+                    } label: {
+                        Label("Sort", systemImage: "arrow.up.arrow.down")
+                    }
+                    .help("Sort \(title)")
+                }
+
                 Button {
                     Task { await reload() }
                 } label: {
@@ -36,6 +65,9 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
                 .disabled(isLoading)
             }
             .task { await reload() }
+            .onAppear {
+                if sortSelection == nil { sortSelection = sortOptions.first?.id }
+            }
     }
 
     @ViewBuilder private var content: some View {
@@ -62,12 +94,12 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
     }
 
     @ViewBuilder private func loadedList(_ items: [Item]) -> some View {
-        let filtered = filter(items)
-        if filtered.isEmpty {
+        let visible = sort(filter(items))
+        if visible.isEmpty {
             ContentUnavailableView.search(text: query)
         } else {
             List {
-                ForEach(filtered) { item in
+                ForEach(visible) { item in
                     NavigationLink(value: item) { row(item) }
                 }
             }
@@ -79,6 +111,12 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
         guard !trimmed.isEmpty else { return items }
 
         return items.filter { searchableText($0).localizedCaseInsensitiveContains(trimmed) }
+    }
+
+    private func sort(_ items: [Item]) -> [Item] {
+        guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return items }
+
+        return items.sorted(by: option.areInIncreasingOrder)
     }
 
     private var isLoading: Bool {
