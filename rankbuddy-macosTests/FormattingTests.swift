@@ -49,6 +49,25 @@ struct FormattingTests {
         #expect(formatted?.contains("and") == true)
     }
 
+    // MARK: - DisplayFormat.duration
+
+    @Test func `duration formats the elapsed time between two timestamps`() {
+        let elapsed = DisplayFormat.duration(
+            fromISO: "2026-05-02T10:00:00Z",
+            toISO: "2026-05-02T11:15:00Z"
+        )
+        // Locale-dependent rendering, so assert the components rather than an exact string.
+        #expect(elapsed?.contains("1") == true)
+        #expect(elapsed?.contains("15") == true)
+    }
+
+    @Test func `duration is nil for missing, unparseable, or non-positive spans`() {
+        #expect(DisplayFormat.duration(fromISO: nil, toISO: "2026-05-02T11:15:00Z") == nil)
+        #expect(DisplayFormat.duration(fromISO: "2026-05-02T10:00:00Z", toISO: nil) == nil)
+        // End not after start.
+        #expect(DisplayFormat.duration(fromISO: "2026-05-02T11:15:00Z", toISO: "2026-05-02T10:00:00Z") == nil)
+    }
+
     // MARK: - integrityBadge
 
     private func candidate(integrity: String?, plagiarism: Bool?) throws -> TestCandidate {

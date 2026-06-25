@@ -85,6 +85,10 @@ struct CandidateDetailView: View {
                 OptionalRow("Plagiarism", candidate.plagiarismStatus.map { $0 ? "Flagged" : "Clear" })
                 OptionalRow("Started", DisplayFormat.date(candidate.attemptStartTime))
                 OptionalRow("Ended", DisplayFormat.date(candidate.attemptEndTime))
+                OptionalRow(
+                    "Time taken",
+                    DisplayFormat.duration(fromISO: candidate.attemptStartTime, toISO: candidate.attemptEndTime)
+                )
 
                 if let report = candidate.reportURL, let url = URL(string: report) {
                     Link(destination: url) {

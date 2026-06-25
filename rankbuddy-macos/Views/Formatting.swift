@@ -31,6 +31,21 @@ enum DisplayFormat {
         return parsed.formatted(date: .abbreviated, time: .shortened)
     }
 
+    private static let durationFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter
+    }()
+
+    /// The elapsed time between two ISO-8601 timestamps (e.g. "1h 15m"), or nil when either
+    /// is missing/unparseable or the end is not after the start.
+    static func duration(fromISO start: String?, toISO end: String?) -> String? {
+        guard let start = parseDate(start), let end = parseDate(end), end > start else { return nil }
+
+        return durationFormatter.string(from: end.timeIntervalSince(start))
+    }
+
     /// Joins a list for display, returning nil when empty so callers can omit the row.
     static func list(_ values: [String]?) -> String? {
         guard let values, !values.isEmpty else { return nil }
