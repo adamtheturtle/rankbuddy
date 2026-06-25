@@ -44,6 +44,7 @@ struct RankBuddyApp: App {
 
         MenuBarExtra("RankBuddy", systemImage: "checklist") {
             MenuBarContent()
+                .environment(accountStore)
         }
     }
 }
