@@ -79,6 +79,7 @@ struct HackerRankClient {
             guard let url = URL(string: cursor) else {
                 throw HackerRankError.http(status: 0, body: "Invalid next-page URL.")
             }
+
             return url
         }
 
@@ -87,6 +88,7 @@ struct HackerRankClient {
         guard let url = components?.url else {
             throw HackerRankError.http(status: 0, body: "Could not build the page URL.")
         }
+
         return url
     }
 
@@ -117,7 +119,7 @@ struct HackerRankClient {
 
 /// One page of a list endpoint: the decoded items plus the cursor (absolute `next` URL)
 /// for the following page, or `nil` on the last page.
-nonisolated struct Page<Item: Sendable>: Sendable {
+nonisolated struct Page<Item: Sendable> {
     let items: [Item]
     let next: String?
 }

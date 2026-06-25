@@ -20,11 +20,11 @@ enum RankBuddySectionOption: String, AppEnum {
         TypeDisplayRepresentation(name: "RankBuddy Section")
     }
 
-    static var caseDisplayRepresentations: [RankBuddySectionOption: DisplayRepresentation] {
+    static var caseDisplayRepresentations: [Self: DisplayRepresentation] {
         [
             .tests: "Tests",
             .questions: "Questions",
-            .interviews: "Interviews",
+            .interviews: "Interviews"
         ]
     }
 }
@@ -73,7 +73,7 @@ struct RankBuddyShortcuts: AppShortcutsProvider {
             intent: OpenRankBuddySectionIntent(),
             phrases: [
                 "Open \(.applicationName) \(\.$section)",
-                "Show \(.applicationName) \(\.$section)",
+                "Show \(.applicationName) \(\.$section)"
             ],
             shortTitle: "Open Section",
             systemImageName: "checklist"
@@ -81,7 +81,7 @@ struct RankBuddyShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: OpenRankBuddyIntent(),
             phrases: [
-                "Open \(.applicationName)",
+                "Open \(.applicationName)"
             ],
             shortTitle: "Open RankBuddy",
             systemImageName: "checklist"
