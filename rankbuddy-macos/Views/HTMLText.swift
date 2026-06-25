@@ -67,3 +67,17 @@ extension AttributedString {
         return result
     }
 }
+
+#Preview {
+    Form {
+        Section("Instructions") {
+            HTMLText(html: """
+            <p>Solve <b>all</b> questions within the <i>time limit</i>. You may use:</p>
+            <ul><li>The standard library</li><li>One scratch file</li></ul>
+            <p>Inputs &amp; outputs are validated. See <code>main()</code> for the entry point.</p>
+            """)
+        }
+    }
+    .formStyle(.grouped)
+    .frame(width: 420, height: 320)
+}
