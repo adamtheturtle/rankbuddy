@@ -33,21 +33,42 @@ struct InterviewsScreen: View {
     }
 }
 
+extension Interview {
+    /// A tinted badge for the interview's lifecycle status. Always returns a badge — the
+    /// status is required — falling back to a neutral pill with the raw (capitalised) value
+    /// for any status not given a dedicated colour.
+    var statusBadge: StatusBadge {
+        switch status.lowercased() {
+        case "completed":
+            StatusBadge(text: "Completed", systemImage: "checkmark.circle.fill", tint: .green)
+        case "scheduled":
+            StatusBadge(text: "Scheduled", systemImage: "calendar", tint: .blue)
+        case "in_progress", "in progress":
+            StatusBadge(text: "In progress", systemImage: "clock", tint: .orange)
+        case "cancelled", "canceled":
+            StatusBadge(text: "Cancelled", systemImage: "xmark.circle", tint: .red)
+        default:
+            StatusBadge(text: status.capitalized, systemImage: "circle", tint: .secondary)
+        }
+    }
+}
+
 /// One row in the interviews list.
 struct InterviewRow: View {
     let interview: Interview
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(interview.title ?? "Interview \(interview.id)").font(.headline)
-            HStack(spacing: 8) {
-                Text(interview.status.capitalized)
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(interview.title ?? "Interview \(interview.id)").font(.headline)
                 if let created = DisplayFormat.date(interview.createdAt) {
                     Text(created)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            Spacer()
+            interview.statusBadge
         }
         .accessibilityElement(children: .combine)
         .rowContextMenu(
@@ -94,4 +115,25 @@ struct InterviewDetailView: View {
         .formStyle(.grouped)
         .navigationTitle(interview.title ?? "Interview")
     }
+}
+
+#Preview {
+    let json = #"""
+    [
+      {"id":"i1","status":"completed","url":"https://example.com/i1",
+       "title":"Senior Backend — Pairing","created_at":"2026-05-05T13:00:00Z"},
+      {"id":"i2","status":"scheduled","url":"https://example.com/i2",
+       "title":"Frontend — Live Coding","created_at":"2026-05-12T16:00:00Z"},
+      {"id":"i3","status":"cancelled","url":"https://example.com/i3","title":"Platform — Screen"}
+    ]
+    """#
+    let interviews = (try? JSONDecoder().decode([Interview].self, from: Data(json.utf8))) ?? []
+    return VStack(alignment: .leading, spacing: 12) {
+        ForEach(interviews) { interview in
+            InterviewRow(interview: interview)
+            Divider()
+        }
+    }
+    .padding()
+    .frame(width: 420)
 }
