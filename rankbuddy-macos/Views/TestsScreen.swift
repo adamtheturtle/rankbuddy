@@ -52,13 +52,39 @@ struct TestRow: View {
                 .foregroundStyle(.secondary)
             }
             Spacer()
-            if test.enableProctoring == true {
-                StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .blue)
+            HStack(spacing: 6) {
+                test.windowBadge(now: Date())
+                if test.enableProctoring == true {
+                    StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .blue)
+                }
             }
         }
         .accessibilityElement(children: .combine)
         .rowContextMenu(copyLabel: "Copy Name", copyText: test.name)
     }
+}
+
+#Preview {
+    // Windows are relative to mid-2026, so these classify stably: open, upcoming, closed.
+    let json = #"""
+    [
+      {"id":"t1","name":"Backend Screen","state":"active","enable_proctoring":true,
+       "start_time":"2026-01-01T09:00:00Z","end_time":"2026-12-31T09:00:00Z"},
+      {"id":"t2","name":"Frontend Take-Home","state":"active",
+       "start_time":"2026-12-01T09:00:00Z"},
+      {"id":"t3","name":"Data Structures Quiz","state":"archived",
+       "end_time":"2026-02-01T09:00:00Z"}
+    ]
+    """#
+    let tests = (try? JSONDecoder().decode([Test].self, from: Data(json.utf8))) ?? []
+    return VStack(alignment: .leading, spacing: 12) {
+        ForEach(tests) { test in
+            TestRow(test: test)
+            Divider()
+        }
+    }
+    .padding()
+    .frame(width: 420)
 }
 
 /// Read-only detail for a single test.
@@ -71,6 +97,7 @@ struct TestDetailView: View {
             Section("Test") {
                 OptionalRow("Name", test.name)
                 OptionalRow("State", test.state?.capitalized)
+                OptionalRow("Window", test.windowStatus(now: Date())?.label)
                 OptionalRow("Unique ID", test.uniqueID)
                 OptionalRow("Duration", test.duration.map { "\($0) min" })
                 OptionalRow("Cutoff score", test.cutoffScore.map(String.init))
