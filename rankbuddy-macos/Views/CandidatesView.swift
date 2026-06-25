@@ -69,6 +69,8 @@ struct CandidateDetailView: View {
             Section("Candidate") {
                 OptionalRow("Name", candidate.fullName)
                 OptionalRow("Email", candidate.email)
+                OptionalRow("Attempt", candidate.attemptStatusLabel)
+                OptionalRow("Pipeline", candidate.pipelineStatusLabel)
                 OptionalRow("Score", candidate.score.map { $0.formatted() })
                 OptionalRow("Percentage", candidate.percentageScore.map { "\($0.formatted())%" })
                 OptionalRow("Integrity", candidate.integrityStatus)
