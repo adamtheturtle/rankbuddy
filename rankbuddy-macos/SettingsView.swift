@@ -52,6 +52,14 @@ struct SettingsView: View {
 
             Section {
                 Button("Add Account…") { editing = .add }
+
+                // A one-click demo account backed by the in-process fixtures, so the app can
+                // be explored without a real token (#10). Offered only until one exists.
+                if !store.accounts.contains(where: \.isMock) {
+                    Button("Add Demo Account") { store.add(.demo) }
+                }
+            } footer: {
+                Text("The demo account shows sample data from the built-in mock server — no HackerRank token required.")
             }
         }
         .formStyle(.grouped)

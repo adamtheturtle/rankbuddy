@@ -23,29 +23,28 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     var token: String
     /// An optional base-URL override for regional HackerRank endpoints.
     var baseURLOverride: String?
-    /// Whether this account is backed by the in-process demo mock rather than the live API
-    /// (mirrors PadBuddy's per-account demo model). Not persisted — real accounts are never
-    /// mock, and the demo account is seeded in-memory at launch — so it stays out of
-    /// `CodingKeys` and old persisted accounts still decode.
-    var isMock = false
 
     var accountID: UUID {
         id
     }
 
-    /// An in-memory demo account backed by the bundled mock server (#10), selectable like a
-    /// real account. Its token is a placeholder; the mock never checks it.
+    /// The reserved token that marks the in-process demo account (mirrors PadBuddy's
+    /// "demo" mock key). Not a valid HackerRank token, so a real account never collides.
+    static let demoToken = "demo"
+
+    /// Whether this account is backed by the in-process demo mock rather than the live API
+    /// (mirrors PadBuddy's per-account demo model). Derived from the reserved demo token, so
+    /// it survives a Keychain round-trip for free and needs no extra persisted field.
+    var isMock: Bool {
+        token == Self.demoToken
+    }
+
+    /// A demo account backed by the bundled mock server (#10), selectable like a real
+    /// account. Its reserved token routes it to the fixtures; the mock never checks it.
     static var demo: Self {
         // A fixed id keeps the demo's restored section/selection stable across launches.
         let id = UUID(uuidString: "00000000-0000-0000-0000-00000000DEAD") ?? UUID()
-        return Self(label: "Demo (HackerRank)", token: "demo", isMock: true, id: id)
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case label
-        case token
-        case baseURLOverride
+        return Self(label: "Demo (HackerRank)", token: demoToken, id: id)
     }
 
     /// The effective base URL: the override if it parses, otherwise the default.
@@ -56,12 +55,11 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         return Self.defaultBaseURL
     }
 
-    init(label: String, token: String, baseURLOverride: String? = nil, isMock: Bool = false, id: UUID = UUID()) {
+    init(label: String, token: String, baseURLOverride: String? = nil, id: UUID = UUID()) {
         self.id = id
         self.label = label
         self.token = token
         self.baseURLOverride = baseURLOverride
-        self.isMock = isMock
     }
 
     /// A changed token or base URL points at potentially different data, so the store

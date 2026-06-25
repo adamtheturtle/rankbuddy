@@ -54,22 +54,17 @@ struct AccountStoreTests {
     @Test func `a normal account is not a mock and the demo account is`() {
         #expect(!Account(label: "Work", token: "t").isMock)
         #expect(Account.demo.isMock)
-        #expect(Account.demo.token == "demo")
+        #expect(Account.demo.token == Account.demoToken)
     }
 
-    @Test func `isMock is never persisted, and legacy json without it still decodes`() throws {
-        // Encoding a mock account omits the flag; decoding restores it as a real account,
-        // so a mock account is never written to or read from the keychain as mock.
+    @Test func `the demo account stays a mock across a JSON round-trip`() throws {
+        // isMock is derived from the reserved token, not a stored field, so it survives
+        // persistence with no extra key — a demo account added in the real app keeps
+        // routing to the fixtures after relaunch.
         let encoded = try JSONEncoder().encode(Account.demo)
         let json = try #require(String(data: encoded, encoding: .utf8))
         #expect(!json.contains("isMock"))
-        #expect(try !JSONDecoder().decode(Account.self, from: encoded).isMock)
-
-        // Legacy accounts (persisted before isMock existed) still decode.
-        let legacy = #"{"id":"\#(UUID().uuidString)","label":"Work","token":"t"}"#
-        let restored = try JSONDecoder().decode(Account.self, from: Data(legacy.utf8))
-        #expect(!restored.isMock)
-        #expect(restored.label == "Work")
+        #expect(try JSONDecoder().decode(Account.self, from: encoded).isMock)
     }
 
     // MARK: - Store seeding & selection
