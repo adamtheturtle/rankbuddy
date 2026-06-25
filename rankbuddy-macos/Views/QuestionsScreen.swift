@@ -11,7 +11,7 @@ struct QuestionsScreen: View {
             LoadableList(
                 title: "Questions",
                 emptyMessage: "No questions",
-                load: { try await HackerRankClient(account: account, session: session).questions() },
+                loadPage: { try await HackerRankClient(account: account, session: session).questionsPage(after: $0) },
                 searchableText: { "\($0.name) \($0.type) \($0.tags?.joined(separator: " ") ?? "")" },
                 sortOptions: [
                     SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },

@@ -10,7 +10,7 @@ struct CandidatesList: View {
         LoadableList(
             title: "Candidates",
             emptyMessage: "No candidates",
-            load: { try await HackerRankClient(account: account, session: session).candidates(testID: testID) },
+            loadPage: { try await HackerRankClient(account: account, session: session).candidatesPage(testID: testID, after: $0) },
             searchableText: { "\($0.fullName ?? "") \($0.email)" },
             sortOptions: [
                 SortOption("Score") {

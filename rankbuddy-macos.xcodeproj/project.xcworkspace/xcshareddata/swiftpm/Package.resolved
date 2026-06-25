@@ -1,13 +1,13 @@
 {
-  "originHash" : "b2a37392981149d27bde340d943633c05ab9c128143f7a9a49f9f4196f928edb",
+  "originHash" : "9ac4a48a59e4c7fad467e91cafb7013217c42bdaa5bdd2bbed6ffc1184a27ed8",
   "pins" : [
     {
       "identity" : "buddy-kit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/buddy-kit",
       "state" : {
-        "revision" : "0b1f5c3485bd4917cbb0b3585ed69f6edc4f36b0",
-        "version" : "0.2.1"
+        "revision" : "ec8d6095f90f8ceee2ec0d12af6a9ab6e921a508",
+        "version" : "0.3.0"
       }
     },
     {
@@ -16,6 +16,15 @@
       "location" : "https://github.com/adamtheturtle/CommandPaletteKit",
       "state" : {
         "revision" : "04bd21868e7d2df7362ab7ab88e4f834032e3b8f",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "paginatedrestclient",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/PaginatedRESTClient.git",
+      "state" : {
+        "revision" : "e1a71374d7b01dfe223db509c561463e90723ba1",
         "version" : "0.1.0"
       }
     },

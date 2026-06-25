@@ -1,12 +1,5 @@
 import SwiftUI
 
-/// The state of an asynchronous load.
-enum LoadState<Value> {
-    case loading
-    case loaded(Value)
-    case failed(String)
-}
-
 /// A named way to order a list's items, shown in the list's sort menu.
 struct SortOption<Item>: Identifiable {
     let id = UUID()
@@ -20,13 +13,24 @@ struct SortOption<Item>: Identifiable {
     }
 }
 
-/// A list that loads its items asynchronously and renders loading, empty, and error
-/// states, with search, optional sorting, and a refresh action. Each row pushes a detail
-/// view through the enclosing `NavigationStack`.
-struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: View {
+/// A list that loads its items one page at a time and renders loading, empty, and error
+/// states, with search, optional sorting, refresh, and load-more-on-scroll. The first page
+/// is shown as soon as it arrives; further pages load as the user nears the end, so large
+/// live collections never drain up front (#34). Each row pushes a detail view through the
+/// enclosing `NavigationStack`.
+struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail: View>: View {
+    /// The first-load phase. Loaded items and the cursor live in their own state so further
+    /// pages can append without disturbing this.
+    private enum Phase {
+        case loading
+        case loaded
+        case failed(String)
+    }
+
     let title: String
     let emptyMessage: String
-    let load: () async throws -> [Item]
+    /// Loads one page: the first page for `cursor == nil`, otherwise the page at `cursor`.
+    let loadPage: (_ cursor: String?) async throws -> Page<Item>
     /// The text a row is matched against when filtering by the search field.
     let searchableText: (Item) -> String
     /// The ways the list can be ordered; the first is the default. Empty hides the menu.
@@ -38,7 +42,11 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
-    @State private var state: LoadState<[Item]> = .loading
+    @State private var phase: Phase = .loading
+    @State private var items: [Item] = []
+    /// The absolute URL of the next page, or `nil` once every page is loaded.
+    @State private var nextCursor: String?
+    @State private var isLoadingMore = false
     @State private var query = ""
     @State private var sortSelection: SortOption<Item>.ID?
     /// The pushed-detail navigation path; only used (and bound) when `restorationKey` is set.
@@ -83,11 +91,7 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
             }
             // Re-runs when the account-scoped key changes, clearing any stale restored
             // pane before loading the new account's data (#19).
-            .task(id: restorationKey) {
-                didRestore = false
-                path = []
-                await reload()
-            }
+            .task(id: restorationKey) { await reload() }
             .onAppear { restoreSort() }
             .onChange(of: sortSelection) { persistSort() }
             .onChange(of: path) { persistSelection() }
@@ -116,16 +120,16 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
     }
 
     @ViewBuilder private var content: some View {
-        switch state {
+        switch phase {
         case .loading:
             ProgressView("Loading…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-        case let .loaded(items) where items.isEmpty:
+        case .loaded where items.isEmpty:
             ContentUnavailableView(emptyMessage, systemImage: "tray")
 
-        case let .loaded(items):
-            loadedList(items)
+        case .loaded:
+            loadedList
 
         case let .failed(message):
             ContentUnavailableView {
@@ -138,7 +142,7 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
         }
     }
 
-    @ViewBuilder private func loadedList(_ items: [Item]) -> some View {
+    @ViewBuilder private var loadedList: some View {
         let visible = sort(filter(items))
         if visible.isEmpty {
             ContentUnavailableView.search(text: query)
@@ -146,10 +150,28 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
             List {
                 ForEach(visible) { item in
                     NavigationLink(value: item) { row(item) }
+                        .onAppear {
+                            if item.id == visible.last?.id { Task { await loadMore() } }
+                        }
+                }
+
+                if isLoadingMore {
+                    HStack {
+                        Spacer()
+                        ProgressView().controlSize(.small)
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
                 }
             }
-            .navigationSubtitle("\(visible.count) \(visible.count == 1 ? "item" : "items")")
+            .navigationSubtitle(subtitle(visibleCount: visible.count))
         }
+    }
+
+    /// A loaded-count summary, with a `+` when more pages remain to be paged in.
+    private func subtitle(visibleCount: Int) -> String {
+        let suffix = nextCursor != nil ? "+" : ""
+        return "\(visibleCount)\(suffix) \(visibleCount == 1 ? "item" : "items")"
     }
 
     private func filter(_ items: [Item]) -> [Item] {
@@ -166,24 +188,50 @@ struct LoadableList<Item: Identifiable & Hashable, Row: View, Detail: View>: Vie
     }
 
     private var isLoading: Bool {
-        if case .loading = state { true } else { false }
+        if case .loading = phase { true } else { false }
     }
 
+    /// Resets and loads the first page (initial load, refresh, or account switch).
     private func reload() async {
-        state = .loading
+        didRestore = false
+        path = []
+        phase = .loading
+        items = []
+        nextCursor = nil
         do {
-            let items = try await load()
-            state = .loaded(items)
+            let page = try await loadPage(nil)
+            items = page.items
+            nextCursor = page.next
+            phase = .loaded
             restoreSelectionIfNeeded(items)
         } catch {
-            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            state = .failed(message)
+            phase = .failed(message(for: error))
         }
     }
 
-    /// Re-opens the last-viewed item's detail once per load, if it still exists. A missing
-    /// item (deleted, or a different account) simply leaves the list at the top — no loops,
-    /// no blank pane (#19).
+    /// Appends the next page when the user nears the end. A failed load-more keeps the
+    /// items already shown and stops paging rather than discarding the list.
+    private func loadMore() async {
+        guard let cursor = nextCursor, !isLoadingMore else { return }
+
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+        do {
+            let page = try await loadPage(cursor)
+            items.append(contentsOf: page.items)
+            nextCursor = page.next
+        } catch {
+            nextCursor = nil
+        }
+    }
+
+    private func message(for error: Error) -> String {
+        (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+
+    /// Re-opens the last-viewed item's detail once per load, if it's in the loaded pages. A
+    /// missing item (deleted, a different account, or only on a not-yet-loaded page) simply
+    /// leaves the list at the top — no loops, no blank pane (#19).
     private func restoreSelectionIfNeeded(_ items: [Item]) {
         guard let restorationKey, !didRestore, path.isEmpty else { return }
 

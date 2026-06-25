@@ -12,6 +12,10 @@ import PaginatedRESTClient
 /// page fetching and JSON decoding still run off the main actor inside the transport.
 struct HackerRankClient {
     private static let apiV3 = "/x/api/v3"
+    /// Items requested per page. Real accounts have huge collections (≈9.7k questions,
+    /// ≈87k interviews), so the read-only lists page through them rather than draining
+    /// every page up front (#34).
+    private static let pageSize = 50
 
     private let rest: PaginatedRESTClient
     private let baseURL: URL
@@ -24,35 +28,66 @@ struct HackerRankClient {
         rest = PaginatedRESTClient(
             apiKey: account.token,
             baseURL: account.baseURL,
-            session: session,
+            transport: URLSessionTransport(session: session),
             decoderFactory: { JSONDecoder() },
             encoderFactory: { JSONEncoder() },
             errors: HackerRankErrorMapping(),
-            logger: logger
+            log: { logger.log("\($0)") }
         )
     }
 
-    /// All tests in the account, across every page.
-    func tests() async throws -> [Test] {
-        try await rest.fetchAllPages(HackerRankPage<Test>.self, path: "\(Self.apiV3)/tests")
+    /// One page of the account's tests, plus the cursor for the next page.
+    func testsPage(after cursor: String? = nil) async throws -> Page<Test> {
+        try await page(HackerRankPage<Test>.self, path: "\(Self.apiV3)/tests", cursor: cursor)
     }
 
-    /// All candidates for a given test, across every page.
-    func candidates(testID: String) async throws -> [TestCandidate] {
-        try await rest.fetchAllPages(
+    /// One page of a test's candidates, plus the cursor for the next page.
+    func candidatesPage(testID: String, after cursor: String? = nil) async throws -> Page<TestCandidate> {
+        try await page(
             HackerRankPage<TestCandidate>.self,
-            path: "\(Self.apiV3)/tests/\(Self.pathSegment(testID))/candidates"
+            path: "\(Self.apiV3)/tests/\(Self.pathSegment(testID))/candidates",
+            cursor: cursor
         )
     }
 
-    /// All questions in the account, across every page.
-    func questions() async throws -> [Question] {
-        try await rest.fetchAllPages(HackerRankPage<Question>.self, path: "\(Self.apiV3)/questions")
+    /// One page of the account's questions, plus the cursor for the next page.
+    func questionsPage(after cursor: String? = nil) async throws -> Page<Question> {
+        try await page(HackerRankPage<Question>.self, path: "\(Self.apiV3)/questions", cursor: cursor)
     }
 
-    /// All interviews in the account, across every page.
-    func interviews() async throws -> [Interview] {
-        try await rest.fetchAllPages(HackerRankPage<Interview>.self, path: "\(Self.apiV3)/interviews")
+    /// One page of the account's interviews, plus the cursor for the next page.
+    func interviewsPage(after cursor: String? = nil) async throws -> Page<Interview> {
+        try await page(HackerRankPage<Interview>.self, path: "\(Self.apiV3)/interviews", cursor: cursor)
+    }
+
+    /// Fetches a single page: the first page (with an explicit page size) when `cursor` is
+    /// `nil`, or the page at the given absolute `next` cursor URL otherwise.
+    private func page<Item: Decodable & Sendable>(
+        _: HackerRankPage<Item>.Type,
+        path: String,
+        cursor: String?
+    ) async throws -> Page<Item> {
+        let url = try pageURL(path: path, cursor: cursor)
+        let response = try await rest.performWithRetry(HackerRankPage<Item>.self, request: rest.authorizedGET(url))
+        return Page(items: response.data, next: response.next)
+    }
+
+    /// The absolute `cursor` URL when continuing, or the first-page URL (base + path +
+    /// `limit`) when starting.
+    private func pageURL(path: String, cursor: String?) throws -> URL {
+        if let cursor {
+            guard let url = URL(string: cursor) else {
+                throw HackerRankError.http(status: 0, body: "Invalid next-page URL.")
+            }
+            return url
+        }
+
+        var components = URLComponents(url: baseURL.appending(path: path), resolvingAgainstBaseURL: false)
+        components?.queryItems = [URLQueryItem(name: "limit", value: String(Self.pageSize))]
+        guard let url = components?.url else {
+            throw HackerRankError.http(status: 0, body: "Could not build the page URL.")
+        }
+        return url
     }
 
     /// Lightweight token validation: requests a single test. A 2xx response (even with no
@@ -78,4 +113,11 @@ struct HackerRankClient {
         allowed.remove(charactersIn: "/?#[]@!$&'()*+,;=")
         return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
     }
+}
+
+/// One page of a list endpoint: the decoded items plus the cursor (absolute `next` URL)
+/// for the following page, or `nil` on the last page.
+nonisolated struct Page<Item: Sendable>: Sendable {
+    let items: [Item]
+    let next: String?
 }

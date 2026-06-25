@@ -70,10 +70,10 @@ enum RankBuddyPalette {
         selection: Binding<SidebarSection>
     ) async -> [PaletteResult] {
         guard let account = store.currentAccount,
-              let tests = try? await HackerRankClient(account: account, session: session).tests()
+              let page = try? await HackerRankClient(account: account, session: session).testsPage()
         else { return [] }
 
-        return tests.map { test in
+        return page.items.map { test in
             PaletteResult(
                 id: "test.\(test.id)",
                 title: test.name,

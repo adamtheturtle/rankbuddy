@@ -12,7 +12,7 @@ struct TestsScreen: View {
             LoadableList(
                 title: "Tests",
                 emptyMessage: "No tests",
-                load: { try await HackerRankClient(account: account, session: session).tests() },
+                loadPage: { try await HackerRankClient(account: account, session: session).testsPage(after: $0) },
                 searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "")" },
                 sortOptions: [
                     SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },

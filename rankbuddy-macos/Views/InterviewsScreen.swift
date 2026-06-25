@@ -11,7 +11,7 @@ struct InterviewsScreen: View {
             LoadableList(
                 title: "Interviews",
                 emptyMessage: "No interviews",
-                load: { try await HackerRankClient(account: account, session: session).interviews() },
+                loadPage: { try await HackerRankClient(account: account, session: session).interviewsPage(after: $0) },
                 searchableText: { "\($0.title ?? "") \($0.status)" },
                 sortOptions: [
                     SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
