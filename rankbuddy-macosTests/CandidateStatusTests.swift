@@ -43,4 +43,19 @@ struct CandidateStatusTests {
         #expect(try candidate(atsState: 5).pipelineStatusLabel == nil)
         #expect(try candidate(atsState: nil).pipelineStatusLabel == nil)
     }
+
+    // MARK: - Compact list label
+
+    @Test func `the list label prefers the pipeline state`() throws {
+        // Pipeline set → it wins over the attempt state for the compact summary.
+        #expect(try candidate(status: 7, atsState: 21).listStatusLabel == "Hired")
+    }
+
+    @Test func `the list label falls back to the attempt state`() throws {
+        #expect(try candidate(status: 0, atsState: 0).listStatusLabel == "In progress")
+    }
+
+    @Test func `the list label is nil when nothing is known`() throws {
+        #expect(try candidate(status: nil, atsState: nil).listStatusLabel == nil)
+    }
 }

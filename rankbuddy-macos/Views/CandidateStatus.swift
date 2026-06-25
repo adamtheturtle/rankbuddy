@@ -20,6 +20,12 @@ extension TestCandidate {
         }
     }
 
+    /// The most decision-relevant status for a compact summary: the pipeline state when
+    /// set, otherwise the attempt state. `nil` when neither has a known label.
+    var listStatusLabel: String? {
+        pipelineStatusLabel ?? attemptStatusLabel
+    }
+
     /// A label for the `ats_state` (pipeline) code, or `nil` when unset/unknown.
     var pipelineStatusLabel: String? {
         switch atsState {

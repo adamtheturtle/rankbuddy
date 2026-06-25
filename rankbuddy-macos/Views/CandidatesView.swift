@@ -14,7 +14,7 @@ struct CandidatesList: View {
                 try await HackerRankClient(account: account, session: session)
                     .candidatesPage(testID: testID, after: $0)
             },
-            searchableText: { "\($0.fullName ?? "") \($0.email)" },
+            searchableText: { "\($0.fullName ?? "") \($0.email) \($0.listStatusLabel ?? "")" },
             sortOptions: [
                 SortOption("Score") {
                     ($0.score ?? -.greatestFiniteMagnitude) > ($1.score ?? -.greatestFiniteMagnitude)
@@ -22,7 +22,9 @@ struct CandidatesList: View {
                 SortOption("Name") {
                     ($0.fullName ?? $0.email).localizedStandardCompare($1.fullName ?? $1.email) == .orderedAscending
                 },
-                SortOption("Recent") { ($0.attemptEndTime ?? "") > ($1.attemptEndTime ?? "") }
+                SortOption("Recent") { ($0.attemptEndTime ?? "") > ($1.attemptEndTime ?? "") },
+                // Higher ATS codes are further along the pipeline; unset/unknown sort last.
+                SortOption("Status") { ($0.atsState ?? -1) > ($1.atsState ?? -1) }
             ],
             row: { CandidateRow(candidate: $0) },
             detail: { CandidateDetailView(candidate: $0) }
@@ -46,6 +48,12 @@ struct CandidateRow: View {
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                if let status = candidate.listStatusLabel {
+                    Text(status)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
             }
             Spacer()
             candidate.integrityBadge
@@ -100,4 +108,26 @@ struct CandidateDetailView: View {
         .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
     }
+}
+
+#Preview {
+    let json = #"""
+    [
+      {"id":"c1","email":"ada@example.com","full_name":"Ada Lovelace","score":92.0,
+       "status":7,"ats_state":21,"integrity_status":"clean"},
+      {"id":"c2","email":"alan@example.com","full_name":"Alan Turing","score":81.5,"status":0},
+      {"id":"c3","email":"grace@example.com","full_name":"Grace Hopper","score":58.0,
+       "status":7,"ats_state":22,"plagiarism_status":true},
+      {"id":"c4","email":"noname@example.com"}
+    ]
+    """#
+    let candidates = (try? JSONDecoder().decode([TestCandidate].self, from: Data(json.utf8))) ?? []
+    return VStack(alignment: .leading, spacing: 12) {
+        ForEach(candidates) { candidate in
+            CandidateRow(candidate: candidate)
+            Divider()
+        }
+    }
+    .padding()
+    .frame(width: 360)
 }
