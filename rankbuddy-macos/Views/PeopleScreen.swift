@@ -4,14 +4,13 @@ import SwiftUI
 /// The People section: the organisation's users (members), with read-only detail (#36).
 struct PeopleScreen: View {
     @Environment(AccountStore.self) private var store
-    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         if let account = store.currentAccount {
             LoadableList(
                 title: "People",
                 emptyMessage: "No people",
-                loadPage: { try await HackerRankClient(account: account, session: session).usersPage(after: $0) },
+                loadPage: { try await HackerRankClient(account: account).usersPage(after: $0) },
                 searchableText: { "\($0.displayName) \($0.email) \($0.role ?? "")" },
                 sortOptions: [
                     SortOption("Name") { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending },

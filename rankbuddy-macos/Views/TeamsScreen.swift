@@ -4,14 +4,13 @@ import SwiftUI
 /// The Teams section: the organisation's teams, with read-only detail (#36).
 struct TeamsScreen: View {
     @Environment(AccountStore.self) private var store
-    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         if let account = store.currentAccount {
             LoadableList(
                 title: "Teams",
                 emptyMessage: "No teams",
-                loadPage: { try await HackerRankClient(account: account, session: session).teamsPage(after: $0) },
+                loadPage: { try await HackerRankClient(account: account).teamsPage(after: $0) },
                 searchableText: { "\($0.name) \($0.departments?.joined(separator: " ") ?? "")" },
                 sortOptions: [
                     SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },

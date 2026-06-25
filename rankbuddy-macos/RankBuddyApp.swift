@@ -9,18 +9,16 @@ import SwiftUI
 struct RankBuddyApp: App {
     /// The app's single multi-account store, shared with every scene via the environment.
     @State private var accountStore: AccountStore
-    /// The session HackerRank clients use — the demo mock or the real shared session.
-    private let session: URLSession
     /// Command-palette presentation state, shared with the menu commands.
     @State private var palette = PaletteModel()
 
     init() {
-        // Demo mode (RANKBUDDY_DEMO=1) seeds a demo account and serves bundled fixtures,
-        // so the app shows populated views without a real token (#10).
+        // Demo mode (RANKBUDDY_DEMO=1) seeds the in-memory demo account; its `isMock` flag
+        // routes its client to the bundled fixtures, so the app shows populated views
+        // without a real token (#10). The mock is chosen per-account, not process-wide.
         let isDemo = ProcessInfo.processInfo.environment["RANKBUDDY_DEMO"] == "1"
-        session = isDemo ? .rankBuddyDemo : .shared
         let store = isDemo
-            ? AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Demo (HackerRank)", token: "demo")])
+            ? AccountStore.rankBuddy(isTesting: true, seed: [.demo])
             : AccountStore.rankBuddy()
         _accountStore = State(initialValue: store)
     }
@@ -29,7 +27,6 @@ struct RankBuddyApp: App {
         Window("RankBuddy", id: WindowID.main) {
             ContentView()
                 .environment(accountStore)
-                .environment(\.hackerRankSession, session)
                 .environment(palette)
         }
         .commands {
@@ -39,7 +36,6 @@ struct RankBuddyApp: App {
         Settings {
             SettingsView()
                 .environment(accountStore)
-                .environment(\.hackerRankSession, session)
         }
 
         MenuBarExtra("RankBuddy", systemImage: "checklist") {

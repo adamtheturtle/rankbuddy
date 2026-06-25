@@ -66,11 +66,10 @@ enum RankBuddyPalette {
     @MainActor
     static func testCandidates(
         store: AccountStore,
-        session: URLSession,
         selection: Binding<SidebarSection>
     ) async -> [PaletteResult] {
         guard let account = store.currentAccount,
-              let page = try? await HackerRankClient(account: account, session: session).testsPage()
+              let page = try? await HackerRankClient(account: account).testsPage()
         else { return [] }
 
         return page.items.map { test in
@@ -95,12 +94,11 @@ enum RankBuddyPalette {
     @MainActor
     static func candidates(
         store: AccountStore,
-        session: URLSession,
         selection: Binding<SidebarSection>,
         openSettings: @escaping @MainActor () -> Void
     ) async -> [PaletteResult] {
         var results = staticCandidates(store: store, selection: selection, openSettings: openSettings)
-        await results.append(contentsOf: testCandidates(store: store, session: session, selection: selection))
+        await results.append(contentsOf: testCandidates(store: store, selection: selection))
         return results
     }
 }

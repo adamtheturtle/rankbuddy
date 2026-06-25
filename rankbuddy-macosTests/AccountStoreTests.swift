@@ -49,6 +49,29 @@ struct AccountStoreTests {
         #expect(restored.baseURLOverride == nil)
     }
 
+    // MARK: - Demo / mock accounts
+
+    @Test func `a normal account is not a mock and the demo account is`() {
+        #expect(!Account(label: "Work", token: "t").isMock)
+        #expect(Account.demo.isMock)
+        #expect(Account.demo.token == "demo")
+    }
+
+    @Test func `isMock is never persisted, and legacy json without it still decodes`() throws {
+        // Encoding a mock account omits the flag; decoding restores it as a real account,
+        // so a mock account is never written to or read from the keychain as mock.
+        let encoded = try JSONEncoder().encode(Account.demo)
+        let json = try #require(String(data: encoded, encoding: .utf8))
+        #expect(!json.contains("isMock"))
+        #expect(try !JSONDecoder().decode(Account.self, from: encoded).isMock)
+
+        // Legacy accounts (persisted before isMock existed) still decode.
+        let legacy = #"{"id":"\#(UUID().uuidString)","label":"Work","token":"t"}"#
+        let restored = try JSONDecoder().decode(Account.self, from: Data(legacy.utf8))
+        #expect(!restored.isMock)
+        #expect(restored.label == "Work")
+    }
+
     // MARK: - Store seeding & selection
 
     @Test func `an empty store has no accounts and no current id`() {

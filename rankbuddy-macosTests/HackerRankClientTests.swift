@@ -11,10 +11,11 @@ import Testing
 /// the assertions.
 @MainActor
 struct HackerRankClientTests {
-    /// A client wired to the demo session, so every request is served from the bundled
-    /// fixtures and never hits the network.
+    /// A client for a mock account, so it routes to the bundled fixtures (via `isMock`) and
+    /// never hits the network — exercising the per-account demo routing rather than an
+    /// injected session.
     private func makeClient(token: String = "demo-token") -> HackerRankClient {
-        HackerRankClient(account: Account(label: "Demo", token: token), session: .rankBuddyDemo)
+        HackerRankClient(account: Account(label: "Demo", token: token, isMock: true))
     }
 
     // MARK: - Pagination

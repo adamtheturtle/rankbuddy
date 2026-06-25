@@ -4,14 +4,13 @@ import SwiftUI
 /// The Interviews section: a list of the account's interviews with read-only detail.
 struct InterviewsScreen: View {
     @Environment(AccountStore.self) private var store
-    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         if let account = store.currentAccount {
             LoadableList(
                 title: "Interviews",
                 emptyMessage: "No interviews",
-                loadPage: { try await HackerRankClient(account: account, session: session).interviewsPage(after: $0) },
+                loadPage: { try await HackerRankClient(account: account).interviewsPage(after: $0) },
                 searchableText: { "\($0.title ?? "") \($0.status)" },
                 sortOptions: [
                     SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },

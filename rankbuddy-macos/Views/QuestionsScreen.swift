@@ -4,14 +4,13 @@ import SwiftUI
 /// The Questions section: a list of the account's questions with read-only detail.
 struct QuestionsScreen: View {
     @Environment(AccountStore.self) private var store
-    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         if let account = store.currentAccount {
             LoadableList(
                 title: "Questions",
                 emptyMessage: "No questions",
-                loadPage: { try await HackerRankClient(account: account, session: session).questionsPage(after: $0) },
+                loadPage: { try await HackerRankClient(account: account).questionsPage(after: $0) },
                 searchableText: { "\($0.name) \($0.type) \($0.tags?.joined(separator: " ") ?? "")" },
                 sortOptions: [
                     SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },

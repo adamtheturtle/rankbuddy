@@ -2,7 +2,6 @@ import SwiftUI
 
 /// The candidates for a test, pushed from `TestDetailView`. Read-only list + detail.
 struct CandidatesList: View {
-    @Environment(\.hackerRankSession) private var session
     let testID: String
     let account: Account
 
@@ -11,7 +10,7 @@ struct CandidatesList: View {
             title: "Candidates",
             emptyMessage: "No candidates",
             loadPage: {
-                try await HackerRankClient(account: account, session: session)
+                try await HackerRankClient(account: account)
                     .candidatesPage(testID: testID, after: $0)
             },
             searchableText: { "\($0.fullName ?? "") \($0.email) \($0.listStatusLabel ?? "")" },

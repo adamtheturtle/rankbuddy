@@ -5,14 +5,13 @@ import SwiftUI
 /// view that also links to the test's candidates.
 struct TestsScreen: View {
     @Environment(AccountStore.self) private var store
-    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         if let account = store.currentAccount {
             LoadableList(
                 title: "Tests",
                 emptyMessage: "No tests",
-                loadPage: { try await HackerRankClient(account: account, session: session).testsPage(after: $0) },
+                loadPage: { try await HackerRankClient(account: account).testsPage(after: $0) },
                 searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "")" },
                 sortOptions: [
                     SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },

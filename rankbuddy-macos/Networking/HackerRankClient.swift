@@ -21,7 +21,10 @@ struct HackerRankClient {
     private let baseURL: URL
     private let token: String
 
-    init(account: Account, session: URLSession = .shared) {
+    /// - Parameter session: the transport session. Defaults to the demo mock for `isMock`
+    ///   accounts and the shared session otherwise; tests can inject an explicit session.
+    init(account: Account, session: URLSession? = nil) {
+        let session = session ?? (account.isMock ? .rankBuddyDemo : .shared)
         baseURL = account.baseURL
         token = account.token
         let logger = Logger(subsystem: "com.adamdangoor.rankbuddy", category: "client")

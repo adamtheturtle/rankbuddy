@@ -9,7 +9,6 @@ struct ContentView: View {
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
     @Environment(PaletteModel.self) private var palette
     @Environment(AccountStore.self) private var store
-    @Environment(\.hackerRankSession) private var session
 
     var body: some View {
         @Bindable var palette = palette
@@ -28,7 +27,6 @@ struct ContentView: View {
             CommandPaletteView(placeholder: "Search RankBuddy…") {
                 await RankBuddyPalette.candidates(
                     store: store,
-                    session: session,
                     selection: $selection,
                     openSettings: { NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) }
                 )
