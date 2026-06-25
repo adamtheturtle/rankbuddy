@@ -20,6 +20,9 @@ struct ContentView: View {
             }
             .navigationTitle("RankBuddy")
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
+            .safeAreaInset(edge: .bottom) {
+                AccountSwitcher()
+            }
         } detail: {
             detailView(for: selection)
         }
