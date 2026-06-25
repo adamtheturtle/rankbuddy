@@ -46,6 +46,21 @@ enum DisplayFormat {
         return durationFormatter.string(from: end.timeIntervalSince(start))
     }
 
+    private static let intervalFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .abbreviated
+        return formatter
+    }()
+
+    /// Formats a raw number of seconds as a short duration (e.g. "1m 30s"), or nil when the
+    /// value is missing or non-positive.
+    static func interval(_ seconds: Double?) -> String? {
+        guard let seconds, seconds > 0 else { return nil }
+
+        return intervalFormatter.string(from: seconds)
+    }
+
     /// Joins a list for display, returning nil when empty so callers can omit the row.
     static func list(_ values: [String]?) -> String? {
         guard let values, !values.isEmpty else { return nil }

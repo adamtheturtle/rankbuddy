@@ -20,6 +20,12 @@ extension TestCandidate {
         }
     }
 
+    /// Whether any proctoring signal is present and non-zero, so the detail view can show a
+    /// Proctoring section only when there is something to report (#14).
+    var hasProctoringSignals: Bool {
+        (outOfWindowEvents ?? 0) > 0 || (outOfWindowDuration ?? 0) > 0 || (editorPasteCount ?? 0) > 0
+    }
+
     /// The most decision-relevant status for a compact summary: the pipeline state when
     /// set, otherwise the attempt state. `nil` when neither has a known label.
     var listStatusLabel: String? {

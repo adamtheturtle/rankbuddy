@@ -14,6 +14,10 @@ struct CandidateStatusTests {
         return try JSONDecoder().decode(TestCandidate.self, from: Data(json.utf8))
     }
 
+    private func decode(_ json: String) throws -> TestCandidate {
+        try JSONDecoder().decode(TestCandidate.self, from: Data(json.utf8))
+    }
+
     // MARK: - Attempt status
 
     @Test func `known attempt-status codes get labels`() throws {
@@ -57,5 +61,26 @@ struct CandidateStatusTests {
 
     @Test func `the list label is nil when nothing is known`() throws {
         #expect(try candidate(status: nil, atsState: nil).listStatusLabel == nil)
+    }
+
+    // MARK: - Proctoring signals
+
+    @Test func `proctoring fields decode from the live snake_case keys`() throws {
+        let candidate = try decode(#"""
+        {"id":"c1","email":"c@x.com","out_of_window_events":4,
+         "out_of_window_duration":95.0,"editor_paste_count":7}
+        """#)
+        #expect(candidate.outOfWindowEvents == 4)
+        #expect(candidate.outOfWindowDuration == 95.0)
+        #expect(candidate.editorPasteCount == 7)
+        #expect(candidate.hasProctoringSignals)
+    }
+
+    @Test func `proctoring signals are absent when the fields are missing or zero`() throws {
+        #expect(try !decode(#"{"id":"c1","email":"c@x.com"}"#).hasProctoringSignals)
+        let zeroed = try decode(#"""
+        {"id":"c1","email":"c@x.com","out_of_window_events":0,"editor_paste_count":0}
+        """#)
+        #expect(!zeroed.hasProctoringSignals)
     }
 }

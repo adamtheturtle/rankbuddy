@@ -68,6 +68,20 @@ struct FormattingTests {
         #expect(DisplayFormat.duration(fromISO: "2026-05-02T11:15:00Z", toISO: "2026-05-02T10:00:00Z") == nil)
     }
 
+    // MARK: - DisplayFormat.interval
+
+    @Test func `interval formats a positive number of seconds`() {
+        let formatted = DisplayFormat.interval(95)
+        #expect(formatted?.contains("1") == true)
+        #expect(formatted?.contains("35") == true)
+    }
+
+    @Test func `interval is nil for nil or non-positive seconds`() {
+        #expect(DisplayFormat.interval(nil) == nil)
+        #expect(DisplayFormat.interval(0) == nil)
+        #expect(DisplayFormat.interval(-10) == nil)
+    }
+
     // MARK: - integrityBadge
 
     private func candidate(integrity: String?, plagiarism: Bool?) throws -> TestCandidate {

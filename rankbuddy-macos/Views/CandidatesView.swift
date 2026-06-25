@@ -97,6 +97,14 @@ struct CandidateDetailView: View {
                 }
             }
 
+            if candidate.hasProctoringSignals {
+                Section("Proctoring") {
+                    OptionalRow("Left test window", candidate.outOfWindowEvents.map { "\($0)×" })
+                    OptionalRow("Time outside window", DisplayFormat.interval(candidate.outOfWindowDuration))
+                    OptionalRow("Editor pastes", candidate.editorPasteCount.map { "\($0)×" })
+                }
+            }
+
             if let tags = candidate.tags, !tags.isEmpty {
                 Section("Tags") {
                     TagList(tags: tags)
@@ -134,4 +142,20 @@ struct CandidateDetailView: View {
     }
     .padding()
     .frame(width: 360)
+}
+
+#Preview("Detail") {
+    let json = #"""
+    {"id":"c3","email":"grace@example.com","full_name":"Grace Hopper","score":58.0,
+     "percentage_score":58.0,"integrity_status":"review","plagiarism_status":true,
+     "status":7,"ats_state":22,"out_of_window_events":4,"out_of_window_duration":95.0,
+     "editor_paste_count":7,"attempt_starttime":"2026-05-04T08:30:00Z",
+     "attempt_endtime":"2026-05-04T09:20:00Z"}
+    """#
+    let candidate = try? JSONDecoder().decode(TestCandidate.self, from: Data(json.utf8))
+    return NavigationStack {
+        if let candidate {
+            CandidateDetailView(candidate: candidate)
+        }
+    }
 }

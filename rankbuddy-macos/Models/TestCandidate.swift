@@ -36,6 +36,13 @@ nonisolated struct TestCandidate: Codable, Hashable, Identifiable {
     let reportURL: String?
     /// Whether plagiarism was flagged.
     let plagiarismStatus: Bool?
+    /// Number of times the candidate left the test window (e.g. switched tabs/apps) — a
+    /// proctoring signal (#14).
+    let outOfWindowEvents: Int?
+    /// Total time, in seconds, the candidate spent outside the test window (#14).
+    let outOfWindowDuration: Double?
+    /// Number of paste actions detected in the code editor — a proctoring signal (#14).
+    let editorPasteCount: Int?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -53,5 +60,8 @@ nonisolated struct TestCandidate: Codable, Hashable, Identifiable {
         case feedback
         case reportURL = "report_url"
         case plagiarismStatus = "plagiarism_status"
+        case outOfWindowEvents = "out_of_window_events"
+        case outOfWindowDuration = "out_of_window_duration"
+        case editorPasteCount = "editor_paste_count"
     }
 }
