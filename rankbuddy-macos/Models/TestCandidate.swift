@@ -34,6 +34,8 @@ nonisolated struct TestCandidate: Codable, Hashable, Identifiable {
     let feedback: String?
     /// URL of the candidate's report.
     let reportURL: String?
+    /// URL of the candidate's report as a downloadable PDF.
+    let pdfURL: String?
     /// Whether plagiarism was flagged.
     let plagiarismStatus: Bool?
     /// Number of times the candidate left the test window (e.g. switched tabs/apps) — a
@@ -59,6 +61,7 @@ nonisolated struct TestCandidate: Codable, Hashable, Identifiable {
         case tags
         case feedback
         case reportURL = "report_url"
+        case pdfURL = "pdf_url"
         case plagiarismStatus = "plagiarism_status"
         case outOfWindowEvents = "out_of_window_events"
         case outOfWindowDuration = "out_of_window_duration"

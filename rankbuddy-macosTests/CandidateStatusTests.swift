@@ -83,4 +83,14 @@ struct CandidateStatusTests {
         """#)
         #expect(!zeroed.hasProctoringSignals)
     }
+
+    // MARK: - Report links
+
+    @Test func `report and pdf urls decode from their live keys`() throws {
+        let candidate = try decode(#"""
+        {"id":"c1","email":"c@x.com","report_url":"https://h.com/r","pdf_url":"https://h.com/r.pdf"}
+        """#)
+        #expect(candidate.reportURL == "https://h.com/r")
+        #expect(candidate.pdfURL == "https://h.com/r.pdf")
+    }
 }

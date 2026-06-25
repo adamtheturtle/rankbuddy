@@ -153,6 +153,8 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
       {"id":"c1","email":"ada@example.com","full_name":"Ada Lovelace","score":92.0,
        "percentage_score":92.0,"integrity_status":"clean","plagiarism_status":false,
        "status":7,"ats_state":2,
+       "report_url":"https://www.hackerrank.com/x/candidates/c1/report",
+       "pdf_url":"https://www.hackerrank.com/x/candidates/c1/report.pdf",
        "attempt_starttime":"2026-05-02T10:00:00Z","attempt_endtime":"2026-05-02T11:15:00Z",
        "tags":["shortlist"],"feedback":"Excellent problem decomposition."},
       {"id":"c2","email":"alan@example.com","full_name":"Alan Turing","score":81.5,

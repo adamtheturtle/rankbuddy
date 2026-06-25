@@ -95,6 +95,12 @@ struct CandidateDetailView: View {
                         Label("Open report", systemImage: "doc.text")
                     }
                 }
+
+                if let pdf = candidate.pdfURL, let url = URL(string: pdf) {
+                    Link(destination: url) {
+                        Label("Download PDF report", systemImage: "arrow.down.doc")
+                    }
+                }
             }
 
             if candidate.hasProctoringSignals {
