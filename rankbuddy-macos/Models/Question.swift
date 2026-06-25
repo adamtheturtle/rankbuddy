@@ -30,6 +30,8 @@ nonisolated struct Question: Codable, Hashable, Identifiable {
     let tags: [String]?
     /// The maximum achievable score.
     let maxScore: Double?
+    /// Skills the question assesses.
+    let skills: [String]?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -44,5 +46,6 @@ nonisolated struct Question: Codable, Hashable, Identifiable {
         case recommendedDuration = "recommended_duration"
         case tags
         case maxScore = "max_score"
+        case skills
     }
 }

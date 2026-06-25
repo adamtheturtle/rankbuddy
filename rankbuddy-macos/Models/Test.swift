@@ -48,6 +48,8 @@ nonisolated struct Test: Codable, Hashable, Identifiable {
     let shuffleQuestions: Bool?
     /// Whether proctoring is enabled for the test.
     let enableProctoring: Bool?
+    /// The test's question sections, when it is organised into them.
+    let sections: [TestSection]?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -69,5 +71,29 @@ nonisolated struct Test: Codable, Hashable, Identifiable {
         case questions
         case shuffleQuestions = "shuffle_questions"
         case enableProctoring = "enable_proctoring"
+        case sections
+    }
+}
+
+/// A named group of questions within a test (the test's `sections`).
+nonisolated struct TestSection: Codable, Hashable, Identifiable {
+    /// Stable identifier of the section.
+    let uuid: String
+    /// The section's display name.
+    let name: String
+    /// Number of questions in the section.
+    let questionCount: Int?
+    /// The section's time limit in minutes, if it has its own.
+    let duration: Int?
+
+    var id: String {
+        uuid
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case uuid
+        case name
+        case questionCount = "questions"
+        case duration
     }
 }

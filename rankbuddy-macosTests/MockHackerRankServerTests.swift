@@ -44,6 +44,10 @@ struct MockHackerRankServerTests {
         let firstPage = try await page(Test.self, "/tests?limit=3")
         #expect(firstPage.pageItems.count == 3)
         #expect(firstPage.pageItems.first?.name == "Backend Engineer Screen")
+        // The first test is organised into named sections.
+        let sections = try #require(firstPage.pageItems.first?.sections)
+        #expect(sections.map(\.name) == ["Coding", "Multiple Choice"])
+        #expect(sections.first?.questionCount == 2)
         // The first page advertises a next page; the client follows it by offset.
         let next = try #require(firstPage.nextPage)
         #expect(next.contains("offset=3"))
@@ -77,6 +81,9 @@ struct MockHackerRankServerTests {
         #expect(questions.pageItems.count == 3)
         #expect(questions.pageItems.contains { $0.type == "code" })
         #expect(questions.pageItems.contains { $0.type == "mcq" })
+        // Skills are surfaced in the question detail.
+        let twoSum = try #require(questions.pageItems.first { $0.name == "Two Sum" })
+        #expect(twoSum.skills?.contains("Problem Solving") == true)
     }
 
     @Test func `the interviews fixture covers completed and scheduled`() async throws {

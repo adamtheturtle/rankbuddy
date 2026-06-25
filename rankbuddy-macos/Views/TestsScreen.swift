@@ -87,6 +87,23 @@ struct TestRow: View {
     .frame(width: 420)
 }
 
+#Preview("Detail") {
+    let json = #"""
+    {"id":"t1","unique_id":"backend-screen","name":"Backend Engineer Screen","state":"active",
+     "duration":90,"cutoff_score":70,"enable_proctoring":true,"languages":["python","go"],
+     "start_time":"2026-01-01T09:00:00Z","end_time":"2026-12-31T09:00:00Z","questions":["q1","q2"],
+     "tags":["backend"],
+     "sections":[{"uuid":"s1","name":"Coding","questions":2,"duration":60},
+                 {"uuid":"s2","name":"Multiple Choice","questions":5,"duration":30}]}
+    """#
+    let test = try? JSONDecoder().decode(Test.self, from: Data(json.utf8))
+    return NavigationStack {
+        if let test {
+            TestDetailView(test: test, account: Account(label: "Demo", token: "demo"))
+        }
+    }
+}
+
 /// Read-only detail for a single test.
 struct TestDetailView: View {
     let test: Test
@@ -109,6 +126,18 @@ struct TestDetailView: View {
                 OptionalRow("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
                 OptionalRow("Locked", test.locked == true ? "Yes" : nil)
                 OptionalRow("Draft", test.draft == true ? "Yes" : nil)
+            }
+
+            if let sections = test.sections, !sections.isEmpty {
+                Section("Sections") {
+                    ForEach(sections) { section in
+                        LabeledContent(section.name) {
+                            if let count = section.questionCount {
+                                Text("\(count) question\(count == 1 ? "" : "s")")
+                            }
+                        }
+                    }
+                }
             }
 
             if let tags = test.tags, !tags.isEmpty {
