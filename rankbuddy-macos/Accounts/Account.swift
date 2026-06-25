@@ -31,12 +31,15 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     /// The reserved token that marks the in-process demo account (mirrors PadBuddy's
     /// "demo" mock key). Not a valid HackerRank token, so a real account never collides.
     static let demoToken = "demo"
+    /// The reserved token for the bad-key demo: the mock answers it with a 401, so the
+    /// authentication-failure UI can be shown without a real (revoked) token.
+    static let badKeyDemoToken = "demo-bad-key"
 
     /// Whether this account is backed by the in-process demo mock rather than the live API
-    /// (mirrors PadBuddy's per-account demo model). Derived from the reserved demo token, so
+    /// (mirrors PadBuddy's per-account demo model). Derived from a reserved demo token, so
     /// it survives a Keychain round-trip for free and needs no extra persisted field.
     var isMock: Bool {
-        token == Self.demoToken
+        token == Self.demoToken || token == Self.badKeyDemoToken
     }
 
     /// A demo account backed by the bundled mock server (#10), selectable like a real
@@ -45,6 +48,13 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         // A fixed id keeps the demo's restored section/selection stable across launches.
         let id = UUID(uuidString: "00000000-0000-0000-0000-00000000DEAD") ?? UUID()
         return Self(label: "Demo (HackerRank)", token: demoToken, id: id)
+    }
+
+    /// A demo account whose token the mock rejects with a 401 — exercises the
+    /// authentication-failure state with a selectable account rather than a global flag.
+    static var badKeyDemo: Self {
+        let id = UUID(uuidString: "00000000-0000-0000-0000-0000BADC0DE5") ?? UUID()
+        return Self(label: "Demo (bad token)", token: badKeyDemoToken, id: id)
     }
 
     /// The effective base URL: the override if it parses, otherwise the default.

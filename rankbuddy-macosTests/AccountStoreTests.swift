@@ -51,10 +51,14 @@ struct AccountStoreTests {
 
     // MARK: - Demo / mock accounts
 
-    @Test func `a normal account is not a mock and the demo account is`() {
+    @Test func `a normal account is not a mock and the demo accounts are`() {
         #expect(!Account(label: "Work", token: "t").isMock)
         #expect(Account.demo.isMock)
         #expect(Account.demo.token == Account.demoToken)
+        // The bad-key demo is also a mock account (its token just gets a 401 from the mock).
+        #expect(Account.badKeyDemo.isMock)
+        #expect(Account.badKeyDemo.token == Account.badKeyDemoToken)
+        #expect(Account.demo.token != Account.badKeyDemo.token)
     }
 
     @Test func `the demo account stays a mock across a JSON round-trip`() throws {

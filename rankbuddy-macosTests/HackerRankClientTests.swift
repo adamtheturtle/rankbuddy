@@ -89,4 +89,23 @@ struct HackerRankClientTests {
         // The success scenario answers the validation probe with a populated tests page.
         try await makeClient().validateToken()
     }
+
+    @Test func `the bad-key demo account surfaces the server's 401`() async {
+        // The mock 401s the bad-key token regardless of scenario, so this exercises the
+        // client's unauthorized path end-to-end (not just the error mapping in isolation).
+        let client = HackerRankClient(account: .badKeyDemo)
+        do {
+            _ = try await client.testsPage()
+            Issue.record("expected an unauthorized error")
+        } catch let error as HackerRankError {
+            guard case let .http(status, _) = error else {
+                Issue.record("expected .http, got \(error)")
+                return
+            }
+
+            #expect(status == 401)
+        } catch {
+            Issue.record("expected HackerRankError, got \(error)")
+        }
+    }
 }

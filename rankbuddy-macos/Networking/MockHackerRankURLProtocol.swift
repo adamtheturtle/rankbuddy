@@ -47,6 +47,14 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
             return
         }
 
+        // The bad-key demo account 401s regardless of the scenario, so the auth-failure UI
+        // can be shown by a selectable account (its token is the only thing the mock checks).
+        let authorization = request.value(forHTTPHeaderField: "Authorization")
+        if authorization == "Bearer \(Account.badKeyDemoToken)" {
+            respond(url: url, statusCode: 401, body: #"{"error":"Invalid or expired token"}"#)
+            return
+        }
+
         switch Scenario.current {
         case .success:
             respond(url: url, statusCode: 200, body: Self.body(for: url))
