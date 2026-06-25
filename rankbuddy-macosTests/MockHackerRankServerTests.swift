@@ -86,9 +86,33 @@ struct MockHackerRankServerTests {
         #expect(interviews.pageItems.contains { $0.status == "scheduled" })
     }
 
-    @Test func `an unknown collection serves an empty page`() async throws {
+    @Test func `the users fixture covers roles, admin flags, and a sparse record`() async throws {
+        let users = try await page(User.self, "/users")
+        #expect(users.pageItems.count == 4)
+        let admin = try #require(users.pageItems.first { $0.companyAdmin == true })
+        #expect(admin.firstName == "Rhea")
+        #expect(admin.teams == ["tm1", "tm2"])
+        // u4 is the sparse fixture: only id and email.
+        let sparse = try #require(users.pageItems.first { $0.id == "u4" })
+        #expect(sparse.firstName == nil)
+        #expect(sparse.role == nil)
+    }
+
+    @Test func `the teams fixture covers member counts and a bare record`() async throws {
         let teams = try await page(Team.self, "/teams")
-        #expect(teams.pageItems.isEmpty)
-        #expect(teams.nextPage == nil)
+        #expect(teams.pageItems.count == 3)
+        let staffed = try #require(teams.pageItems.first { $0.id == "tm1" })
+        #expect(staffed.developerCount == 12)
+        #expect(staffed.locations == ["London", "Berlin"])
+        // tm3 is the bare fixture: only id and name.
+        let bare = try #require(teams.pageItems.first { $0.id == "tm3" })
+        #expect(bare.recruiterCount == nil)
+        #expect(bare.locations == nil)
+    }
+
+    @Test func `an unknown collection serves an empty page`() async throws {
+        let page = try await page(Team.self, "/leaderboards")
+        #expect(page.pageItems.isEmpty)
+        #expect(page.nextPage == nil)
     }
 }

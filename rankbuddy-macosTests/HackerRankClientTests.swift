@@ -54,6 +54,20 @@ struct HackerRankClientTests {
         #expect(page.next == nil)
     }
 
+    @Test func `users page decodes through the client`() async throws {
+        let page = try await makeClient().usersPage()
+        #expect(page.items.count == 4)
+        #expect(page.items.contains { $0.companyAdmin == true })
+        #expect(page.next == nil)
+    }
+
+    @Test func `teams page decodes through the client`() async throws {
+        let page = try await makeClient().teamsPage()
+        #expect(page.items.count == 3)
+        #expect(page.items.contains { $0.developerCount == 12 })
+        #expect(page.next == nil)
+    }
+
     @Test func `candidates page is routed under its test`() async throws {
         // The candidates path also contains "/tests/", so the client must build
         // ".../tests/<id>/candidates" and the mock must route it to the candidates fixture.

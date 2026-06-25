@@ -109,6 +109,12 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
         if path.contains("/interviews") {
             return interviewsJSON
         }
+        if path.contains("/users") {
+            return usersJSON
+        }
+        if path.contains("/teams") {
+            return teamsJSON
+        }
         if path.contains("/tests") {
             let isSecondPage = url.query?.contains("offset=3") ?? false
             return isSecondPage ? testsPage2JSON : testsPage1JSON
@@ -192,6 +198,32 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
        "ended_at":"2026-05-05T14:00:00Z","thumbs_up":1,"feedback":"Strong system design."},
       {"id":"i2","status":"scheduled","url":"https://www.hackerrank.com/x/interviews/i2",
        "title":"Frontend — Live Coding","created_at":"2026-05-12T16:00:00Z"}
+    ],"next":null}
+    """#
+
+    private static let usersJSON = #"""
+    {"data":[
+      {"id":"u1","email":"rhea@example.com","firstname":"Rhea","lastname":"Recruiter",
+       "country":"GB","role":"recruiter","status":"active","teams":["tm1","tm2"],
+       "activated":true,"company_admin":true,"team_admin":true},
+      {"id":"u2","email":"ian@example.com","firstname":"Ian","lastname":"Interviewer",
+       "country":"DE","role":"interviewer","status":"active","teams":["tm1"],
+       "activated":true,"company_admin":false,"team_admin":false},
+      {"id":"u3","email":"pat@example.com","firstname":"Pat","lastname":"Pending",
+       "country":"US","role":"recruiter","status":"invited","teams":[],
+       "activated":false,"company_admin":false,"team_admin":false},
+      {"id":"u4","email":"noname@example.com"}
+    ],"next":null}
+    """#
+
+    private static let teamsJSON = #"""
+    {"data":[
+      {"id":"tm1","name":"Backend Hiring","owner":"u1","created_at":"2026-04-01T09:00:00Z",
+       "recruiter_count":3,"developer_count":12,"locations":["London","Berlin"],
+       "departments":["Engineering","Platform"]},
+      {"id":"tm2","name":"Data Science","owner":"u1","created_at":"2026-04-15T09:00:00Z",
+       "recruiter_count":1,"developer_count":5,"locations":["Remote"]},
+      {"id":"tm3","name":"Unstaffed Team"}
     ],"next":null}
     """#
 }
