@@ -98,6 +98,12 @@ struct InterviewDetailView: View {
                         Label("Open in browser", systemImage: "safari")
                     }
                 }
+
+                if let report = interview.reportURL, let url = URL(string: report) {
+                    Link(destination: url) {
+                        Label("Open report", systemImage: "doc.text")
+                    }
+                }
             }
 
             if let notes = interview.notes, !notes.isEmpty {

@@ -38,6 +38,13 @@ struct SectionDisplayTests {
         #expect(team.memberSummary == "1 recruiter · 1 developer")
     }
 
+    @Test func `member summary includes interviewers when present`() throws {
+        let team = try decode(Team.self, #"""
+        {"id":"t1","name":"Backend","recruiter_count":3,"developer_count":12,"interviewer_count":8}
+        """#)
+        #expect(team.memberSummary == "3 recruiters · 12 developers · 8 interviewers")
+    }
+
     @Test func `member summary omits an absent count`() throws {
         let team = try decode(Team.self, #"{"id":"t1","name":"Backend","developer_count":5}"#)
         #expect(team.memberSummary == "5 developers")

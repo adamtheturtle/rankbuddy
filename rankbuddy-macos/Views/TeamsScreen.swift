@@ -40,6 +40,9 @@ extension Team {
         if let developerCount {
             parts.append("\(developerCount) developer\(developerCount == 1 ? "" : "s")")
         }
+        if let interviewerCount {
+            parts.append("\(interviewerCount) interviewer\(interviewerCount == 1 ? "" : "s")")
+        }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
@@ -72,6 +75,7 @@ struct TeamDetailView: View {
                 OptionalRow("Name", team.name)
                 OptionalRow("Recruiters", team.recruiterCount.map { "\($0)" })
                 OptionalRow("Developers", team.developerCount.map { "\($0)" })
+                OptionalRow("Interviewers", team.interviewerCount.map { "\($0)" })
                 OptionalRow("Created", DisplayFormat.date(team.createdAt))
                 OptionalRow("Locations", DisplayFormat.list(team.locations))
             }
@@ -96,6 +100,7 @@ struct TeamDetailView: View {
             createdAt: "2026-04-01T09:00:00Z",
             recruiterCount: 3,
             developerCount: 12,
+            interviewerCount: 8,
             locations: ["London", "Berlin"],
             departments: ["Engineering", "Platform"]
         ))

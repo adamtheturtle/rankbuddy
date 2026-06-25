@@ -17,6 +17,8 @@ nonisolated struct Team: Codable, Hashable, Identifiable {
     let recruiterCount: Int?
     /// Number of developers on the team.
     let developerCount: Int?
+    /// Number of interviewers on the team.
+    let interviewerCount: Int?
     /// Office locations associated with the team.
     let locations: [String]?
     /// Departments associated with the team.
@@ -29,6 +31,7 @@ nonisolated struct Team: Codable, Hashable, Identifiable {
         case createdAt = "created_at"
         case recruiterCount = "recruiter_count"
         case developerCount = "developer_count"
+        case interviewerCount = "interviewer_count"
         case locations
         case departments
     }

@@ -28,6 +28,8 @@ nonisolated struct Interview: Codable, Hashable, Identifiable {
     let endedAt: String?
     /// Identifier of the interview template used.
     let interviewTemplateID: Int?
+    /// URL of the interview's report, if any.
+    let reportURL: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -41,5 +43,6 @@ nonisolated struct Interview: Codable, Hashable, Identifiable {
         case updatedAt = "updated_at"
         case endedAt = "ended_at"
         case interviewTemplateID = "interview_template_id"
+        case reportURL = "report_url"
     }
 }

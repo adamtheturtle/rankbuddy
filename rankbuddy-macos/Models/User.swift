@@ -27,6 +27,8 @@ nonisolated struct User: Codable, Hashable, Identifiable {
     let companyAdmin: Bool?
     /// Whether the user is a team administrator.
     let teamAdmin: Bool?
+    /// ISO-8601 timestamp of the user's last activity, if known.
+    let lastActivityTime: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -40,5 +42,6 @@ nonisolated struct User: Codable, Hashable, Identifiable {
         case activated
         case companyAdmin = "company_admin"
         case teamAdmin = "team_admin"
+        case lastActivityTime = "last_activity_time"
     }
 }

@@ -73,6 +73,7 @@ struct PersonDetailView: View {
                 OptionalRow("Role", user.role?.capitalized)
                 OptionalRow("Status", user.status?.capitalized)
                 OptionalRow("Country", user.country)
+                OptionalRow("Last active", DisplayFormat.date(user.lastActivityTime))
                 OptionalRow("Activated", user.activated.map { $0 ? "Yes" : "No" })
                 OptionalRow("Company admin", user.companyAdmin == true ? "Yes" : nil)
                 OptionalRow("Team admin", user.teamAdmin == true ? "Yes" : nil)
@@ -102,7 +103,8 @@ struct PersonDetailView: View {
             teams: ["tm1", "tm2"],
             activated: true,
             companyAdmin: true,
-            teamAdmin: true
+            teamAdmin: true,
+            lastActivityTime: "2026-06-20T08:30:00Z"
         ))
     }
 }
