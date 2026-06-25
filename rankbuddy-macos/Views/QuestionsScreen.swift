@@ -77,7 +77,7 @@ struct QuestionDetailView: View {
 
             if let statement = question.problemStatement, !statement.isEmpty {
                 Section("Problem statement") {
-                    Text(statement).textSelection(.enabled)
+                    HTMLText(html: statement)
                 }
             }
         }

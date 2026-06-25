@@ -100,7 +100,7 @@ struct TestDetailView: View {
 
             if let instructions = test.instructions, !instructions.isEmpty {
                 Section("Instructions") {
-                    Text(instructions).textSelection(.enabled)
+                    HTMLText(html: instructions)
                 }
             }
         }
