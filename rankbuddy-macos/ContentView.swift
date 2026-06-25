@@ -52,6 +52,10 @@ struct ContentView: View {
             QuestionsScreen()
         case .interviews:
             InterviewsScreen()
+        case .people:
+            PeopleScreen()
+        case .teams:
+            TeamsScreen()
         }
     }
 }

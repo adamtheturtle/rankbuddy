@@ -7,6 +7,8 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     case tests
     case questions
     case interviews
+    case people = "users"
+    case teams
 
     var id: String {
         rawValue
@@ -18,6 +20,8 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
         case .tests: "Tests"
         case .questions: "Questions"
         case .interviews: "Interviews"
+        case .people: "People"
+        case .teams: "Teams"
         }
     }
 
@@ -27,6 +31,8 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
         case .tests: "checklist"
         case .questions: "questionmark.square"
         case .interviews: "person.crop.rectangle.stack"
+        case .people: "person.2"
+        case .teams: "person.3"
         }
     }
 }

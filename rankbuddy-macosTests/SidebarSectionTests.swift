@@ -6,16 +6,19 @@ import Testing
 /// are persisted via `@AppStorage("selectedSection")` (#19), so the case set, their order,
 /// raw values, titles, and SF Symbols are a stable contract.
 struct SidebarSectionTests {
-    @Test func `the sections are tests, questions, interviews in order`() {
-        #expect(SidebarSection.allCases == [.tests, .questions, .interviews])
+    @Test func `the sections are in display order`() {
+        #expect(SidebarSection.allCases == [.tests, .questions, .interviews, .people, .teams])
     }
 
     @Test func `raw values are stable persistence keys`() {
         // These back @AppStorage("selectedSection"); changing them would drop a user's
-        // restored section on upgrade.
+        // restored section on upgrade. People's raw value is "users" so it matches the
+        // /users endpoint and its restoration key.
         #expect(SidebarSection.tests.rawValue == "tests")
         #expect(SidebarSection.questions.rawValue == "questions")
         #expect(SidebarSection.interviews.rawValue == "interviews")
+        #expect(SidebarSection.people.rawValue == "users")
+        #expect(SidebarSection.teams.rawValue == "teams")
     }
 
     @Test func `id matches the raw value`() {
@@ -28,6 +31,8 @@ struct SidebarSectionTests {
         #expect(SidebarSection.tests.title == "Tests")
         #expect(SidebarSection.questions.title == "Questions")
         #expect(SidebarSection.interviews.title == "Interviews")
+        #expect(SidebarSection.people.title == "People")
+        #expect(SidebarSection.teams.title == "Teams")
 
         for section in SidebarSection.allCases {
             #expect(!section.title.isEmpty)
