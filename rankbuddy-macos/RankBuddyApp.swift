@@ -47,6 +47,7 @@ struct RankBuddyApp: App {
         }
         .commands {
             AppCommands(palette: palette)
+            UpdateCommands()
         }
 
         Settings {
