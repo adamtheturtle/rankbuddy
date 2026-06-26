@@ -13,6 +13,8 @@ struct RankBuddyApp: App {
     @State private var palette = PaletteModel()
     /// Account-aware favourites, shared with the lists and the palette (#25).
     @State private var favorites: FavoritesStore
+    /// Mirrors favourites to iCloud when the capability is present; nil in demo mode (#22).
+    @State private var favoritesSync: FavoritesSyncCoordinator?
 
     init() {
         // Demo mode (RANKBUDDY_DEMO=1) seeds the in-memory demo account; its `isMock` flag
@@ -24,7 +26,15 @@ struct RankBuddyApp: App {
             : AccountStore.rankBuddy()
         _accountStore = State(initialValue: store)
         // Demo mode keeps favourites in-memory so it never reads or writes real favourites.
-        _favorites = State(initialValue: FavoritesStore(isTesting: isDemo))
+        let favorites = FavoritesStore(isTesting: isDemo)
+        _favorites = State(initialValue: favorites)
+        // Sync real favourites to iCloud (gated on the capability inside the coordinator);
+        // demo mode stays local-only.
+        _favoritesSync = State(
+            initialValue: isDemo
+                ? nil
+                : FavoritesSyncCoordinator(favorites: favorites, store: UbiquitousKeyValueSyncStore())
+        )
     }
 
     var body: some Scene {
@@ -33,6 +43,7 @@ struct RankBuddyApp: App {
                 .environment(accountStore)
                 .environment(palette)
                 .environment(favorites)
+                .task { favoritesSync?.start() }
         }
         .commands {
             AppCommands(palette: palette)

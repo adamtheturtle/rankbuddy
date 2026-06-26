@@ -62,6 +62,10 @@ final class FavoritesStore {
     /// the most-recently-added first.
     private(set) var favorites: [FavoriteRef]
 
+    /// Called after any local mutation persists, so a sync coordinator can mirror the change
+    /// (#22). Not part of the observable surface.
+    @ObservationIgnored var onChange: (() -> Void)?
+
     /// - Parameters:
     ///   - defaults: the backing store; injectable so tests stay isolated.
     ///   - isTesting: when true the store starts empty and never reads existing defaults, so
@@ -118,10 +122,20 @@ final class FavoritesStore {
         persist()
     }
 
+    /// Replaces the whole set, e.g. when adopting an incoming iCloud change (#22). No-op when
+    /// the set is unchanged, so it doesn't churn observers or re-trigger a sync.
+    func replace(with refs: [FavoriteRef]) {
+        guard refs != favorites else { return }
+
+        favorites = refs
+        persist()
+    }
+
     private func persist() {
         guard let data = try? JSONEncoder().encode(favorites) else { return }
 
         defaults.set(data, forKey: storageKey)
+        onChange?()
     }
 
     /// The favourite-toggle state for a row's context menu, or `nil` when there is no current
