@@ -11,6 +11,8 @@ struct RankBuddyApp: App {
     @State private var accountStore: AccountStore
     /// Command-palette presentation state, shared with the menu commands.
     @State private var palette = PaletteModel()
+    /// Account-aware favourites, shared with the lists and the palette (#25).
+    @State private var favorites: FavoritesStore
 
     init() {
         // Demo mode (RANKBUDDY_DEMO=1) seeds the in-memory demo account; its `isMock` flag
@@ -21,6 +23,8 @@ struct RankBuddyApp: App {
             ? AccountStore.rankBuddy(isTesting: true, seed: [.demo])
             : AccountStore.rankBuddy()
         _accountStore = State(initialValue: store)
+        // Demo mode keeps favourites in-memory so it never reads or writes real favourites.
+        _favorites = State(initialValue: FavoritesStore(isTesting: isDemo))
     }
 
     var body: some Scene {
@@ -28,6 +32,7 @@ struct RankBuddyApp: App {
             ContentView()
                 .environment(accountStore)
                 .environment(palette)
+                .environment(favorites)
         }
         .commands {
             AppCommands(palette: palette)

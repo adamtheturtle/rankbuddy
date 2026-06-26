@@ -55,11 +55,29 @@ extension Interview {
 /// One row in the interviews list.
 struct InterviewRow: View {
     let interview: Interview
+    @Environment(AccountStore.self) private var store
+    @Environment(FavoritesStore.self) private var favorites
+
+    private var displayTitle: String {
+        interview.title ?? "Interview \(interview.id)"
+    }
+
+    private var favoriteRef: FavoriteRef? {
+        store.currentAccountID.map {
+            FavoriteRef(accountID: $0.uuidString, collection: .interviews, itemID: interview.id, title: displayTitle)
+        }
+    }
+
+    private var isFavorite: Bool {
+        guard let favoriteRef else { return false }
+
+        return favorites.isFavorite(collection: .interviews, accountID: favoriteRef.accountID, itemID: interview.id)
+    }
 
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(interview.title ?? "Interview \(interview.id)").font(.headline)
+                Text(displayTitle).font(.headline)
                 if let created = DisplayFormat.date(interview.createdAt) {
                     Text(created)
                         .font(.caption)
@@ -67,13 +85,16 @@ struct InterviewRow: View {
                 }
             }
             Spacer()
+            FavoriteIndicator(isFavorite: isFavorite)
             interview.statusBadge
         }
         .accessibilityElement(children: .combine)
         .rowContextMenu(
             copyLabel: "Copy Title",
-            copyText: interview.title ?? "Interview \(interview.id)",
-            link: interview.url
+            copyText: displayTitle,
+            link: interview.url,
+            isFavorite: favoriteRef != nil ? isFavorite : nil,
+            toggleFavorite: favoriteRef.map { ref in { favorites.toggle(ref) } }
         )
     }
 }
@@ -141,4 +162,6 @@ struct InterviewDetailView: View {
     }
     .padding()
     .frame(width: 420)
+    .environment(AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Demo", token: "demo")]))
+    .environment(FavoritesStore(isTesting: true))
 }

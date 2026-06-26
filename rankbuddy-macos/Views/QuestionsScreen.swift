@@ -33,21 +33,44 @@ struct QuestionsScreen: View {
 /// One row in the questions list.
 struct QuestionRow: View {
     let question: Question
+    @Environment(AccountStore.self) private var store
+    @Environment(FavoritesStore.self) private var favorites
+
+    private var favoriteRef: FavoriteRef? {
+        store.currentAccountID.map {
+            FavoriteRef(accountID: $0.uuidString, collection: .questions, itemID: question.id, title: question.name)
+        }
+    }
+
+    private var isFavorite: Bool {
+        guard let favoriteRef else { return false }
+
+        return favorites.isFavorite(collection: .questions, accountID: favoriteRef.accountID, itemID: question.id)
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(question.name).font(.headline)
-            HStack(spacing: 8) {
-                Text(question.type.capitalized)
-                if let languages = DisplayFormat.list(question.languages) {
-                    Text(languages)
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(question.name).font(.headline)
+                HStack(spacing: 8) {
+                    Text(question.type.capitalized)
+                    if let languages = DisplayFormat.list(question.languages) {
+                        Text(languages)
+                    }
                 }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            Spacer()
+            FavoriteIndicator(isFavorite: isFavorite)
         }
         .accessibilityElement(children: .combine)
-        .rowContextMenu(copyLabel: "Copy Name", copyText: question.name)
+        .rowContextMenu(
+            copyLabel: "Copy Name",
+            copyText: question.name,
+            isFavorite: favoriteRef != nil ? isFavorite : nil,
+            toggleFavorite: favoriteRef.map { ref in { favorites.toggle(ref) } }
+        )
     }
 }
 

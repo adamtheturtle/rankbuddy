@@ -39,14 +39,29 @@ extension View {
     ///   - copyText: The text placed on the pasteboard by the copy action.
     ///   - link: An optional web URL string; when it parses, an open/copy-link pair is shown.
     ///   - openLabel: The menu title for the open-in-browser action.
+    ///   - isFavorite: when non-nil, a favourite toggle is shown reflecting this state (#25).
+    ///   - toggleFavorite: the action run by the favourite toggle; paired with `isFavorite`.
     func rowContextMenu(
         copyLabel: String,
         copyText: String,
         link: String? = nil,
-        openLabel: String = "Open in Browser"
+        openLabel: String = "Open in Browser",
+        isFavorite: Bool? = nil,
+        toggleFavorite: (() -> Void)? = nil
     ) -> some View {
         let url = link.flatMap(URL.init(string:))
         return contextMenu {
+            if let isFavorite, let toggleFavorite {
+                Button {
+                    toggleFavorite()
+                } label: {
+                    Label(
+                        isFavorite ? "Remove from Favourites" : "Add to Favourites",
+                        systemImage: isFavorite ? "star.slash" : "star"
+                    )
+                }
+                Divider()
+            }
             if let url {
                 Link(destination: url) {
                     Label(openLabel, systemImage: "safari")
@@ -62,6 +77,21 @@ extension View {
             } label: {
                 Label(copyLabel, systemImage: "doc.on.doc")
             }
+        }
+    }
+}
+
+/// A small star shown on a favourited row. Renders nothing when `isFavorite` is false, so
+/// rows stay clean at rest (#25).
+struct FavoriteIndicator: View {
+    let isFavorite: Bool
+
+    var body: some View {
+        if isFavorite {
+            Image(systemName: "star.fill")
+                .font(.caption2)
+                .foregroundStyle(.yellow)
+                .accessibilityLabel("Favourite")
         }
     }
 }

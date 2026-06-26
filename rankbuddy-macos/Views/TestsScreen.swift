@@ -34,6 +34,20 @@ struct TestsScreen: View {
 /// One row in the tests list.
 struct TestRow: View {
     let test: Test
+    @Environment(AccountStore.self) private var store
+    @Environment(FavoritesStore.self) private var favorites
+
+    private var favoriteRef: FavoriteRef? {
+        store.currentAccountID.map {
+            FavoriteRef(accountID: $0.uuidString, collection: .tests, itemID: test.id, title: test.name)
+        }
+    }
+
+    private var isFavorite: Bool {
+        guard let favoriteRef else { return false }
+
+        return favorites.isFavorite(collection: .tests, accountID: favoriteRef.accountID, itemID: test.id)
+    }
 
     var body: some View {
         HStack {
@@ -52,6 +66,7 @@ struct TestRow: View {
             }
             Spacer()
             HStack(spacing: 6) {
+                FavoriteIndicator(isFavorite: isFavorite)
                 test.windowBadge(now: Date())
                 if test.enableProctoring == true {
                     StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .blue)
@@ -59,7 +74,12 @@ struct TestRow: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .rowContextMenu(copyLabel: "Copy Name", copyText: test.name)
+        .rowContextMenu(
+            copyLabel: "Copy Name",
+            copyText: test.name,
+            isFavorite: favoriteRef != nil ? isFavorite : nil,
+            toggleFavorite: favoriteRef.map { ref in { favorites.toggle(ref) } }
+        )
     }
 }
 
@@ -76,6 +96,17 @@ struct TestRow: View {
     ]
     """#
     let tests = (try? JSONDecoder().decode([Test].self, from: Data(json.utf8))) ?? []
+    // Favourite the first test so the row's star indicator is exercised in the preview (#25).
+    let account = Account(label: "Demo", token: "demo")
+    let favorites = FavoritesStore(isTesting: true)
+    if let first = tests.first {
+        favorites.toggle(FavoriteRef(
+            accountID: account.id.uuidString,
+            collection: .tests,
+            itemID: first.id,
+            title: first.name
+        ))
+    }
     return VStack(alignment: .leading, spacing: 12) {
         ForEach(tests) { test in
             TestRow(test: test)
@@ -84,6 +115,8 @@ struct TestRow: View {
     }
     .padding()
     .frame(width: 420)
+    .environment(AccountStore.rankBuddy(isTesting: true, seed: [account]))
+    .environment(favorites)
 }
 
 #Preview("Detail") {

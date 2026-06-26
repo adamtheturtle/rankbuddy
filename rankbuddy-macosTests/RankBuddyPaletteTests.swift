@@ -1,3 +1,4 @@
+import BuddyAppKit
 import CommandPaletteKit
 @testable import rankbuddy_macos
 import SwiftUI
@@ -23,6 +24,7 @@ struct RankBuddyPaletteTests {
         ])
         let results = RankBuddyPalette.staticCandidates(
             store: store,
+            favorites: FavoritesStore(isTesting: true),
             selection: makeBinding(SectionBox()),
             openSettings: {}
         )
@@ -39,6 +41,7 @@ struct RankBuddyPaletteTests {
         let box = SectionBox()
         let results = RankBuddyPalette.staticCandidates(
             store: AccountStore.rankBuddy(isTesting: true),
+            favorites: FavoritesStore(isTesting: true),
             selection: makeBinding(box),
             openSettings: {}
         )
@@ -52,6 +55,7 @@ struct RankBuddyPaletteTests {
         var opened = false
         let results = RankBuddyPalette.staticCandidates(
             store: AccountStore.rankBuddy(isTesting: true),
+            favorites: FavoritesStore(isTesting: true),
             selection: makeBinding(SectionBox()),
             openSettings: { opened = true }
         )
@@ -59,5 +63,43 @@ struct RankBuddyPaletteTests {
         let settings = try #require(results.first { $0.id == "command.settings" })
         settings.action()
         #expect(opened)
+    }
+
+    @Test func `the current account's favourites appear and route to their section`() throws {
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Work", token: "t1")])
+        let account = try #require(store.currentAccount)
+        let favorites = FavoritesStore(isTesting: true)
+        favorites.toggle(FavoriteRef(
+            accountID: account.id.uuidString,
+            collection: .questions,
+            itemID: "q42",
+            title: "Two Sum"
+        ))
+
+        let box = SectionBox()
+        let results = RankBuddyPalette.staticCandidates(
+            store: store,
+            favorites: favorites,
+            selection: makeBinding(box),
+            openSettings: {}
+        )
+
+        let favorite = try #require(results.first { $0.title == "Two Sum" })
+        #expect(favorite.category == "Favourite Questions")
+        favorite.action()
+        #expect(box.value == .questions)
+        // Routing writes the per-account selection key the Questions list restores from.
+        #expect(UserDefaults.standard.string(forKey: "selection.questions.\(account.id)") == "q42")
+    }
+
+    @Test func `favourites contribute nothing when there are none`() {
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Work", token: "t1")])
+        let results = RankBuddyPalette.staticCandidates(
+            store: store,
+            favorites: FavoritesStore(isTesting: true),
+            selection: makeBinding(SectionBox()),
+            openSettings: {}
+        )
+        #expect(!results.contains { $0.id.hasPrefix("favorite.") })
     }
 }

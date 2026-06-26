@@ -1,4 +1,5 @@
 import AppKit
+import BuddyAppKit
 import CommandPaletteKit
 import SwiftUI
 
@@ -9,6 +10,7 @@ struct ContentView: View {
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
     @Environment(PaletteModel.self) private var palette
     @Environment(AccountStore.self) private var store
+    @Environment(FavoritesStore.self) private var favorites
 
     var body: some View {
         @Bindable var palette = palette
@@ -26,10 +28,14 @@ struct ContentView: View {
         } detail: {
             detailView(for: selection)
         }
+        // Drop favourites for accounts that have since been removed, so they never leave
+        // dangling palette/navigation entries (#25).
+        .onAppear { favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString))) }
         .sheet(isPresented: $palette.isPresented) {
             CommandPaletteView(placeholder: "Search RankBuddy…") {
                 await RankBuddyPalette.candidates(
                     store: store,
+                    favorites: favorites,
                     selection: $selection,
                     openSettings: { NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) }
                 )
@@ -65,4 +71,5 @@ struct ContentView: View {
     ContentView()
         .environment(AccountStore.rankBuddy(isTesting: true))
         .environment(PaletteModel())
+        .environment(FavoritesStore(isTesting: true))
 }

@@ -21,6 +21,7 @@ enum RankBuddyPalette {
     @MainActor
     static func staticCandidates(
         store: AccountStore,
+        favorites: FavoritesStore,
         selection: Binding<SidebarSection>,
         openSettings: @escaping @MainActor () -> Void
     ) -> [PaletteResult] {
@@ -34,6 +35,28 @@ enum RankBuddyPalette {
                 systemImage: section.systemImage,
                 searchText: "\(section.title) section"
             ) { selection.wrappedValue = section })
+        }
+
+        // The current account's favourites, routed by writing the same per-account selection
+        // key the list restores from, then switching to that section (#25). Shown on the empty
+        // query (they're useful at rest); contributes nothing — no empty group — when there are
+        // none.
+        if let account = store.currentAccount {
+            for favorite in favorites.favorites(accountID: account.id.uuidString) {
+                results.append(PaletteResult(
+                    id: "favorite.\(favorite.id)",
+                    title: favorite.title,
+                    category: favorite.collection.paletteCategory,
+                    systemImage: "star.fill",
+                    searchText: "\(favorite.title) favourite \(favorite.collection.section.title)"
+                ) {
+                    UserDefaults.standard.set(
+                        favorite.itemID,
+                        forKey: "selection.\(favorite.collection.rawValue).\(favorite.accountID)"
+                    )
+                    selection.wrappedValue = favorite.collection.section
+                })
+            }
         }
 
         results.append(PaletteResult(
@@ -94,10 +117,16 @@ enum RankBuddyPalette {
     @MainActor
     static func candidates(
         store: AccountStore,
+        favorites: FavoritesStore,
         selection: Binding<SidebarSection>,
         openSettings: @escaping @MainActor () -> Void
     ) async -> [PaletteResult] {
-        var results = staticCandidates(store: store, selection: selection, openSettings: openSettings)
+        var results = staticCandidates(
+            store: store,
+            favorites: favorites,
+            selection: selection,
+            openSettings: openSettings
+        )
         await results.append(contentsOf: testCandidates(store: store, selection: selection))
         return results
     }
