@@ -60,6 +60,7 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
             // A write (e.g. inviting a candidate, #12) is acknowledged with the created
             // record, so the app's first write flow can be exercised against the demo.
             if request.httpMethod == "POST" {
+                Self.record(requestBody: Self.bodyData(of: request))
                 respond(url: url, statusCode: 201, body: Self.createdCandidateJSON)
             } else {
                 respond(url: url, statusCode: 200, body: Self.body(for: url))
@@ -90,6 +91,48 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     }
 
     override func stopLoading() {}
+
+    // MARK: - Captured write bodies (test inspection)
+
+    /// Lock guarding the most recent captured request body, since the URL loading system
+    /// calls `startLoading` on its own threads.
+    private static let bodyLock = NSLock()
+    private nonisolated(unsafe) static var capturedBody: Data?
+
+    /// The body of the most recent intercepted write (`POST`), so tests can assert the exact
+    /// JSON the client sends (#12). `nil` until a write is made or after `resetCapturedBody`.
+    static func lastRequestBody() -> Data? {
+        bodyLock.withLock { capturedBody }
+    }
+
+    /// Clears the captured write body so a test starts from a known-empty state.
+    static func resetCapturedBody() {
+        bodyLock.withLock { capturedBody = nil }
+    }
+
+    private static func record(requestBody: Data?) {
+        bodyLock.withLock { capturedBody = requestBody }
+    }
+
+    /// Reads a request's body, draining `httpBodyStream` when set — `URLProtocol` receives a
+    /// `URLSession` upload body as a stream rather than as `httpBody`.
+    private static func bodyData(of request: URLRequest) -> Data? {
+        if let body = request.httpBody { return body }
+        guard let stream = request.httpBodyStream else { return nil }
+
+        stream.open()
+        defer { stream.close() }
+        var data = Data()
+        let bufferSize = 4096
+        var buffer = [UInt8](repeating: 0, count: bufferSize)
+        while stream.hasBytesAvailable {
+            let read = stream.read(&buffer, maxLength: bufferSize)
+            guard read > 0 else { break }
+
+            data.append(buffer, count: read)
+        }
+        return data
+    }
 
     /// Sends a single complete response with the given status and JSON body.
     private func respond(url: URL, statusCode: Int, body: String, extraHeaders: [String: String] = [:]) {
