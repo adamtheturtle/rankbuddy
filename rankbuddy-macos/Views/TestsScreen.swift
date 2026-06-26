@@ -90,6 +90,7 @@ struct TestRow: View {
     let json = #"""
     {"id":"t1","unique_id":"backend-screen","name":"Backend Engineer Screen","state":"active",
      "duration":90,"cutoff_score":70,"enable_proctoring":true,"languages":["python","go"],
+     "shuffle_questions":true,"starred":true,
      "start_time":"2026-01-01T09:00:00Z","end_time":"2026-12-31T09:00:00Z","questions":["q1","q2"],
      "tags":["backend"],
      "sections":[{"uuid":"s1","name":"Coding","questions":2,"duration":60},
@@ -123,6 +124,8 @@ struct TestDetailView: View {
                 OptionalRow("Created", DisplayFormat.date(test.createdAt))
                 OptionalRow("Languages", DisplayFormat.list(test.languages))
                 OptionalRow("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
+                OptionalRow("Shuffle questions", test.shuffleQuestions == true ? "Yes" : nil)
+                OptionalRow("Starred", test.starred == true ? "Yes" : nil)
                 OptionalRow("Locked", test.locked == true ? "Yes" : nil)
                 OptionalRow("Draft", test.draft == true ? "Yes" : nil)
             }
