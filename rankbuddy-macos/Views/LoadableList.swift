@@ -1,4 +1,5 @@
 import BuddyAppKit
+import BuddyDesignSystem
 import FastList
 import SwiftUI
 
@@ -46,6 +47,12 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// launches under this key (#19). Callers scope the key by account and collection. `nil`
     /// (e.g. the nested per-test candidates list) disables persistence but not navigation.
     var restorationKey: String?
+    /// When set, the list offers a date-range filter chip; the closure supplies the date
+    /// each item is filtered by (items with no date are hidden while a range is active).
+    /// Drives the "filters" part of #19. `nil` hides the chip entirely.
+    var filterDate: ((Item) -> Date?)?
+    /// The filter chip's label, naming which date is filtered (e.g. "Attempted", "Created").
+    var dateFilterLabel: String = "Date"
     /// Builds the native row context menu for an item (copy / open-in-browser / favourite).
     /// Returns an empty array for no menu.
     var contextMenu: (Item) -> [MenuItem] = { _ in [] }
@@ -72,6 +79,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @State private var nextCursor: String?
     @State private var isLoadingMore = false
     @State private var query = ""
+    /// The selected date-range filter (one of `NamedDateRange.options`), or `nil` for no
+    /// date constraint.
+    @State private var dateRange: String?
     @State private var sortSelection: SortOption<Item>.ID?
     /// The pushed-detail navigation path.
     @State private var path: [Item] = []
@@ -90,6 +100,17 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .searchable(text: $query, placement: .sidebar, prompt: "Search \(title)")
                 .toolbar {
                     accessoryToolbar()
+
+                    if filterDate != nil {
+                        FilterChipMenu(
+                            title: dateFilterLabel,
+                            icon: "calendar",
+                            selected: $dateRange,
+                            options: NamedDateRange.options,
+                            formatter: { $0.capitalized }
+                        )
+                        .help("Filter \(title) by date")
+                    }
 
                     if !sortOptions.isEmpty {
                         Menu {
@@ -118,6 +139,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .onChange(of: reloadToken) { Task { await reload() } }
                 .onAppear { restoreSort() }
                 .onChange(of: sortSelection) { persistSort() }
+                .onChange(of: dateRange) { persistFilter() }
                 .onChange(of: path) { persistSelection() }
         }
     }
@@ -202,10 +224,17 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     }
 
     private func filter(_ items: [Item]) -> [Item] {
+        var result = items
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return items }
+        if !trimmed.isEmpty {
+            result = result.filter { searchableText($0).localizedCaseInsensitiveContains(trimmed) }
+        }
 
-        return items.filter { searchableText($0).localizedCaseInsensitiveContains(trimmed) }
+        if let filterDate {
+            result = DateRangeFilter.apply(result, range: dateRange, date: filterDate)
+        }
+
+        return result
     }
 
     private func sort(_ items: [Item]) -> [Item] {
@@ -241,9 +270,35 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         }
     }
 
+    /// Where the chosen date filter is remembered (#19), or `nil` when persistence is off.
+    /// Scoped by `restorationKey`, so each account/collection keeps its own filter.
+    private var filterDefaultsKey: String? {
+        restorationKey.map { "filter.\($0)" }
+    }
+
+    /// Restores the saved date filter for the current key, ignoring any stale/unknown value.
+    private func restoreFilter() {
+        guard filterDate != nil, let filterDefaultsKey else { return }
+
+        let saved = UserDefaults.standard.string(forKey: filterDefaultsKey)
+        dateRange = NamedDateRange.options.contains(saved ?? "") ? saved : nil
+    }
+
+    /// Persists the chosen date filter, clearing it when no range is selected.
+    private func persistFilter() {
+        guard let filterDefaultsKey else { return }
+
+        if let dateRange {
+            UserDefaults.standard.set(dateRange, forKey: filterDefaultsKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: filterDefaultsKey)
+        }
+    }
+
     /// Resets and loads the first page (initial load, refresh, or account switch).
     private func reload() async {
         didRestore = false
+        restoreFilter()
         path = []
         selection = nil
         phase = .loading

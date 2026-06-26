@@ -23,6 +23,8 @@ struct InterviewsScreen: View {
                     }
                 ],
                 restorationKey: "selection.interviews.\(account.id)",
+                filterDate: { DisplayFormat.parseDate($0.createdAt) },
+                dateFilterLabel: "Created",
                 contextMenu: { interview in
                     let title = interview.title ?? "Interview \(interview.id)"
                     return rowMenuItems(
@@ -205,6 +207,31 @@ struct InterviewDetailView: View {
         .formStyle(.grouped)
         .navigationTitle(interview.title ?? "Interview")
     }
+}
+
+#Preview("List with date filter") {
+    let json = #"""
+    [
+      {"id":"i1","status":"completed","url":"https://example.com/i1",
+       "title":"Senior Backend — Pairing","created_at":"2026-05-05T13:00:00Z"},
+      {"id":"i2","status":"scheduled","url":"https://example.com/i2",
+       "title":"Frontend — Live Coding","created_at":"2026-05-12T16:00:00Z"}
+    ]
+    """#
+    let interviews = (try? JSONDecoder().decode([Interview].self, from: Data(json.utf8))) ?? []
+    return LoadableList(
+        title: "Interviews",
+        emptyMessage: "No interviews",
+        loadPage: { _ in Page(items: interviews, next: nil) },
+        searchableText: { "\($0.title ?? "") \($0.status)" },
+        filterDate: { DisplayFormat.parseDate($0.createdAt) },
+        dateFilterLabel: "Created",
+        row: { InterviewRow(interview: $0) },
+        detail: { InterviewDetailView(interview: $0) }
+    )
+    .frame(width: 520, height: 360)
+    .environment(AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Demo", token: "demo")]))
+    .environment(FavoritesStore(isTesting: true))
 }
 
 #Preview {

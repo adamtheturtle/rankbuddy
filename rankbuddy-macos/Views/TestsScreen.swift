@@ -22,6 +22,8 @@ struct TestsScreen: View {
                     SortOption("Start Time") { ($0.startTime ?? "") > ($1.startTime ?? "") }
                 ],
                 restorationKey: "selection.tests.\(account.id)",
+                filterDate: { DisplayFormat.parseDate($0.startTime) },
+                dateFilterLabel: "Starts",
                 contextMenu: { test in
                     rowMenuItems(
                         copyLabel: "Copy Name",
