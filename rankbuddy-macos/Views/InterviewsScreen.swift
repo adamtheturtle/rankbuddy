@@ -7,7 +7,9 @@ struct InterviewsScreen: View {
     @Environment(FavoritesStore.self) private var favorites
 
     var body: some View {
-        if let account = store.currentAccount {
+        if store.isMergedView {
+            mergedList
+        } else if let account = store.currentAccount {
             LoadableList(
                 title: "Interviews",
                 emptyMessage: "No interviews",
@@ -44,6 +46,40 @@ struct InterviewsScreen: View {
                     .navigationTitle("Interviews")
             }
         }
+    }
+
+    /// Loads one merged page of interviews across every configured account (#17).
+    private func loadMergedInterviews(_: String?) async throws -> Page<AccountScoped<Interview>> {
+        let items = try await MergedLoader.firstPages(accounts: store.accounts) {
+            try await HackerRankClient(account: $0).interviewsPage().items
+        }
+        return Page(items: items, next: nil)
+    }
+
+    /// Interviews merged across every configured account (#17).
+    private var mergedList: some View {
+        LoadableList(
+            title: "Interviews",
+            emptyMessage: "No interviews",
+            loadPage: loadMergedInterviews,
+            searchableText: { "\($0.item.title ?? "") \($0.item.status) \($0.account.label)" },
+            sortOptions: [
+                SortOption("Newest") { ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "") },
+                SortOption("Account") { $0.account.label.localizedStandardCompare($1.account.label) == .orderedAscending },
+                SortOption("Status") {
+                    $0.item.status.localizedStandardCompare($1.item.status) == .orderedAscending
+                }
+            ],
+            contextMenu: { rowMenuItems(copyLabel: "Copy Title", copyText: $0.item.title ?? "Interview \($0.item.id)", link: $0.item.url) },
+            row: {
+                MergedRow(
+                    title: $0.item.title ?? "Interview \($0.item.id)",
+                    subtitle: $0.item.status.capitalized,
+                    accountLabel: $0.account.label
+                )
+            },
+            detail: { InterviewDetailView(interview: $0.item) }
+        )
     }
 }
 

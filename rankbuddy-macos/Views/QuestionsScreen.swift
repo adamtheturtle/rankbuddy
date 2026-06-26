@@ -7,7 +7,9 @@ struct QuestionsScreen: View {
     @Environment(FavoritesStore.self) private var favorites
 
     var body: some View {
-        if let account = store.currentAccount {
+        if store.isMergedView {
+            mergedList
+        } else if let account = store.currentAccount {
             LoadableList(
                 title: "Questions",
                 emptyMessage: "No questions",
@@ -40,6 +42,32 @@ struct QuestionsScreen: View {
                     .navigationTitle("Questions")
             }
         }
+    }
+
+    /// Loads one merged page of questions across every configured account (#17).
+    private func loadMergedQuestions(_: String?) async throws -> Page<AccountScoped<Question>> {
+        let items = try await MergedLoader.firstPages(accounts: store.accounts) {
+            try await HackerRankClient(account: $0).questionsPage().items
+        }
+        return Page(items: items, next: nil)
+    }
+
+    /// Questions merged across every configured account (#17).
+    private var mergedList: some View {
+        LoadableList(
+            title: "Questions",
+            emptyMessage: "No questions",
+            loadPage: loadMergedQuestions,
+            searchableText: { "\($0.item.name) \($0.item.type) \($0.account.label)" },
+            sortOptions: [
+                SortOption("Name") { $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending },
+                SortOption("Account") { $0.account.label.localizedStandardCompare($1.account.label) == .orderedAscending },
+                SortOption("Type") { $0.item.type.localizedStandardCompare($1.item.type) == .orderedAscending }
+            ],
+            contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
+            row: { MergedRow(title: $0.item.name, subtitle: $0.item.type.capitalized, accountLabel: $0.account.label) },
+            detail: { QuestionDetailView(question: $0.item) }
+        )
     }
 }
 

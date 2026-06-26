@@ -8,7 +8,9 @@ struct TestsScreen: View {
     @Environment(FavoritesStore.self) private var favorites
 
     var body: some View {
-        if let account = store.currentAccount {
+        if store.isMergedView {
+            mergedList
+        } else if let account = store.currentAccount {
             LoadableList(
                 title: "Tests",
                 emptyMessage: "No tests",
@@ -41,6 +43,33 @@ struct TestsScreen: View {
                     .navigationTitle("Tests")
             }
         }
+    }
+
+    /// Loads one merged page of tests across every configured account (#17).
+    private func loadMergedTests(_: String?) async throws -> Page<AccountScoped<Test>> {
+        let items = try await MergedLoader.firstPages(accounts: store.accounts) {
+            try await HackerRankClient(account: $0).testsPage().items
+        }
+        return Page(items: items, next: nil)
+    }
+
+    /// Tests merged across every configured account (#17). One page per account; rows carry an
+    /// account badge and route their detail (and its Candidates drill-down) to the right account.
+    private var mergedList: some View {
+        LoadableList(
+            title: "Tests",
+            emptyMessage: "No tests",
+            loadPage: loadMergedTests,
+            searchableText: { "\($0.item.name) \($0.account.label)" },
+            sortOptions: [
+                SortOption("Name") { $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending },
+                SortOption("Account") { $0.account.label.localizedStandardCompare($1.account.label) == .orderedAscending },
+                SortOption("Newest") { ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "") }
+            ],
+            contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
+            row: { MergedRow(title: $0.item.name, subtitle: $0.item.state?.capitalized, accountLabel: $0.account.label) },
+            detail: { TestDetailView(test: $0.item, account: $0.account) }
+        )
     }
 }
 

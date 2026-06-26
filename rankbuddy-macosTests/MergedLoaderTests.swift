@@ -1,0 +1,61 @@
+import Foundation
+@testable import rankbuddy_macos
+import Testing
+
+/// Coverage for the multi-account merge loader (#17): tagging by account, partial results when
+/// an account fails, all-fail behaviour, and cross-account id distinctness.
+@MainActor
+struct MergedLoaderTests {
+    private struct Item: Identifiable, Hashable {
+        let id: String
+    }
+
+    private struct Boom: Error {}
+
+    private func account(_ label: String) -> Account {
+        Account(label: label, token: "t-\(label)")
+    }
+
+    @Test func `merges items tagged by their account`() async throws {
+        let a = account("A")
+        let b = account("B")
+        let merged = try await MergedLoader.firstPages(accounts: [a, b]) { acct in
+            acct.id == a.id ? [Item(id: "1"), Item(id: "2")] : [Item(id: "3")]
+        }
+        #expect(merged.map(\.item.id) == ["1", "2", "3"])
+        #expect(merged.count(where: { $0.account.id == a.id }) == 2)
+        #expect(merged.last?.account.id == b.id)
+    }
+
+    @Test func `a failing account is skipped but the others still return`() async throws {
+        let good = account("Good")
+        let bad = account("Bad")
+        let merged = try await MergedLoader.firstPages(accounts: [bad, good]) { acct in
+            if acct.id == bad.id { throw Boom() }
+            return [Item(id: "ok")]
+        }
+        #expect(merged.map(\.item.id) == ["ok"])
+        #expect(merged.first?.account.id == good.id)
+    }
+
+    @Test func `it throws only when every account fails`() async {
+        await #expect(throws: Boom.self) {
+            _ = try await MergedLoader.firstPages(accounts: [account("A"), account("B")]) { _ -> [Item] in
+                throw Boom()
+            }
+        }
+    }
+
+    @Test func `no accounts yields an empty list`() async throws {
+        let merged = try await MergedLoader.firstPages(accounts: []) { _ in [Item(id: "x")] }
+        #expect(merged.isEmpty)
+    }
+
+    @Test func `the same item id in two accounts stays distinct`() async throws {
+        let a = account("A")
+        let b = account("B")
+        let merged = try await MergedLoader.firstPages(accounts: [a, b]) { _ in [Item(id: "dup")] }
+        #expect(merged.count == 2)
+        #expect(Set(merged.map(\.id)).count == 2)
+    }
+}
