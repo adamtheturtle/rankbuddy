@@ -1,4 +1,4 @@
-import AppKit
+import BuddyAppKit
 import FastList
 import Flow
 import SwiftUI
@@ -22,13 +22,6 @@ struct TagList: View {
             }
         }
     }
-}
-
-/// Copies `text` to the general pasteboard.
-@MainActor
-func copyToPasteboard(_ text: String) {
-    NSPasteboard.general.clearContents()
-    NSPasteboard.general.setString(text, forType: .string)
 }
 
 /// Builds a row's native context menu (`FastList`'s `MenuItem`s, since the hosted SwiftUI
@@ -59,11 +52,11 @@ func rowMenuItems(
     }
 
     if let link, let url = URL(string: link) {
-        items.append(.button(title: openLabel) { NSWorkspace.shared.open(url) })
-        items.append(.button(title: "Copy Link") { copyToPasteboard(url.absoluteString) })
+        items.append(.button(title: openLabel) { URLOpener.open(url) })
+        items.append(.button(title: "Copy Link") { Clipboard.copy(url.absoluteString) })
     }
 
-    items.append(.button(title: copyLabel) { copyToPasteboard(copyText) })
+    items.append(.button(title: copyLabel) { Clipboard.copy(copyText) })
     return items
 }
 

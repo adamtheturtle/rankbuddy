@@ -199,4 +199,18 @@ struct ModelDecodingResilienceTests {
         #expect(page.pageItems.isEmpty)
         #expect(page.nextPage == nil)
     }
+
+    @Test func `a page drops a malformed item but keeps the good ones`() throws {
+        // The middle test is missing its required `name`; leniency drops it so one bad record
+        // on a live account doesn't fail the whole list (the page-level backstop for #5/#34).
+        let json = #"""
+        {"data":[
+          {"id":"t1","name":"Good"},
+          {"id":"t2"},
+          {"id":"t3","name":"Also good"}
+        ],"next":null}
+        """#
+        let page = try decode(HackerRankPage<rankbuddy_macos.Test>.self, json)
+        #expect(page.pageItems.map(\.id) == ["t1", "t3"])
+    }
 }
