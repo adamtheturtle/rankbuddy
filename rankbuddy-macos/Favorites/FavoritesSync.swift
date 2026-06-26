@@ -1,7 +1,8 @@
+import BuddyAppKit
 import Foundation
 
 /// A minimal key-value sync backend, abstracted so the favourites sync logic is testable
-/// without iCloud (#22). The real implementation wraps `NSUbiquitousKeyValueStore`.
+/// without iCloud (#22). The app implementation adapts buddy-kit's `CloudSyncStore`.
 @MainActor
 protocol KeyValueSyncStore: AnyObject {
     /// Whether the synchronized store is actually usable — gated on the real iCloud KVS
@@ -14,41 +15,54 @@ protocol KeyValueSyncStore: AnyObject {
     @discardableResult func synchronize() -> Bool
 }
 
-/// `NSUbiquitousKeyValueStore`-backed sync store. `isAvailable` is gated on the actual KVS
-/// capability: `synchronize()` returns `false` when the `ubiquity-kvstore-identifier`
-/// entitlement is absent, and there must be an iCloud account — so a build without the
-/// entitlement reports unavailable and the coordinator stays inert (no repeated errors).
+/// Adapts buddy-kit's shared `CloudSyncStore` to `KeyValueSyncStore` (#22).
+///
+/// `CloudSyncStore.isAvailable` gates on the actual `ubiquity-kvstore-identifier` entitlement
+/// (via `SecTask`), so a build without it reports unavailable and the coordinator stays inert.
+/// External changes arrive as `CloudSyncStore.didChangeExternally` notifications; this bridges
+/// the one for our key onto the protocol's `onExternalChange` closure.
 @MainActor
-final class UbiquitousKeyValueSyncStore: KeyValueSyncStore {
-    private let store = NSUbiquitousKeyValueStore.default
+final class CloudSyncKeyValueStore: KeyValueSyncStore {
     var onExternalChange: (() -> Void)?
 
-    private(set) lazy var isAvailable: Bool = FileManager.default.ubiquityIdentityToken != nil && store.synchronize()
+    private let cloud = CloudSyncStore.shared
+    private let key: String
+    private var observer: Task<Void, Never>?
 
-    init() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(externalChange),
-            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
-            object: store
-        )
+    init(key: String) {
+        self.key = key
+        cloud.start()
+        observer = Task { @MainActor [weak self] in
+            for await note in NotificationCenter.default.notifications(named: CloudSyncStore.didChangeExternally) {
+                guard let self, (note.userInfo?["key"] as? String) == key else { continue }
+
+                onExternalChange?()
+            }
+        }
     }
 
-    @objc private func externalChange() {
-        // Hop to the main actor; the notification can arrive on a background queue.
-        Task { @MainActor in self.onExternalChange?() }
+    deinit {
+        observer?.cancel()
+    }
+
+    var isAvailable: Bool {
+        cloud.isAvailable
     }
 
     func data(forKey key: String) -> Data? {
-        store.data(forKey: key)
+        cloud.data(forKey: key)
     }
 
     func setData(_ data: Data?, forKey key: String) {
-        store.set(data, forKey: key)
+        // Favourites are always written as a full (possibly empty) array, never nil.
+        guard let data else { return }
+
+        cloud.mirror(data, forKey: key)
     }
 
     @discardableResult func synchronize() -> Bool {
-        store.synchronize()
+        // CloudSyncStore synchronizes internally on start and write; nothing extra to do.
+        true
     }
 }
 
@@ -57,10 +71,10 @@ final class UbiquitousKeyValueSyncStore: KeyValueSyncStore {
 /// Favourites are non-secret user state (no tokens or API payloads), synced as the whole
 /// `[FavoriteRef]` JSON blob under one key. The merge rule is **whole-set last-writer-wins**:
 /// every local change is pushed immediately, and an incoming external change is adopted
-/// wholesale — which propagates additions *and* deletions deterministically. An `isAdopting`
-/// guard stops an adopted change from echoing straight back. When the store is unavailable
-/// (no iCloud entitlement/account) the coordinator does nothing, so the app works unchanged
-/// locally.
+/// wholesale — which propagates additions *and* deletions deterministically (buddy-kit's
+/// `CloudSyncMerge` is union-only and wouldn't propagate deletions). An `isAdopting` guard
+/// stops an adopted change from echoing straight back. When the store is unavailable (no iCloud
+/// entitlement/account) the coordinator does nothing, so the app works unchanged locally.
 @MainActor
 final class FavoritesSyncCoordinator {
     /// The shared key, identical to the local `FavoritesStore` storage key so a future

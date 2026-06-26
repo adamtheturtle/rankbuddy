@@ -33,7 +33,10 @@ struct RankBuddyApp: App {
         _favoritesSync = State(
             initialValue: isDemo
                 ? nil
-                : FavoritesSyncCoordinator(favorites: favorites, store: UbiquitousKeyValueSyncStore())
+                : FavoritesSyncCoordinator(
+                    favorites: favorites,
+                    store: CloudSyncKeyValueStore(key: FavoritesSyncCoordinator.key)
+                )
         )
     }
 
