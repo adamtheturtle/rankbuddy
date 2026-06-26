@@ -247,6 +247,13 @@ struct CandidateDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
+        .toolbar {
+            ToolbarItem {
+                PrintReportButton(jobTitle: "Candidate – \(candidate.fullName ?? candidate.email)") {
+                    CandidateReport(candidate: candidate)
+                }
+            }
+        }
     }
 }
 

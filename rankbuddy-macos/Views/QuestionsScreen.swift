@@ -152,5 +152,12 @@ struct QuestionDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(question.name)
+        .toolbar {
+            ToolbarItem {
+                PrintReportButton(jobTitle: "Question – \(question.name)") {
+                    QuestionReport(question: question)
+                }
+            }
+        }
     }
 }

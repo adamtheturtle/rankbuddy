@@ -524,7 +524,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/buddy-kit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.6.0;
+				version = 0.7.0;
 			};
 		};
 		66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */ = {

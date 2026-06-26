@@ -206,6 +206,13 @@ struct InterviewDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(interview.title ?? "Interview")
+        .toolbar {
+            ToolbarItem {
+                PrintReportButton(jobTitle: "Interview – \(interview.title ?? interview.id)") {
+                    InterviewReport(interview: interview)
+                }
+            }
+        }
     }
 }
 

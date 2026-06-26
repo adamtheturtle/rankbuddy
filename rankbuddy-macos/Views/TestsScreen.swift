@@ -246,5 +246,12 @@ struct TestDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(test.name)
+        .toolbar {
+            ToolbarItem {
+                PrintReportButton(jobTitle: "Test – \(test.name)") {
+                    TestReport(test: test)
+                }
+            }
+        }
     }
 }
