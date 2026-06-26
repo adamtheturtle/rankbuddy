@@ -13,6 +13,11 @@ struct SettingsView: View {
                     Label("Accounts", systemImage: "person.crop.circle")
                 }
 
+            mcpTab
+                .tabItem {
+                    Label("MCP", systemImage: "terminal")
+                }
+
             aboutTab
                 .tabItem {
                     Label("About", systemImage: "info.circle")
@@ -60,6 +65,39 @@ struct SettingsView: View {
                 }
             } footer: {
                 Text("The demo account shows sample data from the built-in mock server — no HackerRank token required.")
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var mcpTab: some View {
+        Form {
+            Section("Model Context Protocol") {
+                Text("RankBuddy can act as a read-only MCP server, so an AI assistant " +
+                    "(e.g. Claude Desktop) can browse the selected account's tests, candidates, " +
+                    "questions, and interviews.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section {
+                Text(MCPSetup.clientConfigJSON())
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Button {
+                    Clipboard.copy(MCPSetup.clientConfigJSON())
+                } label: {
+                    Label("Copy Configuration", systemImage: "doc.on.doc")
+                }
+            } header: {
+                Text("Client configuration")
+            } footer: {
+                Text("Add this to your MCP client's config (for Claude Desktop, " +
+                    "claude_desktop_config.json) and restart the client. The server reads the " +
+                    "account currently selected in RankBuddy and never exposes your token.")
             }
         }
         .formStyle(.grouped)
