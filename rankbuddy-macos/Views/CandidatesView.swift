@@ -253,6 +253,18 @@ struct CandidateDetailView: View {
     }
 }
 
+#Preview("Invite (demo)") {
+    InviteCandidateSheet(testID: "t1", account: .demo) {}
+}
+
+#Preview("Invite (live)") {
+    InviteCandidateSheet(
+        testID: "t1",
+        account: Account(label: "Work", token: "live-token"),
+        onInvited: {}
+    )
+}
+
 #Preview {
     let json = #"""
     [
