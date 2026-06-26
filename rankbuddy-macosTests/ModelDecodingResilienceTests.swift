@@ -54,6 +54,42 @@ struct ModelDecodingResilienceTests {
         }
     }
 
+    @Test func `decodes a section that omits its uuid`() throws {
+        // Live tests include sections without a `uuid` (and sometimes without a `name`); one
+        // such section must not fail the whole Test, which would break the entire Tests page.
+        let json = #"""
+        {"id":"t1","name":"Screen","sections":[
+          {"name":"Coding","questions":2},
+          {"uuid":"s2","name":"MCQ","questions":5},
+          {}
+        ]}
+        """#
+        let test = try decode(Test.self, json)
+        let sections = try #require(test.sections)
+        #expect(sections.count == 3)
+        #expect(sections[0].uuid == nil)
+        #expect(sections[0].displayName == "Coding")
+        #expect(sections[0].id == "Coding")
+        #expect(sections[1].id == "s2")
+        // A wholly empty section still decodes with a generic label and a fallback id.
+        #expect(sections[2].displayName == "Section")
+        #expect(sections[2].id == "section")
+    }
+
+    @Test func `a uuid-less section does not break the surrounding page`() throws {
+        // Reproduces the live failure: one test deep in a page had a section with no `uuid`,
+        // which previously failed the whole `HackerRankPage<Test>` decode.
+        let json = #"""
+        {"data":[
+          {"id":"t1","name":"First"},
+          {"id":"t2","name":"Second","sections":[{"name":"Part 1","questions":3}]}
+        ],"next":null}
+        """#
+        let page = try decode(HackerRankPage<rankbuddy_macos.Test>.self, json)
+        #expect(page.pageItems.count == 2)
+        #expect(page.pageItems[1].sections?.first?.displayName == "Part 1")
+    }
+
     // MARK: - TestCandidate
 
     @Test func `candidate decodes with only id and email`() throws {

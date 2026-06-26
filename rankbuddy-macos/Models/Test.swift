@@ -76,18 +76,27 @@ nonisolated struct Test: Codable, Hashable, Identifiable {
 }
 
 /// A named group of questions within a test (the test's `sections`).
+///
+/// Both `uuid` and `name` are optional: live responses include sections that omit one or
+/// both (e.g. an unnamed, ad-hoc section), and a single such section must not fail the whole
+/// `Test` (and with it the entire Tests page). `id` falls back through the available fields.
 nonisolated struct TestSection: Codable, Hashable, Identifiable {
-    /// Stable identifier of the section.
-    let uuid: String
-    /// The section's display name.
-    let name: String
+    /// Stable identifier of the section, when the API provides one.
+    let uuid: String?
+    /// The section's display name, when set.
+    let name: String?
     /// Number of questions in the section.
     let questionCount: Int?
     /// The section's time limit in minutes, if it has its own.
     let duration: Int?
 
     var id: String {
-        uuid
+        uuid ?? name ?? "section"
+    }
+
+    /// The name to show, falling back to a generic label when the section is unnamed.
+    var displayName: String {
+        name ?? "Section"
     }
 
     enum CodingKeys: String, CodingKey {

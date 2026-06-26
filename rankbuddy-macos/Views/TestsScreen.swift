@@ -133,7 +133,7 @@ struct TestDetailView: View {
             if let sections = test.sections, !sections.isEmpty {
                 Section("Sections") {
                     ForEach(sections) { section in
-                        LabeledContent(section.name) {
+                        LabeledContent(section.displayName) {
                             if let count = section.questionCount {
                                 Text("\(count) question\(count == 1 ? "" : "s")")
                             }
