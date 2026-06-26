@@ -33,6 +33,15 @@ struct QuestionsScreen: View {
                         )
                     )
                 },
+                onFirstPage: { questions in
+                    RecentActivityStore.shared.record(
+                        questions.map {
+                            RecentItem(collection: .questions, id: $0.id, title: $0.name, subtitle: $0.type.capitalized)
+                        },
+                        for: .questions,
+                        account: account.id
+                    )
+                },
                 row: { QuestionRow(question: $0) },
                 detail: { QuestionDetailView(question: $0) }
             )

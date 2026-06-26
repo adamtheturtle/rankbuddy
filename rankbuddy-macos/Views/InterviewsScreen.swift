@@ -37,6 +37,20 @@ struct InterviewsScreen: View {
                         )
                     )
                 },
+                onFirstPage: { interviews in
+                    RecentActivityStore.shared.record(
+                        interviews.map {
+                            RecentItem(
+                                collection: .interviews,
+                                id: $0.id,
+                                title: $0.title ?? "Interview \($0.id)",
+                                subtitle: $0.status.capitalized
+                            )
+                        },
+                        for: .interviews,
+                        account: account.id
+                    )
+                },
                 row: { InterviewRow(interview: $0) },
                 detail: { InterviewDetailView(interview: $0) }
             )

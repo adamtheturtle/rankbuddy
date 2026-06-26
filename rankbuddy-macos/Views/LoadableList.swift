@@ -49,6 +49,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// Builds the native row context menu for an item (copy / open-in-browser / favourite).
     /// Returns an empty array for no menu.
     var contextMenu: (Item) -> [MenuItem] = { _ in [] }
+    /// Called with the first page's items each time it loads, so callers can cache recent
+    /// activity (#23). Not called for subsequent (load-more) pages.
+    var onFirstPage: ([Item]) -> Void = { _ in }
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
@@ -242,6 +245,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
             items = page.items
             nextCursor = page.next
             phase = .loaded
+            onFirstPage(page.items)
             restoreIfNeeded(items)
         } catch {
             phase = .failed(message(for: error))

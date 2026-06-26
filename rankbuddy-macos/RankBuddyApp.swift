@@ -1,3 +1,4 @@
+import BuddyAppKit
 import SwiftUI
 
 /// The RankBuddy app entry point.
@@ -46,7 +47,10 @@ struct RankBuddyApp: App {
                 .environment(accountStore)
                 .environment(palette)
                 .environment(favorites)
-                .task { favoritesSync?.start() }
+                .task {
+                    favoritesSync?.start()
+                    NetworkMonitor.shared.start()
+                }
         }
         .commands {
             AppCommands(palette: palette)
