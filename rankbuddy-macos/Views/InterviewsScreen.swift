@@ -224,6 +224,7 @@ struct InterviewDetailView: View {
         emptyMessage: "No interviews",
         loadPage: { _ in Page(items: interviews, next: nil) },
         searchableText: { "\($0.title ?? "") \($0.status)" },
+        restorationKey: "preview.interviews",
         filterDate: { DisplayFormat.parseDate($0.createdAt) },
         dateFilterLabel: "Created",
         row: { InterviewRow(interview: $0) },

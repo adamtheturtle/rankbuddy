@@ -125,6 +125,15 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                         .help("Sort \(title)")
                     }
 
+                    if let restorationKey {
+                        SavedSearchMenu(
+                            title: title,
+                            restorationKey: restorationKey,
+                            query: $query,
+                            dateRange: $dateRange
+                        )
+                    }
+
                     Button {
                         Task { await reload() }
                     } label: {
@@ -270,31 +279,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         }
     }
 
-    /// Where the chosen date filter is remembered (#19), or `nil` when persistence is off.
-    /// Scoped by `restorationKey`, so each account/collection keeps its own filter.
-    private var filterDefaultsKey: String? {
-        restorationKey.map { "filter.\($0)" }
-    }
-
-    /// Restores the saved date filter for the current key, ignoring any stale/unknown value.
-    private func restoreFilter() {
-        guard filterDate != nil, let filterDefaultsKey else { return }
-
-        let saved = UserDefaults.standard.string(forKey: filterDefaultsKey)
-        dateRange = NamedDateRange.options.contains(saved ?? "") ? saved : nil
-    }
-
-    /// Persists the chosen date filter, clearing it when no range is selected.
-    private func persistFilter() {
-        guard let filterDefaultsKey else { return }
-
-        if let dateRange {
-            UserDefaults.standard.set(dateRange, forKey: filterDefaultsKey)
-        } else {
-            UserDefaults.standard.removeObject(forKey: filterDefaultsKey)
-        }
-    }
-
     /// Resets and loads the first page (initial load, refresh, or account switch).
     private func reload() async {
         didRestore = false
@@ -369,6 +353,35 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
             UserDefaults.standard.set(String(describing: selected.id), forKey: restorationKey)
         } else {
             UserDefaults.standard.removeObject(forKey: restorationKey)
+        }
+    }
+}
+
+// MARK: - Date-filter persistence (#19)
+
+private extension LoadableList {
+    /// Where the chosen date filter is remembered (#19), or `nil` when persistence is off.
+    /// Scoped by `restorationKey`, so each account/collection keeps its own filter.
+    var filterDefaultsKey: String? {
+        restorationKey.map { "filter.\($0)" }
+    }
+
+    /// Restores the saved date filter for the current key, ignoring any stale/unknown value.
+    func restoreFilter() {
+        guard filterDate != nil, let filterDefaultsKey else { return }
+
+        let saved = UserDefaults.standard.string(forKey: filterDefaultsKey)
+        dateRange = NamedDateRange.options.contains(saved ?? "") ? saved : nil
+    }
+
+    /// Persists the chosen date filter, clearing it when no range is selected.
+    func persistFilter() {
+        guard let filterDefaultsKey else { return }
+
+        if let dateRange {
+            UserDefaults.standard.set(dateRange, forKey: filterDefaultsKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: filterDefaultsKey)
         }
     }
 }
