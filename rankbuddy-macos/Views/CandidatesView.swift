@@ -81,13 +81,8 @@ struct InviteCandidateSheet: View {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// A deliberately conservative check: one `@`, a non-empty local part, and a dotted
-    /// domain. Enough to catch obvious typos before sending; the server is the real judge.
     private var isEmailValid: Bool {
-        let parts = trimmedEmail.split(separator: "@", omittingEmptySubsequences: false)
-        guard parts.count == 2 else { return false }
-
-        return !parts[0].isEmpty && parts[1].contains(".") && !parts[1].hasSuffix(".")
+        EmailValidation.isLikelyValid(email)
     }
 
     var body: some View {
