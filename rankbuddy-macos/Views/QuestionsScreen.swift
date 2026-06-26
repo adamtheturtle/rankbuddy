@@ -4,6 +4,7 @@ import SwiftUI
 /// The Questions section: a list of the account's questions with read-only detail.
 struct QuestionsScreen: View {
     @Environment(AccountStore.self) private var store
+    @Environment(FavoritesStore.self) private var favorites
 
     var body: some View {
         if let account = store.currentAccount {
@@ -18,6 +19,18 @@ struct QuestionsScreen: View {
                     SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") }
                 ],
                 restorationKey: "selection.questions.\(account.id)",
+                contextMenu: { question in
+                    rowMenuItems(
+                        copyLabel: "Copy Name",
+                        copyText: question.name,
+                        favorite: favorites.menuState(
+                            accountID: store.currentAccountID,
+                            collection: .questions,
+                            itemID: question.id,
+                            title: question.name
+                        )
+                    )
+                },
                 row: { QuestionRow(question: $0) },
                 detail: { QuestionDetailView(question: $0) }
             )
@@ -65,12 +78,6 @@ struct QuestionRow: View {
             FavoriteIndicator(isFavorite: isFavorite)
         }
         .accessibilityElement(children: .combine)
-        .rowContextMenu(
-            copyLabel: "Copy Name",
-            copyText: question.name,
-            isFavorite: favoriteRef != nil ? isFavorite : nil,
-            toggleFavorite: favoriteRef.map { ref in { favorites.toggle(ref) } }
-        )
     }
 }
 

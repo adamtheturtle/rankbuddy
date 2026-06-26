@@ -5,6 +5,7 @@ import SwiftUI
 /// view that also links to the test's candidates.
 struct TestsScreen: View {
     @Environment(AccountStore.self) private var store
+    @Environment(FavoritesStore.self) private var favorites
 
     var body: some View {
         if let account = store.currentAccount {
@@ -19,6 +20,18 @@ struct TestsScreen: View {
                     SortOption("Start Time") { ($0.startTime ?? "") > ($1.startTime ?? "") }
                 ],
                 restorationKey: "selection.tests.\(account.id)",
+                contextMenu: { test in
+                    rowMenuItems(
+                        copyLabel: "Copy Name",
+                        copyText: test.name,
+                        favorite: favorites.menuState(
+                            accountID: store.currentAccountID,
+                            collection: .tests,
+                            itemID: test.id,
+                            title: test.name
+                        )
+                    )
+                },
                 row: { TestRow(test: $0) },
                 detail: { TestDetailView(test: $0, account: account) }
             )
@@ -74,12 +87,6 @@ struct TestRow: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .rowContextMenu(
-            copyLabel: "Copy Name",
-            copyText: test.name,
-            isFavorite: favoriteRef != nil ? isFavorite : nil,
-            toggleFavorite: favoriteRef.map { ref in { favorites.toggle(ref) } }
-        )
     }
 }
 

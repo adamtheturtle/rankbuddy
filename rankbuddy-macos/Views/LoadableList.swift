@@ -1,3 +1,5 @@
+import BuddyAppKit
+import FastList
 import SwiftUI
 
 /// A named way to order a list's items, shown in the list's sort menu.
@@ -16,8 +18,13 @@ struct SortOption<Item>: Identifiable {
 /// A list that loads its items one page at a time and renders loading, empty, and error
 /// states, with search, optional sorting, refresh, and load-more-on-scroll. The first page
 /// is shown as soon as it arrives; further pages load as the user nears the end, so large
-/// live collections never drain up front (#34). Each row pushes a detail view through the
-/// enclosing `NavigationStack`.
+/// live collections never drain up front (#34).
+///
+/// Rows render through `FastList` (NSTableView-backed on macOS) for instant selection and
+/// smooth scrolling at large item counts (#31). Selection highlights a row; **double-click
+/// or Return opens** its detail by pushing onto the list's own `NavigationStack`. The
+/// selected detail, the chosen sort order, and the free-scroll position are persisted and
+/// restored per account (#19) when a `restorationKey` is set.
 struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail: View>: View {
     /// The first-load phase. Loaded items and the cursor live in their own state so further
     /// pages can append without disturbing this.
@@ -35,12 +42,20 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     let searchableText: (Item) -> String
     /// The ways the list can be ordered; the first is the default. Empty hides the menu.
     var sortOptions: [SortOption<Item>] = []
-    /// When set, the list owns its `NavigationStack` and restores/persists the selected
-    /// item across launches under this key (#19). Callers scope the key by account and
-    /// collection. `nil` (e.g. a list nested inside another stack) disables both.
+    /// When set, the list persists/restores the selected detail and scroll position across
+    /// launches under this key (#19). Callers scope the key by account and collection. `nil`
+    /// (e.g. the nested per-test candidates list) disables persistence but not navigation.
     var restorationKey: String?
+    /// Builds the native row context menu for an item (copy / open-in-browser / favourite).
+    /// Returns an empty array for no menu.
+    var contextMenu: (Item) -> [MenuItem] = { _ in [] }
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
+
+    // Forwarded into each FastList row: FastList hosts rows in their own NSHostingView, which
+    // does not inherit the SwiftUI environment, so rows that read these stores would trap (#31).
+    @Environment(AccountStore.self) private var accountStore
+    @Environment(FavoritesStore.self) private var favorites
 
     @State private var phase: Phase = .loading
     @State private var items: [Item] = []
@@ -49,58 +64,61 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @State private var isLoadingMore = false
     @State private var query = ""
     @State private var sortSelection: SortOption<Item>.ID?
-    /// The pushed-detail navigation path; only used (and bound) when `restorationKey` is set.
+    /// The pushed-detail navigation path.
     @State private var path: [Item] = []
-    /// Guards selection restoration to once per load cycle, so navigating back doesn't re-push.
+    /// The highlighted row (FastList selection); drives nothing but the highlight.
+    @State private var selection: Item.ID?
+    /// A one-shot scroll target honoured on the next layout (restored selection/scroll).
+    @State private var scrollTarget: Item.ID?
+    /// Guards restoration to once per load cycle, so navigating back doesn't re-push.
     @State private var didRestore = false
 
     var body: some View {
-        if restorationKey != nil {
-            NavigationStack(path: $path) { core }
-        } else {
-            core
-        }
-    }
-
-    private var core: some View {
-        content
-            .navigationTitle(title)
-            .navigationDestination(for: Item.self, destination: detail)
-            .searchable(text: $query, placement: .sidebar, prompt: "Search \(title)")
-            .toolbar {
-                if !sortOptions.isEmpty {
-                    Menu {
-                        Picker("Sort By", selection: $sortSelection) {
-                            ForEach(sortOptions) { option in
-                                Text(option.label).tag(Optional(option.id))
+        NavigationStack(path: $path) {
+            content
+                .navigationTitle(title)
+                .navigationDestination(for: Item.self, destination: detail)
+                .searchable(text: $query, placement: .sidebar, prompt: "Search \(title)")
+                .toolbar {
+                    if !sortOptions.isEmpty {
+                        Menu {
+                            Picker("Sort By", selection: $sortSelection) {
+                                ForEach(sortOptions) { option in
+                                    Text(option.label).tag(Optional(option.id))
+                                }
                             }
+                        } label: {
+                            Label("Sort", systemImage: "arrow.up.arrow.down")
                         }
-                    } label: {
-                        Label("Sort", systemImage: "arrow.up.arrow.down")
+                        .help("Sort \(title)")
                     }
-                    .help("Sort \(title)")
-                }
 
-                Button {
-                    Task { await reload() }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+                    Button {
+                        Task { await reload() }
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    .keyboardShortcut("r", modifiers: .command)
+                    .disabled(isLoading)
                 }
-                .keyboardShortcut("r", modifiers: .command)
-                .disabled(isLoading)
-            }
-            // Re-runs when the account-scoped key changes, clearing any stale restored
-            // pane before loading the new account's data (#19).
-            .task(id: restorationKey) { await reload() }
-            .onAppear { restoreSort() }
-            .onChange(of: sortSelection) { persistSort() }
-            .onChange(of: path) { persistSelection() }
+                // Re-runs when the account-scoped key changes, clearing any stale restored
+                // pane before loading the new account's data (#19).
+                .task(id: restorationKey) { await reload() }
+                .onAppear { restoreSort() }
+                .onChange(of: sortSelection) { persistSort() }
+                .onChange(of: path) { persistSelection() }
+        }
     }
 
     /// Where this list's chosen sort order is remembered between launches (#19). Keyed by
     /// title, so each collection keeps its own preference.
     private var sortDefaultsKey: String {
         "sort.\(title)"
+    }
+
+    /// Where the free-scroll anchor is remembered (#19), or `nil` when persistence is off.
+    private var scrollDefaultsKey: String? {
+        restorationKey.map { "scroll.\($0)" }
     }
 
     /// Restores the saved sort order by label, falling back to the first option.
@@ -147,23 +165,20 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         if visible.isEmpty {
             ContentUnavailableView.search(text: query)
         } else {
-            List {
-                ForEach(visible) { item in
-                    NavigationLink(value: item) { row(item) }
-                        .onAppear {
-                            if item.id == visible.last?.id { Task { await loadMore() } }
-                        }
-                }
-
-                if isLoadingMore {
-                    HStack {
-                        Spacer()
-                        ProgressView().controlSize(.small)
-                        Spacer()
-                    }
-                    .listRowSeparator(.hidden)
-                }
+            FastList(visible, selection: $selection) { item in
+                // Re-inject the stores the rows read, because FastList's per-row NSHostingView
+                // doesn't inherit the SwiftUI environment. Non-interactive so a click falls
+                // through to the table for selection (the favourite star is a passive indicator).
+                row(item)
+                    .environment(accountStore)
+                    .environment(favorites)
+                    .allowsHitTesting(false)
             }
+            .onDoubleClick { open($0) }
+            .onReturnKey { open($0) }
+            .rowContextMenu { contextMenu($0) }
+            .onTopRowChange { topRowChanged(to: $0, in: visible) }
+            .scrollToRow(id: scrollTarget) { scrollTarget = nil }
             .navigationSubtitle(subtitle(visibleCount: visible.count))
         }
     }
@@ -191,10 +206,34 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         if case .loading = phase { true } else { false }
     }
 
+    /// Pushes an item's detail (or no-ops if it's already on top).
+    private func open(_ item: Item) {
+        guard path.last != item else { return }
+
+        path = [item]
+    }
+
+    /// When a settled scroll leaves the top row near the end, page in the next chunk (#34);
+    /// also persists the anchor for scroll restoration (#19).
+    private func topRowChanged(to topID: Item.ID?, in visible: [Item]) {
+        if let scrollDefaultsKey, let topID {
+            UserDefaults.standard.set(String(describing: topID), forKey: scrollDefaultsKey)
+        }
+
+        guard nextCursor != nil, !isLoadingMore, let topID,
+              let index = visible.firstIndex(where: { $0.id == topID })
+        else { return }
+
+        if index >= visible.count - 12 {
+            Task { await loadMore() }
+        }
+    }
+
     /// Resets and loads the first page (initial load, refresh, or account switch).
     private func reload() async {
         didRestore = false
         path = []
+        selection = nil
         phase = .loading
         items = []
         nextCursor = nil
@@ -203,7 +242,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
             items = page.items
             nextCursor = page.next
             phase = .loaded
-            restoreSelectionIfNeeded(items)
+            restoreIfNeeded(items)
         } catch {
             phase = .failed(message(for: error))
         }
@@ -229,18 +268,29 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 
-    /// Re-opens the last-viewed item's detail once per load, if it's in the loaded pages. A
-    /// missing item (deleted, a different account, or only on a not-yet-loaded page) simply
-    /// leaves the list at the top — no loops, no blank pane (#19).
-    private func restoreSelectionIfNeeded(_ items: [Item]) {
-        guard let restorationKey, !didRestore, path.isEmpty else { return }
+    /// Once per load: re-opens the last-viewed item's detail and scrolls to it, or — when no
+    /// detail was open — scrolls to the saved free-scroll anchor. A missing item (deleted, a
+    /// different account, or only on a not-yet-loaded page) simply leaves the list at the top
+    /// — no loops, no blank pane (#19).
+    private func restoreIfNeeded(_ items: [Item]) {
+        guard !didRestore, path.isEmpty else { return }
 
         didRestore = true
-        guard let stored = UserDefaults.standard.string(forKey: restorationKey),
-              let item = items.first(where: { String(describing: $0.id) == stored })
-        else { return }
 
-        path = [item]
+        if let restorationKey,
+           let stored = UserDefaults.standard.string(forKey: restorationKey),
+           let item = items.first(where: { String(describing: $0.id) == stored }) {
+            selection = item.id
+            scrollTarget = item.id
+            path = [item]
+            return
+        }
+
+        if let scrollDefaultsKey,
+           let anchor = UserDefaults.standard.string(forKey: scrollDefaultsKey),
+           let item = items.first(where: { String(describing: $0.id) == anchor }) {
+            scrollTarget = item.id
+        }
     }
 
     /// Remembers the currently selected item (the top of the path), or clears it on pop.

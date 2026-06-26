@@ -17,6 +17,7 @@ struct PeopleScreen: View {
                     SortOption("Role") { ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending }
                 ],
                 restorationKey: "selection.users.\(account.id)",
+                contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
                 row: { PersonRow(user: $0) },
                 detail: { PersonDetailView(user: $0) }
             )
@@ -56,7 +57,6 @@ struct PersonRow: View {
             .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .rowContextMenu(copyLabel: "Copy Email", copyText: user.email)
     }
 }
 

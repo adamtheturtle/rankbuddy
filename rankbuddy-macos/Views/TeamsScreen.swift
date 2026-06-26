@@ -17,6 +17,7 @@ struct TeamsScreen: View {
                     SortOption("Size") { ($0.developerCount ?? 0) > ($1.developerCount ?? 0) }
                 ],
                 restorationKey: "selection.teams.\(account.id)",
+                contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.name) },
                 row: { TeamRow(team: $0) },
                 detail: { TeamDetailView(team: $0) }
             )
@@ -60,7 +61,6 @@ struct TeamRow: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .rowContextMenu(copyLabel: "Copy Name", copyText: team.name)
     }
 }
 

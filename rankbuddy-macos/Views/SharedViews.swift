@@ -1,4 +1,5 @@
 import AppKit
+import FastList
 import Flow
 import SwiftUI
 
@@ -30,55 +31,40 @@ func copyToPasteboard(_ text: String) {
     NSPasteboard.general.setString(text, forType: .string)
 }
 
-extension View {
-    /// Adds a list-row context menu with a copy action and, when a web link is present,
-    /// open-in-browser and copy-link actions.
-    ///
-    /// - Parameters:
-    ///   - copyLabel: The menu title for copying `copyText` (e.g. "Copy Name").
-    ///   - copyText: The text placed on the pasteboard by the copy action.
-    ///   - link: An optional web URL string; when it parses, an open/copy-link pair is shown.
-    ///   - openLabel: The menu title for the open-in-browser action.
-    ///   - isFavorite: when non-nil, a favourite toggle is shown reflecting this state (#25).
-    ///   - toggleFavorite: the action run by the favourite toggle; paired with `isFavorite`.
-    func rowContextMenu(
-        copyLabel: String,
-        copyText: String,
-        link: String? = nil,
-        openLabel: String = "Open in Browser",
-        isFavorite: Bool? = nil,
-        toggleFavorite: (() -> Void)? = nil
-    ) -> some View {
-        let url = link.flatMap(URL.init(string:))
-        return contextMenu {
-            if let isFavorite, let toggleFavorite {
-                Button {
-                    toggleFavorite()
-                } label: {
-                    Label(
-                        isFavorite ? "Remove from Favourites" : "Add to Favourites",
-                        systemImage: isFavorite ? "star.slash" : "star"
-                    )
-                }
-                Divider()
-            }
-            if let url {
-                Link(destination: url) {
-                    Label(openLabel, systemImage: "safari")
-                }
-                Button {
-                    copyToPasteboard(url.absoluteString)
-                } label: {
-                    Label("Copy Link", systemImage: "link")
-                }
-            }
-            Button {
-                copyToPasteboard(copyText)
-            } label: {
-                Label(copyLabel, systemImage: "doc.on.doc")
-            }
-        }
+/// Builds a row's native context menu (`FastList`'s `MenuItem`s, since the hosted SwiftUI
+/// row content is hit-transparent and a SwiftUI `.contextMenu` on it would never fire).
+///
+/// - Parameters:
+///   - copyLabel: The menu title for copying `copyText` (e.g. "Copy Name").
+///   - copyText: The text placed on the pasteboard by the copy action.
+///   - link: An optional web URL string; when it parses, an open/copy-link pair is added.
+///   - openLabel: The menu title for the open-in-browser action.
+///   - favorite: when non-nil, a leading favourite toggle reflecting `isFavorite` (#25).
+@MainActor
+func rowMenuItems(
+    copyLabel: String,
+    copyText: String,
+    link: String? = nil,
+    openLabel: String = "Open in Browser",
+    favorite: (isFavorite: Bool, toggle: () -> Void)? = nil
+) -> [MenuItem] {
+    var items: [MenuItem] = []
+
+    if let favorite {
+        items.append(.button(
+            title: favorite.isFavorite ? "Remove from Favourites" : "Add to Favourites",
+            action: favorite.toggle
+        ))
+        items.append(.separator)
     }
+
+    if let link, let url = URL(string: link) {
+        items.append(.button(title: openLabel) { NSWorkspace.shared.open(url) })
+        items.append(.button(title: "Copy Link") { copyToPasteboard(url.absoluteString) })
+    }
+
+    items.append(.button(title: copyLabel) { copyToPasteboard(copyText) })
+    return items
 }
 
 /// A small star shown on a favourited row. Renders nothing when `isFavorite` is false, so

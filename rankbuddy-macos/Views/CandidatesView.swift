@@ -25,6 +25,14 @@ struct CandidatesList: View {
                 // Higher ATS codes are further along the pipeline; unset/unknown sort last.
                 SortOption("Status") { ($0.atsState ?? -1) > ($1.atsState ?? -1) }
             ],
+            contextMenu: { candidate in
+                rowMenuItems(
+                    copyLabel: "Copy Email",
+                    copyText: candidate.email,
+                    link: candidate.reportURL,
+                    openLabel: "Open Report"
+                )
+            },
             row: { CandidateRow(candidate: $0) },
             detail: { CandidateDetailView(candidate: $0) }
         )
@@ -58,12 +66,6 @@ struct CandidateRow: View {
             candidate.integrityBadge
         }
         .accessibilityElement(children: .combine)
-        .rowContextMenu(
-            copyLabel: "Copy Email",
-            copyText: candidate.email,
-            link: candidate.reportURL,
-            openLabel: "Open Report"
-        )
     }
 }
 

@@ -4,6 +4,7 @@ import SwiftUI
 /// The Interviews section: a list of the account's interviews with read-only detail.
 struct InterviewsScreen: View {
     @Environment(AccountStore.self) private var store
+    @Environment(FavoritesStore.self) private var favorites
 
     var body: some View {
         if let account = store.currentAccount {
@@ -20,6 +21,20 @@ struct InterviewsScreen: View {
                     }
                 ],
                 restorationKey: "selection.interviews.\(account.id)",
+                contextMenu: { interview in
+                    let title = interview.title ?? "Interview \(interview.id)"
+                    return rowMenuItems(
+                        copyLabel: "Copy Title",
+                        copyText: title,
+                        link: interview.url,
+                        favorite: favorites.menuState(
+                            accountID: store.currentAccountID,
+                            collection: .interviews,
+                            itemID: interview.id,
+                            title: title
+                        )
+                    )
+                },
                 row: { InterviewRow(interview: $0) },
                 detail: { InterviewDetailView(interview: $0) }
             )
@@ -89,13 +104,6 @@ struct InterviewRow: View {
             interview.statusBadge
         }
         .accessibilityElement(children: .combine)
-        .rowContextMenu(
-            copyLabel: "Copy Title",
-            copyText: displayTitle,
-            link: interview.url,
-            isFavorite: favoriteRef != nil ? isFavorite : nil,
-            toggleFavorite: favoriteRef.map { ref in { favorites.toggle(ref) } }
-        )
     }
 }
 

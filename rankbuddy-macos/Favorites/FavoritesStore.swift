@@ -123,4 +123,23 @@ final class FavoritesStore {
 
         defaults.set(data, forKey: storageKey)
     }
+
+    /// The favourite-toggle state for a row's context menu, or `nil` when there is no current
+    /// account (nothing to scope the favourite to). The toggle adds/removes the item.
+    func menuState(
+        accountID: UUID?,
+        collection: FavoriteCollection,
+        itemID: String,
+        title: String
+    ) -> (isFavorite: Bool, toggle: () -> Void)? {
+        guard let accountID else { return nil }
+
+        let ref = FavoriteRef(
+            accountID: accountID.uuidString,
+            collection: collection,
+            itemID: itemID,
+            title: title
+        )
+        return (isFavorite(collection: collection, accountID: ref.accountID, itemID: itemID), { self.toggle(ref) })
+    }
 }
