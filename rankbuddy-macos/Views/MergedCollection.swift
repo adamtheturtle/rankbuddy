@@ -11,6 +11,11 @@ nonisolated struct AccountScoped<Item: Identifiable & Hashable & Sendable>: Iden
     var id: String {
         "\(account.id.uuidString)|\(item.id)"
     }
+
+    /// Orders merged rows by their account label — the shared "Account" sort for merged lists.
+    static func byAccountLabel(_ lhs: Self, _ rhs: Self) -> Bool {
+        lhs.account.label.localizedStandardCompare(rhs.account.label) == .orderedAscending
+    }
 }
 
 /// Loads the first page of a collection from several accounts and merges the results (#17).

@@ -17,14 +17,14 @@ struct MergedLoaderTests {
     }
 
     @Test func `merges items tagged by their account`() async throws {
-        let a = account("A")
-        let b = account("B")
-        let merged = try await MergedLoader.firstPages(accounts: [a, b]) { acct in
-            acct.id == a.id ? [Item(id: "1"), Item(id: "2")] : [Item(id: "3")]
+        let accA = account("A")
+        let accB = account("B")
+        let merged = try await MergedLoader.firstPages(accounts: [accA, accB]) { acct in
+            acct.id == accA.id ? [Item(id: "1"), Item(id: "2")] : [Item(id: "3")]
         }
         #expect(merged.map(\.item.id) == ["1", "2", "3"])
-        #expect(merged.count(where: { $0.account.id == a.id }) == 2)
-        #expect(merged.last?.account.id == b.id)
+        #expect(merged.count(where: { $0.account.id == accA.id }) == 2)
+        #expect(merged.last?.account.id == accB.id)
     }
 
     @Test func `a failing account is skipped but the others still return`() async throws {
@@ -52,9 +52,9 @@ struct MergedLoaderTests {
     }
 
     @Test func `the same item id in two accounts stays distinct`() async throws {
-        let a = account("A")
-        let b = account("B")
-        let merged = try await MergedLoader.firstPages(accounts: [a, b]) { _ in [Item(id: "dup")] }
+        let accA = account("A")
+        let accB = account("B")
+        let merged = try await MergedLoader.firstPages(accounts: [accA, accB]) { _ in [Item(id: "dup")] }
         #expect(merged.count == 2)
         #expect(Set(merged.map(\.id)).count == 2)
     }

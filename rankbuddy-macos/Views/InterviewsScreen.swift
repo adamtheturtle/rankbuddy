@@ -65,12 +65,18 @@ struct InterviewsScreen: View {
             searchableText: { "\($0.item.title ?? "") \($0.item.status) \($0.account.label)" },
             sortOptions: [
                 SortOption("Newest") { ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "") },
-                SortOption("Account") { $0.account.label.localizedStandardCompare($1.account.label) == .orderedAscending },
+                SortOption("Account", by: AccountScoped.byAccountLabel),
                 SortOption("Status") {
                     $0.item.status.localizedStandardCompare($1.item.status) == .orderedAscending
                 }
             ],
-            contextMenu: { rowMenuItems(copyLabel: "Copy Title", copyText: $0.item.title ?? "Interview \($0.item.id)", link: $0.item.url) },
+            contextMenu: {
+                rowMenuItems(
+                    copyLabel: "Copy Title",
+                    copyText: $0.item.title ?? "Interview \($0.item.id)",
+                    link: $0.item.url
+                )
+            },
             row: {
                 MergedRow(
                     title: $0.item.title ?? "Interview \($0.item.id)",

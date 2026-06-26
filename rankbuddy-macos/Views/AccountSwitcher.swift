@@ -56,7 +56,9 @@ struct AccountSwitcher: View {
         .menuStyle(.borderlessButton)
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .accessibilityLabel(store.isMergedView ? "All accounts" : "Current account: \(store.currentAccount?.label ?? "none")")
+        .accessibilityLabel(
+            store.isMergedView ? "All accounts" : "Current account: \(store.currentAccount?.label ?? "none")"
+        )
         .accessibilityHint("Switch accounts")
     }
 }

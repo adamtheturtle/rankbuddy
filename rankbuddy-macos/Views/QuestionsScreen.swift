@@ -61,11 +61,13 @@ struct QuestionsScreen: View {
             searchableText: { "\($0.item.name) \($0.item.type) \($0.account.label)" },
             sortOptions: [
                 SortOption("Name") { $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending },
-                SortOption("Account") { $0.account.label.localizedStandardCompare($1.account.label) == .orderedAscending },
+                SortOption("Account", by: AccountScoped.byAccountLabel),
                 SortOption("Type") { $0.item.type.localizedStandardCompare($1.item.type) == .orderedAscending }
             ],
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
-            row: { MergedRow(title: $0.item.name, subtitle: $0.item.type.capitalized, accountLabel: $0.account.label) },
+            row: {
+                MergedRow(title: $0.item.name, subtitle: $0.item.type.capitalized, accountLabel: $0.account.label)
+            },
             detail: { QuestionDetailView(question: $0.item) }
         )
     }
