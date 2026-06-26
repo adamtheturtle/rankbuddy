@@ -14,6 +14,7 @@
 		6676A0A82FEEB2410023907A /* FastList in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0A72FEEB2410023907A /* FastList */; };
 		6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AA2FEEB24F0023907A /* Sparkle */; };
 		6676A0AE2FEEB2710023907A /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AD2FEEB2710023907A /* MCP */; };
+		6676A3532FEF19070023907A /* BuddyMCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A3522FEF19070023907A /* BuddyMCP */; };
 		668CA7EB2FEC7BFA00420E24 /* CommandPaletteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */; };
 /* End PBXBuildFile section */
 
@@ -49,6 +50,7 @@
 		000000000000000130000000 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				6676A3532FEF19070023907A /* BuddyMCP in Frameworks */,
 				6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */,
 				66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */,
 				66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */,
@@ -72,6 +74,7 @@
 			children = (
 				000000000000000000000010 /* rankbuddy-macos */,
 				662C2C562FEC525200FE99C0 /* rankbuddy-macosTests */,
+				6676A3512FEF19070023907A /* Frameworks */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -83,6 +86,13 @@
 				662C2C552FEC525200FE99C0 /* rankbuddy-macosTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6676A3512FEF19070023907A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -111,6 +121,7 @@
 				6676A0A72FEEB2410023907A /* FastList */,
 				6676A0AA2FEEB24F0023907A /* Sparkle */,
 				6676A0AD2FEEB2710023907A /* MCP */,
+				6676A3522FEF19070023907A /* BuddyMCP */,
 			);
 			productName = "rankbuddy-macos";
 			productReference = 000000000000000000000120 /* rankbuddy-macos.app */;
@@ -513,7 +524,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/buddy-kit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.4.0;
+				version = 0.5.0;
 			};
 		};
 		66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */ = {
@@ -593,6 +604,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6676A0AC2FEEB2710023907A /* XCRemoteSwiftPackageReference "swift-sdk" */;
 			productName = MCP;
+		};
+		6676A3522FEF19070023907A /* BuddyMCP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66062D132FEB0FB800352492 /* XCRemoteSwiftPackageReference "buddy-kit" */;
+			productName = BuddyMCP;
 		};
 		668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */ = {
 			isa = XCSwiftPackageProductDependency;
