@@ -1,18 +1,11 @@
 import BuddyAppKit
+import BuddyDesignSystem
 import SwiftUI
 
 /// A form for adding or editing a HackerRank account: label, personal access token, and
 /// an optional region/base-URL override, with a button to validate the token against the
 /// API before saving.
 struct AccountEditor: View {
-    /// The progress of a token-validation attempt.
-    enum ValidationState: Equatable {
-        case idle
-        case validating
-        case valid
-        case invalid(String)
-    }
-
     @Environment(AccountStore.self) private var store
     @Environment(\.dismiss) private var dismiss
 
@@ -22,7 +15,8 @@ struct AccountEditor: View {
     @State private var label: String
     @State private var token: String
     @State private var baseURLOverride: String
-    @State private var validation: ValidationState = .idle
+    /// Validation progress, using buddy-kit's shared credential-validation state (#2).
+    @State private var validation: CredentialValidationState = .idle
 
     init(existing: Account? = nil) {
         self.existing = existing
@@ -45,7 +39,11 @@ struct AccountEditor: View {
                 }
                 .disabled(trimmedToken.isEmpty || validation == .validating)
 
-                validationStatus
+                ValidationStatusBanner(
+                    validation,
+                    validating: "Validating…",
+                    success: "Token is valid — connected to \(draft.baseURL.host() ?? "HackerRank")"
+                )
             }
         }
         .formStyle(.grouped)
@@ -59,28 +57,6 @@ struct AccountEditor: View {
                 Button("Save") { save() }
                     .disabled(!canSave)
             }
-        }
-    }
-
-    @ViewBuilder private var validationStatus: some View {
-        switch validation {
-        case .idle:
-            EmptyView()
-
-        case .validating:
-            HStack(spacing: 6) {
-                ProgressView().controlSize(.small)
-                Text("Validating…").foregroundStyle(.secondary)
-            }
-
-        case .valid:
-            Label("Token is valid — connected to \(draft.baseURL.host() ?? "HackerRank")",
-                  systemImage: "checkmark.circle")
-                .foregroundStyle(.green)
-
-        case let .invalid(message):
-            Label(message, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.red)
         }
     }
 
@@ -129,5 +105,12 @@ struct AccountEditor: View {
             store.update(draft)
         }
         dismiss()
+    }
+}
+
+#Preview {
+    NavigationStack {
+        AccountEditor()
+            .environment(AccountStore.rankBuddy(isTesting: true))
     }
 }
