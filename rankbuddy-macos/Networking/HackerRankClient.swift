@@ -53,6 +53,38 @@ struct HackerRankClient {
         )
     }
 
+    /// Invites a candidate to a test (`POST /tests/{id}/candidates`) — the app's first
+    /// write flow (#12). The app is read-only by default; this is reached only when the
+    /// user has opted into write actions and confirmed the invite.
+    ///
+    /// - Parameters:
+    ///   - testID: the test to invite the candidate to.
+    ///   - email: the candidate's email address (the only required field).
+    ///   - fullName: the candidate's name, if known; blank names are sent as absent.
+    ///   - sendEmail: whether HackerRank should email the candidate the invitation.
+    /// - Returns: the created candidate as echoed by the API (fields are optional, so a 2xx
+    ///   never fails on an unexpected response shape).
+    @discardableResult
+    func inviteCandidate(
+        testID: String,
+        email: String,
+        fullName: String? = nil,
+        sendEmail: Bool = true
+    ) async throws -> InvitedCandidate {
+        let trimmedName = fullName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let body = InviteCandidateRequest(
+            email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+            fullName: (trimmedName?.isEmpty == false) ? trimmedName : nil,
+            sendEmail: sendEmail
+        )
+        return try await rest.send(
+            InvitedCandidate.self,
+            method: "POST",
+            path: "\(Self.apiV3)/tests/\(Self.pathSegment(testID))/candidates",
+            body: body
+        )
+    }
+
     /// One page of the account's questions, plus the cursor for the next page.
     func questionsPage(after cursor: String? = nil) async throws -> Page<Question> {
         try await page(HackerRankPage<Question>.self, path: "\(Self.apiV3)/questions", cursor: cursor)
@@ -135,4 +167,26 @@ struct HackerRankClient {
 nonisolated struct Page<Item: Sendable> {
     let items: [Item]
     let next: String?
+}
+
+/// The body sent when inviting a candidate to a test (#12). Encoded as the API's
+/// snake-case JSON; a blank name is omitted entirely rather than sent empty.
+private nonisolated struct InviteCandidateRequest: Encodable {
+    let email: String
+    let fullName: String?
+    let sendEmail: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case email
+        case fullName = "full_name"
+        case sendEmail = "send_email"
+    }
+}
+
+/// The candidate record echoed back by a successful invite. Every field is optional so a
+/// 2xx response never fails to decode on an unexpected shape — the invite is what matters,
+/// not parsing the echo.
+nonisolated struct InvitedCandidate: Decodable {
+    let id: String?
+    let email: String?
 }

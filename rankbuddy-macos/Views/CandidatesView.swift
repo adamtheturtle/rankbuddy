@@ -1,9 +1,17 @@
 import SwiftUI
 
-/// The candidates for a test, pushed from `TestDetailView`. Read-only list + detail.
+/// The candidates for a test, pushed from `TestDetailView`. Read-only list + detail, with
+/// an opt-in "Invite Candidate" write action (#12).
 struct CandidatesList: View {
     let testID: String
     let account: Account
+
+    // The app is read-only by default; the invite action appears only when the user has
+    // turned on write actions in Settings (#12).
+    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
+    @State private var invitePresented = false
+    /// Bumped after a successful invite to refresh the list.
+    @State private var reloadToken = 0
 
     var body: some View {
         LoadableList(
@@ -33,9 +41,125 @@ struct CandidatesList: View {
                     openLabel: "Open Report"
                 )
             },
+            accessoryToolbar: { writeActionsEnabled ? AnyView(inviteButton) : AnyView(EmptyView()) },
+            reloadToken: reloadToken,
             row: { CandidateRow(candidate: $0) },
             detail: { CandidateDetailView(candidate: $0) }
         )
+        .sheet(isPresented: $invitePresented) {
+            InviteCandidateSheet(testID: testID, account: account) { reloadToken += 1 }
+        }
+    }
+
+    private var inviteButton: some View {
+        Button {
+            invitePresented = true
+        } label: {
+            Label("Invite Candidate…", systemImage: "person.badge.plus")
+        }
+        .help("Invite a candidate to this test")
+    }
+}
+
+/// A sheet that invites a candidate to a test (#12) — the app's first write flow. Reached
+/// only when write actions are enabled; it states plainly when the action affects a real
+/// HackerRank account, and refreshes the list on success.
+struct InviteCandidateSheet: View {
+    let testID: String
+    let account: Account
+    /// Called after a successful invite so the caller can refresh the candidates list.
+    var onInvited: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var email = ""
+    @State private var fullName = ""
+    @State private var sendEmail = true
+    @State private var isSending = false
+    @State private var errorMessage: String?
+
+    private var trimmedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// A deliberately conservative check: one `@`, a non-empty local part, and a dotted
+    /// domain. Enough to catch obvious typos before sending; the server is the real judge.
+    private var isEmailValid: Bool {
+        let parts = trimmedEmail.split(separator: "@", omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return false }
+
+        return !parts[0].isEmpty && parts[1].contains(".") && !parts[1].hasSuffix(".")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Email", text: $email)
+                        .textContentType(.emailAddress)
+                        .disableAutocorrection(true)
+                    TextField("Full name (optional)", text: $fullName)
+                    Toggle("Send invitation email", isOn: $sendEmail)
+                } footer: {
+                    Text(consequenceText)
+                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Invite Candidate")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .disabled(isSending)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if isSending {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Button("Invite") { Task { await invite() } }
+                            .disabled(!isEmailValid)
+                    }
+                }
+            }
+        }
+        .frame(width: 440, height: 300)
+    }
+
+    /// The footer text spelling out what the invite will do, so a live action is never a
+    /// surprise.
+    private var consequenceText: String {
+        if account.isMock {
+            return "Demo account — no real invitation is sent."
+        }
+        return sendEmail
+            ? "This invites a real candidate to this test on HackerRank and emails them the invitation."
+            : "This invites a real candidate to this test on HackerRank (no email is sent)."
+    }
+
+    private func invite() async {
+        isSending = true
+        errorMessage = nil
+        defer { isSending = false }
+        do {
+            try await HackerRankClient(account: account).inviteCandidate(
+                testID: testID,
+                email: trimmedEmail,
+                fullName: fullName,
+                sendEmail: sendEmail
+            )
+            onInvited()
+            dismiss()
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 }
 

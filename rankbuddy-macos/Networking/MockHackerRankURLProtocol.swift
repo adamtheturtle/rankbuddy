@@ -57,7 +57,13 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
 
         switch Scenario.current {
         case .success:
-            respond(url: url, statusCode: 200, body: Self.body(for: url))
+            // A write (e.g. inviting a candidate, #12) is acknowledged with the created
+            // record, so the app's first write flow can be exercised against the demo.
+            if request.httpMethod == "POST" {
+                respond(url: url, statusCode: 201, body: Self.createdCandidateJSON)
+            } else {
+                respond(url: url, statusCode: 200, body: Self.body(for: url))
+            }
 
         case .empty:
             respond(url: url, statusCode: 200, body: #"{"data":[],"next":null}"#)
@@ -131,6 +137,12 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     }
 
     // MARK: - Fixtures (deterministic demo data; no real personal data)
+
+    /// The record returned when a candidate is invited in the demo (#12). The invite UI
+    /// shows the email the user typed, so this canned echo only needs to decode cleanly.
+    private static let createdCandidateJSON = #"""
+    {"id":"c-invited","email":"invited@example.com","status":0,"ats_state":0}
+    """#
 
     private static let testsPage1JSON = #"""
     {"data":[

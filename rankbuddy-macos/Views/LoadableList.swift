@@ -52,6 +52,12 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// Called with the first page's items each time it loads, so callers can cache recent
     /// activity (#23). Not called for subsequent (load-more) pages.
     var onFirstPage: ([Item]) -> Void = { _ in }
+    /// Extra leading toolbar content (e.g. a write action like "Invite Candidate", #12).
+    /// Defaults to nothing, keeping read-only lists unchanged.
+    var accessoryToolbar: () -> AnyView = { AnyView(EmptyView()) }
+    /// Bump this from the caller to force a reload (e.g. after a successful write refreshes
+    /// the list). Changing the value re-runs the first-page load.
+    var reloadToken: Int = 0
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
@@ -83,6 +89,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .navigationDestination(for: Item.self, destination: detail)
                 .searchable(text: $query, placement: .sidebar, prompt: "Search \(title)")
                 .toolbar {
+                    accessoryToolbar()
+
                     if !sortOptions.isEmpty {
                         Menu {
                             Picker("Sort By", selection: $sortSelection) {
@@ -107,6 +115,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 // Re-runs when the account-scoped key changes, clearing any stale restored
                 // pane before loading the new account's data (#19).
                 .task(id: restorationKey) { await reload() }
+                .onChange(of: reloadToken) { Task { await reload() } }
                 .onAppear { restoreSort() }
                 .onChange(of: sortSelection) { persistSort() }
                 .onChange(of: path) { persistSelection() }
