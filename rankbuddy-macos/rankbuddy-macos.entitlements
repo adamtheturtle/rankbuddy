@@ -7,6 +7,10 @@
 	<!-- RankBuddy talks to the HackerRank for Work API over HTTPS. -->
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!-- Print / Save-as-PDF from the detail views (#13). Without this the sandbox
+	     blocks NSPrintOperation with "This application does not support printing." -->
+	<key>com.apple.security.print</key>
+	<true/>
 	<!-- Team-ID-prefixed App Group (not the bare "group." form): a notarized
 	     Developer-ID build embeds no provisioning profile, and macOS only
 	     authorizes a "group."-prefixed App Group when it's listed in the profile.
