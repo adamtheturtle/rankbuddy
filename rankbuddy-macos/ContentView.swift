@@ -8,6 +8,9 @@ import SwiftUI
 struct ContentView: View {
     /// The selected section, persisted across launches (#19).
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
+    /// The last app version whose "What's New" was shown (#47).
+    @AppStorage(WhatsNew.lastSeenKey) private var lastSeenVersion = ""
+    @State private var showWhatsNew = false
     @Environment(PaletteModel.self) private var palette
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
@@ -39,7 +42,15 @@ struct ContentView: View {
         }
         // Drop favourites for accounts that have since been removed, so they never leave
         // dangling palette/navigation entries (#25).
-        .onAppear { favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString))) }
+        .onAppear {
+            favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
+            showWhatsNew = WhatsNew.shouldShow(
+                currentVersion: WhatsNew.currentVersion, lastSeenVersion: lastSeenVersion
+            )
+        }
+        .sheet(isPresented: $showWhatsNew) {
+            WhatsNewView { lastSeenVersion = WhatsNew.currentVersion }
+        }
         .sheet(isPresented: $palette.isPresented) {
             CommandPaletteView(placeholder: "Search RankBuddy…") {
                 await RankBuddyPalette.candidates(
