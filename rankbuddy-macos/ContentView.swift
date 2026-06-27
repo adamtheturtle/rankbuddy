@@ -11,6 +11,7 @@ struct ContentView: View {
     @Environment(PaletteModel.self) private var palette
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(AccountHealthMonitor.self) private var health
 
     var body: some View {
         @Bindable var palette = palette
@@ -26,7 +27,15 @@ struct ContentView: View {
                 AccountSwitcher()
             }
         } detail: {
-            detailView(for: selection)
+            VStack(spacing: 0) {
+                if health.isUnauthorized(store.currentAccountID) {
+                    UnauthorizedBanner()
+                }
+                detailView(for: selection)
+            }
+            // Re-probe whenever the active account changes, so switching to a revoked
+            // account flags it without waiting for the periodic check (#40).
+            .task(id: store.currentAccountID) { await health.check(store: store) }
         }
         // Drop favourites for accounts that have since been removed, so they never leave
         // dangling palette/navigation entries (#25).
@@ -72,4 +81,5 @@ struct ContentView: View {
         .environment(AccountStore.rankBuddy(isTesting: true))
         .environment(PaletteModel())
         .environment(FavoritesStore(isTesting: true))
+        .environment(AccountHealthMonitor())
 }

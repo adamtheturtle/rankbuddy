@@ -7,6 +7,7 @@ import SwiftUI
 /// API before saving.
 struct AccountEditor: View {
     @Environment(AccountStore.self) private var store
+    @Environment(AccountHealthMonitor.self) private var health
     @Environment(\.dismiss) private var dismiss
 
     /// The account being edited, or `nil` when adding a new one.
@@ -104,6 +105,9 @@ struct AccountEditor: View {
         } else {
             store.update(draft)
         }
+        // The token may have just been fixed; clear any stale "rejected" verdict so the
+        // banner drops immediately (a later health check re-flags it if it's still bad).
+        health.clearUnauthorized(draft.id)
         dismiss()
     }
 }
@@ -112,5 +116,6 @@ struct AccountEditor: View {
     NavigationStack {
         AccountEditor()
             .environment(AccountStore.rankBuddy(isTesting: true))
+            .environment(AccountHealthMonitor())
     }
 }

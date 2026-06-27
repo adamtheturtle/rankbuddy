@@ -141,6 +141,26 @@ struct GetAPIKeyLink: View {
     }
 }
 
+/// A banner shown over the lists when the current account's token has been rejected
+/// mid-session (#40), pointing the user at Settings to fix it.
+struct UnauthorizedBanner: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .accessibilityHidden(true)
+            Text("This account's token was rejected. Update it in Settings.")
+                .font(.callout)
+            Spacer()
+            SettingsLink { Text("Open Settings") }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.orange.opacity(0.12))
+        .accessibilityElement(children: .combine)
+    }
+}
+
 /// A `LabeledContent` row that renders only when the value is present and non-empty, so
 /// detail forms can list every field without showing blank rows for missing data.
 struct OptionalRow: View {
@@ -164,4 +184,9 @@ struct OptionalRow: View {
     NoAccountView()
         .environment(AccountStore.rankBuddy(isTesting: true))
         .frame(width: 520, height: 380)
+}
+
+#Preview("Unauthorized banner") {
+    UnauthorizedBanner()
+        .frame(width: 520)
 }

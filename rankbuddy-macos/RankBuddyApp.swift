@@ -17,6 +17,8 @@ struct RankBuddyApp: App {
     @State private var favoritesSync: FavoritesSyncCoordinator?
     /// The user's chosen appearance (General settings), applied to the main window.
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
+    /// Re-checks the current account's token so a mid-session revocation surfaces a banner (#40).
+    @State private var health = AccountHealthMonitor()
 
     init() {
         // Demo mode (RANKBUDDY_DEMO=1) seeds the in-memory demo account; its `isMock` flag
@@ -48,11 +50,13 @@ struct RankBuddyApp: App {
                 .environment(accountStore)
                 .environment(palette)
                 .environment(favorites)
+                .environment(health)
                 .task {
                     favoritesSync?.start()
                     NetworkMonitor.shared.start()
                     LivenessNotifier.shared.register()
                     LivenessMonitor.shared.start(store: accountStore)
+                    health.start(store: accountStore)
                 }
                 .preferredColorScheme(appearance.colorScheme)
         }
@@ -64,6 +68,7 @@ struct RankBuddyApp: App {
         Settings {
             SettingsView()
                 .environment(accountStore)
+                .environment(health)
         }
 
         MenuBarExtra("RankBuddy", systemImage: "checklist") {
