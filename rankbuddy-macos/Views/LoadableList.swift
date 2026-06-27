@@ -317,7 +317,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
             nextCursor = page.next
             phase = .loaded
             onFirstPage(page.items)
-            restoreIfNeeded(items)
+            await restoreIfNeeded(items)
         } catch {
             phase = .failed(message(for: error))
         }
@@ -348,7 +348,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// detail was open — scrolls to the saved free-scroll anchor. A missing item (deleted, a
     /// different account, or only on a not-yet-loaded page) simply leaves the list at the top
     /// — no loops, no blank pane (#19).
-    private func restoreIfNeeded(_ items: [Item]) {
+    private func restoreIfNeeded(_ items: [Item]) async {
         guard !didRestore, path.isEmpty else { return }
 
         didRestore = true
@@ -358,6 +358,14 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
            let item = items.first(where: { String(describing: $0.id) == stored }) {
             selection = [item.id]
             scrollTarget = item.id
+            // Push the restored detail on the next runloop tick, after the cleared path
+            // (the loading reset in `reload()`) has committed. If `loadPage` resolves
+            // without a real suspension — a cached or mock page — clearing and re-pushing
+            // `path` otherwise land in one frame, so the NavigationStack's path observer is
+            // asked to update twice per frame (#84). The yield forces a frame boundary.
+            await Task.yield()
+            guard path.isEmpty else { return }
+
             path = [item]
             return
         }
