@@ -128,6 +128,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @State private var scrollTarget: Item.ID?
     /// Guards restoration to once per load cycle, so navigating back doesn't re-push.
     @State private var didRestore = false
+    @State var isFilterLoading = false // search-paging spinner vs. a premature "No results" (#86)
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -258,8 +259,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
             FacetBar(facets: facets, items: items, selected: $selectedFacets)
 
             if visible.isEmpty {
-                ContentUnavailableView.search(text: query)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                filterEmptyState
             } else {
                 FastList(visible, selection: $selection) { item in
                     // Re-inject the stores the rows read, because FastList's per-row NSHostingView

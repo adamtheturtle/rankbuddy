@@ -60,6 +60,18 @@ extension LoadableList {
             || (!serverDateFiltering && filterDate != nil && dateRange != nil)
     }
 
+    /// The empty state shown when a filter matches nothing in the loaded rows: a "Searching…"
+    /// spinner while more pages are still being paged in (#86), so a slow scan over a large
+    /// collection (e.g. finding one person among thousands) doesn't read as a premature "No
+    /// results"; the real "No results" shows only once the scan has settled.
+    @ViewBuilder var filterEmptyState: some View {
+        if isFilterLoading {
+            ProgressView("Searching…").frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ContentUnavailableView.search(text: query).frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
     /// Pages in more rows while a client-side filter is active so the match isn't limited to the
     /// first page (#86). Driven by `.task(id: clientFilterToken)`, so SwiftUI cancels and restarts
     /// it as the filter changes — which also debounces typing via the initial sleep.
@@ -69,6 +81,8 @@ extension LoadableList {
         // Debounce: a rapid keystroke/toggle cancels this task (and this sleep) before any load.
         try? await Task.sleep(for: .milliseconds(350))
 
+        isFilterLoading = true
+        defer { isFilterLoading = false }
         var pagesLoadedThisFilter = 0
         while !Task.isCancelled,
               ListSearchPaging.shouldKeepLoading(
