@@ -42,6 +42,8 @@ struct QuestionsScreen: View {
                         account: account.id
                     )
                 },
+                csvExport: { CSVExport.questions($0) },
+                csvFilename: "questions",
                 row: { QuestionRow(question: $0) },
                 detail: { QuestionDetailView(question: $0) }
             )

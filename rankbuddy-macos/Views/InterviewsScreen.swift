@@ -53,6 +53,8 @@ struct InterviewsScreen: View {
                         account: account.id
                     )
                 },
+                csvExport: { CSVExport.interviews($0) },
+                csvFilename: "interviews",
                 row: { InterviewRow(interview: $0) },
                 detail: { InterviewDetailView(interview: $0) }
             )

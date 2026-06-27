@@ -45,6 +45,8 @@ struct TestsScreen: View {
                         account: account.id
                     )
                 },
+                csvExport: { CSVExport.tests($0) },
+                csvFilename: "tests",
                 row: { TestRow(test: $0) },
                 detail: { TestDetailView(test: $0, account: account) }
             )

@@ -65,6 +65,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// Bump this from the caller to force a reload (e.g. after a successful write refreshes
     /// the list). Changing the value re-runs the first-page load.
     var reloadToken: Int = 0
+    /// When set, offers an "Export CSV" action over the shown (filtered, sorted) items (#39).
+    var csvExport: (([Item]) -> String)?
+    /// Suggested CSV file name (no extension).
+    var csvFilename = "export"
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
@@ -132,6 +136,15 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                             query: $query,
                             dateRange: $dateRange
                         )
+                    }
+
+                    if let csvExport {
+                        Button {
+                            CSVExport.save(csvExport(sort(filter(items))), suggestedName: csvFilename)
+                        } label: {
+                            Label("Export CSV…", systemImage: "tablecells")
+                        }
+                        .help("Export \(title) as CSV")
                     }
 
                     Button {

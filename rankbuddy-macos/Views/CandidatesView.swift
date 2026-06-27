@@ -45,6 +45,8 @@ struct CandidatesList: View {
             },
             accessoryToolbar: { writeActionsEnabled ? AnyView(inviteButton) : AnyView(EmptyView()) },
             reloadToken: reloadToken,
+            csvExport: { CSVExport.candidates($0) },
+            csvFilename: "candidates",
             row: { CandidateRow(candidate: $0) },
             detail: { CandidateDetailView(candidate: $0) }
         )
