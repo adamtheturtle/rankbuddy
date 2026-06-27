@@ -85,6 +85,32 @@ struct HackerRankClient {
         )
     }
 
+    /// Creates an organisation user (`POST /users`) (#58). Like the invite flow (#12), reached
+    /// only when the user has opted into write actions and confirmed.
+    ///
+    /// - Returns: the created user as echoed by the API (fields are optional, so a 2xx never
+    ///   fails on an unexpected response shape).
+    @discardableResult
+    func createUser(
+        email: String,
+        firstName: String? = nil,
+        lastName: String? = nil,
+        role: String? = nil
+    ) async throws -> CreatedUser {
+        func trimmed(_ value: String?) -> String? {
+            let result = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return (result?.isEmpty == false) ? result : nil
+        }
+
+        let body = CreateUserRequest(
+            email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+            firstName: trimmed(firstName),
+            lastName: trimmed(lastName),
+            role: trimmed(role)
+        )
+        return try await rest.send(CreatedUser.self, method: "POST", path: "\(Self.apiV3)/users", body: body)
+    }
+
     /// One page of the account's questions, plus the cursor for the next page.
     func questionsPage(after cursor: String? = nil) async throws -> Page<Question> {
         try await page(HackerRankPage<Question>.self, path: "\(Self.apiV3)/questions", cursor: cursor)
@@ -196,6 +222,29 @@ private nonisolated struct InviteCandidateRequest: Encodable {
 /// 2xx response never fails to decode on an unexpected shape — the invite is what matters,
 /// not parsing the echo.
 nonisolated struct InvitedCandidate: Decodable {
+    let id: String?
+    let email: String?
+}
+
+/// The body sent when creating a user (#58). Snake-case to match the API; blank optional
+/// fields are omitted.
+private nonisolated struct CreateUserRequest: Encodable {
+    let email: String
+    let firstName: String?
+    let lastName: String?
+    let role: String?
+
+    enum CodingKeys: String, CodingKey {
+        case email
+        case firstName = "firstname"
+        case lastName = "lastname"
+        case role
+    }
+}
+
+/// The user record echoed back by a successful create. All-optional so a 2xx never fails to
+/// decode on an unexpected shape.
+nonisolated struct CreatedUser: Decodable {
     let id: String?
     let email: String?
 }

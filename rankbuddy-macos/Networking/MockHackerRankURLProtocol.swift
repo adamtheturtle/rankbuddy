@@ -61,7 +61,7 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
             // record, so the app's first write flow can be exercised against the demo.
             if request.httpMethod == "POST" {
                 Self.record(requestBody: Self.bodyData(of: request))
-                respond(url: url, statusCode: 201, body: Self.createdCandidateJSON)
+                respond(url: url, statusCode: 201, body: Self.createdBody(for: url))
             } else {
                 respond(url: url, statusCode: 200, body: Self.body(for: url))
             }
@@ -181,10 +181,21 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
 
     // MARK: - Fixtures (deterministic demo data; no real personal data)
 
+    /// The acknowledgement body for a created write, routed by path: a user for `/users`
+    /// (#58), otherwise a candidate (the invite flow, #12).
+    private static func createdBody(for url: URL) -> String {
+        url.path.contains("/users") ? createdUserJSON : createdCandidateJSON
+    }
+
     /// The record returned when a candidate is invited in the demo (#12). The invite UI
     /// shows the email the user typed, so this canned echo only needs to decode cleanly.
     private static let createdCandidateJSON = #"""
     {"id":"c-invited","email":"invited@example.com","status":0,"ats_state":0}
+    """#
+
+    /// The record returned when a user is created in the demo (#58).
+    private static let createdUserJSON = #"""
+    {"id":"u-created","email":"created@example.com","role":"recruiter","status":"invited"}
     """#
 
     private static let testsPage1JSON = #"""

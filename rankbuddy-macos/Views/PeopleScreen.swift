@@ -1,9 +1,13 @@
 import BuddyAppKit
 import SwiftUI
 
-/// The People section: the organisation's users (members), with read-only detail (#36).
+/// The People section: the organisation's users (members), with read-only detail (#36) and
+/// an opt-in "Create User" write action (#58).
 struct PeopleScreen: View {
     @Environment(AccountStore.self) private var store
+    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
+    @State private var createPresented = false
+    @State private var reloadToken = 0
 
     var body: some View {
         if let account = store.currentAccount {
@@ -18,14 +22,113 @@ struct PeopleScreen: View {
                 ],
                 restorationKey: "selection.users.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
+                accessoryToolbar: { writeActionsEnabled ? AnyView(createButton) : AnyView(EmptyView()) },
+                reloadToken: reloadToken,
                 row: { PersonRow(user: $0) },
                 detail: { PersonDetailView(user: $0) }
             )
+            .sheet(isPresented: $createPresented) {
+                CreateUserSheet(account: account) { reloadToken += 1 }
+            }
         } else {
             NavigationStack {
                 NoAccountView()
                     .navigationTitle("People")
             }
+        }
+    }
+
+    private var createButton: some View {
+        Button {
+            createPresented = true
+        } label: {
+            Label("Create User…", systemImage: "person.badge.plus")
+        }
+        .help("Create an organisation user")
+    }
+}
+
+/// A sheet that creates an organisation user (#58) — a write flow, so it's reached only when
+/// write actions are enabled. States plainly when it affects a real account, and refreshes the
+/// list on success.
+struct CreateUserSheet: View {
+    let account: Account
+    var onCreated: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var email = ""
+    @State private var firstName = ""
+    @State private var lastName = ""
+    @State private var role = "recruiter"
+    @State private var isSending = false
+    @State private var errorMessage: String?
+
+    private static let roles = ["recruiter", "interviewer", "developer"]
+
+    private var trimmedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Email", text: $email)
+                        .textContentType(.emailAddress)
+                        .disableAutocorrection(true)
+                    TextField("First name (optional)", text: $firstName)
+                    TextField("Last name (optional)", text: $lastName)
+                    Picker("Role", selection: $role) {
+                        ForEach(Self.roles, id: \.self) { Text($0.capitalized).tag($0) }
+                    }
+                } footer: {
+                    Text(account.isMock
+                        ? "Demo account — no real user is created."
+                        : "This creates a real user in your HackerRank for Work organisation.")
+                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Create User")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .disabled(isSending)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if isSending {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Button("Create") { Task { await create() } }
+                            .disabled(!EmailValidation.isLikelyValid(email))
+                    }
+                }
+            }
+        }
+        .frame(width: 440, height: 320)
+    }
+
+    private func create() async {
+        isSending = true
+        errorMessage = nil
+        defer { isSending = false }
+        do {
+            try await HackerRankClient(account: account).createUser(
+                email: trimmedEmail, firstName: firstName, lastName: lastName, role: role
+            )
+            onCreated()
+            dismiss()
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 }
