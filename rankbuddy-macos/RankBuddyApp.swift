@@ -51,6 +51,7 @@ struct RankBuddyApp: App {
                 .task {
                     favoritesSync?.start()
                     NetworkMonitor.shared.start()
+                    LivenessNotifier.shared.register()
                     LivenessMonitor.shared.start(store: accountStore)
                 }
                 .preferredColorScheme(appearance.colorScheme)

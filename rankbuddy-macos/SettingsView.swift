@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage(MenuBarPreferences.recentCountKey)
     private var menuBarRecentCount = MenuBarPreferences.defaultRecentCount
     @AppStorage(LivenessSettings.backgroundUpdatesKey) private var backgroundUpdates = false
+    @AppStorage(LivenessSettings.notifyKey) private var notifyNewInterviews = false
 
     var body: some View {
         TabView {
@@ -71,11 +72,18 @@ struct SettingsView: View {
                         if enabled { LivenessMonitor.shared.requestBadgeAuthorization() }
                         Task { await LivenessMonitor.shared.sweep(store: store) }
                     }
+
+                Toggle("Notify me about new interviews", isOn: $notifyNewInterviews)
+                    .onChange(of: notifyNewInterviews) { _, enabled in
+                        if enabled { LivenessNotifier.shared.requestAuthorization() }
+                    }
+                    .disabled(!backgroundUpdates)
             } header: {
                 Text("Updates")
             } footer: {
-                Text("Keeps a count of scheduled interviews on the Dock icon, refreshed in the " +
-                    "background even when no window is open.")
+                Text("Keeps a count of scheduled interviews on the Dock icon and, optionally, " +
+                    "posts a notification when new interviews appear — refreshed in the background " +
+                    "even when no window is open.")
             }
         }
         .formStyle(.grouped)

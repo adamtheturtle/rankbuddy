@@ -29,4 +29,21 @@ struct LivenessDigestTests {
         #expect(LivenessDigest.badgeLabel(scheduledCount: 1) == "1")
         #expect(LivenessDigest.badgeLabel(scheduledCount: 12) == "12")
     }
+
+    @Test func `new interviews are those not in the previous set`() throws {
+        let current = try [
+            interview(id: "a", status: "scheduled"),
+            interview(id: "b", status: "scheduled"),
+            interview(id: "c", status: "completed")
+        ]
+        let new = LivenessDigest.newInterviews(previousIDs: ["a"], current: current)
+        #expect(new.map(\.id) == ["b", "c"])
+        // Nothing new when every id was already seen.
+        #expect(LivenessDigest.newInterviews(previousIDs: ["a", "b", "c"], current: current).isEmpty)
+    }
+
+    @Test func `the notification body singularises one interview`() {
+        #expect(LivenessDigest.notificationBody(newCount: 1) == "1 new interview")
+        #expect(LivenessDigest.notificationBody(newCount: 3) == "3 new interviews")
+    }
 }
