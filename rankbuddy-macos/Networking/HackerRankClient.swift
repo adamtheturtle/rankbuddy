@@ -85,6 +85,41 @@ struct HackerRankClient {
         )
     }
 
+    /// Creates a test (`POST /tests`) (#57). Gated behind the write-actions opt-in.
+    ///
+    /// - Returns: the created test as echoed by the API (all-optional, so a 2xx never fails to
+    ///   decode on an unexpected shape).
+    @discardableResult
+    func createTest(name: String) async throws -> CreatedTest {
+        let body = CreateTestRequest(name: name.trimmingCharacters(in: .whitespacesAndNewlines))
+        return try await rest.send(CreatedTest.self, method: "POST", path: "\(Self.apiV3)/tests", body: body)
+    }
+
+    /// Renames a test (`PATCH /tests/{id}`) (#57). Gated behind the write-actions opt-in.
+    @discardableResult
+    func updateTest(testID: String, name: String) async throws -> CreatedTest {
+        let body = UpdateTestRequest(name: name.trimmingCharacters(in: .whitespacesAndNewlines))
+        return try await rest.send(
+            CreatedTest.self,
+            method: "PATCH",
+            path: "\(Self.apiV3)/tests/\(Self.pathSegment(testID))",
+            body: body
+        )
+    }
+
+    /// Permanently deletes a test (`DELETE /tests/{id}`) (#57). Destructive and irreversible,
+    /// so the UI confirms (naming the test) before this is called. The test is identified in
+    /// the path, so the request carries an empty JSON body.
+    @discardableResult
+    func deleteTest(testID: String) async throws -> CreatedTest {
+        try await rest.send(
+            CreatedTest.self,
+            method: "DELETE",
+            path: "\(Self.apiV3)/tests/\(Self.pathSegment(testID))",
+            body: EmptyBody()
+        )
+    }
+
     /// Creates an organisation user (`POST /users`) (#58). Like the invite flow (#12), reached
     /// only when the user has opted into write actions and confirmed.
     ///
@@ -289,102 +324,4 @@ struct HackerRankClient {
 nonisolated struct Page<Item: Sendable> {
     let items: [Item]
     let next: String?
-}
-
-/// The body sent when inviting a candidate to a test (#12). Encoded as the API's
-/// snake-case JSON; a blank name is omitted entirely rather than sent empty.
-private nonisolated struct InviteCandidateRequest: Encodable {
-    let email: String
-    let fullName: String?
-    let sendEmail: Bool
-
-    enum CodingKeys: String, CodingKey {
-        case email
-        case fullName = "full_name"
-        case sendEmail = "send_email"
-    }
-}
-
-/// The candidate record echoed back by a successful invite. Every field is optional so a
-/// 2xx response never fails to decode on an unexpected shape — the invite is what matters,
-/// not parsing the echo.
-nonisolated struct InvitedCandidate: Decodable {
-    let id: String?
-    let email: String?
-}
-
-/// The body sent when creating a user (#58). Snake-case to match the API; blank optional
-/// fields are omitted.
-private nonisolated struct CreateUserRequest: Encodable {
-    let email: String
-    let firstName: String?
-    let lastName: String?
-    let role: String?
-
-    enum CodingKeys: String, CodingKey {
-        case email
-        case firstName = "firstname"
-        case lastName = "lastname"
-        case role
-    }
-}
-
-/// The user record echoed back by a successful create. All-optional so a 2xx never fails to
-/// decode on an unexpected shape.
-nonisolated struct CreatedUser: Decodable {
-    let id: String?
-    let email: String?
-}
-
-/// The body sent when creating a team (#59).
-private nonisolated struct CreateTeamRequest: Encodable {
-    let name: String
-}
-
-/// The body sent when adding a team member (#59). Snake-case to match the API; a blank role
-/// is omitted.
-private nonisolated struct AddTeamMemberRequest: Encodable {
-    let email: String
-    let role: String?
-}
-
-/// An empty JSON body (`{}`) for a write whose parameters are all in the path — a team-member
-/// removal identifies the user in the URL.
-private nonisolated struct EmptyBody: Encodable {}
-
-/// The team echoed back by a successful create (#59). All-optional so a 2xx never fails to
-/// decode on an unexpected shape.
-nonisolated struct CreatedTeam: Decodable {
-    let id: String?
-    let name: String?
-}
-
-/// The record echoed back by a team-membership change (#59). All-optional for the same
-/// reason as the other write echoes.
-nonisolated struct TeamMembershipResult: Decodable {
-    let id: String?
-    let email: String?
-}
-
-/// The body sent when creating a QuickPad interview (#60).
-private nonisolated struct CreateQuickPadRequest: Encodable {
-    let title: String?
-    let quickpad: Bool
-}
-
-/// The body sent when scheduling an interview (#60). The start time is an ISO-8601 string;
-/// blank optional fields are omitted.
-private nonisolated struct ScheduleInterviewRequest: Encodable {
-    let title: String
-    let from: String
-    let candidate: String?
-    let notes: String?
-}
-
-/// The interview echoed back by a successful create (#60). All-optional so a 2xx never fails
-/// to decode on an unexpected shape; the URL lets the UI open the new pad.
-nonisolated struct CreatedInterview: Decodable {
-    let id: String?
-    let url: String?
-    let status: String?
 }

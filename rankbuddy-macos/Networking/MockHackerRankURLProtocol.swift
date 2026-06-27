@@ -57,11 +57,12 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
 
         switch Scenario.current {
         case .success:
-            // A write (invite #12, create user #58, team create / membership #59) is
-            // acknowledged with a record, so the write flows can be exercised against the
-            // demo. A membership removal is a DELETE; everything else here is a POST.
+            // A write (invite #12, create user #58, team create / membership #59, interview
+            // #60, test CRUD #57) is acknowledged with a record, so the write flows can be
+            // exercised against the demo. A create is a POST (201); an update is a PATCH and a
+            // delete is a DELETE (both 200).
             let method = request.httpMethod
-            if method == "POST" || method == "DELETE" {
+            if method == "POST" || method == "PATCH" || method == "DELETE" {
                 Self.record(requestBody: Self.bodyData(of: request), forPath: url.path)
                 respond(url: url, statusCode: method == "POST" ? 201 : 200, body: Self.writeAckBody(for: url))
             } else {
@@ -187,17 +188,19 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
 
     // MARK: - Fixtures (deterministic demo data; no real personal data)
 
-    /// The acknowledgement body for a write, routed by path: a user for `/users` (covers
-    /// user create #58 and team membership #59), a team for `/teams` (team create #59), an
-    /// interview for `/interviews` (QuickPad / schedule #60), otherwise a candidate (the
-    /// invite flow, #12). `/users` is checked first because a membership path also contains
-    /// `/teams`.
+    /// The acknowledgement body for a write, routed by path: a user for `/users` (user create
+    /// #58 and team membership #59), a team for `/teams` (team create #59), an interview for
+    /// `/interviews` (QuickPad / schedule #60), a candidate for `/candidates` (the invite flow
+    /// #12), otherwise a test (test CRUD #57). Order matters: `/users` precedes `/teams`
+    /// because a membership path contains both, and `/candidates` precedes `/tests` because an
+    /// invite path contains both.
     private static func writeAckBody(for url: URL) -> String {
         let path = url.path
         if path.contains("/users") { return createdUserJSON }
         if path.contains("/teams") { return createdTeamJSON }
         if path.contains("/interviews") { return createdInterviewJSON }
-        return createdCandidateJSON
+        if path.contains("/candidates") { return createdCandidateJSON }
+        return createdTestJSON
     }
 
     /// The record returned when a candidate is invited in the demo (#12). The invite UI
@@ -219,6 +222,11 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     /// The record returned when an interview is created in the demo (#60).
     private static let createdInterviewJSON = #"""
     {"id":"i-created","url":"https://www.hackerrank.com/x/interviews/i-created","status":"scheduled"}
+    """#
+
+    /// The record returned when a test is created/updated/deleted in the demo (#57).
+    private static let createdTestJSON = #"""
+    {"id":"t-created","name":"New Test","state":"draft"}
     """#
 
     private static let testsPage1JSON = #"""

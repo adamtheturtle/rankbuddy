@@ -2,11 +2,15 @@ import BuddyAppKit
 import SwiftUI
 
 /// The Tests section: a list of the account's tests, each opening a read-only detail
-/// view that also links to the test's candidates.
+/// view that also links to the test's candidates. With write actions enabled, a "New Test"
+/// action and edit/delete affordances appear (#57).
 struct TestsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.openWindow) private var openWindow
+    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
+    @State private var createPresented = false
+    @State private var reloadToken = 0
 
     var body: some View {
         if store.isMergedView {
@@ -47,17 +51,31 @@ struct TestsScreen: View {
                         account: account.id
                     )
                 },
+                accessoryToolbar: { writeActionsEnabled ? AnyView(createButton) : AnyView(EmptyView()) },
+                reloadToken: reloadToken,
                 csvExport: { CSVExport.tests($0) },
                 csvFilename: "tests",
                 row: { TestRow(test: $0) },
-                detail: { TestDetailView(test: $0, account: account) }
+                detail: { TestDetailView(test: $0, account: account, onChanged: { reloadToken += 1 }) }
             )
+            .sheet(isPresented: $createPresented) {
+                TestEditorSheet(account: account, mode: .create) { reloadToken += 1 }
+            }
         } else {
             NavigationStack {
                 NoAccountView()
                     .navigationTitle("Tests")
             }
         }
+    }
+
+    private var createButton: some View {
+        Button {
+            createPresented = true
+        } label: {
+            Label("New Test…", systemImage: "doc.badge.plus")
+        }
+        .help("Create a test")
     }
 
     /// Loads one merged page of tests across every configured account (#17).
@@ -190,10 +208,19 @@ struct TestRow: View {
     }
 }
 
-/// Read-only detail for a single test.
+/// Read-only detail for a single test, plus opt-in edit/delete affordances (#57). The
+/// destructive delete is confirmed (naming the test) and pops back to the list on success.
 struct TestDetailView: View {
     let test: Test
     let account: Account
+    /// Called after a successful edit or delete so the list can refresh.
+    var onChanged: () -> Void = {}
+
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
+    @State private var editPresented = false
+    @State private var deletePresented = false
+    @State private var deleteError: String?
 
     var body: some View {
         Form {
@@ -251,6 +278,24 @@ struct TestDetailView: View {
         .formStyle(.grouped)
         .navigationTitle(test.name)
         .toolbar {
+            if writeActionsEnabled {
+                ToolbarItem {
+                    Button {
+                        editPresented = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .help("Rename this test")
+                }
+                ToolbarItem {
+                    Button(role: .destructive) {
+                        deletePresented = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    .help("Delete this test")
+                }
+            }
             ToolbarItem {
                 PrintReportButton(jobTitle: "Test – \(test.name)") {
                     TestReport(test: test)
@@ -259,6 +304,41 @@ struct TestDetailView: View {
             ToolbarItem {
                 MarkdownExportButton(suggestedName: test.name) { MarkdownExport.test(test) }
             }
+        }
+        .sheet(isPresented: $editPresented) {
+            TestEditorSheet(account: account, mode: .edit(testID: test.id, currentName: test.name)) {
+                onChanged()
+                dismiss()
+            }
+        }
+        .confirmationDialog("Delete “\(test.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
+            Button("Delete Test", role: .destructive) {
+                Task { await delete() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(account.isMock
+                ? "Demo account — no real test is deleted."
+                : "This permanently deletes the test on HackerRank. This can’t be undone.")
+        }
+        .alert("Couldn’t delete test", isPresented: deleteErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteError ?? "")
+        }
+    }
+
+    private var deleteErrorPresented: Binding<Bool> {
+        Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
+    }
+
+    private func delete() async {
+        do {
+            try await HackerRankClient(account: account).deleteTest(testID: test.id)
+            onChanged()
+            dismiss()
+        } catch {
+            deleteError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 }
