@@ -10,6 +10,10 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     case people = "users"
     case teams
 
+    /// The `@AppStorage`/`UserDefaults` key the selected section is persisted under, shared by
+    /// the main window, menu bar, deep links, and the Dock menu.
+    static let defaultsKey = "selectedSection"
+
     var id: String {
         rawValue
     }

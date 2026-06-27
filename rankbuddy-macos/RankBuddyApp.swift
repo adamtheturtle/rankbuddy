@@ -7,6 +7,8 @@ import SwiftUI
 /// window so the app never opens duplicate main windows, plus a `Settings`
 /// scene for preferences and account management.
 struct RankBuddyApp: App {
+    /// Provides the Dock right-click menu (#45).
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     /// The app's single multi-account store, shared with every scene via the environment.
     @State private var accountStore: AccountStore
     /// Command-palette presentation state, shared with the menu commands.
