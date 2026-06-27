@@ -28,6 +28,9 @@ struct PeopleScreen: View {
                     ListFacet("role", "Role", systemImage: "person.fill", value: { $0.role?.capitalized }),
                     ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.status?.capitalized })
                 ],
+                // People is bounded (a few thousand) and the API has no name-search param, so let a
+                // search/facet page through the whole list rather than only the first ~1000 (#86).
+                searchPageCap: 80,
                 restorationKey: "selection.users.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
                 accessoryToolbar: { AnyView(createButton) },

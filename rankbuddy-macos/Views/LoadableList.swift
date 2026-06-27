@@ -57,9 +57,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     var sortOptions: [SortOption<Item>] = []
     /// The declarative filter facets shown in the bar above the list (#55). Empty hides the bar.
     var facets: [ListFacet<Item>] = []
-    /// When set, the list persists/restores the selected detail and scroll position across
-    /// launches under this key (#19). Callers scope the key by account and collection. `nil`
-    /// (e.g. the nested per-test candidates list) disables persistence but not navigation.
+    /// Pages auto-loaded per active client-side filter (#86); raise for small lists to scan fully.
+    var searchPageCap = ListSearchPaging.pageCap
+    /// Persists/restores the selected detail + scroll position per account (#19); `nil` disables it.
     var restorationKey: String?
     /// When set, the list offers a date-range filter chip; the closure supplies the date
     /// each item is filtered by (items with no date are hidden while a range is active).
@@ -204,6 +204,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 // pane before loading the new account's data (#19).
                 .task(id: restorationKey) { await reload() }
                 .task(id: autoRefreshSeconds) { await autoRefreshLoop() }
+                // While a client-side filter (search/facet/date) is active, page in more (capped)
+                // so the match isn't limited to the first page — see `LoadableList+Search` (#86).
+                .task(id: clientFilterToken) { await autoLoadWhileFiltering() }
                 .onChange(of: reloadToken) { Task { await reload() } }
                 .onAppear { restoreSort() }
                 .onChange(of: sortSelection) { persistSort() }
@@ -330,8 +333,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     }
 
     /// Appends the next page when the user nears the end. A failed load-more keeps the
-    /// items already shown and stops paging rather than discarding the list.
-    private func loadMore() async {
+    /// items already shown and stops paging rather than discarding the list. Internal so the
+    /// search auto-load extension (`LoadableList+Search`) can drive it too.
+    func loadMore() async {
         guard let cursor = nextCursor, !isLoadingMore else { return }
 
         isLoadingMore = true
