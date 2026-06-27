@@ -165,3 +165,19 @@ file_header:
     \/\/  SWIFTLINT_CURRENT_FILENAME
     \/\/  rankbuddy-macos(Tests)?
     \/\/
+
+# Project-specific gates.
+custom_rules:
+  # Prevent accidental competitor/old product-name leakage into user-facing strings
+  # (#21). PadBuddy is RankBuddy's design north-star, so its name legitimately appears
+  # throughout doc-comments and comments; `match_kinds: [string]` restricts this rule
+  # to string literals only, so those comments are untouched while a name that would
+  # actually ship to a user (a Text, label, alert, accessibility string …) fails the
+  # strict lint gate.
+  competitor_product_name_in_string:
+    name: "Competitor/old product name in a string literal"
+    regex: '(?i)(coderpad|padbuddy)'
+    match_kinds:
+      - string
+    message: "Don't ship CoderPad/PadBuddy product names in user-facing strings (#21); use RankBuddy."
+    severity: error
