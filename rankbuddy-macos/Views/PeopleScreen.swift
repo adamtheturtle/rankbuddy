@@ -18,7 +18,14 @@ struct PeopleScreen: View {
             LoadableList(
                 title: "People",
                 emptyMessage: "No people",
-                loadPage: { try await HackerRankClient(account: account).usersPage(after: $0) },
+                // People is bounded (an org has a few thousand members) and the API has no
+                // name-search param, so load the whole list up front — fetched in parallel by
+                // `allUsers`, so it's a few seconds, not minutes — and present it as one page.
+                // Then search/sort/facets match every user instantly, with no fragile per-keystroke
+                // paging (#86).
+                loadPage: { _ in
+                    try await Page(items: HackerRankClient(account: account).allUsers(), next: nil)
+                },
                 searchableText: { "\($0.displayName) \($0.email) \($0.role ?? "")" },
                 sortOptions: [
                     SortOption("Name") { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending },
@@ -28,9 +35,6 @@ struct PeopleScreen: View {
                     ListFacet("role", "Role", systemImage: "person.fill", value: { $0.role?.capitalized }),
                     ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.status?.capitalized })
                 ],
-                // People is bounded (a few thousand) and the API has no name-search param, so let a
-                // search/facet page through the whole list rather than only the first ~1000 (#86).
-                searchPageCap: 80,
                 restorationKey: "selection.users.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
                 accessoryToolbar: { AnyView(createButton) },

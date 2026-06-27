@@ -33,10 +33,15 @@ private nonisolated struct LenientItem<Wrapped: Decodable>: Decodable {
 nonisolated struct HackerRankPage<Item: Decodable & Sendable>: PagedResponse {
     let data: [Item]
     let next: String?
+    /// The collection's total size from the envelope's `total` field, when present. Kept separate
+    /// from the protocol's `total` (below, deliberately `nil`); used to fan out a bounded
+    /// collection's remaining pages in parallel by offset (#86).
+    let totalCount: Int?
 
     enum CodingKeys: String, CodingKey {
         case data
         case next
+        case total
     }
 
     init(from decoder: any Decoder) throws {
@@ -44,6 +49,7 @@ nonisolated struct HackerRankPage<Item: Decodable & Sendable>: PagedResponse {
         let lenient = try container.decode([LenientItem<Item>].self, forKey: .data)
         data = lenient.compactMap(\.value)
         next = try container.decodeIfPresent(String.self, forKey: .next)
+        totalCount = try? container.decodeIfPresent(Int.self, forKey: .total)
     }
 
     var pageItems: [Item] {

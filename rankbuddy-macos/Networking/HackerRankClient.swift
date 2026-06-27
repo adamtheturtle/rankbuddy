@@ -16,15 +16,17 @@ import PaginatedRESTClient
 /// envelope. MainActor-isolated (like the transport's high-level API); the expensive
 /// page fetching and JSON decoding still run off the main actor inside the transport.
 struct HackerRankClient {
-    private static let apiV3 = "/x/api/v3"
+    /// Internal (not private) so the parallel `allUsers` loader in `HackerRankClient+AllUsers`
+    /// can build offset requests against the same transport, per the repo's split-file rule (#86).
+    static let apiV3 = "/x/api/v3"
     /// Items requested per page — the API's maximum (requests above 100 are rejected). Real
     /// accounts have huge collections (≈9.7k questions, ≈87k interviews), so the read-only lists
     /// page through them rather than draining every page up front (#34); the larger page also
     /// halves the request count when search pages through a big list to find a match (#86).
-    private static let pageSize = 100
+    static let pageSize = 100
 
-    private let rest: PaginatedRESTClient
-    private let baseURL: URL
+    let rest: PaginatedRESTClient
+    let baseURL: URL
     private let token: String
 
     /// - Parameter session: the transport session. Defaults to the demo mock for `isMock`
