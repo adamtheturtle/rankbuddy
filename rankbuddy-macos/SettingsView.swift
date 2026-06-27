@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var editing: AccountEditingTarget?
     @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
+    @AppStorage(AppPresence.defaultsKey) private var presence: AppPresence = .both
     @AppStorage(MenuBarPreferences.recentCountKey)
     private var menuBarRecentCount = MenuBarPreferences.defaultRecentCount
     @AppStorage(MenuBarPreferences.activeOnlyKey) private var menuBarActiveOnly = false
@@ -66,6 +67,19 @@ struct SettingsView: View {
             }
 
             Section {
+                Picker("Show RankBuddy in", selection: $presence) {
+                    ForEach(AppPresence.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+            } header: {
+                Text("Presence")
+            } footer: {
+                Text("Choose whether RankBuddy appears in the Dock, the Menu Bar, or both. " +
+                    "Menu Bar only hides the Dock icon for a lightweight, always-available app.")
+            }
+
+            Section {
                 Toggle("Launch at login", isOn: launchAtLoginBinding)
             } header: {
                 Text("Startup")
@@ -87,19 +101,21 @@ struct SettingsView: View {
                     "while you're on a list (not inside an item) and haven't scrolled past the first page.")
             }
 
-            Section {
-                Stepper(
-                    "Recent items in the menu bar: \(menuBarRecentCount)",
-                    value: $menuBarRecentCount,
-                    in: 0 ... MenuBarPreferences.maxRecentCount
-                )
+            if presence.showsMenuBarIcon {
+                Section {
+                    Stepper(
+                        "Recent items in the menu bar: \(menuBarRecentCount)",
+                        value: $menuBarRecentCount,
+                        in: 0 ... MenuBarPreferences.maxRecentCount
+                    )
 
-                Toggle("Show only active or upcoming items", isOn: $menuBarActiveOnly)
-            } header: {
-                Text("Menu Bar")
-            } footer: {
-                Text("How many recently viewed items the menu bar lists (0 hides the Recent section). " +
-                    "When filtered, it shows only open tests and scheduled interviews.")
+                    Toggle("Show only active or upcoming items", isOn: $menuBarActiveOnly)
+                } header: {
+                    Text("Menu Bar")
+                } footer: {
+                    Text("How many recently viewed items the menu bar lists (0 hides the Recent section). " +
+                        "When filtered, it shows only open tests and scheduled interviews.")
+                }
             }
 
             Section {
@@ -276,27 +292,6 @@ private extension SettingsView {
                     "so this updates when you Refresh.")
             }
         }
-    }
-
-    var aboutTab: some View {
-        Form {
-            Section("RankBuddy") {
-                LabeledContent("Version", value: Self.appVersion)
-                Text("A native macOS browser for HackerRank for Work tests, candidates, questions, and interviews.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .formStyle(.grouped)
-    }
-
-    /// The app's marketing version and build number, e.g. "1.0 (12)".
-    static var appVersion: String {
-        let info = Bundle.main.infoDictionary
-        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
-        let build = info?["CFBundleVersion"] as? String ?? "—"
-        return "\(short) (\(build))"
     }
 
     var loginItemErrorPresented: Binding<Bool> {

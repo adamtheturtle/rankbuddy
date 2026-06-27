@@ -21,6 +21,9 @@ struct RankBuddyApp: App {
     @State private var favoritesSync: FavoritesSyncCoordinator?
     /// The user's chosen appearance (General settings), applied to the main window.
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
+    /// Where the app shows itself — Dock, Menu Bar, or both (#66). Drives the activation policy
+    /// and whether the Menu Bar extra is inserted.
+    @AppStorage(AppPresence.defaultsKey) private var presence: AppPresence = .both
     /// Re-checks the current account's token so a mid-session revocation surfaces a banner (#40).
     @State private var health = AccountHealthMonitor()
 
@@ -62,7 +65,9 @@ struct RankBuddyApp: App {
                     LivenessNotifier.shared.register()
                     LivenessMonitor.shared.start(store: accountStore)
                     health.start(store: accountStore)
+                    presence.applyDockVisibility()
                 }
+                .onChange(of: presence) { _, new in new.applyDockVisibility() }
                 .preferredColorScheme(appearance.colorScheme)
         }
         .commands {
@@ -85,10 +90,17 @@ struct RankBuddyApp: App {
                 .environment(health)
         }
 
-        MenuBarExtra("RankBuddy", systemImage: "checklist") {
+        MenuBarExtra("RankBuddy", systemImage: "checklist", isInserted: menuBarInserted) {
             MenuBarContent()
                 .environment(accountStore)
         }
+    }
+
+    /// Whether the Menu Bar extra is inserted, derived from the chosen presence (#66). The
+    /// setter is a no-op: presence is changed through the Settings picker, not by dragging the
+    /// extra out of the menu bar.
+    private var menuBarInserted: Binding<Bool> {
+        Binding(get: { presence.showsMenuBarIcon }, set: { _ in })
     }
 }
 
