@@ -46,4 +46,11 @@ struct LivenessDigestTests {
         #expect(LivenessDigest.notificationBody(newCount: 1) == "1 new interview")
         #expect(LivenessDigest.notificationBody(newCount: 3) == "3 new interviews")
     }
+
+    @Test func `the refresh cadence clamps unset and unknown values to the default`() {
+        // Unset (0) and out-of-range values fall back to the default; supported options pass.
+        #expect(LivenessSettings.intervalMinutes(raw: 0) == LivenessSettings.defaultIntervalMinutes)
+        #expect(LivenessSettings.intervalMinutes(raw: 7) == LivenessSettings.defaultIntervalMinutes)
+        #expect(LivenessSettings.intervalMinutes(raw: 10) == 10)
+    }
 }

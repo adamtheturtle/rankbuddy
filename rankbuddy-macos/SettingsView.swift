@@ -11,6 +11,8 @@ struct SettingsView: View {
     private var menuBarRecentCount = MenuBarPreferences.defaultRecentCount
     @AppStorage(LivenessSettings.backgroundUpdatesKey) private var backgroundUpdates = false
     @AppStorage(LivenessSettings.notifyKey) private var notifyNewInterviews = false
+    @AppStorage(LivenessSettings.intervalMinutesKey)
+    private var refreshMinutes = LivenessSettings.defaultIntervalMinutes
 
     var body: some View {
         TabView {
@@ -78,6 +80,13 @@ struct SettingsView: View {
                         if enabled { LivenessNotifier.shared.requestAuthorization() }
                     }
                     .disabled(!backgroundUpdates)
+
+                Picker("Check every", selection: $refreshMinutes) {
+                    ForEach(LivenessSettings.intervalOptions, id: \.self) { minutes in
+                        Text(minutes == 1 ? "1 minute" : "\(minutes) minutes").tag(minutes)
+                    }
+                }
+                .disabled(!backgroundUpdates)
             } header: {
                 Text("Updates")
             } footer: {

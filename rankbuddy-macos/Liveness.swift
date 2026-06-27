@@ -12,8 +12,23 @@ enum LivenessSettings {
     static let backgroundUpdatesKey = "rb.backgroundUpdates"
     /// `@AppStorage` key: whether to post a notification when new interviews appear.
     static let notifyKey = "rb.notifyNewInterviews"
-    /// How often the background sweep runs.
-    static let interval: Duration = .seconds(300)
+    /// `@AppStorage` key: how often the background sweep runs, in minutes.
+    static let intervalMinutesKey = "rb.refreshMinutes"
+    /// The cadence options offered in Settings, in minutes.
+    static let intervalOptions = [1, 2, 5, 10, 15, 30]
+    /// The default sweep cadence in minutes.
+    static let defaultIntervalMinutes = 5
+
+    /// Clamps a raw stored minutes value to a supported option, falling back to the default for
+    /// an unset (`0`) or unrecognised value. Pure, so it's unit-testable.
+    static func intervalMinutes(raw: Int) -> Int {
+        intervalOptions.contains(raw) ? raw : defaultIntervalMinutes
+    }
+
+    /// The current sweep cadence as a `Duration`, read from the stored setting.
+    static func currentInterval() -> Duration {
+        .seconds(intervalMinutes(raw: UserDefaults.standard.integer(forKey: intervalMinutesKey)) * 60)
+    }
 
     /// Where the set of interview IDs last seen for an account is persisted, so the next sweep
     /// can tell which interviews are new.
@@ -57,16 +72,17 @@ final class LivenessMonitor {
     private var task: Task<Void, Never>?
     private init() {}
 
-    /// Starts the sweep loop (idempotent). Runs one sweep immediately, then every interval.
-    /// The loop always runs but self-gates on the opt-in each tick, so toggling the setting
-    /// takes effect without restarting the timer.
-    func start(store: AccountStore, every interval: Duration = LivenessSettings.interval) {
+    /// Starts the sweep loop (idempotent). Runs one sweep immediately, then re-reads the
+    /// configured cadence before each subsequent sweep, so a changed interval (or toggled
+    /// opt-in) takes effect without restarting the timer. Tests can pin the cadence via
+    /// `interval`.
+    func start(store: AccountStore, every interval: Duration? = nil) {
         guard task == nil else { return }
 
         task = Task { [weak self] in
             await self?.sweep(store: store)
             while !Task.isCancelled {
-                try? await Task.sleep(for: interval)
+                try? await Task.sleep(for: interval ?? LivenessSettings.currentInterval())
                 if Task.isCancelled { break }
 
                 await self?.sweep(store: store)
