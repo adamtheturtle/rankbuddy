@@ -105,6 +105,15 @@ struct HackerRankClient {
         try await page(HackerRankPage<Team>.self, path: "\(Self.apiV3)/teams", cursor: cursor)
     }
 
+    /// One page of a team's members (users), plus the cursor for the next page (#56).
+    func teamMembersPage(teamID: String, after cursor: String? = nil) async throws -> Page<User> {
+        try await page(
+            HackerRankPage<User>.self,
+            path: "\(Self.apiV3)/teams/\(Self.pathSegment(teamID))/users",
+            cursor: cursor
+        )
+    }
+
     /// Fetches a single page: the first page (with an explicit page size) when `cursor` is
     /// `nil`, or the page at the given absolute `next` cursor URL otherwise.
     private func page<Item: Decodable & Sendable>(

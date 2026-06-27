@@ -19,7 +19,7 @@ struct TeamsScreen: View {
                 restorationKey: "selection.teams.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.name) },
                 row: { TeamRow(team: $0) },
-                detail: { TeamDetailView(team: $0) }
+                detail: { TeamDetailView(team: $0, account: account) }
             )
         } else {
             NavigationStack {
@@ -64,9 +64,34 @@ struct TeamRow: View {
     }
 }
 
+/// The members of a team, pushed from `TeamDetailView`. Read-only list + detail (#56).
+struct TeamMembersList: View {
+    let teamID: String
+    let account: Account
+
+    var body: some View {
+        LoadableList(
+            title: "Members",
+            emptyMessage: "No members",
+            loadPage: {
+                try await HackerRankClient(account: account).teamMembersPage(teamID: teamID, after: $0)
+            },
+            searchableText: { "\($0.displayName) \($0.email) \($0.role ?? "")" },
+            sortOptions: [
+                SortOption("Name") { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending },
+                SortOption("Role") { ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending }
+            ],
+            contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
+            row: { PersonRow(user: $0) },
+            detail: { PersonDetailView(user: $0) }
+        )
+    }
+}
+
 /// Read-only detail for a single team.
 struct TeamDetailView: View {
     let team: Team
+    let account: Account
 
     var body: some View {
         Form {
@@ -77,6 +102,14 @@ struct TeamDetailView: View {
                 OptionalRow("Interviewers", team.interviewerCount.map { "\($0)" })
                 OptionalRow("Created", DisplayFormat.date(team.createdAt))
                 OptionalRow("Locations", DisplayFormat.list(team.locations))
+            }
+
+            Section {
+                NavigationLink {
+                    TeamMembersList(teamID: team.id, account: account)
+                } label: {
+                    Label("Members", systemImage: "person.2")
+                }
             }
 
             if let departments = team.departments, !departments.isEmpty {
@@ -102,6 +135,6 @@ struct TeamDetailView: View {
             interviewerCount: 8,
             locations: ["London", "Berlin"],
             departments: ["Engineering", "Platform"]
-        ))
+        ), account: Account(label: "Demo", token: "demo"))
     }
 }

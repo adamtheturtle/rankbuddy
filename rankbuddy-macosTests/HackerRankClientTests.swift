@@ -69,6 +69,14 @@ struct HackerRankClientTests {
         #expect(page.next == nil)
     }
 
+    @Test func `team members page is routed under its team`() async throws {
+        // The members path is "/teams/<id>/users"; the mock routes the "/users" segment to the
+        // users fixture (#56).
+        let page = try await makeClient().teamMembersPage(teamID: "tm1")
+        #expect(page.items.count == 4)
+        #expect(page.items.contains { $0.firstName == "Rhea" })
+    }
+
     @Test func `candidates page is routed under its test`() async throws {
         // The candidates path also contains "/tests/", so the client must build
         // ".../tests/<id>/candidates" and the mock must route it to the candidates fixture.
