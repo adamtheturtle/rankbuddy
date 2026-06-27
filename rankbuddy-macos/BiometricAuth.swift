@@ -31,4 +31,26 @@ enum BiometricAuth {
             .deviceOwnerAuthenticationWithBiometrics, localizedReason: reason
         )) ?? false
     }
+
+    /// Whether the device can evaluate device-owner authentication (Touch ID *or* password)
+    /// right now. Used to gate the *disable* path: turning the reveal requirement off should
+    /// itself require auth, but only where the device can actually evaluate it — otherwise a
+    /// user with no enrolled biometrics/password would be trapped with the gate stuck on.
+    static var canEvaluateOwnerAuth: Bool {
+        LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: nil)
+    }
+
+    /// Authenticates before *disabling* the reveal gate (#65). Uses `.deviceOwnerAuthentication`
+    /// so a password fallback is allowed. Returns `true` (permitting the disable) immediately on
+    /// devices that can't evaluate the policy, rather than trapping the user; otherwise returns
+    /// the result of the prompt, so a failed or cancelled prompt leaves the gate on.
+    @MainActor
+    static func authenticateToDisableGate(reason: String) async -> Bool {
+        let context = LAContext()
+        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) else { return true }
+
+        return await (try? context.evaluatePolicy(
+            .deviceOwnerAuthentication, localizedReason: reason
+        )) ?? false
+    }
 }

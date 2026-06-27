@@ -30,7 +30,7 @@ struct AccountEditor: View {
 
     var body: some View {
         Form {
-            Section("Account") {
+            Section {
                 TextField("Label", text: $label)
                 HStack {
                     if isTokenRevealed {
@@ -42,6 +42,10 @@ struct AccountEditor: View {
                         .buttonStyle(.link)
                 }
                 TextField("Base URL (optional)", text: $baseURLOverride)
+            } header: {
+                Text("Account")
+            } footer: {
+                GetAPIKeyLink()
             }
 
             Section {

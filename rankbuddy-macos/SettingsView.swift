@@ -15,6 +15,7 @@ struct SettingsView: View {
     private var refreshMinutes = LivenessSettings.defaultIntervalMinutes
     @AppStorage(BiometricAuth.revealSettingKey) private var biometricReveal = false
     @State private var mcpActivity: [MCPActivityEntry] = []
+    @State private var loginItemError: String?
 
     var body: some View {
         TabView {
@@ -45,6 +46,11 @@ struct SettingsView: View {
                     .environment(store)
             }
         }
+        .alert("Couldn’t change the login item", isPresented: loginItemErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(loginItemError ?? "")
+        }
     }
 
     private var generalTab: some View {
@@ -56,6 +62,14 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+            }
+
+            Section {
+                Toggle("Launch at login", isOn: launchAtLoginBinding)
+            } header: {
+                Text("Startup")
+            } footer: {
+                Text("Open RankBuddy automatically when you log in to your Mac.")
             }
 
             Section {
@@ -98,11 +112,12 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("Require Touch ID to reveal a token", isOn: $biometricReveal)
+                Toggle("Require Touch ID to reveal a token", isOn: biometricRevealBinding)
             } header: {
                 Text("Security")
             } footer: {
-                Text("When on, revealing an account's token in the editor asks for Touch ID first.")
+                Text("When on, revealing an account's token in the editor asks for Touch ID first. " +
+                    "Turning this off asks for Touch ID too, so it can't be disabled at an unlocked Mac.")
             }
         }
         .formStyle(.grouped)
@@ -112,8 +127,11 @@ struct SettingsView: View {
         Form {
             Section {
                 if store.accounts.isEmpty {
-                    Text("No accounts yet. Add a HackerRank account to get started.")
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("No accounts yet. Add a HackerRank account to get started.")
+                            .foregroundStyle(.secondary)
+                        GetAPIKeyLink()
+                    }
                 } else {
                     ForEach(store.accounts) { account in
                         AccountRow(account: account, isCurrent: account.id == store.currentAccountID)
@@ -237,6 +255,52 @@ struct SettingsView: View {
         let short = info?["CFBundleShortVersionString"] as? String ?? "—"
         let build = info?["CFBundleVersion"] as? String ?? "—"
         return "\(short) (\(build))"
+    }
+}
+
+/// Setting bindings, in an extension so they don't count toward `SettingsView`'s body length.
+private extension SettingsView {
+    var loginItemErrorPresented: Binding<Bool> {
+        Binding(get: { loginItemError != nil }, set: { if !$0 { loginItemError = nil } })
+    }
+
+    /// The "Launch at login" state, with the system as the source of truth: `get` reads the
+    /// live `SMAppService` status and `set` registers/unregisters, surfacing any error. On
+    /// failure the live status is unchanged, so the toggle reflects reality without a manual
+    /// snap-back (#62).
+    var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { LoginItem.isEnabled },
+            set: { enabled in
+                do {
+                    try LoginItem.setEnabled(enabled)
+                } catch {
+                    loginItemError = error.localizedDescription
+                }
+            }
+        )
+    }
+
+    /// The "Require Touch ID to reveal a token" state. Enabling is free; disabling first
+    /// requires a successful device-owner auth, so the protection can't simply be switched off
+    /// at an unlocked Mac (#65). A failed/cancelled prompt leaves it on.
+    var biometricRevealBinding: Binding<Bool> {
+        Binding(
+            get: { biometricReveal },
+            set: { enabled in
+                if enabled {
+                    biometricReveal = true
+                } else {
+                    Task {
+                        if await BiometricAuth.authenticateToDisableGate(
+                            reason: "turn off the Touch ID requirement"
+                        ) {
+                            biometricReveal = false
+                        }
+                    }
+                }
+            }
+        )
     }
 }
 
