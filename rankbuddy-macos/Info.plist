@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Partial Info.plist. GENERATE_INFOPLIST_FILE stays YES, so Xcode overlays the
+  generated CFBundle* keys on top of this base at build time. This file exists
+  only to carry the NSServices array, which can't be expressed as a scalar
+  INFOPLIST_KEY_* build setting (#46).
+-->
+<plist version="1.0">
+<dict>
+	<!--
+	  The "Open in RankBuddy" macOS Service (#46). Lets a HackerRank URL selected
+	  in any app deep-link into RankBuddy. The runtime handler is
+	  ServicesProvider.openInRankBuddy(_:userData:error:), registered at launch via
+	  NSApp.servicesProvider; this entry is what makes it appear in the Services menu.
+	-->
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Open in RankBuddy</string>
+			</dict>
+			<!-- The selector openInRankBuddy:userData:error: minus its standard suffix. -->
+			<key>NSMessage</key>
+			<string>openInRankBuddy</string>
+			<key>NSPortName</key>
+			<string>rankbuddy-macos</string>
+			<!-- The handler reads the selected text (.string); a selected URL arrives as plain text. -->
+			<key>NSSendTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

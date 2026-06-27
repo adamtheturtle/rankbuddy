@@ -8,11 +8,11 @@ import AppKit
 /// A macOS Service, "Open in RankBuddy", that takes a selected HackerRank URL in any app and
 /// deep-links to the matching item (#46). Mirrors PadBuddy's "Open Pad in CoderPad" service.
 ///
-/// The runtime side here is complete — the provider is registered at launch and resolves the
-/// current account from its persisted id, so no store reference is needed. The service only
-/// *appears* in the Services menu once an `NSServices` entry is declared in the app's
-/// Info.plist; RankBuddy uses a generated Info.plist, so adding that entry is a project-file
-/// change for the maintainer (see the `NSServices` snippet on issue #46).
+/// The provider is registered at launch (`AppDelegate`) and resolves the current account from
+/// its persisted id, so no store reference is needed. The `NSServices` entry that makes the
+/// service appear in the Services menu lives in the partial `Info.plist` the app target merges
+/// over its generated keys (`INFOPLIST_FILE`), since `NSServices` is an array-of-dicts that no
+/// scalar `INFOPLIST_KEY_*` build setting can express (#46).
 /// A resolved deep-link target for the Service.
 struct ServiceTarget: Equatable {
     let collection: FavoriteCollection

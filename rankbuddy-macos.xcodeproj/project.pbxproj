@@ -387,6 +387,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "rankbuddy-macos/Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
@@ -428,6 +429,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "rankbuddy-macos/Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
