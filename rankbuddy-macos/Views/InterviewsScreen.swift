@@ -1,11 +1,16 @@
 import BuddyAppKit
 import SwiftUI
 
-/// The Interviews section: a list of the account's interviews with read-only detail.
+/// The Interviews section: a list of the account's interviews with read-only detail, plus
+/// opt-in "New QuickPad" and "Schedule Interview" write actions (#60).
 struct InterviewsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.openWindow) private var openWindow
+    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
+    @State private var quickPadPresented = false
+    @State private var schedulePresented = false
+    @State private var reloadToken = 0
 
     var body: some View {
         if store.isMergedView {
@@ -55,17 +60,43 @@ struct InterviewsScreen: View {
                         account: account.id
                     )
                 },
+                accessoryToolbar: { writeActionsEnabled ? AnyView(newMenu) : AnyView(EmptyView()) },
+                reloadToken: reloadToken,
                 csvExport: { CSVExport.interviews($0) },
                 csvFilename: "interviews",
                 row: { InterviewRow(interview: $0) },
                 detail: { InterviewDetailView(interview: $0) }
             )
+            .sheet(isPresented: $quickPadPresented) {
+                NewQuickPadSheet(account: account) { reloadToken += 1 }
+            }
+            .sheet(isPresented: $schedulePresented) {
+                ScheduleInterviewSheet(account: account) { reloadToken += 1 }
+            }
         } else {
             NavigationStack {
                 NoAccountView()
                     .navigationTitle("Interviews")
             }
         }
+    }
+
+    private var newMenu: some View {
+        Menu {
+            Button {
+                quickPadPresented = true
+            } label: {
+                Label("New QuickPad…", systemImage: "bolt")
+            }
+            Button {
+                schedulePresented = true
+            } label: {
+                Label("Schedule Interview…", systemImage: "calendar.badge.plus")
+            }
+        } label: {
+            Label("New", systemImage: "plus")
+        }
+        .help("Create a QuickPad or schedule an interview")
     }
 
     /// Loads one merged page of interviews across every configured account (#17).

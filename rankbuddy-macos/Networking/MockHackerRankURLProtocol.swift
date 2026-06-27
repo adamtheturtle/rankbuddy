@@ -188,13 +188,15 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     // MARK: - Fixtures (deterministic demo data; no real personal data)
 
     /// The acknowledgement body for a write, routed by path: a user for `/users` (covers
-    /// user create #58 and team membership #59), a team for `/teams` (team create #59),
-    /// otherwise a candidate (the invite flow, #12). `/users` is checked first because a
-    /// membership path also contains `/teams`.
+    /// user create #58 and team membership #59), a team for `/teams` (team create #59), an
+    /// interview for `/interviews` (QuickPad / schedule #60), otherwise a candidate (the
+    /// invite flow, #12). `/users` is checked first because a membership path also contains
+    /// `/teams`.
     private static func writeAckBody(for url: URL) -> String {
         let path = url.path
         if path.contains("/users") { return createdUserJSON }
         if path.contains("/teams") { return createdTeamJSON }
+        if path.contains("/interviews") { return createdInterviewJSON }
         return createdCandidateJSON
     }
 
@@ -212,6 +214,11 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     /// The record returned when a team is created in the demo (#59).
     private static let createdTeamJSON = #"""
     {"id":"tm-created","name":"New Team","owner":"u1"}
+    """#
+
+    /// The record returned when an interview is created in the demo (#60).
+    private static let createdInterviewJSON = #"""
+    {"id":"i-created","url":"https://www.hackerrank.com/x/interviews/i-created","status":"scheduled"}
     """#
 
     private static let testsPage1JSON = #"""

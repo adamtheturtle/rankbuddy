@@ -152,6 +152,45 @@ struct HackerRankClient {
         )
     }
 
+    /// Creates an instant QuickPad collaborative interview (`POST /interviews`) (#60). Gated
+    /// behind the write-actions opt-in.
+    ///
+    /// - Returns: the created interview as echoed by the API (all-optional, so a 2xx never
+    ///   fails to decode on an unexpected shape).
+    @discardableResult
+    func createQuickPad(title: String? = nil) async throws -> CreatedInterview {
+        let body = CreateQuickPadRequest(title: Self.nonBlank(title), quickpad: true)
+        return try await rest.send(
+            CreatedInterview.self,
+            method: "POST",
+            path: "\(Self.apiV3)/interviews",
+            body: body
+        )
+    }
+
+    /// Schedules an interview (`POST /interviews`) (#60). Gated behind the write-actions
+    /// opt-in. The start time is sent as an ISO-8601 timestamp.
+    @discardableResult
+    func scheduleInterview(
+        title: String,
+        from: Date,
+        candidateEmail: String? = nil,
+        notes: String? = nil
+    ) async throws -> CreatedInterview {
+        let body = ScheduleInterviewRequest(
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            from: ISO8601DateFormatter().string(from: from),
+            candidate: Self.nonBlank(candidateEmail),
+            notes: Self.nonBlank(notes)
+        )
+        return try await rest.send(
+            CreatedInterview.self,
+            method: "POST",
+            path: "\(Self.apiV3)/interviews",
+            body: body
+        )
+    }
+
     /// One page of the account's questions, plus the cursor for the next page.
     func questionsPage(after cursor: String? = nil) async throws -> Page<Question> {
         try await page(HackerRankPage<Question>.self, path: "\(Self.apiV3)/questions", cursor: cursor)
@@ -229,6 +268,13 @@ struct HackerRankClient {
         }
 
         _ = try await rest.performWithRetry(HackerRankPage<Test>.self, request: rest.authorizedGET(url))
+    }
+
+    /// Trims `value` and returns `nil` for an empty/whitespace-only result, so blank optional
+    /// fields are omitted from a write body rather than sent empty.
+    private static func nonBlank(_ value: String?) -> String? {
+        let result = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (result?.isEmpty == false) ? result : nil
     }
 
     private static func pathSegment(_ value: String) -> String {
@@ -318,4 +364,27 @@ nonisolated struct CreatedTeam: Decodable {
 nonisolated struct TeamMembershipResult: Decodable {
     let id: String?
     let email: String?
+}
+
+/// The body sent when creating a QuickPad interview (#60).
+private nonisolated struct CreateQuickPadRequest: Encodable {
+    let title: String?
+    let quickpad: Bool
+}
+
+/// The body sent when scheduling an interview (#60). The start time is an ISO-8601 string;
+/// blank optional fields are omitted.
+private nonisolated struct ScheduleInterviewRequest: Encodable {
+    let title: String
+    let from: String
+    let candidate: String?
+    let notes: String?
+}
+
+/// The interview echoed back by a successful create (#60). All-optional so a 2xx never fails
+/// to decode on an unexpected shape; the URL lets the UI open the new pad.
+nonisolated struct CreatedInterview: Decodable {
+    let id: String?
+    let url: String?
+    let status: String?
 }
