@@ -235,8 +235,21 @@ struct HackerRankClient {
     }
 
     /// One page of the account's interviews, plus the cursor for the next page.
+    ///
+    /// Requests **newest-first** ordering from the server (`ordering=-created_at`). Real
+    /// accounts have huge interview collections (≈87k) returned oldest-first by default, so
+    /// without this the first pages — the only ones a user realistically scrolls — are the
+    /// oldest interviews, and the list's client-side "Newest" sort can only reorder what's
+    /// already loaded (#85). The server propagates the ordering into the `next`/`previous`
+    /// URLs, so subsequent pages inherit it. An ordering the API doesn't recognise is ignored
+    /// rather than erroring, so this can't regress a deployment that doesn't honour it.
     func interviewsPage(after cursor: String? = nil) async throws -> Page<Interview> {
-        try await page(HackerRankPage<Interview>.self, path: "\(Self.apiV3)/interviews", cursor: cursor)
+        try await page(
+            HackerRankPage<Interview>.self,
+            path: "\(Self.apiV3)/interviews",
+            cursor: cursor,
+            query: [URLQueryItem(name: "ordering", value: "-created_at")]
+        )
     }
 
     /// One page of the organisation's users (members), plus the cursor for the next page.
@@ -263,16 +276,18 @@ struct HackerRankClient {
     private func page<Item: Decodable & Sendable>(
         _: HackerRankPage<Item>.Type,
         path: String,
-        cursor: String?
+        cursor: String?,
+        query: [URLQueryItem] = []
     ) async throws -> Page<Item> {
-        let url = try pageURL(path: path, cursor: cursor)
+        let url = try pageURL(path: path, cursor: cursor, query: query)
         let response = try await rest.performWithRetry(HackerRankPage<Item>.self, request: rest.authorizedGET(url))
         return Page(items: response.data, next: response.next)
     }
 
     /// The absolute `cursor` URL when continuing, or the first-page URL (base + path +
-    /// `limit`) when starting.
-    private func pageURL(path: String, cursor: String?) throws -> URL {
+    /// `limit`, plus any endpoint-specific `query` such as ordering) when starting. Subsequent
+    /// pages reuse the absolute `next` URL, which already carries the original query.
+    private func pageURL(path: String, cursor: String?, query: [URLQueryItem] = []) throws -> URL {
         if let cursor {
             guard let url = URL(string: cursor) else {
                 throw HackerRankError.http(status: 0, body: "Invalid next-page URL.")
@@ -282,7 +297,7 @@ struct HackerRankClient {
         }
 
         var components = URLComponents(url: baseURL.appending(path: path), resolvingAgainstBaseURL: false)
-        components?.queryItems = [URLQueryItem(name: "limit", value: String(Self.pageSize))]
+        components?.queryItems = [URLQueryItem(name: "limit", value: String(Self.pageSize))] + query
         guard let url = components?.url else {
             throw HackerRankError.http(status: 0, body: "Could not build the page URL.")
         }
