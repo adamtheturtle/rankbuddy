@@ -112,10 +112,14 @@ struct ModelDecodingResilienceTests {
         #expect(candidate.score == 80.0)
     }
 
-    @Test func `candidate fails when email is missing`() throws {
-        #expect(throws: DecodingError.self) {
-            try decode(TestCandidate.self, #"{"id":"c1"}"#)
-        }
+    @Test func `candidate with no email is kept (defaulted), not dropped (#85)`() throws {
+        // `email` is required in the schema but can be null/absent for an invited-but-unregistered
+        // candidate. It must default rather than throw, or the page decoder drops the record.
+        let candidate = try decode(TestCandidate.self, #"{"id":"c1"}"#)
+        #expect(candidate.id == "c1")
+        #expect(candidate.email.isEmpty)
+        let nullEmail = try decode(TestCandidate.self, #"{"id":"c2","email":null}"#)
+        #expect(nullEmail.email.isEmpty)
     }
 
     // MARK: - Question
@@ -146,10 +150,17 @@ struct ModelDecodingResilienceTests {
         #expect(interview.endedAt == nil)
     }
 
-    @Test func `interview fails when url is missing`() throws {
-        #expect(throws: DecodingError.self) {
-            try decode(Interview.self, #"{"id":"i1","status":"ended"}"#)
-        }
+    @Test func `interview with no url or status is kept (defaulted), not dropped (#85)`() throws {
+        // `status`/`url` are required in the schema but a freshly scheduled interview can lack a
+        // url, and either can be null. They must default rather than throw, or the page decoder
+        // drops the record — the root cause of "only old interviews" showing.
+        let noURL = try decode(Interview.self, #"{"id":"i1","status":"ended"}"#)
+        #expect(noURL.url.isEmpty)
+        #expect(noURL.status == "ended")
+        let nullBoth = try decode(Interview.self, #"{"id":"i2","status":null,"url":null}"#)
+        #expect(nullBoth.id == "i2")
+        #expect(nullBoth.status.isEmpty)
+        #expect(nullBoth.url.isEmpty)
     }
 
     // MARK: - Team & User
@@ -179,10 +190,15 @@ struct ModelDecodingResilienceTests {
         #expect(user.teams == ["team1"])
     }
 
-    @Test func `user fails when email is missing`() throws {
-        #expect(throws: DecodingError.self) {
-            try decode(User.self, #"{"id":"u1"}"#)
-        }
+    @Test func `user with no email is kept (defaulted), not dropped (#85)`() throws {
+        // `email` is required in the schema but SSO/pending/service accounts can lack one. It must
+        // default rather than throw, or the page decoder drops the user — the root cause of "only
+        // some users" showing.
+        let user = try decode(User.self, #"{"id":"u1"}"#)
+        #expect(user.id == "u1")
+        #expect(user.email.isEmpty)
+        let nullEmail = try decode(User.self, #"{"id":"u2","email":null}"#)
+        #expect(nullEmail.email.isEmpty)
     }
 
     // MARK: - Page envelope
@@ -217,5 +233,33 @@ struct ModelDecodingResilienceTests {
         """#
         let page = try decode(HackerRankPage<rankbuddy_macos.Test>.self, json)
         #expect(page.pageItems.map(\.id) == ["t1", "t3"])
+    }
+
+    @Test func `a users page keeps records whose required email is null or absent (#85)`() throws {
+        // The exact "only some users" bug: previously a user with a null/absent email threw and
+        // the lenient page decode silently dropped it. Now all three must survive.
+        let json = #"""
+        {"data":[
+          {"id":"u1","email":"a@example.com"},
+          {"id":"u2","email":null},
+          {"id":"u3"}
+        ],"next":null}
+        """#
+        let page = try decode(HackerRankPage<User>.self, json)
+        #expect(page.pageItems.map(\.id) == ["u1", "u2", "u3"])
+    }
+
+    @Test func `an interviews page keeps records with null status or absent url (#85)`() throws {
+        // The "only old interviews" bug: a record missing url (or with null status) used to be
+        // dropped. All three must survive now.
+        let json = #"""
+        {"data":[
+          {"id":"i1","status":"completed","url":"https://hr.test/i1"},
+          {"id":"i2","status":null,"url":"https://hr.test/i2"},
+          {"id":"i3","status":"scheduled"}
+        ],"next":null}
+        """#
+        let page = try decode(HackerRankPage<Interview>.self, json)
+        #expect(page.pageItems.map(\.id) == ["i1", "i2", "i3"])
     }
 }

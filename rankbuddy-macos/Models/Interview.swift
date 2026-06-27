@@ -51,3 +51,26 @@ nonisolated struct Interview: Codable, Hashable, Identifiable {
         case reportURL = "report_url"
     }
 }
+
+extension Interview {
+    /// Decodes resiliently. `status` and `url` are required in the schema but can be absent or
+    /// null on live records (e.g. a freshly scheduled interview with no URL yet); the page
+    /// decoder drops any element that throws, so without this those interviews silently vanish
+    /// from the list (#85). They default to "" so the record still appears. Only `id` is truly
+    /// required — an interview with no identity can't be shown.
+    nonisolated init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        status = container.lenient(String.self, .status) ?? ""
+        url = container.lenient(String.self, .url) ?? ""
+        title = container.lenient(String.self, .title)
+        feedback = container.lenient(String.self, .feedback)
+        thumbsUp = container.lenient(Int.self, .thumbsUp)
+        notes = container.lenient(String.self, .notes)
+        createdAt = container.lenient(String.self, .createdAt)
+        updatedAt = container.lenient(String.self, .updatedAt)
+        endedAt = container.lenient(String.self, .endedAt)
+        interviewTemplateID = container.lenient(Int.self, .interviewTemplateID)
+        reportURL = container.lenient(String.self, .reportURL)
+    }
+}

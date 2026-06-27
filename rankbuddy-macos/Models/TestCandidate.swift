@@ -73,3 +73,32 @@ nonisolated struct TestCandidate: Codable, Hashable, Identifiable {
         case editorPasteCount = "editor_paste_count"
     }
 }
+
+extension TestCandidate {
+    /// Decodes resiliently. `email` is required in the schema but can be absent or null on live
+    /// records (e.g. an invited candidate who hasn't registered); the page decoder drops any
+    /// element that throws, so without this those candidates silently vanish from the list (#85).
+    /// It defaults to "" so the record still appears. Only `id` is truly required.
+    nonisolated init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        email = container.lenient(String.self, .email) ?? ""
+        fullName = container.lenient(String.self, .fullName)
+        score = container.lenient(Double.self, .score)
+        percentageScore = container.lenient(Double.self, .percentageScore)
+        test = container.lenient(String.self, .test)
+        status = container.lenient(Int.self, .status)
+        atsState = container.lenient(Int.self, .atsState)
+        integrityStatus = container.lenient(String.self, .integrityStatus)
+        attemptStartTime = container.lenient(String.self, .attemptStartTime)
+        attemptEndTime = container.lenient(String.self, .attemptEndTime)
+        tags = container.lenient([String].self, .tags)
+        feedback = container.lenient(String.self, .feedback)
+        reportURL = container.lenient(String.self, .reportURL)
+        pdfURL = container.lenient(String.self, .pdfURL)
+        plagiarismStatus = container.lenient(Bool.self, .plagiarismStatus)
+        outOfWindowEvents = container.lenient(Int.self, .outOfWindowEvents)
+        outOfWindowDuration = container.lenient(Double.self, .outOfWindowDuration)
+        editorPasteCount = container.lenient(Int.self, .editorPasteCount)
+    }
+}

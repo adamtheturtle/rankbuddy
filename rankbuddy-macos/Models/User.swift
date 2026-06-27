@@ -50,3 +50,25 @@ nonisolated struct User: Codable, Hashable, Identifiable {
         case lastActivityTime = "last_activity_time"
     }
 }
+
+extension User {
+    /// Decodes resiliently. `email` is required in the schema but can be absent or null on live
+    /// records (SSO members, pending invites, service accounts); the page decoder drops any
+    /// element that throws, so without this those users silently vanish from the People list
+    /// (#85). It defaults to "" so the record still appears. Only `id` is truly required.
+    nonisolated init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        email = container.lenient(String.self, .email) ?? ""
+        firstName = container.lenient(String.self, .firstName)
+        lastName = container.lenient(String.self, .lastName)
+        country = container.lenient(String.self, .country)
+        role = container.lenient(String.self, .role)
+        status = container.lenient(String.self, .status)
+        teams = container.lenient([String].self, .teams)
+        activated = container.lenient(Bool.self, .activated)
+        companyAdmin = container.lenient(Bool.self, .companyAdmin)
+        teamAdmin = container.lenient(Bool.self, .teamAdmin)
+        lastActivityTime = container.lenient(String.self, .lastActivityTime)
+    }
+}
