@@ -76,7 +76,7 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         // Best-effort: donate to a named Spotlight index whenever the system asks for
         // suggestions, so the same fetch also keeps Spotlight current — no extra network and
         // no launch-time work. Only the non-sensitive display metadata is indexed (#24).
-        try? await CSSearchableIndex(name: "RankBuddyObjects").indexAppEntities(entities)
+        try? await CSSearchableIndex(name: RankBuddySpotlightIndex.name).indexAppEntities(entities)
         return entities
     }
 
@@ -108,6 +108,21 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
             )
         }
         return entities
+    }
+}
+
+/// The shared Spotlight index RankBuddy donates findable items to (#24). Centralised so the
+/// donation (`suggestedEntities`) and the deletion-on-account-removal use the same index name.
+enum RankBuddySpotlightIndex {
+    /// The `CSSearchableIndex` name holding RankBuddy's donated items.
+    static let name = "RankBuddyObjects"
+
+    /// Removes every donated item from Spotlight. Called when an account is deleted so that a
+    /// removed account's items can't linger in system search (#24: indexed content is removed
+    /// when an account is deleted). The index repopulates with the current account the next time
+    /// the system requests suggestions, so only the current account is ever indexed.
+    static func clear() async {
+        try? await CSSearchableIndex(name: name).deleteAllSearchableItems()
     }
 }
 

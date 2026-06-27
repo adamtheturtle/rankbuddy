@@ -48,4 +48,16 @@ struct RankBuddyEntitiesTests {
         #expect(UserDefaults.standard.string(forKey: key) == "t99")
         #expect(UserDefaults.standard.string(forKey: "selectedSection") == "tests")
     }
+
+    @Test func `the spotlight index name is shared by donation and clearing`() {
+        // Donation (suggestedEntities) and deletion-on-removal must target the same index, or a
+        // deleted account's items would linger (#24). Pin the name so the two can't drift apart.
+        #expect(RankBuddySpotlightIndex.name == "RankBuddyObjects")
+    }
+
+    @Test func `clearing the spotlight index completes without throwing`() async {
+        // Best-effort deletion: it must never throw into the account-removal path, even when
+        // Spotlight is unavailable in the test environment.
+        await RankBuddySpotlightIndex.clear()
+    }
 }

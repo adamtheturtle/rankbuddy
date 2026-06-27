@@ -41,7 +41,10 @@ extension AccountStore {
             migrateIfEmpty: { nil },
             onAccountsChanged: { _ in },
             onCurrentChanged: { _ in },
-            onRemoved: { _ in },
+            // Purge donated Spotlight items so a deleted account's tests/questions/interviews
+            // can't linger in system search (#24). The index repopulates with the current
+            // account on the next suggestion request.
+            onRemoved: { _ in Task { await RankBuddySpotlightIndex.clear() } },
             onRekeyed: { _ in },
             logger: logger
         )
