@@ -59,6 +59,7 @@ struct RankBuddyApp: App {
                 .environment(openLink)
                 .environment(favorites)
                 .environment(health)
+                .environment(\.openURL, browserOpenURLAction)
                 .task {
                     favoritesSync?.start()
                     NetworkMonitor.shared.start()
@@ -81,6 +82,7 @@ struct RankBuddyApp: App {
             DetailWindowContent(value: value)
                 .environment(accountStore)
                 .environment(favorites)
+                .environment(\.openURL, browserOpenURLAction)
                 .preferredColorScheme(appearance.colorScheme)
         }
 
@@ -101,6 +103,16 @@ struct RankBuddyApp: App {
     /// extra out of the menu bar.
     private var menuBarInserted: Binding<Bool> {
         Binding(get: { presence.showsMenuBarIcon }, set: { _ in })
+    }
+
+    /// Routes every SwiftUI `Link` / `openURL` through the browser preferences (#63), so web
+    /// links honour the chosen browser and background-open setting. Deep links use their own
+    /// routing and are unaffected.
+    private var browserOpenURLAction: OpenURLAction {
+        OpenURLAction { url in
+            BrowserSettings.open(url)
+            return .handled
+        }
     }
 }
 

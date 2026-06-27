@@ -20,10 +20,13 @@ struct SettingsView: View {
     @AppStorage(GeneralSettings.refreshSecondsKey)
     private var listRefreshSeconds = GeneralSettings.defaultRefreshSeconds
     @AppStorage(MCPServerSettings.enabledKey) private var mcpServerEnabled = false
-    // `mcpActivity`/`mcpClient` are internal so the MCP sections (a separate file, for
-    // file_length) can read them (#74).
+    @AppStorage(BrowserSettings.defaultBrowserKey) var defaultBrowserID = ""
+    @AppStorage(BrowserSettings.backgroundKey) var openLinksInBackground = false
+    // `mcpActivity`/`mcpClient`/`installedBrowsers` are internal so the MCP and Browser
+    // sections (separate files, for file_length) can read them (#74, #63).
     @State var mcpActivity: [MCPActivityEntry] = []
     @State var mcpClient: MCPClient = .claudeDesktop
+    @State var installedBrowsers: [BrowserSettings.Browser] = []
     @State private var loginItemError: String?
 
     var body: some View {
@@ -36,6 +39,11 @@ struct SettingsView: View {
             accountsTab
                 .tabItem {
                     Label("Accounts", systemImage: "person.crop.circle")
+                }
+
+            browserTab
+                .tabItem {
+                    Label("Browser", systemImage: "safari")
                 }
 
             mcpTab
