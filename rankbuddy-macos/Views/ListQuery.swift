@@ -32,10 +32,67 @@ enum ListQuery {
         return result
     }
 
+    /// Whether `item` satisfies the active facet selection (#55): for every facet with a
+    /// non-empty chosen set, at least one of the item's values for that facet must be chosen
+    /// (AND across facets, OR within a facet). Facets with no selection impose no constraint.
+    static func matchesFacets<Item>(
+        _ item: Item,
+        facets: [ListFacet<Item>],
+        selected: [String: Set<String>]
+    ) -> Bool {
+        for facet in facets {
+            guard let chosen = selected[facet.id], !chosen.isEmpty else { continue }
+
+            if Set(facet.values(item)).isDisjoint(with: chosen) { return false }
+        }
+        return true
+    }
+
+    /// The distinct, non-empty values present for `facet` across `items`, sorted for display —
+    /// the options the facet's dropdown offers (#55).
+    static func facetOptions<Item>(_ facet: ListFacet<Item>, in items: [Item]) -> [String] {
+        var seen = Set<String>()
+        var ordered: [String] = []
+        for item in items {
+            for value in facet.values(item) where !value.isEmpty && seen.insert(value).inserted {
+                ordered.append(value)
+            }
+        }
+        return ordered.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
     /// The `UserDefaults` key the chosen date filter persists under (#19), or `nil` when the
     /// list has no restoration key (persistence off).
     static func filterKey(_ restorationKey: String?) -> String? {
         restorationKey.map { "filter.\($0)" }
+    }
+
+    /// The `UserDefaults` key the active facet selection persists under (#55), or `nil` when
+    /// persistence is off.
+    static func facetsKey(_ restorationKey: String?) -> String? {
+        restorationKey.map { "facets.\($0)" }
+    }
+
+    /// The saved facet selection for `key` (#55), or empty when absent/unreadable.
+    static func restoredFacets(key: String?, defaults: UserDefaults = .standard) -> [String: Set<String>] {
+        guard let key, let data = defaults.data(forKey: key),
+              let raw = try? JSONDecoder().decode([String: [String]].self, from: data)
+        else { return [:] }
+
+        return raw.mapValues(Set.init).filter { !$0.value.isEmpty }
+    }
+
+    /// Persists the active facet selection under `key` (#55), clearing it when nothing is
+    /// selected. Empty per-facet sets are dropped so a cleared facet doesn't linger.
+    static func persistFacets(_ selected: [String: Set<String>], key: String?, defaults: UserDefaults = .standard) {
+        guard let key else { return }
+
+        let nonEmpty = selected.filter { !$0.value.isEmpty }
+        if nonEmpty.isEmpty {
+            defaults.removeObject(forKey: key)
+        } else {
+            defaults.set(try? JSONEncoder().encode(nonEmpty.mapValues(Array.init)), forKey: key)
+        }
     }
 
     /// The saved date range for `key`, ignoring any stale/unknown value.

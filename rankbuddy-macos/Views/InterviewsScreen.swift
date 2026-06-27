@@ -32,6 +32,9 @@ struct InterviewsScreen: View {
                         ($0.title ?? "").localizedStandardCompare($1.title ?? "") == .orderedAscending
                     }
                 ],
+                facets: [
+                    ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.status.capitalized })
+                ],
                 restorationKey: "selection.interviews.\(account.id)",
                 filterDate: { DisplayFormat.parseDate($0.createdAt) },
                 dateFilterLabel: "Created",

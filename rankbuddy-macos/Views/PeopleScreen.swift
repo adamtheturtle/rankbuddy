@@ -24,6 +24,10 @@ struct PeopleScreen: View {
                     SortOption("Name") { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending },
                     SortOption("Role") { ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending }
                 ],
+                facets: [
+                    ListFacet("role", "Role", systemImage: "person.fill", value: { $0.role?.capitalized }),
+                    ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.status?.capitalized })
+                ],
                 restorationKey: "selection.users.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
                 accessoryToolbar: { AnyView(createButton) },

@@ -36,6 +36,9 @@ struct CandidatesList: View {
                 // Higher ATS codes are further along the pipeline; unset/unknown sort last.
                 SortOption("Status") { ($0.atsState ?? -1) > ($1.atsState ?? -1) }
             ],
+            facets: [
+                ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.listStatusLabel })
+            ],
             filterDate: { DisplayFormat.parseDate($0.attemptEndTime ?? $0.attemptStartTime) },
             dateFilterLabel: "Attempted",
             contextMenu: { candidate in

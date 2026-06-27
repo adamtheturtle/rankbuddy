@@ -48,6 +48,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     let searchableText: (Item) -> String
     /// The ways the list can be ordered; the first is the default. Empty hides the menu.
     var sortOptions: [SortOption<Item>] = []
+    /// The declarative filter facets shown in the bar above the list (#55). Empty hides the bar.
+    var facets: [ListFacet<Item>] = []
     /// When set, the list persists/restores the selected detail and scroll position across
     /// launches under this key (#19). Callers scope the key by account and collection. `nil`
     /// (e.g. the nested per-test candidates list) disables persistence but not navigation.
@@ -112,6 +114,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// The selected rows (FastList multi-selection): drives the highlight and the
     /// "Export Selected" bulk action (#44).
     @State var selection: Set<Item.ID> = []
+    /// The active facet selection (#55): facet id → chosen values. Internal so the
+    /// `visibleItems` extension reads it; restored/persisted per account.
+    @State var selectedFacets: [String: Set<String>] = [:]
     /// A one-shot scroll target honoured on the next layout (restored selection/scroll).
     @State private var scrollTarget: Item.ID?
     /// Guards restoration to once per load cycle, so navigating back doesn't re-push.
@@ -198,35 +203,16 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .onChange(of: dateRange) {
                     ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
                 }
+                .onChange(of: selectedFacets) {
+                    ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))
+                }
                 .onChange(of: path) { persistSelection() }
         }
-    }
-
-    /// Where this list's chosen sort order is remembered between launches (#19). Keyed by
-    /// title, so each collection keeps its own preference.
-    private var sortDefaultsKey: String {
-        "sort.\(title)"
     }
 
     /// Where the free-scroll anchor is remembered (#19), or `nil` when persistence is off.
     private var scrollDefaultsKey: String? {
         restorationKey.map { "scroll.\($0)" }
-    }
-
-    /// Restores the saved sort order by label, falling back to the first option.
-    private func restoreSort() {
-        guard !sortOptions.isEmpty else { return }
-
-        let savedLabel = UserDefaults.standard.string(forKey: sortDefaultsKey)
-        let saved = sortOptions.first { $0.label == savedLabel }
-        sortSelection = (saved ?? sortOptions.first)?.id
-    }
-
-    /// Persists the current sort order by its stable label (the option ids are per-launch).
-    private func persistSort() {
-        guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return }
-
-        UserDefaults.standard.set(option.label, forKey: sortDefaultsKey)
     }
 
     @ViewBuilder private var content: some View {
@@ -254,24 +240,30 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
 
     @ViewBuilder private var loadedList: some View {
         let visible = visibleItems
-        if visible.isEmpty {
-            ContentUnavailableView.search(text: query)
-        } else {
-            FastList(visible, selection: $selection) { item in
-                // Re-inject the stores the rows read, because FastList's per-row NSHostingView
-                // doesn't inherit the SwiftUI environment. Non-interactive so a click falls
-                // through to the table for selection (the favourite star is a passive indicator).
-                row(item)
-                    .environment(accountStore)
-                    .environment(favorites)
-                    .allowsHitTesting(false)
+        VStack(spacing: 0) {
+            // Renders nothing when no facets are declared, so unfaceted lists are unchanged (#55).
+            FacetBar(facets: facets, items: items, selected: $selectedFacets)
+
+            if visible.isEmpty {
+                ContentUnavailableView.search(text: query)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                FastList(visible, selection: $selection) { item in
+                    // Re-inject the stores the rows read, because FastList's per-row NSHostingView
+                    // doesn't inherit the SwiftUI environment. Non-interactive so a click falls
+                    // through to the table for selection (the favourite star is a passive indicator).
+                    row(item)
+                        .environment(accountStore)
+                        .environment(favorites)
+                        .allowsHitTesting(false)
+                }
+                .onDoubleClick { open($0) }
+                .onReturnKey { open($0) }
+                .rowContextMenu { contextMenu($0) }
+                .onTopRowChange { topRowChanged(to: $0, in: visible) }
+                .scrollToRow(id: scrollTarget) { scrollTarget = nil }
+                .navigationSubtitle(subtitle(visibleCount: visible.count))
             }
-            .onDoubleClick { open($0) }
-            .onReturnKey { open($0) }
-            .rowContextMenu { contextMenu($0) }
-            .onTopRowChange { topRowChanged(to: $0, in: visible) }
-            .scrollToRow(id: scrollTarget) { scrollTarget = nil }
-            .navigationSubtitle(subtitle(visibleCount: visible.count))
         }
     }
 
@@ -312,6 +304,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     private func reload() async {
         didRestore = false
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
+        if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
         path = []
         selection = []
         phase = .loading

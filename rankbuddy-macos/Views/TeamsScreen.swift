@@ -25,6 +25,10 @@ struct TeamsScreen: View {
                     SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
                     SortOption("Size") { ($0.developerCount ?? 0) > ($1.developerCount ?? 0) }
                 ],
+                facets: [
+                    ListFacet("department", "Department", systemImage: "building.2") { $0.departments ?? [] },
+                    ListFacet("location", "Location", systemImage: "mappin.and.ellipse") { $0.locations ?? [] }
+                ],
                 restorationKey: "selection.teams.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.name) },
                 accessoryToolbar: { AnyView(createButton) },

@@ -30,6 +30,12 @@ struct TestsScreen: View {
                     SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
                     SortOption("Start Time") { ($0.startTime ?? "") > ($1.startTime ?? "") }
                 ],
+                facets: [
+                    ListFacet("state", "State", systemImage: "circle.fill", value: { $0.state?.capitalized }),
+                    ListFacet("language", "Language", systemImage: "chevron.left.forwardslash.chevron.right") {
+                        ($0.languages ?? []).map(DisplayFormat.languageName)
+                    }
+                ],
                 restorationKey: "selection.tests.\(account.id)",
                 filterDate: { DisplayFormat.parseDate($0.startTime) },
                 dateFilterLabel: "Starts",
