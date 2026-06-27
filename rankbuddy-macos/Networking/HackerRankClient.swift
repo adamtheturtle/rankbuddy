@@ -236,19 +236,23 @@ struct HackerRankClient {
 
     /// One page of the account's interviews, plus the cursor for the next page.
     ///
-    /// Requests **newest-first** ordering from the server (`ordering=-created_at`). Real
-    /// accounts have huge interview collections (≈87k) returned oldest-first by default, so
-    /// without this the first pages — the only ones a user realistically scrolls — are the
-    /// oldest interviews, and the list's client-side "Newest" sort can only reorder what's
-    /// already loaded (#85). The server propagates the ordering into the `next`/`previous`
-    /// URLs, so subsequent pages inherit it. An ordering the API doesn't recognise is ignored
-    /// rather than erroring, so this can't regress a deployment that doesn't honour it.
+    /// Requests **newest-first** ordering from the server (`order_by=created_at&order_dir=desc`).
+    /// Real accounts have huge interview collections (≈87k) returned oldest-first by default, so
+    /// without this the first pages — the only ones a user realistically scrolls — are the oldest
+    /// interviews, and the recent ones (incl. anything created today) never load (#85). The exact
+    /// parameter names are from the HackerRank for Work OpenAPI spec for `GET /interviews`:
+    /// `order_by` ∈ {title, id, created_at, ended_at, current_status, user} and `order_dir` ∈
+    /// {asc, desc}, where `order_dir` is required whenever `order_by` is set. The server carries
+    /// the ordering into the `next` URLs, so subsequent pages inherit it.
     func interviewsPage(after cursor: String? = nil) async throws -> Page<Interview> {
         try await page(
             HackerRankPage<Interview>.self,
             path: "\(Self.apiV3)/interviews",
             cursor: cursor,
-            query: [URLQueryItem(name: "ordering", value: "-created_at")]
+            query: [
+                URLQueryItem(name: "order_by", value: "created_at"),
+                URLQueryItem(name: "order_dir", value: "desc")
+            ]
         )
     }
 

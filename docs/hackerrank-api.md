@@ -73,6 +73,22 @@ rather than offering a global candidates list.
 
 Token validation uses a lightweight `GET /x/api/v3/tests?limit=1`.
 
+## Sorting (interviews)
+
+The collections default to **oldest-first**, which on a real account (≈87k interviews)
+means the recent records never appear in the first pages. `GET /x/api/v3/interviews`
+accepts two sort parameters (from the official OpenAPI spec — *not* a generic `ordering`
+key, which the server ignores):
+
+- `order_by` ∈ `title`, `id`, `created_at`, `ended_at`, `current_status`, `user`.
+- `order_dir` ∈ `asc`, `desc`. **Required whenever `order_by` is set.**
+
+RankBuddy requests `order_by=created_at&order_dir=desc` so the newest interviews — and
+anything created today — load first; the server carries the parameters into the `next`
+URLs. `GET /x/api/v3/questions` exposes no sort parameter, and the spec documents none
+for tests/users/teams. The interviews endpoint also accepts a `created_at=<from>..<to>`
+range filter (ISO-8601 with `±hh:mm` offset) for future server-side date filtering.
+
 ## Rate limiting and errors
 
 - `429` indicates rate limiting; RankBuddy retries with bounded exponential backoff.
