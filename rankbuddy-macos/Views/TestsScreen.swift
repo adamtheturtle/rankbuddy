@@ -254,6 +254,9 @@ struct TestDetailView: View {
                     TestReport(test: test)
                 }
             }
+            ToolbarItem {
+                MarkdownExportButton(suggestedName: test.name) { MarkdownExport.test(test) }
+            }
         }
     }
 }

@@ -160,6 +160,9 @@ struct QuestionDetailView: View {
                     QuestionReport(question: question)
                 }
             }
+            ToolbarItem {
+                MarkdownExportButton(suggestedName: question.name) { MarkdownExport.question(question) }
+            }
         }
     }
 }

@@ -212,6 +212,11 @@ struct InterviewDetailView: View {
                     InterviewReport(interview: interview)
                 }
             }
+            ToolbarItem {
+                MarkdownExportButton(suggestedName: interview.title ?? "interview-\(interview.id)") {
+                    MarkdownExport.interview(interview)
+                }
+            }
         }
     }
 }

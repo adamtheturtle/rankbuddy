@@ -259,6 +259,11 @@ struct CandidateDetailView: View {
                     CandidateReport(candidate: candidate)
                 }
             }
+            ToolbarItem {
+                MarkdownExportButton(suggestedName: candidate.fullName ?? candidate.email) {
+                    MarkdownExport.candidate(candidate)
+                }
+            }
         }
     }
 }
