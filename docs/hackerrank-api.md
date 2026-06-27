@@ -6,6 +6,16 @@ match. Derived from the public [`adamtheturtle/hackerrank`](https://github.com/a
 Python client and **confirmed against a live HackerRank for Work account on 2026-06-24**
 (#3) for the read-only endpoints below.
 
+## Re-confirmed against a live account (2026-06-27)
+
+- **Auth + paginated fetch still hold** end-to-end: `GET /x/api/v3/tests?limit=1` returns
+  the envelope below; a valid token authenticates and an invalid token is rejected with a
+  mapped `HackerRankError` (clear message), exercising both the success and auth-failure paths.
+- **`GET /x/api/v3/users/me`** returns the **single signed-in user object** (not a paged
+  envelope) in the same shape as a People-list entry — `id`, `email`, `firstname`, `lastname`,
+  `role`, `company_admin`, team/permission fields. RankBuddy uses it to auto-discover an
+  account's identity in the editor (#72); it decodes straight into the `User` model.
+
 ## Confirmed against a live account (2026-06-24)
 
 - **Auth/pagination:** `GET /x/api/v3/tests|questions|interviews` return `200` with the
@@ -67,9 +77,14 @@ List endpoints use **offset/limit** pagination and return a top-level envelope:
 | Candidates  | `GET /x/api/v3/tests/{test_id}/candidates`  |
 | Questions   | `GET /x/api/v3/questions`                    |
 | Interviews  | `GET /x/api/v3/interviews`                   |
+| Users       | `GET /x/api/v3/users`                        |
+| Current user| `GET /x/api/v3/users/me`                     |
+| Teams       | `GET /x/api/v3/teams`                        |
+| Team members| `GET /x/api/v3/teams/{team_id}/users`       |
 
 Candidates exist only in the context of a test, so RankBuddy nests them under a test
-rather than offering a global candidates list.
+rather than offering a global candidates list. `users/me` returns a single user object
+(not a paged envelope) and is used to auto-discover the account's identity (#72).
 
 Token validation uses a lightweight `GET /x/api/v3/tests?limit=1`.
 
