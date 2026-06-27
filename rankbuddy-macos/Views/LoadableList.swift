@@ -114,7 +114,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
             content
                 .navigationTitle(title)
                 .navigationDestination(for: Item.self, destination: detail)
-                .searchable(text: $query, placement: .sidebar, prompt: "Search \(title)")
+                // `.automatic`, not `.sidebar`: this list lives in the split view's detail
+                // column, where no sidebar location is in scope. `.sidebar` placement can't be
+                // realized here and logs a `sidebarPocket` "Invalid Configuration" fault (#77).
+                .searchable(text: $query, placement: .automatic, prompt: "Search \(title)")
                 .toolbar {
                     accessoryToolbar()
 
