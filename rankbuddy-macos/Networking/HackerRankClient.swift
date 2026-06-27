@@ -337,6 +337,15 @@ struct HackerRankClient {
         _ = try await rest.performWithRetry(HackerRankPage<Test>.self, request: rest.authorizedGET(url))
     }
 
+    /// The user the token belongs to (`GET /users/me`). Used to auto-discover an account's
+    /// identity (#72) so "who am I" is captured without hand-entry. The endpoint returns a
+    /// single user object (not a paged envelope), in the same shape as the People list, so it
+    /// decodes straight into `User`.
+    func currentUser() async throws -> User {
+        let url = baseURL.appending(path: "\(Self.apiV3)/users/me")
+        return try await rest.performWithRetry(User.self, request: rest.authorizedGET(url))
+    }
+
     /// Trims `value` and returns `nil` for an empty/whitespace-only result, so blank optional
     /// fields are omitted from a write body rather than sent empty.
     private static func nonBlank(_ value: String?) -> String? {

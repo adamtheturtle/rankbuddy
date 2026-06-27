@@ -103,6 +103,18 @@ struct HackerRankClientTests {
         try await makeClient().validateToken()
     }
 
+    // MARK: - Current user (#72)
+
+    @Test func `currentUser decodes the single users-me object`() async throws {
+        // /users/me returns a single user object, not a paged envelope; it must decode straight
+        // into User (the same shape as a People-list entry).
+        let current = try await makeClient().currentUser()
+        #expect(current.id == "u-me")
+        #expect(current.email == "demo@example.com")
+        #expect(current.firstName == "Demo")
+        #expect(current.role == "admin")
+    }
+
     @Test func `the bad-key demo account surfaces the server's 401`() async {
         // The mock 401s the bad-key token regardless of scenario, so this exercises the
         // client's unauthorized path end-to-end (not just the error mapping in isolation).

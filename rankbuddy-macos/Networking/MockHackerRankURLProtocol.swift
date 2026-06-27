@@ -178,6 +178,11 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
         if path.contains("/interviews") {
             return interviewsJSON
         }
+        // `/users/me` (#72) returns a single user object, not a paged envelope, so it must be
+        // matched before the generic `/users` list route below.
+        if path.hasSuffix("/users/me") {
+            return currentUserJSON
+        }
         if path.contains("/users") {
             return usersJSON
         }
@@ -346,6 +351,16 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
        "recruiter_count":1,"developer_count":5,"locations":["Remote"]},
       {"id":"tm3","name":"Unstaffed Team"}
     ],"next":null}
+    """#
+}
+
+extension MockHackerRankURLProtocol {
+    /// The single-user object returned by `/users/me` (#72): the demo account's own identity,
+    /// in the same shape as a People-list entry but not wrapped in a paged envelope. In an
+    /// extension so it doesn't count toward the class's type-body-length budget.
+    private static let currentUserJSON = #"""
+    {"id":"u-me","email":"demo@example.com","firstname":"Demo","lastname":"Owner",
+     "country":"GB","role":"admin","status":"active","company_admin":true}
     """#
 }
 

@@ -182,8 +182,15 @@ struct AccountEditor: View {
     private func validate() async {
         validation = .validating
         do {
-            try await HackerRankClient(account: draft).validateToken()
+            let client = HackerRankClient(account: draft)
+            try await client.validateToken()
             validation = .valid
+            // Auto-discover the signed-in user's email (#72) when the field is blank, so identity
+            // is captured without hand-entry. Best-effort: a lookup failure never fails validation,
+            // and the field stays editable as the fallback.
+            if trimmedEmail.isEmpty, let user = try? await client.currentUser(), !user.email.isEmpty {
+                userEmail = user.email
+            }
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             validation = .invalid(message)
