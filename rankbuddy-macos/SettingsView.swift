@@ -61,12 +61,8 @@ struct SettingsView: View {
     private var generalTab: some View {
         Form {
             Section("Appearance") {
-                Picker("Theme", selection: $appearance) {
-                    ForEach(AppAppearance.allCases) { option in
-                        Text(option.label).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
+                AppearancePicker(selection: $appearance)
+                    .padding(.vertical, 4)
             }
 
             Section {
