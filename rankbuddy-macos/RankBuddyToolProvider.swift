@@ -30,17 +30,40 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     /// instead of the real keychain.
     private let makeStore: @Sendable @MainActor () -> AccountStore
 
-    init(makeStore: @escaping @Sendable @MainActor () -> AccountStore = { AccountStore.rankBuddy() }) {
+    /// Whether write tools are advertised and runnable (#73). Off by default; the `--mcp` entry
+    /// point sets it from the separate `mcpServerAllowWrites` opt-in.
+    let allowWrites: Bool
+
+    init(
+        allowWrites: Bool = false,
+        makeStore: @escaping @Sendable @MainActor () -> AccountStore = { AccountStore.rankBuddy() }
+    ) {
+        self.allowWrites = allowWrites
         self.makeStore = makeStore
     }
 
     func tools() async -> [Tool] {
-        mcpTools(from: Self.descriptors)
+        // Read tools are always advertised; write tools only when the user has opted in (#73).
+        mcpTools(from: allowWrites ? Self.descriptors + Self.writeDescriptors : Self.descriptors)
     }
 
     func callTool(_ name: String, arguments: [String: Value]?) async -> CallTool.Result {
         let account = stringArgument(arguments, "account")
         MCPActivityLog.record(tool: name, detail: Self.callDetail(arguments))
+
+        // Write tools are gated behind the separate opt-in even if a client calls one by name
+        // while it isn't advertised (#73).
+        if Self.isWriteTool(name) {
+            guard allowWrites else {
+                return errorResult(
+                    "Write tools are off. Turn on “Allow the MCP server to make changes” in " +
+                        "RankBuddy ▸ Settings ▸ MCP, then restart your assistant."
+                )
+            }
+
+            return await callWriteTool(name, arguments: arguments, account: account)
+        }
+
         switch name {
         case "list_accounts": return await listAccounts()
         case "list_tests": return await listTests(account: account)
@@ -95,8 +118,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     // MARK: - Account resolution
 
     /// The account matching `identifier` (label or id), or the current account when nil/unknown.
+    /// Internal (not private) so the write-tools extension in another file can resolve too (#73).
     @MainActor
-    private func resolveAccount(_ identifier: String?) -> Account? {
+    func resolveAccount(_ identifier: String?) -> Account? {
         let store = makeStore()
         guard let identifier else { return store.currentAccount }
 
@@ -335,48 +359,4 @@ extension RankBuddyToolProvider {
             throw PromptError.unknownPrompt(name)
         }
     }
-}
-
-// MARK: - Catalogue
-
-extension RankBuddyToolProvider {
-    /// The advertised tool descriptors. All read-only (`readOnlyHint`); list/search tools take an
-    /// optional `account` (label or id), search tools also a required `query`.
-    static let descriptors: [[String: Any]] = {
-        let account: [String: Any] = [
-            "type": "string", "description": "Account label or id; defaults to the current account."
-        ]
-        let query: [String: Any] = ["type": "string", "description": "Case-insensitive substring to match."]
-        func readOnly(
-            _ name: String,
-            _ description: String,
-            properties: [String: Any],
-            required: [String] = []
-        ) -> [String: Any] {
-            var schema: [String: Any] = ["type": "object", "properties": properties]
-            if !required.isEmpty { schema["required"] = required }
-            return [
-                "name": name, "description": description,
-                "annotations": ["readOnlyHint": true], "inputSchema": schema
-            ]
-        }
-        return [
-            readOnly("list_accounts", "List the configured RankBuddy accounts (no tokens).", properties: [:]),
-            readOnly("list_tests", "List the current (or named) account's HackerRank tests (first page).",
-                     properties: ["account": account]),
-            readOnly("list_questions", "List the account's questions (first page).",
-                     properties: ["account": account]),
-            readOnly("list_interviews", "List the account's interviews (first page).",
-                     properties: ["account": account]),
-            readOnly("list_candidates", "List the candidates for a test.",
-                     properties: ["test_id": ["type": "string", "description": "The test's id."], "account": account],
-                     required: ["test_id"]),
-            readOnly("search_tests", "Search the account's tests by name (bounded paging).",
-                     properties: ["query": query, "account": account], required: ["query"]),
-            readOnly("search_questions", "Search the account's questions by name (bounded paging).",
-                     properties: ["query": query, "account": account], required: ["query"]),
-            readOnly("search_interviews", "Search the account's interviews by title/status (bounded paging).",
-                     properties: ["query": query, "account": account], required: ["query"])
-        ]
-    }()
 }

@@ -20,6 +20,13 @@ struct RankBuddyToolProviderTests {
         })
     }
 
+    /// A provider with the write opt-in on (#73), backed by the same seeded demo/mock store.
+    private func writeProvider() -> RankBuddyToolProvider {
+        RankBuddyToolProvider(allowWrites: true, makeStore: {
+            AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Demo", token: Account.demoToken)])
+        })
+    }
+
     /// The first text block of a tool result.
     private func text(_ result: CallTool.Result) -> String {
         for content in result.content {
@@ -137,5 +144,55 @@ struct RankBuddyToolProviderTests {
         await #expect(throws: (any Error).self) {
             _ = try await provider().getPrompt("nope", arguments: nil)
         }
+    }
+
+    // MARK: - Write tools (#73)
+
+    @Test func `write tools are hidden while writes are off`() async {
+        let names = await provider().tools().map(\.name)
+        #expect(!names.contains("create_test"))
+        #expect(!names.contains("delete_test"))
+        // Read tools are still there.
+        #expect(names.contains("list_tests"))
+    }
+
+    @Test func `a write tool is refused while writes are off`() async {
+        let result = await provider().callTool("create_test", arguments: ["name": .string("Backend")])
+        #expect(result.isError == true)
+        #expect(text(result).contains("Allow the MCP server to make changes"))
+    }
+
+    @Test func `write tools are advertised when writes are on`() async {
+        let tools = await writeProvider().tools()
+        let names = tools.map(\.name)
+        #expect(names.contains("create_test"))
+        #expect(names.contains("delete_test"))
+        #expect(names.contains("invite_candidate"))
+        #expect(names.contains("schedule_interview"))
+        // The write tools are flagged not-read-only.
+        let writeTools = tools.filter { RankBuddyToolProvider.isWriteTool($0.name) }
+        #expect(writeTools.allSatisfy { $0.annotations.readOnlyHint == false })
+    }
+
+    @Test func `create_test runs against the mock when writes are on`() async {
+        let result = await writeProvider().callTool("create_test", arguments: ["name": .string("Backend Screen")])
+        let body = text(result)
+        #expect(result.isError != true)
+        #expect(body.contains("created_test"))
+        #expect(body.contains("t-created"))
+    }
+
+    @Test func `create_test requires a name`() async {
+        let result = await writeProvider().callTool("create_test", arguments: nil)
+        #expect(result.isError == true)
+        #expect(text(result).contains("name"))
+    }
+
+    @Test func `schedule_interview rejects a non-ISO-8601 start time`() async {
+        let result = await writeProvider().callTool(
+            "schedule_interview", arguments: ["title": .string("Pairing"), "from": .string("next tuesday")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("ISO-8601"))
     }
 }

@@ -14,10 +14,22 @@ enum MCPServerSettings {
     /// The `@AppStorage` / `UserDefaults` key for whether the MCP server is enabled.
     static let enabledKey = "rb.mcpServerEnabled"
 
+    /// The `@AppStorage` / `UserDefaults` key for whether the MCP server may make changes —
+    /// a separate, explicit opt-in from `enabledKey` so read tools work without ever exposing
+    /// writes by accident (#73).
+    static let allowWritesKey = "rb.mcpServerAllowWrites"
+
     /// Whether the MCP server is currently enabled. Defaults to off, so RankBuddy serves the
     /// catalogue only after the user explicitly opts in.
     static func isEnabled(defaults: UserDefaults = .standard) -> Bool {
         defaults.bool(forKey: enabledKey)
+    }
+
+    /// Whether the MCP server may advertise and run write tools (create/update/delete). Defaults
+    /// to off: even with the server enabled, writes stay hidden until this is explicitly turned
+    /// on, and it only takes effect after the assistant restarts the server process (#73).
+    static func allowsWrites(defaults: UserDefaults = .standard) -> Bool {
+        defaults.bool(forKey: allowWritesKey)
     }
 }
 

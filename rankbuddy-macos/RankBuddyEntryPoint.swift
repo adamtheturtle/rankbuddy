@@ -37,7 +37,8 @@ enum RankBuddyEntryPoint {
         Task {
             let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
             do {
-                let server = BuddyMCPServer(name: "RankBuddy", version: version, provider: RankBuddyToolProvider())
+                let provider = RankBuddyToolProvider(allowWrites: MCPServerSettings.allowsWrites())
+                let server = BuddyMCPServer(name: "RankBuddy", version: version, provider: provider)
                 try await server.run(transport: StdioTransport())
             } catch {
                 FileHandle.standardError.write(Data("RankBuddy MCP server error: \(error)\n".utf8))

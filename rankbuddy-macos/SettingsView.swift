@@ -23,6 +23,7 @@ struct SettingsView: View {
     @AppStorage(GeneralSettings.refreshSecondsKey)
     private var listRefreshSeconds = GeneralSettings.defaultRefreshSeconds
     @AppStorage(MCPServerSettings.enabledKey) private var mcpServerEnabled = false
+    @AppStorage(MCPServerSettings.allowWritesKey) private var mcpAllowWrites = false
     @AppStorage(BrowserSettings.defaultBrowserKey) var defaultBrowserID = ""
     @AppStorage(BrowserSettings.backgroundKey) var openLinksInBackground = false
     // `mcpActivity`/`mcpClient`/`installedBrowsers` are internal so the MCP and Browser
@@ -192,6 +193,15 @@ struct SettingsView: View {
             }
 
             if mcpServerEnabled {
+                Section {
+                    Toggle("Allow the MCP server to make changes", isOn: $mcpAllowWrites)
+                } footer: {
+                    Text("Off by default. When on, the server also exposes write tools — creating " +
+                        "and deleting tests, inviting candidates, creating users/teams, and scheduling " +
+                        "interviews. Only enable this if you trust the assistant with live data. Takes " +
+                        "effect after you restart the assistant.")
+                }
+
                 mcpConfigSections
             }
         }
