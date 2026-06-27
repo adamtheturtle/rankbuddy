@@ -70,6 +70,15 @@ struct RankBuddyApp: App {
             UpdateCommands()
         }
 
+        // Opens a single item in its own window (#49). Keyed by a Codable detail value passed
+        // through openWindow(value:).
+        WindowGroup(id: WindowID.detail, for: DetailWindowValue.self) { $value in
+            DetailWindowContent(value: value)
+                .environment(accountStore)
+                .environment(favorites)
+                .preferredColorScheme(appearance.colorScheme)
+        }
+
         Settings {
             SettingsView()
                 .environment(accountStore)
@@ -86,4 +95,6 @@ struct RankBuddyApp: App {
 /// Stable identifiers for the app's windows.
 enum WindowID {
     static let main = "main"
+    /// The standalone item-detail window (#49).
+    static let detail = "detail"
 }

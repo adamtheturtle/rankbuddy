@@ -39,9 +39,15 @@ func rowMenuItems(
     copyText: String,
     link: String? = nil,
     openLabel: String = "Open in Browser",
-    favorite: (isFavorite: Bool, toggle: () -> Void)? = nil
+    favorite: (isFavorite: Bool, toggle: () -> Void)? = nil,
+    openInWindow: (() -> Void)? = nil
 ) -> [MenuItem] {
     var items: [MenuItem] = []
+
+    if let openInWindow {
+        items.append(.button(title: "Open in New Window", action: openInWindow))
+        items.append(.separator)
+    }
 
     if let favorite {
         items.append(.button(

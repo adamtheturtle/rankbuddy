@@ -6,6 +6,7 @@ struct CandidatesList: View {
     let testID: String
     let account: Account
 
+    @Environment(\.openWindow) private var openWindow
     // The app is read-only by default; the invite action appears only when the user has
     // turned on write actions in Settings (#12).
     @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
@@ -40,7 +41,8 @@ struct CandidatesList: View {
                     copyLabel: "Copy Email",
                     copyText: candidate.email,
                     link: candidate.reportURL,
-                    openLabel: "Open Report"
+                    openLabel: "Open Report",
+                    openInWindow: { openWindow(value: DetailWindowValue.candidate(candidate)) }
                 )
             },
             accessoryToolbar: { writeActionsEnabled ? AnyView(inviteButton) : AnyView(EmptyView()) },

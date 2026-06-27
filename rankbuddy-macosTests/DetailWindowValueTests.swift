@@ -1,0 +1,22 @@
+import Foundation
+@testable import rankbuddy_macos
+import Testing
+
+/// Coverage for the open-in-new-window value (#49): it round-trips through Codable (so it can
+/// pass through openWindow) and titles the window.
+struct DetailWindowValueTests {
+    private func test(name: String) throws -> rankbuddy_macos.Test {
+        try JSONDecoder().decode(rankbuddy_macos.Test.self, from: Data(#"{"id":"t1","name":"\#(name)"}"#.utf8))
+    }
+
+    @Test func `it round-trips through Codable`() throws {
+        let value = try DetailWindowValue.test(test(name: "Backend Screen"))
+        let data = try JSONEncoder().encode(value)
+        let restored = try JSONDecoder().decode(DetailWindowValue.self, from: data)
+        #expect(restored == value)
+    }
+
+    @Test func `the window title comes from the item`() throws {
+        #expect(try DetailWindowValue.test(test(name: "Backend Screen")).windowTitle == "Backend Screen")
+    }
+}

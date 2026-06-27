@@ -5,6 +5,7 @@ import SwiftUI
 struct InterviewsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         if store.isMergedView {
@@ -36,7 +37,8 @@ struct InterviewsScreen: View {
                             collection: .interviews,
                             itemID: interview.id,
                             title: title
-                        )
+                        ),
+                        openInWindow: { openWindow(value: DetailWindowValue.interview(interview)) }
                     )
                 },
                 onFirstPage: { interviews in
