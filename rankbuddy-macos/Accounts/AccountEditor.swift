@@ -17,6 +17,8 @@ struct AccountEditor: View {
     @State private var token: String
     @State private var baseURLOverride: String
     @State private var userEmail: String
+    @State private var selectedIcon: String
+    @State private var selectedTintHex: String?
     /// Validation progress, using buddy-kit's shared credential-validation state (#2).
     @State private var validation: CredentialValidationState = .idle
     /// Whether the token is shown in clear text (#48), gated behind Touch ID when enabled.
@@ -28,6 +30,8 @@ struct AccountEditor: View {
         _token = State(initialValue: existing?.token ?? "")
         _baseURLOverride = State(initialValue: existing?.baseURLOverride ?? "")
         _userEmail = State(initialValue: existing?.userEmail ?? "")
+        _selectedIcon = State(initialValue: existing?.displayIcon ?? Account.defaultIconSymbol)
+        _selectedTintHex = State(initialValue: existing?.tintHex)
     }
 
     var body: some View {
@@ -64,6 +68,8 @@ struct AccountEditor: View {
                 Text("The email this token belongs to. Used to highlight items owned by or " +
                     "assigned to you.")
             }
+
+            AccountAppearancePicker(selectedIcon: $selectedIcon, selectedTintHex: $selectedTintHex)
 
             Section {
                 Button("Validate token") {
@@ -126,6 +132,9 @@ struct AccountEditor: View {
             token: trimmedToken,
             baseURLOverride: trimmedOverride.isEmpty ? nil : trimmedOverride,
             userEmail: trimmedEmail.isEmpty ? nil : trimmedEmail,
+            // Store the default icon as nil to keep older-style accounts clean.
+            iconSymbol: selectedIcon == Account.defaultIconSymbol ? nil : selectedIcon,
+            tintHex: selectedTintHex,
             id: existing?.id ?? UUID()
         )
     }

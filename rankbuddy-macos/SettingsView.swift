@@ -295,6 +295,11 @@ struct AccountRow: View {
 
     var body: some View {
         HStack {
+            Image(systemName: account.displayIcon)
+                .font(.title2)
+                .foregroundStyle(account.tintColor ?? .accentColor)
+                .frame(width: 28)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(account.label).font(.headline)
                 Text(account.userEmail ?? account.baseURL.host() ?? account.baseURL.absoluteString)

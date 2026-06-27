@@ -27,6 +27,11 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     /// "who am I" for this account, enabling owned-by-me / assigned-to-me filtering. Optional
     /// and decoded with `decodeIfPresent`, so accounts saved before this field stay valid.
     var userEmail: String?
+    /// An SF Symbol name distinguishing this account in the switcher/sidebar (#64). Optional;
+    /// `nil` falls back to a generic person icon. `decodeIfPresent`, so older accounts decode.
+    var iconSymbol: String?
+    /// A "#RRGGBB" tint for this account's icon (#64). Optional; `nil` uses the app accent.
+    var tintHex: String?
 
     var accountID: UUID {
         id
@@ -74,6 +79,8 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         token: String,
         baseURLOverride: String? = nil,
         userEmail: String? = nil,
+        iconSymbol: String? = nil,
+        tintHex: String? = nil,
         id: UUID = UUID()
     ) {
         self.id = id
@@ -81,6 +88,8 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         self.token = token
         self.baseURLOverride = baseURLOverride
         self.userEmail = userEmail
+        self.iconSymbol = iconSymbol
+        self.tintHex = tintHex
     }
 
     /// A changed token or base URL points at potentially different data, so the store

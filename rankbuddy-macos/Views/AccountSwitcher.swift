@@ -15,12 +15,12 @@ struct AccountSwitcher: View {
                 Button {
                     store.currentAccountID = account.id
                 } label: {
-                    // A checkmark marks the current account; SwiftUI hides the leading space
-                    // for the others so the labels stay aligned.
+                    // A checkmark marks the current account; the others show their own icon
+                    // (#64) so they're distinguishable at a glance.
                     if account.id == store.currentAccountID, !store.isMergedView {
                         Label(account.label, systemImage: "checkmark")
                     } else {
-                        Text(account.label)
+                        Label(account.label, systemImage: account.displayIcon)
                     }
                 }
             }
@@ -42,9 +42,10 @@ struct AccountSwitcher: View {
             let merged = store.isMergedView
             let icon = merged
                 ? "person.2.crop.square.stack"
-                : (store.currentAccount == nil ? "person.crop.circle.badge.questionmark" : "person.crop.circle")
+                : (store.currentAccount?.displayIcon ?? "person.crop.circle.badge.questionmark")
             HStack(spacing: 6) {
                 Image(systemName: icon)
+                    .foregroundStyle(merged ? Color.accentColor : (store.currentAccount?.tintColor ?? .accentColor))
                 Text(merged ? "All Accounts" : (store.currentAccount?.label ?? "No account"))
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -66,7 +67,7 @@ struct AccountSwitcher: View {
 #Preview("Two accounts") {
     let store = AccountStore.rankBuddy(
         isTesting: true,
-        seed: [Account(label: "Work", token: "t"), .demo]
+        seed: [Account(label: "Work", token: "t", iconSymbol: "briefcase", tintHex: "#8B5CF6"), .demo]
     )
     return AccountSwitcher()
         .environment(store)
