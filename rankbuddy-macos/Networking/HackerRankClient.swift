@@ -54,8 +54,7 @@ struct HackerRankClient {
     }
 
     /// Invites a candidate to a test (`POST /tests/{id}/candidates`) — the app's first
-    /// write flow (#12). The app is read-only by default; this is reached only when the
-    /// user has opted into write actions and confirmed the invite.
+    /// write flow (#12). The user confirms the invite before it runs.
     ///
     /// - Parameters:
     ///   - testID: the test to invite the candidate to.
@@ -85,7 +84,7 @@ struct HackerRankClient {
         )
     }
 
-    /// Creates a test (`POST /tests`) (#57). Gated behind the write-actions opt-in.
+    /// Creates a test (`POST /tests`) (#57).
     ///
     /// - Returns: the created test as echoed by the API (all-optional, so a 2xx never fails to
     ///   decode on an unexpected shape).
@@ -95,7 +94,7 @@ struct HackerRankClient {
         return try await rest.send(CreatedTest.self, method: "POST", path: "\(Self.apiV3)/tests", body: body)
     }
 
-    /// Renames a test (`PATCH /tests/{id}`) (#57). Gated behind the write-actions opt-in.
+    /// Renames a test (`PATCH /tests/{id}`) (#57).
     @discardableResult
     func updateTest(testID: String, name: String) async throws -> CreatedTest {
         let body = UpdateTestRequest(name: name.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -120,8 +119,8 @@ struct HackerRankClient {
         )
     }
 
-    /// Creates an organisation user (`POST /users`) (#58). Like the invite flow (#12), reached
-    /// only when the user has opted into write actions and confirmed.
+    /// Creates an organisation user (`POST /users`) (#58). Like the invite flow (#12), the
+    /// user confirms before it runs.
     ///
     /// - Returns: the created user as echoed by the API (fields are optional, so a 2xx never
     ///   fails on an unexpected response shape).
@@ -146,8 +145,7 @@ struct HackerRankClient {
         return try await rest.send(CreatedUser.self, method: "POST", path: "\(Self.apiV3)/users", body: body)
     }
 
-    /// Creates a team (`POST /teams`) (#59). Gated behind the write-actions opt-in like the
-    /// other write flows.
+    /// Creates a team (`POST /teams`) (#59).
     ///
     /// - Returns: the created team as echoed by the API (all-optional, so a 2xx never fails
     ///   to decode on an unexpected shape).
@@ -157,8 +155,7 @@ struct HackerRankClient {
         return try await rest.send(CreatedTeam.self, method: "POST", path: "\(Self.apiV3)/teams", body: body)
     }
 
-    /// Adds a member to a team (`POST /teams/{id}/users`) (#59). Gated behind the
-    /// write-actions opt-in.
+    /// Adds a member to a team (`POST /teams/{id}/users`) (#59).
     @discardableResult
     func addTeamMember(teamID: String, email: String, role: String? = nil) async throws -> TeamMembershipResult {
         let trimmedRole = role?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -187,8 +184,7 @@ struct HackerRankClient {
         )
     }
 
-    /// Creates an instant QuickPad collaborative interview (`POST /interviews`) (#60). Gated
-    /// behind the write-actions opt-in.
+    /// Creates an instant QuickPad collaborative interview (`POST /interviews`) (#60).
     ///
     /// - Returns: the created interview as echoed by the API (all-optional, so a 2xx never
     ///   fails to decode on an unexpected shape).
@@ -205,8 +201,8 @@ struct HackerRankClient {
         )
     }
 
-    /// Schedules an interview (`POST /interviews`) (#60). Gated behind the write-actions
-    /// opt-in. The start time is sent as an ISO-8601 timestamp.
+    /// Schedules an interview (`POST /interviews`) (#60). The start time is sent as an
+    /// ISO-8601 timestamp.
     @discardableResult
     func scheduleInterview(
         title: String,

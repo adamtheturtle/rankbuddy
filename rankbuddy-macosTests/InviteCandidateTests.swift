@@ -83,16 +83,4 @@ struct InviteCandidateTests {
             Issue.record("expected HackerRankError, got \(error)")
         }
     }
-
-    @Test func `the write-actions opt-in defaults to read-only`() {
-        // The key is shared by the Settings toggle and the views that gate the invite UI;
-        // unset means read-only.
-        let key = WriteActions.defaultsKey
-        let defaults = UserDefaults.standard
-        let original = defaults.object(forKey: key)
-        defaults.removeObject(forKey: key)
-        #expect(defaults.bool(forKey: key) == false)
-        // Restore whatever the environment had, so the test leaves no trace.
-        if let original { defaults.set(original, forKey: key) }
-    }
 }

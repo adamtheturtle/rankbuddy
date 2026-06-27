@@ -2,11 +2,10 @@ import BuddyAppKit
 import FastList
 import SwiftUI
 
-/// The Teams section: the organisation's teams, with read-only detail (#36) and an opt-in
+/// The Teams section: the organisation's teams, with read-only detail (#36) and a
 /// "New Team" write action (#59).
 struct TeamsScreen: View {
     @Environment(AccountStore.self) private var store
-    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @State private var createPresented = false
     @State private var reloadToken = 0
 
@@ -23,7 +22,7 @@ struct TeamsScreen: View {
                 ],
                 restorationKey: "selection.teams.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.name) },
-                accessoryToolbar: { writeActionsEnabled ? AnyView(createButton) : AnyView(EmptyView()) },
+                accessoryToolbar: { AnyView(createButton) },
                 reloadToken: reloadToken,
                 row: { TeamRow(team: $0) },
                 detail: { TeamDetailView(team: $0, account: account) }
@@ -84,12 +83,11 @@ struct TeamRow: View {
 }
 
 /// The members of a team, pushed from `TeamDetailView`. Read-only list + detail (#56), with
-/// opt-in "Add Member" and per-row "Remove from Team" write actions (#59).
+/// "Add Member" and per-row "Remove from Team" write actions (#59).
 struct TeamMembersList: View {
     let teamID: String
     let account: Account
 
-    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @State private var addPresented = false
     @State private var memberPendingRemoval: User?
     @State private var removalError: String?
@@ -108,7 +106,7 @@ struct TeamMembersList: View {
                 SortOption("Role") { ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending }
             ],
             contextMenu: { memberMenuItems(for: $0) },
-            accessoryToolbar: { writeActionsEnabled ? AnyView(addButton) : AnyView(EmptyView()) },
+            accessoryToolbar: { AnyView(addButton) },
             reloadToken: reloadToken,
             row: { PersonRow(user: $0) },
             detail: { PersonDetailView(user: $0) }
@@ -148,10 +146,8 @@ struct TeamMembersList: View {
 
     private func memberMenuItems(for member: User) -> [MenuItem] {
         var items = rowMenuItems(copyLabel: "Copy Email", copyText: member.email)
-        if writeActionsEnabled {
-            items.append(.separator)
-            items.append(.button(title: "Remove from Team…") { memberPendingRemoval = member })
-        }
+        items.append(.separator)
+        items.append(.button(title: "Remove from Team…") { memberPendingRemoval = member })
         return items
     }
 

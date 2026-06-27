@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// A sheet that creates a team (`POST /teams`, #59) — a write flow, so it's reached only
-/// when write actions are enabled. States plainly when it touches a real organisation, and
-/// refreshes the list on success.
+/// A sheet that creates a team (`POST /teams`, #59) — a write flow. States plainly when it
+/// touches a real organisation, and refreshes the list on success.
 struct CreateTeamSheet: View {
     let account: Account
     var onCreated: () -> Void
@@ -71,9 +70,8 @@ struct CreateTeamSheet: View {
     }
 }
 
-/// A sheet that adds a member to a team (`POST /teams/{id}/users`, #59). Reached only when
-/// write actions are enabled; states plainly when it touches a real organisation, and
-/// refreshes the members list on success.
+/// A sheet that adds a member to a team (`POST /teams/{id}/users`, #59). States plainly when
+/// it touches a real organisation, and refreshes the members list on success.
 struct AddTeamMemberSheet: View {
     let teamID: String
     let account: Account

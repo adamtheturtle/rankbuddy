@@ -2,12 +2,11 @@ import BuddyAppKit
 import SwiftUI
 
 /// The Interviews section: a list of the account's interviews with read-only detail, plus
-/// opt-in "New QuickPad" and "Schedule Interview" write actions (#60).
+/// "New QuickPad" and "Schedule Interview" write actions (#60).
 struct InterviewsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.openWindow) private var openWindow
-    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @State private var quickPadPresented = false
     @State private var schedulePresented = false
     @State private var reloadToken = 0
@@ -60,7 +59,7 @@ struct InterviewsScreen: View {
                         account: account.id
                     )
                 },
-                accessoryToolbar: { writeActionsEnabled ? AnyView(newMenu) : AnyView(EmptyView()) },
+                accessoryToolbar: { AnyView(newMenu) },
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.interviews($0) },
                 csvFilename: "interviews",

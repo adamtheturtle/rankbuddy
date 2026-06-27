@@ -2,13 +2,12 @@ import BuddyAppKit
 import SwiftUI
 
 /// The Tests section: a list of the account's tests, each opening a read-only detail
-/// view that also links to the test's candidates. With write actions enabled, a "New Test"
-/// action and edit/delete affordances appear (#57).
+/// view that also links to the test's candidates. A "New Test" action and edit/delete
+/// affordances are available (#57).
 struct TestsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.openWindow) private var openWindow
-    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @State private var createPresented = false
     @State private var reloadToken = 0
 
@@ -51,7 +50,7 @@ struct TestsScreen: View {
                         account: account.id
                     )
                 },
-                accessoryToolbar: { writeActionsEnabled ? AnyView(createButton) : AnyView(EmptyView()) },
+                accessoryToolbar: { AnyView(createButton) },
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.tests($0) },
                 csvFilename: "tests",
@@ -217,7 +216,6 @@ struct TestDetailView: View {
     var onChanged: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @State private var editPresented = false
     @State private var deletePresented = false
     @State private var deleteError: String?
@@ -278,23 +276,21 @@ struct TestDetailView: View {
         .formStyle(.grouped)
         .navigationTitle(test.name)
         .toolbar {
-            if writeActionsEnabled {
-                ToolbarItem {
-                    Button {
-                        editPresented = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    .help("Rename this test")
+            ToolbarItem {
+                Button {
+                    editPresented = true
+                } label: {
+                    Label("Edit", systemImage: "pencil")
                 }
-                ToolbarItem {
-                    Button(role: .destructive) {
-                        deletePresented = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                    .help("Delete this test")
+                .help("Rename this test")
+            }
+            ToolbarItem {
+                Button(role: .destructive) {
+                    deletePresented = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
                 }
+                .help("Delete this test")
             }
             ToolbarItem {
                 PrintReportButton(jobTitle: "Test – \(test.name)") {

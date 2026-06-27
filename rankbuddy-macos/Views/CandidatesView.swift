@@ -1,15 +1,12 @@
 import SwiftUI
 
 /// The candidates for a test, pushed from `TestDetailView`. Read-only list + detail, with
-/// an opt-in "Invite Candidate" write action (#12).
+/// an "Invite Candidate" write action (#12).
 struct CandidatesList: View {
     let testID: String
     let account: Account
 
     @Environment(\.openWindow) private var openWindow
-    // The app is read-only by default; the invite action appears only when the user has
-    // turned on write actions in Settings (#12).
-    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @State private var invitePresented = false
     /// Bumped after a successful invite to refresh the list.
     @State private var reloadToken = 0
@@ -45,7 +42,7 @@ struct CandidatesList: View {
                     openInWindow: { openWindow(value: DetailWindowValue.candidate(candidate)) }
                 )
             },
-            accessoryToolbar: { writeActionsEnabled ? AnyView(inviteButton) : AnyView(EmptyView()) },
+            accessoryToolbar: { AnyView(inviteButton) },
             reloadToken: reloadToken,
             csvExport: { CSVExport.candidates($0) },
             csvFilename: "candidates",
@@ -67,9 +64,9 @@ struct CandidatesList: View {
     }
 }
 
-/// A sheet that invites a candidate to a test (#12) — the app's first write flow. Reached
-/// only when write actions are enabled; it states plainly when the action affects a real
-/// HackerRank account, and refreshes the list on success.
+/// A sheet that invites a candidate to a test (#12) — the app's first write flow. It states
+/// plainly when the action affects a real HackerRank account, and refreshes the list on
+/// success.
 struct InviteCandidateSheet: View {
     let testID: String
     let account: Account

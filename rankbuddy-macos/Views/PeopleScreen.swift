@@ -2,10 +2,9 @@ import BuddyAppKit
 import SwiftUI
 
 /// The People section: the organisation's users (members), with read-only detail (#36) and
-/// an opt-in "Create User" write action (#58).
+/// a "Create User" write action (#58).
 struct PeopleScreen: View {
     @Environment(AccountStore.self) private var store
-    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @State private var createPresented = false
     @State private var reloadToken = 0
 
@@ -22,7 +21,7 @@ struct PeopleScreen: View {
                 ],
                 restorationKey: "selection.users.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
-                accessoryToolbar: { writeActionsEnabled ? AnyView(createButton) : AnyView(EmptyView()) },
+                accessoryToolbar: { AnyView(createButton) },
                 reloadToken: reloadToken,
                 row: { PersonRow(user: $0) },
                 detail: { PersonDetailView(user: $0) }
@@ -48,9 +47,8 @@ struct PeopleScreen: View {
     }
 }
 
-/// A sheet that creates an organisation user (#58) — a write flow, so it's reached only when
-/// write actions are enabled. States plainly when it affects a real account, and refreshes the
-/// list on success.
+/// A sheet that creates an organisation user (#58) — a write flow. States plainly when it
+/// affects a real account, and refreshes the list on success.
 struct CreateUserSheet: View {
     let account: Account
     var onCreated: () -> Void

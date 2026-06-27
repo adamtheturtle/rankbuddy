@@ -5,7 +5,6 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AccountStore.self) private var store
     @State private var editing: AccountEditingTarget?
-    @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
     @AppStorage(AppPresence.defaultsKey) private var presence: AppPresence = .both
     @AppStorage(MenuBarPreferences.recentCountKey)
@@ -214,16 +213,6 @@ struct SettingsView: View {
                 }
             } footer: {
                 Text("The demo account shows sample data from the built-in mock server — no HackerRank token required.")
-            }
-
-            Section {
-                Toggle("Enable write actions", isOn: $writeActionsEnabled)
-            } header: {
-                Text("Actions")
-            } footer: {
-                Text("RankBuddy is read-only by default. Turn this on to allow actions that " +
-                    "change data on HackerRank, such as inviting a candidate to a test. Each " +
-                    "action still confirms before it runs.")
             }
         }
         .formStyle(.grouped)

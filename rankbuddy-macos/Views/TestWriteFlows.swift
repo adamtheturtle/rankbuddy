@@ -7,8 +7,8 @@ enum TestEditorMode {
 }
 
 /// A sheet that creates a test (`POST /tests`) or renames one (`PATCH /tests/{id}`) (#57) —
-/// a write flow, so it's reached only when write actions are enabled. States plainly when it
-/// touches a real organisation, and refreshes the list on success.
+/// a write flow. States plainly when it touches a real organisation, and refreshes the list
+/// on success.
 struct TestEditorSheet: View {
     let account: Account
     let mode: TestEditorMode

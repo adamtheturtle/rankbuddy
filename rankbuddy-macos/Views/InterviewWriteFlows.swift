@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// A sheet that creates an instant QuickPad collaborative interview (`POST /interviews`,
-/// #60) — a write flow, so it's reached only when write actions are enabled. States plainly
-/// when it touches a real organisation, and refreshes the list on success.
+/// #60) — a write flow. States plainly when it touches a real organisation, and refreshes
+/// the list on success.
 struct NewQuickPadSheet: View {
     let account: Account
     var onCreated: () -> Void
@@ -66,9 +66,8 @@ struct NewQuickPadSheet: View {
     }
 }
 
-/// A sheet that schedules an interview (`POST /interviews`, #60). Reached only when write
-/// actions are enabled; states plainly when it touches a real organisation, and refreshes
-/// the list on success.
+/// A sheet that schedules an interview (`POST /interviews`, #60). States plainly when it
+/// touches a real organisation, and refreshes the list on success.
 struct ScheduleInterviewSheet: View {
     let account: Account
     var onScheduled: () -> Void
