@@ -77,18 +77,30 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @Environment(AccountStore.self) private var accountStore
     @Environment(FavoritesStore.self) private var favorites
 
+    /// The user's chosen list auto-refresh cadence in seconds (#69). `0`/below the minimum is
+    /// off. Changing it restarts the refresh task. Internal (not private) so the auto-refresh
+    /// extension in `LoadableList+AutoRefresh.swift` can read it, per the repo's split-file rule.
+    @AppStorage(GeneralSettings.refreshSecondsKey) var autoRefreshSeconds = GeneralSettings
+        .defaultRefreshSeconds
+
     @State private var phase: Phase = .loading
-    @State private var items: [Item] = []
+    /// `items`/`nextCursor`/`isLoadingMore`/`pagesLoaded` are internal so the auto-refresh
+    /// extension (a separate file, for file_length) can reload in place (#69).
+    @State var items: [Item] = []
     /// The absolute URL of the next page, or `nil` once every page is loaded.
-    @State private var nextCursor: String?
-    @State private var isLoadingMore = false
+    @State var nextCursor: String?
+    @State var isLoadingMore = false
+    /// How many pages are currently loaded. Auto-refresh only fires on the first page, so it
+    /// never yanks a user who has paged deep back to the top (#69).
+    @State var pagesLoaded = 1
     @State private var query = ""
     /// The selected date-range filter (one of `NamedDateRange.options`), or `nil` for no
     /// date constraint.
     @State private var dateRange: String?
     @State private var sortSelection: SortOption<Item>.ID?
-    /// The pushed-detail navigation path.
-    @State private var path: [Item] = []
+    /// The pushed-detail navigation path. Internal so the auto-refresh extension can skip a
+    /// tick while a detail is open (#69).
+    @State var path: [Item] = []
     /// The selected rows (FastList multi-selection): drives the highlight and the
     /// "Export Selected" bulk action (#44).
     @State private var selection: Set<Item.ID> = []
@@ -168,6 +180,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 // Re-runs when the account-scoped key changes, clearing any stale restored
                 // pane before loading the new account's data (#19).
                 .task(id: restorationKey) { await reload() }
+                .task(id: autoRefreshSeconds) { await autoRefreshLoop() }
                 .onChange(of: reloadToken) { Task { await reload() } }
                 .onAppear { restoreSort() }
                 .onChange(of: sortSelection) { persistSort() }
@@ -257,7 +270,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         return "\(visibleCount)\(suffix) \(visibleCount == 1 ? "item" : "items")"
     }
 
-    private var isLoading: Bool {
+    var isLoading: Bool {
         if case .loading = phase { true } else { false }
     }
 
@@ -293,6 +306,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         phase = .loading
         items = []
         nextCursor = nil
+        pagesLoaded = 1
         do {
             let page = try await loadPage(nil)
             items = page.items
@@ -316,6 +330,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
             let page = try await loadPage(cursor)
             items.append(contentsOf: page.items)
             nextCursor = page.next
+            pagesLoaded += 1
         } catch {
             nextCursor = nil
         }

@@ -32,6 +32,41 @@ enum AppAppearance: String, CaseIterable, Identifiable {
     }
 }
 
+/// General list behaviour shared by the Settings control and `LoadableList` (#69).
+enum GeneralSettings {
+    /// `@AppStorage` key: how often the visible list auto-refreshes, in seconds. `0` (the
+    /// default) is off — the lists then refresh only on demand.
+    static let refreshSecondsKey = "rb.listRefreshSeconds"
+    /// The historical default: auto-refresh off.
+    static let defaultRefreshSeconds = 0
+    /// The shortest auto-refresh interval the stepper allows; anything below it counts as off.
+    static let minRefreshSeconds = 30
+    /// The longest auto-refresh interval the stepper allows.
+    static let maxRefreshSeconds = 600
+    /// The stepper increment.
+    static let refreshStep = 30
+
+    /// A human-readable label for an interval: "Off", "30s", "2m", or "2m 30s". Pure, so it's
+    /// unit-testable.
+    static func refreshIntervalLabel(_ seconds: Int) -> String {
+        guard seconds >= minRefreshSeconds else { return "Off" }
+
+        let minutes = seconds / 60
+        let remainder = seconds % 60
+        switch (minutes, remainder) {
+        case (0, _): return "\(remainder)s"
+        case (_, 0): return "\(minutes)m"
+        default: return "\(minutes)m \(remainder)s"
+        }
+    }
+
+    /// The auto-refresh cadence as a `Duration`, or `nil` when off. Any value below the
+    /// minimum (including the `0` default) is treated as off, so the timer simply never runs.
+    static func refreshInterval(raw: Int) -> Duration? {
+        raw >= minRefreshSeconds ? .seconds(raw) : nil
+    }
+}
+
 /// Menu-bar preferences shared by the Settings stepper and `MenuBarContent`.
 enum MenuBarPreferences {
     /// The `@AppStorage` key for how many recent items the menu bar lists.

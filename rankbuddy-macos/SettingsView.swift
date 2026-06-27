@@ -15,6 +15,8 @@ struct SettingsView: View {
     @AppStorage(LivenessSettings.intervalMinutesKey)
     private var refreshMinutes = LivenessSettings.defaultIntervalMinutes
     @AppStorage(BiometricAuth.revealSettingKey) private var biometricReveal = false
+    @AppStorage(GeneralSettings.refreshSecondsKey)
+    private var listRefreshSeconds = GeneralSettings.defaultRefreshSeconds
     @AppStorage(MCPServerSettings.enabledKey) private var mcpServerEnabled = false
     @State private var mcpActivity: [MCPActivityEntry] = []
     @State private var loginItemError: String?
@@ -72,6 +74,20 @@ struct SettingsView: View {
                 Text("Startup")
             } footer: {
                 Text("Open RankBuddy automatically when you log in to your Mac.")
+            }
+
+            Section {
+                Stepper(
+                    "Auto-refresh lists: \(GeneralSettings.refreshIntervalLabel(listRefreshSeconds))",
+                    value: $listRefreshSeconds,
+                    in: 0 ... GeneralSettings.maxRefreshSeconds,
+                    step: GeneralSettings.refreshStep
+                )
+            } header: {
+                Text("Lists")
+            } footer: {
+                Text("Periodically reload the list you're viewing. Off by default; refreshes only " +
+                    "while you're on a list (not inside an item) and haven't scrolled past the first page.")
             }
 
             Section {
@@ -198,8 +214,13 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .onAppear { mcpActivity = MCPActivityLog.entries() }
     }
+}
 
-    private var mcpConfigSections: some View {
+/// Tabs and setting bindings, in an extension so they don't count toward `SettingsView`'s
+/// body length.
+private extension SettingsView {
+    /// The MCP setup + activity, shown only once the server is enabled (#75).
+    var mcpConfigSections: some View {
         Group {
             Section {
                 Text(MCPSetup.clientConfigJSON())
@@ -250,7 +271,7 @@ struct SettingsView: View {
         }
     }
 
-    private var aboutTab: some View {
+    var aboutTab: some View {
         Form {
             Section("RankBuddy") {
                 LabeledContent("Version", value: Self.appVersion)
@@ -264,16 +285,13 @@ struct SettingsView: View {
     }
 
     /// The app's marketing version and build number, e.g. "1.0 (12)".
-    private static var appVersion: String {
+    static var appVersion: String {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "—"
         let build = info?["CFBundleVersion"] as? String ?? "—"
         return "\(short) (\(build))"
     }
-}
 
-/// Setting bindings, in an extension so they don't count toward `SettingsView`'s body length.
-private extension SettingsView {
     var loginItemErrorPresented: Binding<Bool> {
         Binding(get: { loginItemError != nil }, set: { if !$0 { loginItemError = nil } })
     }
