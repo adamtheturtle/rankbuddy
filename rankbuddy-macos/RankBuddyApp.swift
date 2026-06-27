@@ -13,6 +13,8 @@ struct RankBuddyApp: App {
     @State private var accountStore: AccountStore
     /// Command-palette presentation state, shared with the menu commands.
     @State private var palette = PaletteModel()
+    /// Open-by-URL sheet presentation state, shared with the File command (#42).
+    @State private var openLink = OpenLinkModel()
     /// Account-aware favourites, shared with the lists and the palette (#25).
     @State private var favorites: FavoritesStore
     /// Mirrors favourites to iCloud when the capability is present; nil in demo mode (#22).
@@ -51,6 +53,7 @@ struct RankBuddyApp: App {
             ContentView()
                 .environment(accountStore)
                 .environment(palette)
+                .environment(openLink)
                 .environment(favorites)
                 .environment(health)
                 .task {
@@ -63,7 +66,7 @@ struct RankBuddyApp: App {
                 .preferredColorScheme(appearance.colorScheme)
         }
         .commands {
-            AppCommands(palette: palette)
+            AppCommands(palette: palette, openLink: openLink)
             UpdateCommands()
         }
 

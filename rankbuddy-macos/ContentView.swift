@@ -12,12 +12,14 @@ struct ContentView: View {
     @AppStorage(WhatsNew.lastSeenKey) private var lastSeenVersion = ""
     @State private var showWhatsNew = false
     @Environment(PaletteModel.self) private var palette
+    @Environment(OpenLinkModel.self) private var openLink
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
     @Environment(AccountHealthMonitor.self) private var health
 
     var body: some View {
         @Bindable var palette = palette
+        @Bindable var openLink = openLink
 
         NavigationSplitView {
             List(SidebarSection.allCases, selection: sectionSelection) { section in
@@ -50,6 +52,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showWhatsNew) {
             WhatsNewView { lastSeenVersion = WhatsNew.currentVersion }
+        }
+        .sheet(isPresented: $openLink.isPresented) {
+            OpenLinkSheet().environment(store)
         }
         .sheet(isPresented: $palette.isPresented) {
             CommandPaletteView(placeholder: "Search RankBuddy…") {
@@ -91,6 +96,7 @@ struct ContentView: View {
     ContentView()
         .environment(AccountStore.rankBuddy(isTesting: true))
         .environment(PaletteModel())
+        .environment(OpenLinkModel())
         .environment(FavoritesStore(isTesting: true))
         .environment(AccountHealthMonitor())
 }

@@ -136,8 +136,14 @@ enum RankBuddyPalette {
 struct AppCommands: Commands {
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
     let palette: PaletteModel
+    let openLink: OpenLinkModel
 
     var body: some Commands {
+        CommandGroup(after: .newItem) {
+            Button("Open by URL…") { openLink.isPresented = true }
+                .keyboardShortcut("o", modifiers: .command)
+        }
+
         CommandMenu("Go") {
             ForEach(Array(SidebarSection.allCases.enumerated()), id: \.element) { index, section in
                 Button(section.title) { selection = section }
