@@ -51,4 +51,28 @@ struct RecentActivityTests {
         #expect(store.recent(.tests, account: accountA).map(\.id) == ["t1"])
         #expect(store.recent(.tests, account: accountB).isEmpty)
     }
+
+    // MARK: - Active/upcoming filter (#67)
+
+    private func item(_ id: String, _ collection: FavoriteCollection, subtitle: String?) -> RecentItem {
+        RecentItem(collection: collection, id: id, title: id, subtitle: subtitle)
+    }
+
+    @Test func `active or upcoming keeps open tests and scheduled interviews`() {
+        #expect(item("t", .tests, subtitle: "Active").isActiveOrUpcoming)
+        #expect(item("i", .interviews, subtitle: "Scheduled").isActiveOrUpcoming)
+        #expect(item("i", .interviews, subtitle: "In progress").isActiveOrUpcoming)
+        // Matching is case-insensitive and tolerant of the snake_case status.
+        #expect(item("i", .interviews, subtitle: "in_progress").isActiveOrUpcoming)
+    }
+
+    @Test func `active or upcoming drops finished, archived, and questions`() {
+        #expect(!item("t", .tests, subtitle: "Archived").isActiveOrUpcoming)
+        #expect(!item("i", .interviews, subtitle: "Completed").isActiveOrUpcoming)
+        #expect(!item("i", .interviews, subtitle: "Cancelled").isActiveOrUpcoming)
+        // Questions have no active/upcoming notion, so they're always excluded.
+        #expect(!item("q", .questions, subtitle: "Published").isActiveOrUpcoming)
+        // A missing subtitle can't be classified as active.
+        #expect(!item("t", .tests, subtitle: nil).isActiveOrUpcoming)
+    }
 }

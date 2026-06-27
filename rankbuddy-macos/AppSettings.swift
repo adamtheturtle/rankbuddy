@@ -40,4 +40,7 @@ enum MenuBarPreferences {
     static let defaultRecentCount = 8
     /// The largest value the stepper allows.
     static let maxRecentCount = 20
+
+    /// The `@AppStorage` key for filtering the menu-bar list to active/upcoming items (#67).
+    static let activeOnlyKey = "rb.menuBarActiveOnly"
 }

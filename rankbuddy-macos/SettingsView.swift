@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
     @AppStorage(MenuBarPreferences.recentCountKey)
     private var menuBarRecentCount = MenuBarPreferences.defaultRecentCount
+    @AppStorage(MenuBarPreferences.activeOnlyKey) private var menuBarActiveOnly = false
     @AppStorage(LivenessSettings.backgroundUpdatesKey) private var backgroundUpdates = false
     @AppStorage(LivenessSettings.notifyKey) private var notifyNewInterviews = false
     @AppStorage(LivenessSettings.intervalMinutesKey)
@@ -78,10 +79,13 @@ struct SettingsView: View {
                     value: $menuBarRecentCount,
                     in: 0 ... MenuBarPreferences.maxRecentCount
                 )
+
+                Toggle("Show only active or upcoming items", isOn: $menuBarActiveOnly)
             } header: {
                 Text("Menu Bar")
             } footer: {
-                Text("How many recently viewed items the menu bar lists. Set to 0 to hide the Recent section.")
+                Text("How many recently viewed items the menu bar lists (0 hides the Recent section). " +
+                    "When filtered, it shows only open tests and scheduled interviews.")
             }
 
             Section {

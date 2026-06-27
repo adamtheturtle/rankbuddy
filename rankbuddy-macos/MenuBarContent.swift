@@ -11,6 +11,7 @@ import SwiftUI
 struct MenuBarContent: View {
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
     @AppStorage(MenuBarPreferences.recentCountKey) private var recentCount = MenuBarPreferences.defaultRecentCount
+    @AppStorage(MenuBarPreferences.activeOnlyKey) private var activeOnly = false
     @Environment(\.openWindow) private var openWindow
     @Environment(AccountStore.self) private var store
 
@@ -86,10 +87,11 @@ struct MenuBarContent: View {
     /// window populates — no second network stack (#23). Hidden when there's nothing cached.
     @ViewBuilder private var recentSection: some View {
         if let account = store.currentAccount, recentCount > 0 {
-            let recents = RecentActivityStore.shared.recentAll(account: account.id)
+            let cached = RecentActivityStore.shared.recentAll(account: account.id)
+            let recents = activeOnly ? cached.filter(\.isActiveOrUpcoming) : cached
             if !recents.isEmpty {
                 Divider()
-                Section("Recent") {
+                Section(activeOnly ? "Active & Upcoming" : "Recent") {
                     ForEach(recents.prefix(recentCount)) { item in
                         Button {
                             RankBuddyDeepLink.open(

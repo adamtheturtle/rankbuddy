@@ -10,6 +10,22 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
     let id: String
     let title: String
     var subtitle: String?
+
+    /// Whether this item counts as "active or upcoming" for the menu-bar filter (#67): an
+    /// open test or a scheduled / in-progress interview. Questions (no active/upcoming notion)
+    /// and finished/archived items are excluded. Matches on the cached `subtitle`, which the
+    /// lists record as the test state / interview status — the only signal available offline.
+    var isActiveOrUpcoming: Bool {
+        let status = subtitle?.lowercased()
+        switch collection {
+        case .tests:
+            return status == "active"
+        case .interviews:
+            return status == "scheduled" || status == "in progress" || status == "in_progress"
+        default:
+            return false
+        }
+    }
 }
 
 /// Caches the most-recently-listed items per account/collection on disk (#23), via buddy-kit's
