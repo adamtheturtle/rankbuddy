@@ -35,6 +35,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     func callTool(_ name: String, arguments: [String: Value]?) async -> CallTool.Result {
         let account = stringArgument(arguments, "account")
+        MCPActivityLog.record(tool: name, detail: Self.callDetail(arguments))
         switch name {
         case "list_accounts": return await listAccounts()
         case "list_tests": return await listTests(account: account)
@@ -48,6 +49,17 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     }
 
     /// The tools that need a keyed argument (a test id, or a search query).
+    /// A short, human-readable summary of a tool call's arguments, for the activity log (#52).
+    private static func callDetail(_ arguments: [String: Value]?) -> String {
+        let keys = ["account", "test_id", "query"]
+        let parts = keys.compactMap { key -> String? in
+            guard case let .string(value)? = arguments?[key], !value.isEmpty else { return nil }
+
+            return "\(key): \(value)"
+        }
+        return parts.joined(separator: ", ")
+    }
+
     private func callKeyedTool(_ name: String, arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         switch name {
         case "list_candidates":

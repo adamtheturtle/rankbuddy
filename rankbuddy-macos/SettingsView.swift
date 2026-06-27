@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage(LivenessSettings.intervalMinutesKey)
     private var refreshMinutes = LivenessSettings.defaultIntervalMinutes
     @AppStorage(BiometricAuth.revealSettingKey) private var biometricReveal = false
+    @State private var mcpActivity: [MCPActivityEntry] = []
 
     var body: some View {
         TabView {
@@ -184,8 +185,37 @@ struct SettingsView: View {
                     "claude_desktop_config.json) and restart the client. The server reads the " +
                     "account currently selected in RankBuddy and never exposes your token.")
             }
+
+            Section {
+                if mcpActivity.isEmpty {
+                    Text("No MCP activity recorded yet.").foregroundStyle(.secondary)
+                } else {
+                    ForEach(mcpActivity) { entry in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.tool).font(.callout.monospaced())
+                            Text([DisplayFormat.date(entry.timestamp) ?? entry.timestamp, entry.detail]
+                                .filter { !$0.isEmpty }.joined(separator: " · "))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                HStack {
+                    Text("Activity")
+                    Spacer()
+                    Button("Refresh") { mcpActivity = MCPActivityLog.entries() }
+                    if !mcpActivity.isEmpty {
+                        Button("Clear") { MCPActivityLog.clear(); mcpActivity = [] }
+                    }
+                }
+            } footer: {
+                Text("Recent tool calls served by the MCP server. It runs as a separate process, " +
+                    "so this updates when you Refresh.")
+            }
         }
         .formStyle(.grouped)
+        .onAppear { mcpActivity = MCPActivityLog.entries() }
     }
 
     private var aboutTab: some View {
