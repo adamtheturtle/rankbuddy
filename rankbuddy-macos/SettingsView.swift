@@ -20,7 +20,10 @@ struct SettingsView: View {
     @AppStorage(GeneralSettings.refreshSecondsKey)
     private var listRefreshSeconds = GeneralSettings.defaultRefreshSeconds
     @AppStorage(MCPServerSettings.enabledKey) private var mcpServerEnabled = false
-    @State private var mcpActivity: [MCPActivityEntry] = []
+    // `mcpActivity`/`mcpClient` are internal so the MCP sections (a separate file, for
+    // file_length) can read them (#74).
+    @State var mcpActivity: [MCPActivityEntry] = []
+    @State var mcpClient: MCPClient = .claudeDesktop
     @State private var loginItemError: String?
 
     var body: some View {
@@ -239,61 +242,8 @@ struct SettingsView: View {
     }
 }
 
-/// Tabs and setting bindings, in an extension so they don't count toward `SettingsView`'s
-/// body length.
+/// Setting bindings, in an extension so they don't count toward `SettingsView`'s body length.
 private extension SettingsView {
-    /// The MCP setup + activity, shown only once the server is enabled (#75).
-    var mcpConfigSections: some View {
-        Group {
-            Section {
-                Text(MCPSetup.clientConfigJSON())
-                    .font(.system(.caption, design: .monospaced))
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Button {
-                    Clipboard.copy(MCPSetup.clientConfigJSON())
-                } label: {
-                    Label("Copy Configuration", systemImage: "doc.on.doc")
-                }
-            } header: {
-                Text("Client configuration")
-            } footer: {
-                Text("Add this to your MCP client's config (for Claude Desktop, " +
-                    "claude_desktop_config.json) and restart the client. The server reads the " +
-                    "account currently selected in RankBuddy and never exposes your token.")
-            }
-
-            Section {
-                if mcpActivity.isEmpty {
-                    Text("No MCP activity recorded yet.").foregroundStyle(.secondary)
-                } else {
-                    ForEach(mcpActivity) { entry in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(entry.tool).font(.callout.monospaced())
-                            Text([DisplayFormat.date(entry.timestamp) ?? entry.timestamp, entry.detail]
-                                .filter { !$0.isEmpty }.joined(separator: " · "))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            } header: {
-                HStack {
-                    Text("Activity")
-                    Spacer()
-                    Button("Refresh") { mcpActivity = MCPActivityLog.entries() }
-                    if !mcpActivity.isEmpty {
-                        Button("Clear") { MCPActivityLog.clear(); mcpActivity = [] }
-                    }
-                }
-            } footer: {
-                Text("Recent tool calls served by the MCP server. It runs as a separate process, " +
-                    "so this updates when you Refresh.")
-            }
-        }
-    }
-
     var loginItemErrorPresented: Binding<Bool> {
         Binding(get: { loginItemError != nil }, set: { if !$0 { loginItemError = nil } })
     }
