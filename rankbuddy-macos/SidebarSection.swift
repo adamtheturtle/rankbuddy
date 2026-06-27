@@ -2,8 +2,9 @@ import SwiftUI
 
 /// The top-level sections shown in the sidebar of the main window.
 ///
-/// Order is the display order, so the cases are deliberately not sorted.
-enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
+/// Order is the display order, so the cases are deliberately not sorted. `nonisolated` (a pure
+/// value type) so other `nonisolated` types — e.g. `FavoriteCollection` — can read its labels.
+nonisolated enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     case tests
     case questions
     case interviews

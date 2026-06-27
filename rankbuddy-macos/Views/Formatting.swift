@@ -70,7 +70,7 @@ enum DisplayFormat {
 
     /// Canonical display names keyed by lower-cased code (and common aliases). A table rather
     /// than a `switch` so the lookup stays a single low-complexity expression.
-    private static let languageNames: [String: String] = [
+    private nonisolated static let languageNames: [String: String] = [
         "python": "Python", "python2": "Python 2", "python3": "Python 3",
         "javascript": "JavaScript", "js": "JavaScript",
         "typescript": "TypeScript", "ts": "TypeScript",
@@ -87,8 +87,9 @@ enum DisplayFormat {
 
     /// A human-friendly name for a language code (e.g. `"cpp"` → `"C++"`, `"python"` →
     /// `"Python"`). Unknown codes are title-cased as a sensible fallback. Mirrors PadBuddy's
-    /// normalisation so the same raw API codes read the same across both apps.
-    static func languageName(_ code: String) -> String {
+    /// normalisation so the same raw API codes read the same across both apps. `nonisolated`
+    /// (pure) so off-main callers like `CSVExport` can use it.
+    nonisolated static func languageName(_ code: String) -> String {
         if let name = languageNames[code.lowercased()] { return name }
 
         return code.isEmpty ? code : code.prefix(1).uppercased() + code.dropFirst()

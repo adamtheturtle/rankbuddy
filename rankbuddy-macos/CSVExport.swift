@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 enum CSVExport {
     /// Escapes a single CSV field: wrapped in quotes when it contains a comma, quote, or
     /// newline, with embedded quotes doubled (RFC 4180).
-    static func field(_ value: String) -> String {
+    nonisolated static func field(_ value: String) -> String {
         guard value.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" }) else {
             return value
         }
@@ -17,7 +17,7 @@ enum CSVExport {
     }
 
     /// Joins one row of fields with commas, escaping each.
-    static func row(_ fields: [String]) -> String {
+    nonisolated static func row(_ fields: [String]) -> String {
         fields.map(field).joined(separator: ",")
     }
 
