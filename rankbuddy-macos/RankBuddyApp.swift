@@ -15,6 +15,8 @@ struct RankBuddyApp: App {
     @State private var favorites: FavoritesStore
     /// Mirrors favourites to iCloud when the capability is present; nil in demo mode (#22).
     @State private var favoritesSync: FavoritesSyncCoordinator?
+    /// The user's chosen appearance (General settings), applied to the main window.
+    @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
 
     init() {
         // Demo mode (RANKBUDDY_DEMO=1) seeds the in-memory demo account; its `isMock` flag
@@ -50,6 +52,7 @@ struct RankBuddyApp: App {
                     favoritesSync?.start()
                     NetworkMonitor.shared.start()
                 }
+                .preferredColorScheme(appearance.colorScheme)
         }
         .commands {
             AppCommands(palette: palette)

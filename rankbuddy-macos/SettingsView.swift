@@ -6,9 +6,17 @@ struct SettingsView: View {
     @Environment(AccountStore.self) private var store
     @State private var editing: AccountEditingTarget?
     @AppStorage(WriteActions.defaultsKey) private var writeActionsEnabled = false
+    @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
+    @AppStorage(MenuBarPreferences.recentCountKey)
+    private var menuBarRecentCount = MenuBarPreferences.defaultRecentCount
 
     var body: some View {
         TabView {
+            generalTab
+                .tabItem {
+                    Label("General", systemImage: "gearshape")
+                }
+
             accountsTab
                 .tabItem {
                     Label("Accounts", systemImage: "person.crop.circle")
@@ -31,6 +39,32 @@ struct SettingsView: View {
                     .environment(store)
             }
         }
+    }
+
+    private var generalTab: some View {
+        Form {
+            Section("Appearance") {
+                Picker("Theme", selection: $appearance) {
+                    ForEach(AppAppearance.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            Section {
+                Stepper(
+                    "Recent items in the menu bar: \(menuBarRecentCount)",
+                    value: $menuBarRecentCount,
+                    in: 0 ... MenuBarPreferences.maxRecentCount
+                )
+            } header: {
+                Text("Menu Bar")
+            } footer: {
+                Text("How many recently viewed items the menu bar lists. Set to 0 to hide the Recent section.")
+            }
+        }
+        .formStyle(.grouped)
     }
 
     private var accountsTab: some View {

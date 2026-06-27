@@ -10,6 +10,7 @@ import SwiftUI
 /// shared `AccountStore`, so the menu never spins up a second account/request stack (#23).
 struct MenuBarContent: View {
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
+    @AppStorage(MenuBarPreferences.recentCountKey) private var recentCount = MenuBarPreferences.defaultRecentCount
     @Environment(\.openWindow) private var openWindow
     @Environment(AccountStore.self) private var store
 
@@ -84,12 +85,12 @@ struct MenuBarContent: View {
     /// Recent items the current account has listed, read from the on-disk cache the main
     /// window populates — no second network stack (#23). Hidden when there's nothing cached.
     @ViewBuilder private var recentSection: some View {
-        if let account = store.currentAccount {
+        if let account = store.currentAccount, recentCount > 0 {
             let recents = RecentActivityStore.shared.recentAll(account: account.id)
             if !recents.isEmpty {
                 Divider()
                 Section("Recent") {
-                    ForEach(recents.prefix(RecentActivityStore.perCollectionLimit)) { item in
+                    ForEach(recents.prefix(recentCount)) { item in
                         Button {
                             RankBuddyDeepLink.open(
                                 collection: item.collection,
