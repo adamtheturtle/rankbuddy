@@ -6,6 +6,10 @@ import os
 typealias AccountStore = KeychainAccountStore<Account>
 
 extension AccountStore {
+    /// Where the current account's id is persisted. Shared so out-of-store callers (the macOS
+    /// Service, #46) can resolve "the current account" without a store reference.
+    static let currentIDDefaultsKey = "rankbuddy.currentAccountID"
+
     /// Builds the RankBuddy account store.
     ///
     /// The Keychain service string is a permanent compatibility contract: it must never
@@ -23,7 +27,7 @@ extension AccountStore {
         let config = Config(
             keychain: keychain,
             accountsKey: "accounts",
-            currentIDDefaultsKey: "rankbuddy.currentAccountID",
+            currentIDDefaultsKey: currentIDDefaultsKey,
             showAllAccountsDefaultsKey: "rankbuddy.showAllAccounts",
             encode: { accounts in try? JSONEncoder().encode(accounts) },
             decode: { data in (try? JSONDecoder().decode([Account].self, from: data)) ?? [] },

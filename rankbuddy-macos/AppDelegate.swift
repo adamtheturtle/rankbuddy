@@ -5,6 +5,14 @@ import AppKit
 /// (the same persisted `selectedSection` the menu bar and deep links use) and brings the app
 /// forward.
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// The "Open in RankBuddy" Service provider (#46), held so it isn't deallocated.
+    private let servicesProvider = ServicesProvider()
+
+    func applicationDidFinishLaunching(_: Notification) {
+        NSApp.servicesProvider = servicesProvider
+        NSUpdateDynamicServices()
+    }
+
     func applicationDockMenu(_: NSApplication) -> NSMenu? {
         let menu = NSMenu()
         for section in SidebarSection.allCases {
