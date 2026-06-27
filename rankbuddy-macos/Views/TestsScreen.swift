@@ -222,23 +222,27 @@ struct TestDetailView: View {
 
     var body: some View {
         Form {
-            Section("Test") {
-                OptionalRow("Name", test.name)
+            InspectorHeader(title: test.name, badges: test.inspectorBadges(now: Date()))
+
+            Section("Properties") {
                 OptionalRow("State", test.state?.capitalized)
                 OptionalRow("Window", test.windowStatus(now: Date())?.label)
                 OptionalRow("Unique ID", test.uniqueID)
                 OptionalRow("Duration", test.duration.map { "\($0) min" })
                 OptionalRow("Cutoff score", test.cutoffScore.map(String.init))
                 OptionalRow("Questions", test.questions.map { "\($0.count)" })
-                OptionalRow("Starts", DisplayFormat.date(test.startTime))
-                OptionalRow("Ends", DisplayFormat.date(test.endTime))
-                OptionalRow("Created", DisplayFormat.date(test.createdAt))
                 OptionalRow("Languages", DisplayFormat.languages(test.languages))
                 OptionalRow("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
                 OptionalRow("Shuffle questions", test.shuffleQuestions == true ? "Yes" : nil)
                 OptionalRow("Starred", test.starred == true ? "Yes" : nil)
                 OptionalRow("Locked", test.locked == true ? "Yes" : nil)
                 OptionalRow("Draft", test.draft == true ? "Yes" : nil)
+            }
+
+            Section("Schedule") {
+                OptionalRow("Starts", DisplayFormat.date(test.startTime))
+                OptionalRow("Ends", DisplayFormat.date(test.endTime))
+                OptionalRow("Created", DisplayFormat.date(test.createdAt))
             }
 
             if let sections = test.sections, !sections.isEmpty {
@@ -259,7 +263,7 @@ struct TestDetailView: View {
                 }
             }
 
-            Section {
+            Section("Participants") {
                 NavigationLink {
                     CandidatesList(testID: test.id, account: account)
                 } label: {

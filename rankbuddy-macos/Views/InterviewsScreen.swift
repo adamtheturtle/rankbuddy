@@ -203,8 +203,9 @@ struct InterviewDetailView: View {
 
     var body: some View {
         Form {
-            Section("Interview") {
-                OptionalRow("Title", interview.title)
+            InspectorHeader(title: interview.title ?? "Interview", badges: interview.inspectorBadges)
+
+            Section("Properties") {
                 OptionalRow("Status", interview.status.capitalized)
                 OptionalRow("Created", DisplayFormat.date(interview.createdAt))
                 OptionalRow("Updated", DisplayFormat.date(interview.updatedAt))

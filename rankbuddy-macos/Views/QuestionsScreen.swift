@@ -130,8 +130,9 @@ struct QuestionDetailView: View {
 
     var body: some View {
         Form {
-            Section("Question") {
-                OptionalRow("Name", question.name)
+            InspectorHeader(title: question.name, badges: question.inspectorBadges)
+
+            Section("Properties") {
                 OptionalRow("Type", question.type.capitalized)
                 OptionalRow("Unique ID", question.uniqueID)
                 OptionalRow("Status", question.status?.capitalized)

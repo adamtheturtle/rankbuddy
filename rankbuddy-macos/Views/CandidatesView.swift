@@ -201,8 +201,9 @@ struct CandidateDetailView: View {
 
     var body: some View {
         Form {
-            Section("Candidate") {
-                OptionalRow("Name", candidate.fullName)
+            InspectorHeader(title: candidate.fullName ?? candidate.email, badges: candidate.inspectorBadges)
+
+            Section("Properties") {
                 OptionalRow("Email", candidate.email)
                 OptionalRow("Attempt", candidate.attemptStatusLabel)
                 OptionalRow("Pipeline", candidate.pipelineStatusLabel)

@@ -167,8 +167,9 @@ struct PersonDetailView: View {
 
     var body: some View {
         Form {
-            Section("Person") {
-                OptionalRow("Name", user.displayName)
+            InspectorHeader(title: user.displayName, badges: user.inspectorBadges)
+
+            Section("Properties") {
                 OptionalRow("Email", user.email)
                 OptionalRow("Role", user.role?.capitalized)
                 OptionalRow("Status", user.status?.capitalized)

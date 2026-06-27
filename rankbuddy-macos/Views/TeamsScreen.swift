@@ -176,8 +176,9 @@ struct TeamDetailView: View {
 
     var body: some View {
         Form {
-            Section("Team") {
-                OptionalRow("Name", team.name)
+            InspectorHeader(title: team.name, badges: team.inspectorBadges)
+
+            Section("Properties") {
                 OptionalRow("Recruiters", team.recruiterCount.map { "\($0)" })
                 OptionalRow("Developers", team.developerCount.map { "\($0)" })
                 OptionalRow("Interviewers", team.interviewerCount.map { "\($0)" })
@@ -185,7 +186,7 @@ struct TeamDetailView: View {
                 OptionalRow("Locations", DisplayFormat.list(team.locations))
             }
 
-            Section {
+            Section("Participants") {
                 NavigationLink {
                     TeamMembersList(teamID: team.id, account: account)
                 } label: {
