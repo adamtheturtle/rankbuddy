@@ -139,6 +139,10 @@ struct AppCommands: Commands {
     let openLink: OpenLinkModel
 
     var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button("About RankBuddy") { AboutPanel.show() }
+        }
+
         CommandGroup(after: .newItem) {
             Button("Open by URL…") { openLink.isPresented = true }
                 .keyboardShortcut("o", modifiers: .command)
