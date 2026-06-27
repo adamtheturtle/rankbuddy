@@ -1,5 +1,21 @@
 import Foundation
 
+/// Preferences for RankBuddy's built-in MCP server (#75).
+///
+/// The server is opt-in: an explicit toggle in Settings ▸ MCP enables it, gating both the
+/// setup instructions in the UI and the `--mcp` entry point (`RankBuddyEntryPoint`). A client
+/// pointed at a disabled server is told to enable it rather than silently serving data.
+enum MCPServerSettings {
+    /// The `@AppStorage` / `UserDefaults` key for whether the MCP server is enabled.
+    static let enabledKey = "rb.mcpServerEnabled"
+
+    /// Whether the MCP server is currently enabled. Defaults to off, so RankBuddy serves the
+    /// catalogue only after the user explicitly opts in.
+    static func isEnabled(defaults: UserDefaults = .standard) -> Bool {
+        defaults.bool(forKey: enabledKey)
+    }
+}
+
 /// Helpers for configuring an external MCP client to use RankBuddy's `--mcp` server (#9).
 ///
 /// RankBuddy serves its read-only catalogue when its own binary is launched with `--mcp`

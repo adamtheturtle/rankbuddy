@@ -20,4 +20,16 @@ struct MCPSetupTests {
         #expect(servers["hr"] != nil)
         #expect(servers["rankbuddy"] == nil)
     }
+
+    @Test func `the MCP server is opt-in: disabled by default, on once the key is set`() throws {
+        let defaults = try #require(UserDefaults(suiteName: "mcp-server-settings-test"))
+        defaults.removePersistentDomain(forName: "mcp-server-settings-test")
+
+        #expect(MCPServerSettings.isEnabled(defaults: defaults) == false)
+
+        defaults.set(true, forKey: MCPServerSettings.enabledKey)
+        #expect(MCPServerSettings.isEnabled(defaults: defaults) == true)
+
+        defaults.removePersistentDomain(forName: "mcp-server-settings-test")
+    }
 }

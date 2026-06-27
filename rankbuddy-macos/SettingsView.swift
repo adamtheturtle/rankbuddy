@@ -15,6 +15,7 @@ struct SettingsView: View {
     @AppStorage(LivenessSettings.intervalMinutesKey)
     private var refreshMinutes = LivenessSettings.defaultIntervalMinutes
     @AppStorage(BiometricAuth.revealSettingKey) private var biometricReveal = false
+    @AppStorage(MCPServerSettings.enabledKey) private var mcpServerEnabled = false
     @State private var mcpActivity: [MCPActivityEntry] = []
     @State private var loginItemError: String?
 
@@ -180,15 +181,26 @@ struct SettingsView: View {
 
     private var mcpTab: some View {
         Form {
-            Section("Model Context Protocol") {
+            Section {
+                Toggle("Enable the MCP server", isOn: $mcpServerEnabled)
+            } header: {
+                Text("Model Context Protocol")
+            } footer: {
                 Text("RankBuddy can act as a read-only MCP server, so an AI assistant " +
                     "(e.g. Claude Desktop) can browse the selected account's tests, candidates, " +
-                    "questions, and interviews.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    "questions, and interviews. It's off until you turn it on here.")
             }
 
+            if mcpServerEnabled {
+                mcpConfigSections
+            }
+        }
+        .formStyle(.grouped)
+        .onAppear { mcpActivity = MCPActivityLog.entries() }
+    }
+
+    private var mcpConfigSections: some View {
+        Group {
             Section {
                 Text(MCPSetup.clientConfigJSON())
                     .font(.system(.caption, design: .monospaced))
@@ -236,8 +248,6 @@ struct SettingsView: View {
                     "so this updates when you Refresh.")
             }
         }
-        .formStyle(.grouped)
-        .onAppear { mcpActivity = MCPActivityLog.entries() }
     }
 
     private var aboutTab: some View {

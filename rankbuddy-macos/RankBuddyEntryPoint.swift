@@ -13,6 +13,13 @@ import SwiftUI
 enum RankBuddyEntryPoint {
     static func main() {
         if CommandLine.arguments.dropFirst().contains("--mcp") {
+            guard MCPServerSettings.isEnabled() else {
+                FileHandle.standardError.write(Data(
+                    "RankBuddy MCP server is disabled. Enable it in RankBuddy ▸ Settings ▸ MCP, then retry.\n".utf8
+                ))
+                exit(EXIT_FAILURE)
+            }
+
             runMCPServer()
         } else {
             RankBuddyApp.main()
