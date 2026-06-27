@@ -18,11 +18,12 @@ struct CreateUserTests {
     }
 
     @Test func `the create body is snake-cased with the entered fields`() async throws {
-        MockHackerRankURLProtocol.resetCapturedBody()
+        let path = "/x/api/v3/users"
+        MockHackerRankURLProtocol.resetCapturedBody(forPath: path)
         _ = try await makeClient().createUser(
             email: "  new@example.com ", firstName: "New", lastName: "Person", role: "interviewer"
         )
-        let body = try #require(MockHackerRankURLProtocol.lastRequestBody())
+        let body = try #require(MockHackerRankURLProtocol.lastRequestBody(forPath: path))
         let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
         #expect(json?["email"] as? String == "new@example.com")
         #expect(json?["firstname"] as? String == "New")
@@ -31,9 +32,10 @@ struct CreateUserTests {
     }
 
     @Test func `blank names are omitted from the body`() async throws {
-        MockHackerRankURLProtocol.resetCapturedBody()
+        let path = "/x/api/v3/users"
+        MockHackerRankURLProtocol.resetCapturedBody(forPath: path)
         _ = try await makeClient().createUser(email: "new@example.com", firstName: "   ", role: "recruiter")
-        let body = try #require(MockHackerRankURLProtocol.lastRequestBody())
+        let body = try #require(MockHackerRankURLProtocol.lastRequestBody(forPath: path))
         let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
         #expect(json?["firstname"] == nil)
     }

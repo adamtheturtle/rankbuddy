@@ -35,14 +35,15 @@ struct InviteCandidateTests {
     }
 
     @Test func `the invite body is snake-cased with the entered fields`() async throws {
-        MockHackerRankURLProtocol.resetCapturedBody()
+        let path = "/x/api/v3/tests/t1/candidates"
+        MockHackerRankURLProtocol.resetCapturedBody(forPath: path)
         _ = try await makeClient().inviteCandidate(
             testID: "t1",
             email: "  new@example.com ",
             fullName: "New Person",
             sendEmail: true
         )
-        let body = try #require(MockHackerRankURLProtocol.lastRequestBody())
+        let body = try #require(MockHackerRankURLProtocol.lastRequestBody(forPath: path))
         let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
         // The email is trimmed and the API's snake-case keys are used.
         #expect(json?["email"] as? String == "new@example.com")
@@ -51,14 +52,15 @@ struct InviteCandidateTests {
     }
 
     @Test func `a blank name is omitted from the invite body`() async throws {
-        MockHackerRankURLProtocol.resetCapturedBody()
+        let path = "/x/api/v3/tests/t1/candidates"
+        MockHackerRankURLProtocol.resetCapturedBody(forPath: path)
         _ = try await makeClient().inviteCandidate(
             testID: "t1",
             email: "new@example.com",
             fullName: "   ",
             sendEmail: false
         )
-        let body = try #require(MockHackerRankURLProtocol.lastRequestBody())
+        let body = try #require(MockHackerRankURLProtocol.lastRequestBody(forPath: path))
         let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
         // A whitespace-only name is dropped entirely rather than sent empty.
         #expect(json?["full_name"] == nil)

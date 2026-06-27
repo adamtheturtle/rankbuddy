@@ -111,6 +111,47 @@ struct HackerRankClient {
         return try await rest.send(CreatedUser.self, method: "POST", path: "\(Self.apiV3)/users", body: body)
     }
 
+    /// Creates a team (`POST /teams`) (#59). Gated behind the write-actions opt-in like the
+    /// other write flows.
+    ///
+    /// - Returns: the created team as echoed by the API (all-optional, so a 2xx never fails
+    ///   to decode on an unexpected shape).
+    @discardableResult
+    func createTeam(name: String) async throws -> CreatedTeam {
+        let body = CreateTeamRequest(name: name.trimmingCharacters(in: .whitespacesAndNewlines))
+        return try await rest.send(CreatedTeam.self, method: "POST", path: "\(Self.apiV3)/teams", body: body)
+    }
+
+    /// Adds a member to a team (`POST /teams/{id}/users`) (#59). Gated behind the
+    /// write-actions opt-in.
+    @discardableResult
+    func addTeamMember(teamID: String, email: String, role: String? = nil) async throws -> TeamMembershipResult {
+        let trimmedRole = role?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let body = AddTeamMemberRequest(
+            email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+            role: (trimmedRole?.isEmpty == false) ? trimmedRole : nil
+        )
+        return try await rest.send(
+            TeamMembershipResult.self,
+            method: "POST",
+            path: "\(Self.apiV3)/teams/\(Self.pathSegment(teamID))/users",
+            body: body
+        )
+    }
+
+    /// Removes a member from a team (`DELETE /teams/{id}/users/{userID}`) (#59). Destructive,
+    /// so the UI confirms before this is called. The user is identified in the path, so the
+    /// request carries an empty JSON body.
+    @discardableResult
+    func removeTeamMember(teamID: String, userID: String) async throws -> TeamMembershipResult {
+        try await rest.send(
+            TeamMembershipResult.self,
+            method: "DELETE",
+            path: "\(Self.apiV3)/teams/\(Self.pathSegment(teamID))/users/\(Self.pathSegment(userID))",
+            body: EmptyBody()
+        )
+    }
+
     /// One page of the account's questions, plus the cursor for the next page.
     func questionsPage(after cursor: String? = nil) async throws -> Page<Question> {
         try await page(HackerRankPage<Question>.self, path: "\(Self.apiV3)/questions", cursor: cursor)
@@ -245,6 +286,36 @@ private nonisolated struct CreateUserRequest: Encodable {
 /// The user record echoed back by a successful create. All-optional so a 2xx never fails to
 /// decode on an unexpected shape.
 nonisolated struct CreatedUser: Decodable {
+    let id: String?
+    let email: String?
+}
+
+/// The body sent when creating a team (#59).
+private nonisolated struct CreateTeamRequest: Encodable {
+    let name: String
+}
+
+/// The body sent when adding a team member (#59). Snake-case to match the API; a blank role
+/// is omitted.
+private nonisolated struct AddTeamMemberRequest: Encodable {
+    let email: String
+    let role: String?
+}
+
+/// An empty JSON body (`{}`) for a write whose parameters are all in the path — a team-member
+/// removal identifies the user in the URL.
+private nonisolated struct EmptyBody: Encodable {}
+
+/// The team echoed back by a successful create (#59). All-optional so a 2xx never fails to
+/// decode on an unexpected shape.
+nonisolated struct CreatedTeam: Decodable {
+    let id: String?
+    let name: String?
+}
+
+/// The record echoed back by a team-membership change (#59). All-optional for the same
+/// reason as the other write echoes.
+nonisolated struct TeamMembershipResult: Decodable {
     let id: String?
     let email: String?
 }

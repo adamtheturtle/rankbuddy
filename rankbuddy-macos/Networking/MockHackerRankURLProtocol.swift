@@ -57,11 +57,13 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
 
         switch Scenario.current {
         case .success:
-            // A write (e.g. inviting a candidate, #12) is acknowledged with the created
-            // record, so the app's first write flow can be exercised against the demo.
-            if request.httpMethod == "POST" {
-                Self.record(requestBody: Self.bodyData(of: request))
-                respond(url: url, statusCode: 201, body: Self.createdBody(for: url))
+            // A write (invite #12, create user #58, team create / membership #59) is
+            // acknowledged with a record, so the write flows can be exercised against the
+            // demo. A membership removal is a DELETE; everything else here is a POST.
+            let method = request.httpMethod
+            if method == "POST" || method == "DELETE" {
+                Self.record(requestBody: Self.bodyData(of: request), forPath: url.path)
+                respond(url: url, statusCode: method == "POST" ? 201 : 200, body: Self.writeAckBody(for: url))
             } else {
                 respond(url: url, statusCode: 200, body: Self.body(for: url))
             }
@@ -94,24 +96,28 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
 
     // MARK: - Captured write bodies (test inspection)
 
-    /// Lock guarding the most recent captured request body, since the URL loading system
-    /// calls `startLoading` on its own threads.
+    /// Lock guarding the captured request bodies, since the URL loading system calls
+    /// `startLoading` on its own threads.
     private static let bodyLock = NSLock()
-    private nonisolated(unsafe) static var capturedBody: Data?
+    /// The most recent captured write body per request path. Keyed by path so that write
+    /// tests in different (independently parallelised) suites don't clobber one another's
+    /// captured body — each path is written only by the one serialized suite that targets it.
+    private nonisolated(unsafe) static var capturedBodies: [String: Data] = [:]
 
-    /// The body of the most recent intercepted write (`POST`), so tests can assert the exact
-    /// JSON the client sends (#12). `nil` until a write is made or after `resetCapturedBody`.
-    static func lastRequestBody() -> Data? {
-        bodyLock.withLock { capturedBody }
+    /// The body of the most recent intercepted write (`POST`/`DELETE`) to `path`, so tests
+    /// can assert the exact JSON the client sends (#12, #58, #59). `nil` until such a write is
+    /// made or after `resetCapturedBody(forPath:)`.
+    static func lastRequestBody(forPath path: String) -> Data? {
+        bodyLock.withLock { capturedBodies[path] }
     }
 
-    /// Clears the captured write body so a test starts from a known-empty state.
-    static func resetCapturedBody() {
-        bodyLock.withLock { capturedBody = nil }
+    /// Clears the captured write body for `path` so a test starts from a known-empty state.
+    static func resetCapturedBody(forPath path: String) {
+        bodyLock.withLock { capturedBodies[path] = nil }
     }
 
-    private static func record(requestBody: Data?) {
-        bodyLock.withLock { capturedBody = requestBody }
+    private static func record(requestBody: Data?, forPath path: String) {
+        bodyLock.withLock { capturedBodies[path] = requestBody }
     }
 
     /// Reads a request's body, draining `httpBodyStream` when set — `URLProtocol` receives a
@@ -181,10 +187,15 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
 
     // MARK: - Fixtures (deterministic demo data; no real personal data)
 
-    /// The acknowledgement body for a created write, routed by path: a user for `/users`
-    /// (#58), otherwise a candidate (the invite flow, #12).
-    private static func createdBody(for url: URL) -> String {
-        url.path.contains("/users") ? createdUserJSON : createdCandidateJSON
+    /// The acknowledgement body for a write, routed by path: a user for `/users` (covers
+    /// user create #58 and team membership #59), a team for `/teams` (team create #59),
+    /// otherwise a candidate (the invite flow, #12). `/users` is checked first because a
+    /// membership path also contains `/teams`.
+    private static func writeAckBody(for url: URL) -> String {
+        let path = url.path
+        if path.contains("/users") { return createdUserJSON }
+        if path.contains("/teams") { return createdTeamJSON }
+        return createdCandidateJSON
     }
 
     /// The record returned when a candidate is invited in the demo (#12). The invite UI
@@ -196,6 +207,11 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     /// The record returned when a user is created in the demo (#58).
     private static let createdUserJSON = #"""
     {"id":"u-created","email":"created@example.com","role":"recruiter","status":"invited"}
+    """#
+
+    /// The record returned when a team is created in the demo (#59).
+    private static let createdTeamJSON = #"""
+    {"id":"tm-created","name":"New Team","owner":"u1"}
     """#
 
     private static let testsPage1JSON = #"""
