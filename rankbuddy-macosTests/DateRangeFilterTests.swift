@@ -3,6 +3,7 @@
 //  rankbuddy-macosTests
 //
 
+import BuddyAppKit
 import Foundation
 @testable import rankbuddy_macos
 import Testing
@@ -59,5 +60,33 @@ struct DateRangeFilterTests {
     @Test func `today keeps only items from the current calendar day`() {
         let result = DateRangeFilter.apply(rows(), range: "today", now: now) { $0.date }
         #expect(result.map(\.id) == [0])
+    }
+
+    // MARK: - Server-side value (#86)
+
+    @Test func `no range yields no server value`() {
+        #expect(DateRangeFilter.createdAtServerValue(nil, now: now) == nil)
+        #expect(DateRangeFilter.createdAtServerValue("not a range", now: now) == nil)
+    }
+
+    @Test func `a named range becomes an ISO from..to value bounded by now`() throws {
+        let value = try #require(DateRangeFilter.createdAtServerValue("last 7 days", now: now))
+        let parts = value.components(separatedBy: "..")
+        #expect(parts.count == 2)
+
+        let formatter = ISO8601DateFormatter()
+        let from = try #require(formatter.date(from: parts[0]))
+        let upper = try #require(formatter.date(from: parts[1]))
+        // Lower bound matches the named window's calendar-day start; upper bound is `now`.
+        #expect(from == NamedDateRange.start(for: "last 7 days", now: now))
+        #expect(upper == now)
+        #expect(from < upper)
+    }
+
+    @Test func `today's server value starts at the calendar day, not 7 days back`() throws {
+        let value = try #require(DateRangeFilter.createdAtServerValue("today", now: now))
+        let formatter = ISO8601DateFormatter()
+        let from = try #require(formatter.date(from: value.components(separatedBy: "..")[0]))
+        #expect(from == Calendar.current.startOfDay(for: now))
     }
 }

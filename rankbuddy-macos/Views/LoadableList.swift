@@ -44,6 +44,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     let emptyMessage: String
     /// Loads one page: the first page for `cursor == nil`, otherwise the page at `cursor`.
     let loadPage: (_ cursor: String?) async throws -> Page<Item>
+    /// When set, the list loads pages with the active date range applied **server-side** instead
+    /// of filtering loaded rows with `filterDate` (#86). Essential for large collections — the
+    /// client-side date filter only sees loaded rows, so a date chip over 87k interviews would
+    /// otherwise miss everything not yet paged in. Receives the cursor and the active named range;
+    /// changing the range reloads, and the client-side date pass is skipped. `filterDate` is still
+    /// set (it drives the chip and persistence) but isn't applied locally while this is set.
+    var loadPageInDateRange: ((_ cursor: String?, _ range: String?) async throws -> Page<Item>)?
     /// The text a row is matched against when filtering by the search field.
     let searchableText: (Item) -> String
     /// The ways the list can be ordered; the first is the default. Empty hides the menu.
@@ -202,6 +209,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .onChange(of: sortSelection) { persistSort() }
                 .onChange(of: dateRange) {
                     ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
+                    // Server-side date filtering re-queries from page 1; client-side just
+                    // re-filters the loaded rows on the next `visibleItems` recompute (#86).
+                    if serverDateFiltering { Task { await reload() } }
                 }
                 .onChange(of: selectedFacets) {
                     ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))
@@ -308,7 +318,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         nextCursor = nil
         pagesLoaded = 1
         do {
-            let page = try await loadPage(nil)
+            let page = try await loadCurrentPage(nil)
             items = page.items
             nextCursor = page.next
             phase = .loaded
@@ -327,7 +337,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         isLoadingMore = true
         defer { isLoadingMore = false }
         do {
-            let page = try await loadPage(cursor)
+            let page = try await loadCurrentPage(cursor)
             items.append(contentsOf: page.items)
             nextCursor = page.next
             pagesLoaded += 1

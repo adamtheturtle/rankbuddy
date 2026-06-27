@@ -86,8 +86,16 @@ key, which the server ignores):
 RankBuddy requests `order_by=created_at&order_dir=desc` so the newest interviews — and
 anything created today — load first; the server carries the parameters into the `next`
 URLs. `GET /x/api/v3/questions` exposes no sort parameter, and the spec documents none
-for tests/users/teams. The interviews endpoint also accepts a `created_at=<from>..<to>`
-range filter (ISO-8601 with `±hh:mm` offset) for future server-side date filtering.
+for tests/users/teams.
+
+## Date filtering (interviews)
+
+`GET /x/api/v3/interviews` accepts a `created_at=<from>..<to>` range filter. RankBuddy uses
+it for the Interviews date chip (#86) so the filter spans the whole collection rather than
+only the rows already loaded — on a real account "last 90 days" matched ~6.9k of ~87.6k
+interviews, far more than the client ever pages in. Both bounds are ISO-8601; the API
+accepts UTC `…Z` form (e.g. `2026-03-30T00:00:00Z..2026-06-27T23:59:59Z`), which is what
+`ISO8601DateFormatter` emits, and the named ranges map to it via `DateRangeFilter`.
 
 ## Rate limiting and errors
 

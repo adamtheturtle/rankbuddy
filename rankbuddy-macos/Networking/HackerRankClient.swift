@@ -244,15 +244,24 @@ struct HackerRankClient {
     /// `order_by` ∈ {title, id, created_at, ended_at, current_status, user} and `order_dir` ∈
     /// {asc, desc}, where `order_dir` is required whenever `order_by` is set. The server carries
     /// the ordering into the `next` URLs, so subsequent pages inherit it.
-    func interviewsPage(after cursor: String? = nil) async throws -> Page<Interview> {
-        try await page(
+    ///
+    /// `createdAtRange` (a `created_at=<from>..<to>` value, see `DateRangeFilter`) filters by
+    /// creation date **server-side** when a date range is active (#86), so the date chip works
+    /// across all 87k interviews rather than only the loaded rows. It's ignored on follow-up
+    /// pages (the absolute `next` cursor already carries every query parameter).
+    func interviewsPage(after cursor: String? = nil, createdAtRange: String? = nil) async throws -> Page<Interview> {
+        var query = [
+            URLQueryItem(name: "order_by", value: "created_at"),
+            URLQueryItem(name: "order_dir", value: "desc")
+        ]
+        if let createdAtRange {
+            query.append(URLQueryItem(name: "created_at", value: createdAtRange))
+        }
+        return try await page(
             HackerRankPage<Interview>.self,
             path: "\(Self.apiV3)/interviews",
             cursor: cursor,
-            query: [
-                URLQueryItem(name: "order_by", value: "created_at"),
-                URLQueryItem(name: "order_dir", value: "desc")
-            ]
+            query: query
         )
     }
 

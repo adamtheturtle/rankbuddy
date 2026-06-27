@@ -24,6 +24,14 @@ struct InterviewsScreen: View {
                 title: "Interviews",
                 emptyMessage: "No interviews",
                 loadPage: { try await HackerRankClient(account: account).interviewsPage(after: $0) },
+                // The date chip filters server-side over all interviews, not just loaded rows
+                // (#86) — the account can have ~87k, so a client-only filter would miss most.
+                loadPageInDateRange: { cursor, range in
+                    try await HackerRankClient(account: account).interviewsPage(
+                        after: cursor,
+                        createdAtRange: DateRangeFilter.createdAtServerValue(range)
+                    )
+                },
                 searchableText: { "\($0.title ?? "") \($0.status)" },
                 sortOptions: [
                     SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },

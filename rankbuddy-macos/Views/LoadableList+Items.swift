@@ -11,8 +11,11 @@ import Foundation
 extension LoadableList {
     /// The items currently shown: filtered by search + date + facets, then sorted (#19, #55).
     var visibleItems: [Item] {
+        // When the date range is applied server-side (#86), don't also filter locally — the
+        // loaded rows are already the server's date-filtered result.
         let base = ListQuery.filtered(
-            items, query: query, searchableText: searchableText, date: filterDate, dateRange: dateRange
+            items, query: query, searchableText: searchableText,
+            date: serverDateFiltering ? nil : filterDate, dateRange: dateRange
         )
         .filter { ListQuery.matchesFacets($0, facets: facets, selected: selectedFacets) }
         let option = sortOptions.first { $0.id == sortSelection }
@@ -22,6 +25,21 @@ extension LoadableList {
     /// The selected, currently-visible items — the bulk CSV export's input (#44).
     var selectedItems: [Item] {
         visibleItems.filter { selection.contains($0.id) }
+    }
+
+    /// Whether the active date range is resolved server-side rather than over loaded rows (#86).
+    var serverDateFiltering: Bool {
+        loadPageInDateRange != nil
+    }
+
+    /// Loads one page, routing through the server-side date loader when one is set (passing the
+    /// active range) so the date chip filters the whole collection, not just loaded rows (#86).
+    func loadCurrentPage(_ cursor: String?) async throws -> Page<Item> {
+        if let loadPageInDateRange {
+            return try await loadPageInDateRange(cursor, dateRange)
+        }
+
+        return try await loadPage(cursor)
     }
 
     /// Where this list's chosen sort order is remembered between launches (#19). Keyed by title,
