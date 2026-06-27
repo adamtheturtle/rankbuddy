@@ -4,7 +4,7 @@ extension Test {
     /// Where "now" sits relative to a test's scheduled window. This is independent of the
     /// owner-set lifecycle `state`: an "active" test can still be `.closed` if its end time
     /// has passed, which is what tells a recruiter whether candidates can still take it.
-    enum WindowStatus {
+    nonisolated enum WindowStatus {
         case upcoming
         case open
         case closed
