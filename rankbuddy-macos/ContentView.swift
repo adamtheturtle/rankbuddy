@@ -22,9 +22,32 @@ struct ContentView: View {
         @Bindable var openLink = openLink
 
         NavigationSplitView {
-            List(SidebarSection.allCases, selection: sectionSelection) { section in
-                Label(section.title, systemImage: section.systemImage)
-                    .tag(section)
+            List(selection: sectionSelection) {
+                Section {
+                    ForEach(SidebarSection.allCases) { section in
+                        Label(section.title, systemImage: section.systemImage)
+                            .tag(section)
+                    }
+                }
+
+                let favourites = accountFavorites
+                if !favourites.isEmpty {
+                    Section("Favourites") {
+                        ForEach(favourites) { ref in
+                            Button { openFavorite(ref) } label: {
+                                Label(ref.title, systemImage: ref.collection.systemImage)
+                                    .lineLimit(1)
+                            }
+                            .buttonStyle(.plain)
+                            .contextMenu {
+                                Button("Remove from Favourites", role: .destructive) {
+                                    _ = favorites.toggle(ref)
+                                }
+                            }
+                        }
+                        .onMove(perform: moveFavorites)
+                    }
+                }
             }
             .navigationTitle("RankBuddy")
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
@@ -68,6 +91,28 @@ struct ContentView: View {
         }
     }
 
+    /// The current account's favourites, shown as a sidebar section (#41).
+    private var accountFavorites: [FavoriteRef] {
+        guard let accountID = store.currentAccount?.id.uuidString else { return [] }
+
+        return favorites.favorites(accountID: accountID)
+    }
+
+    /// Opens a favourited item: switches to its section and deep-links its detail.
+    private func openFavorite(_ ref: FavoriteRef) {
+        RankBuddyDeepLink.open(collection: ref.collection, accountID: ref.accountID, itemID: ref.itemID)
+        selection = ref.collection.section
+    }
+
+    /// Persists a drag-reorder of the current account's favourites.
+    private func moveFavorites(from source: IndexSet, to destination: Int) {
+        guard let accountID = store.currentAccount?.id.uuidString else { return }
+
+        favorites.replace(with: FavoritesReorder.apply(
+            all: favorites.favorites, accountID: accountID, from: source, to: destination
+        ))
+    }
+
     /// A `List` selection binding that never clears to nil, so a section is always shown.
     private var sectionSelection: Binding<SidebarSection?> {
         Binding(
@@ -93,10 +138,15 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
-        .environment(AccountStore.rankBuddy(isTesting: true))
+    let favorites = FavoritesStore(isTesting: true)
+    favorites.replace(with: [
+        FavoriteRef(accountID: Account.demo.id.uuidString, collection: .tests, itemID: "t1", title: "Backend Screen"),
+        FavoriteRef(accountID: Account.demo.id.uuidString, collection: .questions, itemID: "q1", title: "Two Sum")
+    ])
+    return ContentView()
+        .environment(AccountStore.rankBuddy(isTesting: true, seed: [.demo]))
         .environment(PaletteModel())
         .environment(OpenLinkModel())
-        .environment(FavoritesStore(isTesting: true))
+        .environment(favorites)
         .environment(AccountHealthMonitor())
 }
