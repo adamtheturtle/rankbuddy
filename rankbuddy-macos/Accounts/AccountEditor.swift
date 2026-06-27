@@ -17,6 +17,13 @@ struct AccountEditor: View {
 
     /// The account being edited, or `nil` when adding a new one.
     let existing: Account?
+    /// Whether the editor is hosted inline in a master-detail pane (#71) rather than a modal
+    /// sheet. When embedded it renders its own Save/Cancel buttons instead of sheet toolbar
+    /// items and reports completion through `onFinish` rather than dismissing.
+    let embedded: Bool
+    /// Called when an embedded editor finishes: the saved account's id on save, or `nil` when
+    /// the user cancels. Ignored (and `nil`) for the sheet presentation, which dismisses instead.
+    let onFinish: ((Account.ID?) -> Void)?
 
     @State private var label: String
     @State private var token: String
@@ -29,8 +36,10 @@ struct AccountEditor: View {
     /// Whether the token is shown in clear text (#48), gated behind Touch ID when enabled.
     @State private var isTokenRevealed = false
 
-    init(existing: Account? = nil) {
+    init(existing: Account? = nil, embedded: Bool = false, onFinish: ((Account.ID?) -> Void)? = nil) {
         self.existing = existing
+        self.embedded = embedded
+        self.onFinish = onFinish
         _label = State(initialValue: existing?.label ?? "")
         _token = State(initialValue: existing?.token ?? "")
         _baseURLOverride = State(initialValue: existing?.baseURLOverride ?? "")
@@ -88,17 +97,34 @@ struct AccountEditor: View {
                     success: "Token is valid — connected to \(draft.baseURL.host() ?? "HackerRank")"
                 )
             }
+
+            // When embedded in the master-detail pane there's no sheet toolbar, so the editor
+            // carries its own Save/Cancel buttons (#71).
+            if embedded {
+                Section {
+                    HStack {
+                        Button("Cancel") { onFinish?(nil) }
+                            .keyboardShortcut(.cancelAction)
+                        Spacer()
+                        Button(existing == nil ? "Add Account" : "Save Changes") { save() }
+                            .keyboardShortcut(.defaultAction)
+                            .disabled(!canSave)
+                    }
+                }
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 440)
+        .frame(width: embedded ? nil : 440)
         .navigationTitle(existing == nil ? "Add Account" : "Edit Account")
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { save() }
-                    .disabled(!canSave)
+            if !embedded {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .disabled(!canSave)
+                }
             }
         }
     }
@@ -173,7 +199,11 @@ struct AccountEditor: View {
         // The token may have just been fixed; clear any stale "rejected" verdict so the
         // banner drops immediately (a later health check re-flags it if it's still bad).
         health.clearUnauthorized(draft.id)
-        dismiss()
+        if let onFinish {
+            onFinish(draft.id)
+        } else {
+            dismiss()
+        }
     }
 }
 

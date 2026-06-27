@@ -9,7 +9,6 @@ import SwiftUI
 /// The app's Settings scene: manage HackerRank accounts (add, edit, remove).
 struct SettingsView: View {
     @Environment(AccountStore.self) private var store
-    @State private var editing: AccountEditingTarget?
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
     @AppStorage(AppPresence.defaultsKey) private var presence: AppPresence = .both
     @AppStorage(MenuBarPreferences.recentCountKey)
@@ -61,12 +60,6 @@ struct SettingsView: View {
                 }
         }
         .frame(width: 520, height: 380)
-        .sheet(item: $editing) { target in
-            NavigationStack {
-                AccountEditor(existing: target.account)
-                    .environment(store)
-            }
-        }
         .alert("Couldn’t change the login item", isPresented: loginItemErrorPresented) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -183,44 +176,7 @@ struct SettingsView: View {
     }
 
     private var accountsTab: some View {
-        Form {
-            Section {
-                if store.accounts.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("No accounts yet. Add a HackerRank account to get started.")
-                            .foregroundStyle(.secondary)
-                        GetAPIKeyLink()
-                    }
-                } else {
-                    ForEach(store.accounts) { account in
-                        AccountRow(account: account, isCurrent: account.id == store.currentAccountID)
-                            .contentShape(Rectangle())
-                            .onTapGesture { editing = .edit(account) }
-                            .accessibilityAddTraits(.isButton)
-                            .accessibilityHint("Edit this account")
-                            .contextMenu {
-                                Button("Edit") { editing = .edit(account) }
-                                Button("Remove", role: .destructive) {
-                                    store.remove(id: account.id)
-                                }
-                            }
-                    }
-                }
-            }
-
-            Section {
-                Button("Add Account…") { editing = .add }
-
-                // A one-click demo account backed by the in-process fixtures, so the app can
-                // be explored without a real token (#10). Offered only until one exists.
-                if !store.accounts.contains(where: \.isMock) {
-                    Button("Add Demo Account") { store.add(.demo) }
-                }
-            } footer: {
-                Text("The demo account shows sample data from the built-in mock server — no HackerRank token required.")
-            }
-        }
-        .formStyle(.grouped)
+        AccountsSettingsView()
     }
 
     private var mcpTab: some View {
@@ -317,26 +273,6 @@ struct AccountRow: View {
             }
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-/// What the editor sheet is presenting: a new account or an existing one.
-enum AccountEditingTarget: Identifiable {
-    case add
-    case edit(Account)
-
-    var id: String {
-        switch self {
-        case .add: "add"
-        case let .edit(account): account.id.uuidString
-        }
-    }
-
-    var account: Account? {
-        switch self {
-        case .add: nil
-        case let .edit(account): account
-        }
     }
 }
 
