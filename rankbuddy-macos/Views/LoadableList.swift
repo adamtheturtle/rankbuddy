@@ -89,8 +89,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @State private var sortSelection: SortOption<Item>.ID?
     /// The pushed-detail navigation path.
     @State private var path: [Item] = []
-    /// The highlighted row (FastList selection); drives nothing but the highlight.
-    @State private var selection: Item.ID?
+    /// The selected rows (FastList multi-selection): drives the highlight and the
+    /// "Export Selected" bulk action (#44).
+    @State private var selection: Set<Item.ID> = []
     /// A one-shot scroll target honoured on the next layout (restored selection/scroll).
     @State private var scrollTarget: Item.ID?
     /// Guards restoration to once per load cycle, so navigating back doesn't re-push.
@@ -140,11 +141,20 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
 
                     if let csvExport {
                         Button {
-                            CSVExport.save(csvExport(sort(filter(items))), suggestedName: csvFilename)
+                            CSVExport.save(csvExport(visibleItems), suggestedName: csvFilename)
                         } label: {
                             Label("Export CSV…", systemImage: "tablecells")
                         }
                         .help("Export \(title) as CSV")
+
+                        if !selection.isEmpty {
+                            Button {
+                                CSVExport.save(csvExport(selectedItems), suggestedName: "\(csvFilename)-selected")
+                            } label: {
+                                Label("Export Selected (\(selection.count))…", systemImage: "tablecells.badge.ellipsis")
+                            }
+                            .help("Export the selected \(title) as CSV (#44)")
+                        }
                     }
 
                     Button {
@@ -161,7 +171,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .onChange(of: reloadToken) { Task { await reload() } }
                 .onAppear { restoreSort() }
                 .onChange(of: sortSelection) { persistSort() }
-                .onChange(of: dateRange) { persistFilter() }
+                .onChange(of: dateRange) {
+                    ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
+                }
                 .onChange(of: path) { persistSelection() }
         }
     }
@@ -217,7 +229,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     }
 
     @ViewBuilder private var loadedList: some View {
-        let visible = sort(filter(items))
+        let visible = visibleItems
         if visible.isEmpty {
             ContentUnavailableView.search(text: query)
         } else {
@@ -243,26 +255,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     private func subtitle(visibleCount: Int) -> String {
         let suffix = nextCursor != nil ? "+" : ""
         return "\(visibleCount)\(suffix) \(visibleCount == 1 ? "item" : "items")"
-    }
-
-    private func filter(_ items: [Item]) -> [Item] {
-        var result = items
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmed.isEmpty {
-            result = result.filter { searchableText($0).localizedCaseInsensitiveContains(trimmed) }
-        }
-
-        if let filterDate {
-            result = DateRangeFilter.apply(result, range: dateRange, date: filterDate)
-        }
-
-        return result
-    }
-
-    private func sort(_ items: [Item]) -> [Item] {
-        guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return items }
-
-        return items.sorted(by: option.areInIncreasingOrder)
     }
 
     private var isLoading: Bool {
@@ -295,9 +287,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// Resets and loads the first page (initial load, refresh, or account switch).
     private func reload() async {
         didRestore = false
-        restoreFilter()
+        if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         path = []
-        selection = nil
+        selection = []
         phase = .loading
         items = []
         nextCursor = nil
@@ -345,7 +337,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         if let restorationKey,
            let stored = UserDefaults.standard.string(forKey: restorationKey),
            let item = items.first(where: { String(describing: $0.id) == stored }) {
-            selection = item.id
+            selection = [item.id]
             scrollTarget = item.id
             path = [item]
             return
@@ -370,31 +362,20 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     }
 }
 
-// MARK: - Date-filter persistence (#19)
+// MARK: - Visible / selected items
 
 private extension LoadableList {
-    /// Where the chosen date filter is remembered (#19), or `nil` when persistence is off.
-    /// Scoped by `restorationKey`, so each account/collection keeps its own filter.
-    var filterDefaultsKey: String? {
-        restorationKey.map { "filter.\($0)" }
+    /// The items currently shown: filtered by search + date, then sorted (#19).
+    var visibleItems: [Item] {
+        let base = ListQuery.filtered(
+            items, query: query, searchableText: searchableText, date: filterDate, dateRange: dateRange
+        )
+        let option = sortOptions.first { $0.id == sortSelection }
+        return option.map { base.sorted(by: $0.areInIncreasingOrder) } ?? base
     }
 
-    /// Restores the saved date filter for the current key, ignoring any stale/unknown value.
-    func restoreFilter() {
-        guard filterDate != nil, let filterDefaultsKey else { return }
-
-        let saved = UserDefaults.standard.string(forKey: filterDefaultsKey)
-        dateRange = NamedDateRange.options.contains(saved ?? "") ? saved : nil
-    }
-
-    /// Persists the chosen date filter, clearing it when no range is selected.
-    func persistFilter() {
-        guard let filterDefaultsKey else { return }
-
-        if let dateRange {
-            UserDefaults.standard.set(dateRange, forKey: filterDefaultsKey)
-        } else {
-            UserDefaults.standard.removeObject(forKey: filterDefaultsKey)
-        }
+    /// The selected, currently-visible items — the bulk CSV export's input (#44).
+    var selectedItems: [Item] {
+        visibleItems.filter { selection.contains($0.id) }
     }
 }
