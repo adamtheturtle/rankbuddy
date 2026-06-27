@@ -32,6 +32,9 @@ struct TestsScreen: View {
                 ],
                 facets: [
                     ListFacet("state", "State", systemImage: "circle.fill", value: { $0.state?.capitalized }),
+                    // Derived from the scheduling window (#55): lets a recruiter narrow to the
+                    // tests candidates can still take (Open) vs. Upcoming/Closed.
+                    ListFacet("window", "Window", systemImage: "clock", value: { $0.windowStatus(now: Date())?.label }),
                     ListFacet("language", "Language", systemImage: "chevron.left.forwardslash.chevron.right") {
                         ($0.languages ?? []).map(DisplayFormat.languageName)
                     }
