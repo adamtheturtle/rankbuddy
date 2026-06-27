@@ -14,6 +14,15 @@ enum LivenessSettings {
     static let notifyKey = "rb.notifyNewInterviews"
     /// `@AppStorage` key: how often the background sweep runs, in minutes.
     static let intervalMinutesKey = "rb.refreshMinutes"
+    /// `@AppStorage` key: which accounts the Dock badge counts (#68).
+    static let dockScopeKey = "rb.dockBadgeScope"
+
+    /// The Dock-badge scope as stored, defaulting to the current account (the historical
+    /// behaviour) for an unset or unrecognised value.
+    static func dockBadgeScope() -> DockBadgeScope {
+        DockBadgeScope(rawValue: UserDefaults.standard.string(forKey: dockScopeKey) ?? "") ?? .currentAccount
+    }
+
     /// The cadence options offered in Settings, in minutes.
     static let intervalOptions = [1, 2, 5, 10, 15, 30]
     /// The default sweep cadence in minutes.
@@ -34,6 +43,36 @@ enum LivenessSettings {
     /// can tell which interviews are new.
     static func seenKey(_ accountID: UUID) -> String {
         "rb.liveness.seen.\(accountID.uuidString)"
+    }
+}
+
+/// Which accounts the Dock badge's scheduled-interview count covers (#68). Matters with
+/// multiple accounts: "all accounts" sums upcoming interviews across every real account,
+/// while "current account" counts only the selected one. `RawRepresentable`/`String` so it
+/// persists directly through `@AppStorage`.
+enum DockBadgeScope: String, CaseIterable, Identifiable {
+    case currentAccount
+    case allAccounts
+
+    var id: String {
+        rawValue
+    }
+
+    var label: String {
+        switch self {
+        case .currentAccount: "Current account"
+        case .allAccounts: "All accounts"
+        }
+    }
+
+    /// The accounts this scope badges: real (non-demo) accounts with a token. "Current"
+    /// narrows to the selected account; "all" spans every usable account.
+    func badgeableAccounts(in store: AccountStore) -> [Account] {
+        let usable: (Account) -> Bool = { !$0.isMock && !$0.token.isEmpty }
+        switch self {
+        case .currentAccount: return [store.currentAccount].compactMap(\.self).filter(usable)
+        case .allAccounts: return store.accounts.filter(usable)
+        }
     }
 }
 
@@ -90,21 +129,28 @@ final class LivenessMonitor {
         }
     }
 
-    /// One sweep: when enabled, fetch the current account's interviews and badge the count of
-    /// scheduled ones; when disabled (or for a demo/key-less account) clear the badge.
+    /// One sweep: when enabled, fetch the in-scope accounts' interviews and badge the total
+    /// count of scheduled ones (#68); when disabled (or with no usable account in scope) clear
+    /// the badge. New-interview notifications stay per-account.
     func sweep(store: AccountStore) async {
-        guard UserDefaults.standard.bool(forKey: LivenessSettings.backgroundUpdatesKey),
-              let account = store.currentAccount, !account.isMock, !account.token.isEmpty,
-              let interviews = try? await HackerRankClient(account: account).interviewsPage().items
-        else {
+        guard UserDefaults.standard.bool(forKey: LivenessSettings.backgroundUpdatesKey) else {
             NSApp.dockTile.badgeLabel = nil
             return
         }
 
-        NSApp.dockTile.badgeLabel = LivenessDigest.badgeLabel(
-            scheduledCount: LivenessDigest.scheduledCount(interviews)
-        )
-        notifyIfNeeded(interviews, accountID: account.id)
+        let accounts = LivenessSettings.dockBadgeScope().badgeableAccounts(in: store)
+        var scheduled = 0
+        for account in accounts {
+            guard let interviews = try? await HackerRankClient(account: account).interviewsPage().items
+            else { continue }
+
+            scheduled += LivenessDigest.scheduledCount(interviews)
+            notifyIfNeeded(interviews, accountID: account.id)
+        }
+
+        NSApp.dockTile.badgeLabel = accounts.isEmpty
+            ? nil
+            : LivenessDigest.badgeLabel(scheduledCount: scheduled)
     }
 
     /// Compares this sweep's interviews against the account's last-seen set, posting a

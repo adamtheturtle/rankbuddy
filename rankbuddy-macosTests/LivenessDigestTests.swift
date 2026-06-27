@@ -53,4 +53,21 @@ struct LivenessDigestTests {
         #expect(LivenessSettings.intervalMinutes(raw: 7) == LivenessSettings.defaultIntervalMinutes)
         #expect(LivenessSettings.intervalMinutes(raw: 10) == 10)
     }
+
+    @MainActor
+    @Test func `the dock badge scope picks the right accounts and always excludes the demo`() {
+        let real = Account(label: "Work", token: "tok-1")
+        let other = Account(label: "EU", token: "tok-2")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [real, other, .demo])
+
+        // "Current account" badges only the selected (first-seeded) real account.
+        let current = DockBadgeScope.currentAccount.badgeableAccounts(in: store)
+        #expect(current.count == 1)
+        #expect(current.allSatisfy { !$0.isMock })
+
+        // "All accounts" badges both real accounts but never the demo.
+        let all = DockBadgeScope.allAccounts.badgeableAccounts(in: store)
+        #expect(all.count == 2)
+        #expect(all.allSatisfy { !$0.isMock })
+    }
 }

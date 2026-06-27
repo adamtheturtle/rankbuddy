@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage(LivenessSettings.notifyKey) private var notifyNewInterviews = false
     @AppStorage(LivenessSettings.intervalMinutesKey)
     private var refreshMinutes = LivenessSettings.defaultIntervalMinutes
+    @AppStorage(LivenessSettings.dockScopeKey) private var dockBadgeScope: DockBadgeScope = .currentAccount
     @AppStorage(BiometricAuth.revealSettingKey) private var biometricReveal = false
     @AppStorage(GeneralSettings.refreshSecondsKey)
     private var listRefreshSeconds = GeneralSettings.defaultRefreshSeconds
@@ -124,12 +125,22 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(!backgroundUpdates)
+
+                Picker("Badge counts", selection: $dockBadgeScope) {
+                    ForEach(DockBadgeScope.allCases) { scope in
+                        Text(scope.label).tag(scope)
+                    }
+                }
+                .disabled(!backgroundUpdates)
+                .onChange(of: dockBadgeScope) {
+                    Task { await LivenessMonitor.shared.sweep(store: store) }
+                }
             } header: {
                 Text("Updates")
             } footer: {
                 Text("Keeps a count of scheduled interviews on the Dock icon and, optionally, " +
                     "posts a notification when new interviews appear — refreshed in the background " +
-                    "even when no window is open.")
+                    "even when no window is open. Badge counts the current account or every account.")
             }
 
             Section {
