@@ -75,18 +75,53 @@ struct FavoriteIndicator: View {
     }
 }
 
-/// Shown when a section needs an account but none is configured.
+/// Shown when a section needs an account but none is configured. On first run (no accounts
+/// at all) it's a small onboarding surface explaining what RankBuddy needs, with a one-click
+/// demo so the app can be explored before connecting a real token.
 struct NoAccountView: View {
+    @Environment(AccountStore.self) private var store
+
     var body: some View {
-        ContentUnavailableView {
-            Label("No account", systemImage: "person.crop.circle.badge.exclamationmark")
-        } description: {
-            Text("Add a HackerRank account in Settings to get started.")
-        } actions: {
-            SettingsLink {
-                Text("Open Settings")
+        if store.accounts.isEmpty {
+            ContentUnavailableView {
+                Label("Welcome to RankBuddy", systemImage: "doc.text.magnifyingglass")
+            } description: {
+                Text("RankBuddy connects to HackerRank for Work with a personal access token, " +
+                    "then keeps your tests, candidates, questions, and interviews a click away. " +
+                    "Add an account to get started — or explore the demo first.")
+            } actions: {
+                SettingsLink {
+                    Text("Add Account…")
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Add Demo Account") { store.add(.demo) }
+
+                GetAPIKeyLink()
+            }
+        } else {
+            ContentUnavailableView {
+                Label("No account selected", systemImage: "person.crop.circle.badge.questionmark")
+            } description: {
+                Text("Choose one of your saved accounts in Settings.")
+            } actions: {
+                SettingsLink {
+                    Text("Open Settings")
+                }
+                .buttonStyle(.borderedProminent)
             }
         }
+    }
+}
+
+/// A link to where a HackerRank for Work personal access token is generated, so a new user
+/// can find their key before connecting an account.
+struct GetAPIKeyLink: View {
+    private static let url = URL(string: "https://www.hackerrank.com/work") ?? Account.defaultBaseURL
+
+    var body: some View {
+        Link("Get an API key", destination: Self.url)
+            .font(.callout)
     }
 }
 
@@ -107,4 +142,10 @@ struct OptionalRow: View {
                 .textSelection(.enabled)
         }
     }
+}
+
+#Preview("Welcome (first run)") {
+    NoAccountView()
+        .environment(AccountStore.rankBuddy(isTesting: true))
+        .frame(width: 520, height: 380)
 }
