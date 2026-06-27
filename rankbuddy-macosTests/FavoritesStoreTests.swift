@@ -1,3 +1,8 @@
+//
+//  FavoritesStoreTests.swift
+//  rankbuddy-macosTests
+//
+
 import Foundation
 @testable import rankbuddy_macos
 import Testing

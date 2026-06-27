@@ -1,3 +1,8 @@
+//
+//  SavedSearchMenu.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// The toolbar menu for applying, saving, and deleting a list's saved searches (#25).

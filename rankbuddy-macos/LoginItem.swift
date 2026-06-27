@@ -1,3 +1,8 @@
+//
+//  LoginItem.swift
+//  rankbuddy-macos
+//
+
 import ServiceManagement
 
 /// A thin wrapper over `SMAppService.mainApp` for the "Launch at login" setting (#62).

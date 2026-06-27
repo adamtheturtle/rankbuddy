@@ -1,3 +1,8 @@
+//
+//  AppDelegate.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 
 /// Minimal app delegate, used for the Dock right-click menu (#45). PadBuddy offers quick

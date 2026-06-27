@@ -1,3 +1,8 @@
+//
+//  PrintableReports.swift
+//  rankbuddy-macos
+//
+
 import BuddyDesignSystem
 import SwiftUI
 

@@ -1,3 +1,8 @@
+//
+//  BiometricAuth.swift
+//  rankbuddy-macos
+//
+
 import LocalAuthentication
 
 /// Optional biometric (Touch ID) gate for revealing a stored API token in the account editor

@@ -1,3 +1,8 @@
+//
+//  AppearancePicker.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// A visual appearance picker (#76): three swatches — System, Light, Dark — each a miniature

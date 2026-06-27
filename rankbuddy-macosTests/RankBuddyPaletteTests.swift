@@ -1,3 +1,8 @@
+//
+//  RankBuddyPaletteTests.swift
+//  rankbuddy-macosTests
+//
+
 import BuddyAppKit
 import CommandPaletteKit
 @testable import rankbuddy_macos

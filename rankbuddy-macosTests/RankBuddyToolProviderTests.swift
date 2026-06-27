@@ -1,3 +1,8 @@
+//
+//  RankBuddyToolProviderTests.swift
+//  rankbuddy-macosTests
+//
+
 import BuddyAppKit
 import BuddyMCP
 import Foundation

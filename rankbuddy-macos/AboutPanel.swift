@@ -1,3 +1,8 @@
+//
+//  AboutPanel.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 
 /// The custom "About RankBuddy" panel (#51), mirroring PadBuddy's. Opens the standard macOS

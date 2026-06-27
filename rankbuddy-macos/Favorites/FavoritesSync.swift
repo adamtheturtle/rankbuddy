@@ -1,3 +1,8 @@
+//
+//  FavoritesSync.swift
+//  rankbuddy-macos
+//
+
 import BuddyAppKit
 import Foundation
 

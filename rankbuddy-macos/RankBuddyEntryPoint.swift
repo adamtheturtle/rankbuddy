@@ -1,3 +1,8 @@
+//
+//  RankBuddyEntryPoint.swift
+//  rankbuddy-macos
+//
+
 import BuddyMCP
 import Foundation
 import MCP

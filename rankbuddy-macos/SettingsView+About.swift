@@ -1,3 +1,8 @@
+//
+//  SettingsView+About.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// The About tab, split out so `SettingsView.swift` stays under the file-length limit. Holds

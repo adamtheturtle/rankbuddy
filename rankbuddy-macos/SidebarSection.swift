@@ -1,3 +1,8 @@
+//
+//  SidebarSection.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// The top-level sections shown in the sidebar of the main window.

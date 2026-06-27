@@ -1,3 +1,8 @@
+//
+//  MCPClients.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// The assistants RankBuddy gives MCP setup instructions for (#74). Each carries the config

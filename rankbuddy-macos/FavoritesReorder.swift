@@ -1,3 +1,8 @@
+//
+//  FavoritesReorder.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// Pure reordering for the sidebar Favourites section (#41): moves items within one account's

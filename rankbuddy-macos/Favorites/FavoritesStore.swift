@@ -1,3 +1,8 @@
+//
+//  FavoritesStore.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 import Observation
 

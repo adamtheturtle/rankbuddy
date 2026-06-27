@@ -1,3 +1,8 @@
+//
+//  WriteRequests.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 // The request bodies and response echoes for `HackerRankClient`'s write flows (#12, #57–#60).

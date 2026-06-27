@@ -1,3 +1,8 @@
+//
+//  SavedSearch.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// A named, reusable combination of a list's free-text query and date-range filter (#25),

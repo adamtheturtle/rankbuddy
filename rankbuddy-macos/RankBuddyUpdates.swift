@@ -1,3 +1,8 @@
+//
+//  RankBuddyUpdates.swift
+//  rankbuddy-macos
+//
+
 import Sparkle
 import SwiftUI
 

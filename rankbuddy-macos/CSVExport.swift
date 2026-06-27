@@ -1,3 +1,8 @@
+//
+//  CSVExport.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 import Foundation
 import UniformTypeIdentifiers

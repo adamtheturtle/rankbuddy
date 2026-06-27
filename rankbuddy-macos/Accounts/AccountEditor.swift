@@ -1,3 +1,8 @@
+//
+//  AccountEditor.swift
+//  rankbuddy-macos
+//
+
 import BuddyAppKit
 import BuddyDesignSystem
 import SwiftUI

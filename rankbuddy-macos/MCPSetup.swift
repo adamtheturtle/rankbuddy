@@ -1,3 +1,8 @@
+//
+//  MCPSetup.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// Preferences for RankBuddy's built-in MCP server (#75).

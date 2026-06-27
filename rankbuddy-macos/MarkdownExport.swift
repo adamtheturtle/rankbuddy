@@ -1,3 +1,8 @@
+//
+//  MarkdownExport.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 import SwiftUI
 import UniformTypeIdentifiers

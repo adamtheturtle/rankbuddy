@@ -1,3 +1,8 @@
+//
+//  MCPActivityLog.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// One recorded MCP tool call (#52).

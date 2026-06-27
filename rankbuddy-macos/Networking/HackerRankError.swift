@@ -1,3 +1,8 @@
+//
+//  HackerRankError.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 import PaginatedRESTClient
 

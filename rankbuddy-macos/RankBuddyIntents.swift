@@ -1,3 +1,8 @@
+//
+//  RankBuddyIntents.swift
+//  rankbuddy-macos
+//
+
 import AppIntents
 import Foundation
 

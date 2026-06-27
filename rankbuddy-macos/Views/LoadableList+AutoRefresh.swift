@@ -1,3 +1,8 @@
+//
+//  LoadableList+AutoRefresh.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// The list auto-refresh loop (#69), split out so `LoadableList.swift` stays under the

@@ -1,3 +1,8 @@
+//
+//  CandidateStatus.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// Human-readable labels for the candidate `status` (test-attempt state) and `ats_state`

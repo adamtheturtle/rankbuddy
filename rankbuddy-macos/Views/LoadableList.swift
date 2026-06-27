@@ -1,3 +1,8 @@
+//
+//  LoadableList.swift
+//  rankbuddy-macos
+//
+
 import BuddyAppKit
 import BuddyDesignSystem
 import FastList
@@ -93,17 +98,20 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// How many pages are currently loaded. Auto-refresh only fires on the first page, so it
     /// never yanks a user who has paged deep back to the top (#69).
     @State var pagesLoaded = 1
-    @State private var query = ""
+    /// Internal (not private) so the `visibleItems`/`selectedItems` extension in
+    /// `LoadableList+Items.swift` can read the live query/filter/sort/selection state, per the
+    /// repo's split-file rule.
+    @State var query = ""
     /// The selected date-range filter (one of `NamedDateRange.options`), or `nil` for no
     /// date constraint.
-    @State private var dateRange: String?
-    @State private var sortSelection: SortOption<Item>.ID?
+    @State var dateRange: String?
+    @State var sortSelection: SortOption<Item>.ID?
     /// The pushed-detail navigation path. Internal so the auto-refresh extension can skip a
     /// tick while a detail is open (#69).
     @State var path: [Item] = []
     /// The selected rows (FastList multi-selection): drives the highlight and the
     /// "Export Selected" bulk action (#44).
-    @State private var selection: Set<Item.ID> = []
+    @State var selection: Set<Item.ID> = []
     /// A one-shot scroll target honoured on the next layout (restored selection/scroll).
     @State private var scrollTarget: Item.ID?
     /// Guards restoration to once per load cycle, so navigating back doesn't re-push.
@@ -377,23 +385,5 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         } else {
             UserDefaults.standard.removeObject(forKey: restorationKey)
         }
-    }
-}
-
-// MARK: - Visible / selected items
-
-private extension LoadableList {
-    /// The items currently shown: filtered by search + date, then sorted (#19).
-    var visibleItems: [Item] {
-        let base = ListQuery.filtered(
-            items, query: query, searchableText: searchableText, date: filterDate, dateRange: dateRange
-        )
-        let option = sortOptions.first { $0.id == sortSelection }
-        return option.map { base.sorted(by: $0.areInIncreasingOrder) } ?? base
-    }
-
-    /// The selected, currently-visible items — the bulk CSV export's input (#44).
-    var selectedItems: [Item] {
-        visibleItems.filter { selection.contains($0.id) }
     }
 }

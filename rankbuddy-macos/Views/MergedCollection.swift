@@ -1,3 +1,8 @@
+//
+//  MergedCollection.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// An item paired with the account it came from, for the multi-account merged lists (#17).

@@ -1,3 +1,8 @@
+//
+//  DateRangeFilter.swift
+//  rankbuddy-macos
+//
+
 import BuddyAppKit
 import Foundation
 

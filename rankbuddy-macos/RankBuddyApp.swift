@@ -1,3 +1,8 @@
+//
+//  RankBuddyApp.swift
+//  rankbuddy-macos
+//
+
 import BuddyAppKit
 import SwiftUI
 

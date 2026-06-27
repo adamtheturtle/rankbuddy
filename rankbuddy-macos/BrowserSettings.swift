@@ -1,3 +1,8 @@
+//
+//  BrowserSettings.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 
 /// Link-opening preferences (#63): which browser RankBuddy's external (HackerRank web) links

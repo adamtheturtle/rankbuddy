@@ -1,3 +1,8 @@
+//
+//  InspectorDetail.swift
+//  rankbuddy-macos
+//
+
 import Flow
 import SwiftUI
 

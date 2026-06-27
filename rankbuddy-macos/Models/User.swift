@@ -1,3 +1,8 @@
+//
+//  User.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// A HackerRank for Work user (a member of the organisation).

@@ -1,3 +1,8 @@
+//
+//  TeamWriteFlows.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// A sheet that creates a team (`POST /teams`, #59) — a write flow. States plainly when it

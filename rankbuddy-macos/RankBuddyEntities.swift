@@ -1,3 +1,8 @@
+//
+//  RankBuddyEntities.swift
+//  rankbuddy-macos
+//
+
 import AppIntents
 import BuddyAppKit
 import CoreSpotlight

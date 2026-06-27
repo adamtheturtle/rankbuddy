@@ -1,3 +1,8 @@
+//
+//  RankBuddyToolProvider.swift
+//  rankbuddy-macos
+//
+
 import BuddyAppKit
 import BuddyMCP
 import Foundation

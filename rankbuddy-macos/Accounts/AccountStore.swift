@@ -1,3 +1,8 @@
+//
+//  AccountStore.swift
+//  rankbuddy-macos
+//
+
 import BuddyAppKit
 import Foundation
 import os

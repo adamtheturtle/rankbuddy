@@ -1,3 +1,8 @@
+//
+//  HackerRankLink.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 import BuddyAppKit
 import SwiftUI

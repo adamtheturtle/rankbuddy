@@ -1,3 +1,8 @@
+//
+//  AppPresenceTests.swift
+//  rankbuddy-macosTests
+//
+
 import AppKit
 import Foundation
 @testable import rankbuddy_macos

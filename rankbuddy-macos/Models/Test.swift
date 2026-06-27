@@ -1,3 +1,8 @@
+//
+//  Test.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// A HackerRank for Work test (assessment).

@@ -1,3 +1,8 @@
+//
+//  SharedViews.swift
+//  rankbuddy-macos
+//
+
 import BuddyAppKit
 import FastList
 import Flow

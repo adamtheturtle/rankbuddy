@@ -1,3 +1,8 @@
+//
+//  Formatting.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// Display helpers for the read-only views.

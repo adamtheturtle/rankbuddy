@@ -41,8 +41,6 @@
 #   architecture conflict: private_swiftui_state — views are split across
 #     Type+Feature.swift files to satisfy file_length, so their @State must be
 #     module-internal rather than private.
-#   not yet adopted: file_header — the app sources don't carry a standard header
-#     comment, so the rule is left off until a header convention is agreed.
 #
 # The analyzer_rules section below holds rules that only take effect under
 # `swiftlint analyze` (which needs a compiler log), not plain `lint`. Listing
@@ -81,6 +79,7 @@ opt_in_rules:
   - explicit_init
   - fallthrough
   - fatal_error_message
+  - file_header
   - file_name_no_space
   - final_test_case
   - first_where
@@ -156,3 +155,13 @@ analyzer_rules:
   - typesafe_array_init
   - unused_declaration
   - unused_import
+
+# The Xcode-style file header (PadBuddy parity, #80): a blank comment, the file
+# name, the target name, a blank comment. `SWIFTLINT_CURRENT_FILENAME` is replaced
+# per file; the optional `Tests` matches the test target's files.
+file_header:
+  required_pattern: |
+    \/\/
+    \/\/  SWIFTLINT_CURRENT_FILENAME
+    \/\/  rankbuddy-macos(Tests)?
+    \/\/

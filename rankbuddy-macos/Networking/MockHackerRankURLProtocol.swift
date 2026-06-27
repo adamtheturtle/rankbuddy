@@ -1,3 +1,8 @@
+//
+//  MockHackerRankURLProtocol.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// A `URLProtocol` that serves deterministic, sanitized demo data for the HackerRank

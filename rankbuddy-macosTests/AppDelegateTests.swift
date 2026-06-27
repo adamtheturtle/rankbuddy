@@ -1,3 +1,8 @@
+//
+//  AppDelegateTests.swift
+//  rankbuddy-macosTests
+//
+
 import AppKit
 @testable import rankbuddy_macos
 import Testing

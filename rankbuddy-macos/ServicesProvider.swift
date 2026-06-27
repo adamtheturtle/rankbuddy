@@ -1,3 +1,8 @@
+//
+//  ServicesProvider.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 
 /// A macOS Service, "Open in RankBuddy", that takes a selected HackerRank URL in any app and

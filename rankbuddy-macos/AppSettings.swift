@@ -1,3 +1,8 @@
+//
+//  AppSettings.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// The user's preferred appearance, applied to the whole app from the General settings tab.

@@ -1,3 +1,8 @@
+//
+//  InterviewWriteFlows.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// A sheet that creates an instant QuickPad collaborative interview (`POST /interviews`,

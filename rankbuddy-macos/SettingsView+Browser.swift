@@ -1,3 +1,8 @@
+//
+//  SettingsView+Browser.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// The Browser settings tab (#63), split out so `SettingsView.swift` stays under the

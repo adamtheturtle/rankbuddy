@@ -1,3 +1,8 @@
+//
+//  WhatsNew.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// A "What's New" surface shown once per app version (#45/#47), mirroring PadBuddy's

@@ -1,3 +1,8 @@
+//
+//  EmailValidation.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// Lightweight, client-side email validation used to gate the invite-candidate action (#12).

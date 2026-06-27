@@ -1,3 +1,8 @@
+//
+//  RecentActivityTests.swift
+//  rankbuddy-macosTests
+//
+
 import BuddyAppKit
 import Foundation
 import os

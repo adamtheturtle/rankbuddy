@@ -1,3 +1,8 @@
+//
+//  AppPresence.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 
 /// Where RankBuddy shows itself: in the Dock, in the Menu Bar, or both (#66). Mirrors

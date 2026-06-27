@@ -1,3 +1,8 @@
+//
+//  TestCandidate.swift
+//  rankbuddy-macos
+//
+
 import Foundation
 
 /// A candidate associated with a HackerRank for Work test.

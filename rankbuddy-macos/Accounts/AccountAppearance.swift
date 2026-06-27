@@ -1,3 +1,8 @@
+//
+//  AccountAppearance.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 /// Per-account icon + tint (#64): view-layer helpers that turn an account's stored `iconSymbol`

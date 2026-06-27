@@ -1,3 +1,8 @@
+//
+//  HTMLText.swift
+//  rankbuddy-macos
+//
+
 import AppKit
 import SwiftUI
 

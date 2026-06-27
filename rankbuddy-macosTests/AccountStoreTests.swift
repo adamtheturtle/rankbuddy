@@ -1,3 +1,8 @@
+//
+//  AccountStoreTests.swift
+//  rankbuddy-macosTests
+//
+
 import BuddyAppKit
 import Foundation
 @testable import rankbuddy_macos

@@ -1,3 +1,8 @@
+//
+//  TestWindowStatus.swift
+//  rankbuddy-macos
+//
+
 import SwiftUI
 
 extension Test {

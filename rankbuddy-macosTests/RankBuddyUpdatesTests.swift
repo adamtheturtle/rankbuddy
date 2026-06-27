@@ -1,3 +1,8 @@
+//
+//  RankBuddyUpdatesTests.swift
+//  rankbuddy-macosTests
+//
+
 @testable import rankbuddy_macos
 import Testing
 
