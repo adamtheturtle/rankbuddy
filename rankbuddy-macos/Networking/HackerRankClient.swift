@@ -17,10 +17,11 @@ import PaginatedRESTClient
 /// page fetching and JSON decoding still run off the main actor inside the transport.
 struct HackerRankClient {
     private static let apiV3 = "/x/api/v3"
-    /// Items requested per page. Real accounts have huge collections (≈9.7k questions,
-    /// ≈87k interviews), so the read-only lists page through them rather than draining
-    /// every page up front (#34).
-    private static let pageSize = 50
+    /// Items requested per page — the API's maximum (requests above 100 are rejected). Real
+    /// accounts have huge collections (≈9.7k questions, ≈87k interviews), so the read-only lists
+    /// page through them rather than draining every page up front (#34); the larger page also
+    /// halves the request count when search pages through a big list to find a match (#86).
+    private static let pageSize = 100
 
     private let rest: PaginatedRESTClient
     private let baseURL: URL
