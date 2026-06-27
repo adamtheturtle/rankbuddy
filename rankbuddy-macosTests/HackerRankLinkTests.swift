@@ -3,29 +3,54 @@
 //  rankbuddy-macosTests
 //
 
+import Foundation
 @testable import rankbuddy_macos
 import Testing
 
-/// Coverage for Open-by-URL parsing (#42).
+/// Coverage for the URL/ID parsing behind "Open by URL" (#42) and the "Open in RankBuddy"
+/// Service (#46, #32). `parse` finds a known collection segment and takes the segment after
+/// it; anything without one (a bare id) returns nil so the caller can fall back to a picker.
 struct HackerRankLinkTests {
-    @Test func `a tests URL parses to the test collection and id`() {
-        let parsed = HackerRankLink.parse("https://www.hackerrank.com/x/tests/abc123/candidates")
+    @Test(arguments: [
+        ("https://www.hackerrank.com/x/tests/abc123/edit", FavoriteCollection.tests, "abc123"),
+        ("https://www.hackerrank.com/x/questions/q-42", .questions, "q-42"),
+        ("https://www.hackerrank.com/x/interviews/iv99", .interviews, "iv99"),
+        // The path-relative case (no scheme/host): still split on `/`.
+        ("tests/plain-id", .tests, "plain-id"),
+        // Surrounding whitespace is trimmed before parsing.
+        ("  https://hackerrank.com/x/tests/spaced  ", .tests, "spaced"),
+        // A trailing slash after the id is tolerated (the empty segment is dropped).
+        ("https://hackerrank.com/x/TESTS/t1/", .tests, "t1"),
+        // The collection segment is matched case-insensitively.
+        ("https://hackerrank.com/x/Tests/CaseId", .tests, "CaseId")
+    ])
+    func `a URL with a known collection segment resolves`(
+        _ input: String, _ collection: FavoriteCollection, _ id: String
+    ) {
+        let parsed = HackerRankLink.parse(input)
+        #expect(parsed?.collection == collection)
+        #expect(parsed?.id == id)
+    }
+
+    /// The first known collection segment wins when more than one is present.
+    @Test func `the first known collection segment wins`() {
+        let parsed = HackerRankLink.parse("https://hackerrank.com/x/tests/t1/questions/q2")
         #expect(parsed?.collection == .tests)
-        #expect(parsed?.id == "abc123")
+        #expect(parsed?.id == "t1")
     }
 
-    @Test func `questions and interviews URLs are recognised`() {
-        #expect(HackerRankLink.parse("https://www.hackerrank.com/x/questions/q9")?.collection == .questions)
-        #expect(HackerRankLink.parse("https://www.hackerrank.com/x/interviews/i7")?.id == "i7")
-    }
-
-    @Test func `matching is case-insensitive and tolerates a trailing slash`() {
-        #expect(HackerRankLink.parse("  https://host/x/TESTS/t1/  ")?.id == "t1")
-    }
-
-    @Test func `a bare id or unknown path yields nil so the caller picks a type`() {
-        #expect(HackerRankLink.parse("abc123") == nil)
-        #expect(HackerRankLink.parse("https://host/x/leaderboards/l1") == nil)
-        #expect(HackerRankLink.parse("") == nil)
+    @Test(arguments: [
+        // A bare id has no collection segment.
+        "abc123",
+        "",
+        "   ",
+        // A known segment with nothing after it can't yield an id.
+        "https://hackerrank.com/x/tests/",
+        "https://hackerrank.com/x/tests",
+        // An unknown collection segment is ignored.
+        "https://hackerrank.com/x/foo/bar"
+    ])
+    func `input without a usable collection segment returns nil`(_ input: String) {
+        #expect(HackerRankLink.parse(input) == nil)
     }
 }
