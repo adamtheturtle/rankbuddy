@@ -260,7 +260,11 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .onDoubleClick { open($0) }
                 .onReturnKey { open($0) }
                 .rowContextMenu { contextMenu($0) }
-                .onTopRowChange { topRowChanged(to: $0, in: visible) }
+                .onTopRowChange { persistScrollAnchor($0) }
+                // Load-more keys off the *bottom* of the viewport (FastList #1, shipped in 0.3.0),
+                // so it fires on any window size — the top-row signal alone never reached the end
+                // on a normal window, stranding every list on its first page (#85).
+                .onReachEnd(threshold: 12) { Task { await loadMore() } }
                 .scrollToRow(id: scrollTarget) { scrollTarget = nil }
                 .navigationSubtitle(subtitle(visibleCount: visible.count))
             }
@@ -284,20 +288,12 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         path = [item]
     }
 
-    /// When a settled scroll leaves the top row near the end, page in the next chunk (#34);
-    /// also persists the anchor for scroll restoration (#19).
-    private func topRowChanged(to topID: Item.ID?, in visible: [Item]) {
-        if let scrollDefaultsKey, let topID {
-            UserDefaults.standard.set(String(describing: topID), forKey: scrollDefaultsKey)
-        }
+    /// Persists the current top row as the free-scroll anchor for restoration (#19). Load-more
+    /// is driven separately by `onReachEnd` (the bottom of the viewport), not from here.
+    private func persistScrollAnchor(_ topID: Item.ID?) {
+        guard let scrollDefaultsKey, let topID else { return }
 
-        guard nextCursor != nil, !isLoadingMore, let topID,
-              let index = visible.firstIndex(where: { $0.id == topID })
-        else { return }
-
-        if index >= visible.count - 12 {
-            Task { await loadMore() }
-        }
+        UserDefaults.standard.set(String(describing: topID), forKey: scrollDefaultsKey)
     }
 
     /// Resets and loads the first page (initial load, refresh, or account switch).

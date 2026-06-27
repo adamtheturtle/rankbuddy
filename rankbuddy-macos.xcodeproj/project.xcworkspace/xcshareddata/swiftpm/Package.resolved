@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/FastList",
       "state" : {
-        "revision" : "0aca63fe8581d80ebe6b733af07f6c8645b49cf6",
-        "version" : "0.2.0"
+        "revision" : "cc6fc6bb31ce8715d9afc4541fb9b78441e80ac7",
+        "version" : "0.3.0"
       }
     },
     {
