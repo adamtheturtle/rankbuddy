@@ -47,6 +47,19 @@ struct AccountStoreTests {
         let restored = try JSONDecoder().decode(Account.self, from: data)
         #expect(restored == account)
         #expect(restored.baseURLOverride == nil)
+        #expect(restored.userEmail == nil)
+    }
+
+    @Test func `the user email round-trips and is absent from older saved accounts`() throws {
+        // A captured identity (#72) survives persistence...
+        let account = Account(label: "Work", token: "secret", userEmail: "ada@example.com")
+        let restored = try JSONDecoder().decode(Account.self, from: JSONEncoder().encode(account))
+        #expect(restored.userEmail == "ada@example.com")
+        #expect(restored == account)
+
+        // ...and JSON saved before the field existed still decodes (decodeIfPresent → nil).
+        let legacy = Data(#"{"id":"00000000-0000-0000-0000-000000000001","label":"Old","token":"t"}"#.utf8)
+        #expect(try JSONDecoder().decode(Account.self, from: legacy).userEmail == nil)
     }
 
     // MARK: - Demo / mock accounts

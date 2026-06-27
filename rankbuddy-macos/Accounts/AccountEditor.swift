@@ -16,6 +16,7 @@ struct AccountEditor: View {
     @State private var label: String
     @State private var token: String
     @State private var baseURLOverride: String
+    @State private var userEmail: String
     /// Validation progress, using buddy-kit's shared credential-validation state (#2).
     @State private var validation: CredentialValidationState = .idle
     /// Whether the token is shown in clear text (#48), gated behind Touch ID when enabled.
@@ -26,6 +27,7 @@ struct AccountEditor: View {
         _label = State(initialValue: existing?.label ?? "")
         _token = State(initialValue: existing?.token ?? "")
         _baseURLOverride = State(initialValue: existing?.baseURLOverride ?? "")
+        _userEmail = State(initialValue: existing?.userEmail ?? "")
     }
 
     var body: some View {
@@ -46,6 +48,21 @@ struct AccountEditor: View {
                 Text("Account")
             } footer: {
                 GetAPIKeyLink()
+            }
+
+            Section {
+                TextField("Your email (optional)", text: $userEmail)
+                    .textContentType(.emailAddress)
+                if !emailLooksValid {
+                    Label("That doesn’t look like an email address.", systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            } header: {
+                Text("Identity")
+            } footer: {
+                Text("The email this token belongs to. Used to highlight items owned by or " +
+                    "assigned to you.")
             }
 
             Section {
@@ -87,8 +104,18 @@ struct AccountEditor: View {
         baseURLOverride.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var trimmedEmail: String {
+        userEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// True when the email is blank (it's optional) or looks plausible. A non-empty,
+    /// implausible address blocks saving so a typo doesn't silently persist.
+    private var emailLooksValid: Bool {
+        trimmedEmail.isEmpty || EmailValidation.isLikelyValid(trimmedEmail)
+    }
+
     private var canSave: Bool {
-        !trimmedLabel.isEmpty && !trimmedToken.isEmpty && validation != .validating
+        !trimmedLabel.isEmpty && !trimmedToken.isEmpty && validation != .validating && emailLooksValid
     }
 
     /// The account assembled from the current field values, reusing the edited account's
@@ -98,6 +125,7 @@ struct AccountEditor: View {
             label: trimmedLabel,
             token: trimmedToken,
             baseURLOverride: trimmedOverride.isEmpty ? nil : trimmedOverride,
+            userEmail: trimmedEmail.isEmpty ? nil : trimmedEmail,
             id: existing?.id ?? UUID()
         )
     }

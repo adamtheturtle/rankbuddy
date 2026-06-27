@@ -347,7 +347,7 @@ struct AccountRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(account.label).font(.headline)
-                Text(account.baseURL.host() ?? account.baseURL.absoluteString)
+                Text(account.userEmail ?? account.baseURL.host() ?? account.baseURL.absoluteString)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

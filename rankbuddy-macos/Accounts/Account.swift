@@ -23,6 +23,10 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     var token: String
     /// An optional base-URL override for regional HackerRank endpoints.
     var baseURLOverride: String?
+    /// The email of the user this token belongs to (#72), entered in the editor. Identifies
+    /// "who am I" for this account, enabling owned-by-me / assigned-to-me filtering. Optional
+    /// and decoded with `decodeIfPresent`, so accounts saved before this field stay valid.
+    var userEmail: String?
 
     var accountID: UUID {
         id
@@ -65,11 +69,18 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         return Self.defaultBaseURL
     }
 
-    init(label: String, token: String, baseURLOverride: String? = nil, id: UUID = UUID()) {
+    init(
+        label: String,
+        token: String,
+        baseURLOverride: String? = nil,
+        userEmail: String? = nil,
+        id: UUID = UUID()
+    ) {
         self.id = id
         self.label = label
         self.token = token
         self.baseURLOverride = baseURLOverride
+        self.userEmail = userEmail
     }
 
     /// A changed token or base URL points at potentially different data, so the store
