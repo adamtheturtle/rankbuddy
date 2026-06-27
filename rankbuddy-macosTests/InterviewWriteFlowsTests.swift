@@ -27,12 +27,15 @@ struct InterviewWriteFlowsTests {
         #expect(json?["title"] as? String == "Pairing Pad")
     }
 
-    @Test func `a blank QuickPad title is omitted from the body`() async throws {
+    @Test func `a blank QuickPad title falls back to a non-empty default so the API does not 400`() async throws {
+        // The API rejects a titleless interview with HTTP 400 (#83), so a blank title must be
+        // replaced with a dated default rather than omitted.
         MockHackerRankURLProtocol.resetCapturedBody(forPath: path)
         _ = try await makeClient().createQuickPad(title: "   ")
         let body = try #require(MockHackerRankURLProtocol.lastRequestBody(forPath: path))
         let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
-        #expect(json?["title"] == nil)
+        let title = try #require(json?["title"] as? String)
+        #expect(title.hasPrefix("QuickPad"))
         #expect(json?["quickpad"] as? Bool == true)
     }
 

@@ -194,7 +194,9 @@ struct HackerRankClient {
     ///   fails to decode on an unexpected shape).
     @discardableResult
     func createQuickPad(title: String? = nil) async throws -> CreatedInterview {
-        let body = CreateQuickPadRequest(title: Self.nonBlank(title), quickpad: true)
+        // The API rejects a titleless interview with HTTP 400 (#83). The QuickPad form treats
+        // the title as optional, so fall back to a dated default rather than surfacing an error.
+        let body = CreateQuickPadRequest(title: Self.nonBlank(title) ?? Self.defaultQuickPadTitle(), quickpad: true)
         return try await rest.send(
             CreatedInterview.self,
             method: "POST",
@@ -310,6 +312,12 @@ struct HackerRankClient {
     private static func nonBlank(_ value: String?) -> String? {
         let result = value?.trimmingCharacters(in: .whitespacesAndNewlines)
         return (result?.isEmpty == false) ? result : nil
+    }
+
+    /// A dated fallback title for a QuickPad created without one (#83), so the optional title
+    /// stays optional in the UI while the API still receives the title it requires.
+    private static func defaultQuickPadTitle() -> String {
+        "QuickPad — \(Date.now.formatted(date: .abbreviated, time: .shortened))"
     }
 
     private static func pathSegment(_ value: String) -> String {
