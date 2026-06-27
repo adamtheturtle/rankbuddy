@@ -67,4 +67,38 @@ enum DisplayFormat {
 
         return values.formatted(.list(type: .and))
     }
+
+    /// Canonical display names keyed by lower-cased code (and common aliases). A table rather
+    /// than a `switch` so the lookup stays a single low-complexity expression.
+    private static let languageNames: [String: String] = [
+        "python": "Python", "python2": "Python 2", "python3": "Python 3",
+        "javascript": "JavaScript", "js": "JavaScript",
+        "typescript": "TypeScript", "ts": "TypeScript",
+        "node": "Node.js", "node.js": "Node.js", "nodejs": "Node.js",
+        "swift": "Swift", "go": "Go", "golang": "Go", "rust": "Rust",
+        "java": "Java", "kotlin": "Kotlin", "ruby": "Ruby",
+        "c": "C", "cpp": "C++", "c++": "C++", "csharp": "C#", "c#": "C#",
+        "objective-c": "Objective-C", "objc": "Objective-C",
+        "php": "PHP", "html": "HTML", "css": "CSS", "sql": "SQL",
+        "mysql": "MySQL", "postgresql": "PostgreSQL", "postgres": "PostgreSQL",
+        "bash": "Bash", "shell": "Shell", "sh": "Shell",
+        "r": "R", "scala": "Scala", "perl": "Perl", "dart": "Dart"
+    ]
+
+    /// A human-friendly name for a language code (e.g. `"cpp"` → `"C++"`, `"python"` →
+    /// `"Python"`). Unknown codes are title-cased as a sensible fallback. Mirrors PadBuddy's
+    /// normalisation so the same raw API codes read the same across both apps.
+    static func languageName(_ code: String) -> String {
+        if let name = languageNames[code.lowercased()] { return name }
+
+        return code.isEmpty ? code : code.prefix(1).uppercased() + code.dropFirst()
+    }
+
+    /// Joins language codes for display, normalising each to its friendly name. Returns nil
+    /// when empty so callers can omit the row.
+    static func languages(_ codes: [String]?) -> String? {
+        guard let codes, !codes.isEmpty else { return nil }
+
+        return codes.map(languageName).formatted(.list(type: .and))
+    }
 }

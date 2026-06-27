@@ -142,7 +142,7 @@ struct TestReport: View {
                     ("Starts", DisplayFormat.date(test.startTime)),
                     ("Ends", DisplayFormat.date(test.endTime)),
                     ("Created", DisplayFormat.date(test.createdAt)),
-                    ("Languages", DisplayFormat.list(test.languages)),
+                    ("Languages", DisplayFormat.languages(test.languages)),
                     ("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
                 ]))
             }
@@ -212,7 +212,7 @@ struct QuestionReport: View {
                     ("Max score", question.maxScore.map { $0.formatted() }),
                     ("Recommended duration", question.recommendedDuration.map { "\($0) min" }),
                     ("Created", DisplayFormat.date(question.createdAt)),
-                    ("Languages", DisplayFormat.list(question.languages)),
+                    ("Languages", DisplayFormat.languages(question.languages)),
                     ("Skills", DisplayFormat.list(question.skills))
                 ]))
             }

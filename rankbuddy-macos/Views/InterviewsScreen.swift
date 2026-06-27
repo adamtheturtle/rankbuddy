@@ -151,11 +151,9 @@ struct InterviewRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(displayTitle).font(.headline)
-                if let created = DisplayFormat.date(interview.createdAt) {
-                    Text(created)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                RelativeDateText(iso: interview.createdAt, prefix: "Created")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
             FavoriteIndicator(isFavorite: isFavorite)

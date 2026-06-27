@@ -60,6 +60,22 @@ func rowMenuItems(
     return items
 }
 
+/// A relative timestamp ("2 months ago") parsed from an ISO string, with the absolute date
+/// as a tooltip. Renders nothing when the string is missing or unparseable. Matches
+/// PadBuddy's list rows via buddy-kit's memoised `RelativeDateLabel`.
+struct RelativeDateText: View {
+    let iso: String?
+    var prefix: String = ""
+
+    var body: some View {
+        if let date = DisplayFormat.parseDate(iso) {
+            let labels = RelativeDateLabel.labels(for: date)
+            Text(prefix.isEmpty ? labels.relative : "\(prefix) \(labels.relative)")
+                .help(labels.tooltip)
+        }
+    }
+}
+
 /// A small star shown on a favourited row. Renders nothing when `isFavorite` is false, so
 /// rows stay clean at rest (#25).
 struct FavoriteIndicator: View {

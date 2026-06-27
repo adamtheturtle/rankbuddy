@@ -5,6 +5,22 @@ import Testing
 /// Coverage for the pure display helpers (#32): `DisplayFormat`'s date/list formatting and
 /// the `TestCandidate.integrityBadge` derivation that drives the plagiarism/integrity pill.
 struct FormattingTests {
+    // MARK: - DisplayFormat.languages
+
+    @Test func `language codes normalise to friendly names`() {
+        #expect(DisplayFormat.languageName("cpp") == "C++")
+        #expect(DisplayFormat.languageName("python") == "Python")
+        #expect(DisplayFormat.languageName("CSHARP") == "C#")
+        // An unknown code is title-cased rather than dropped.
+        #expect(DisplayFormat.languageName("brainfuck") == "Brainfuck")
+    }
+
+    @Test func `languages joins normalised names and omits empties`() {
+        #expect(DisplayFormat.languages(nil) == nil)
+        #expect(DisplayFormat.languages([]) == nil)
+        #expect(DisplayFormat.languages(["python", "go"]) == "Python and Go")
+    }
+
     // MARK: - DisplayFormat.date
 
     @Test func `date returns nil for nil or empty input`() {

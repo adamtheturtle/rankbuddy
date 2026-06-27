@@ -106,7 +106,7 @@ struct QuestionRow: View {
                 Text(question.name).font(.headline)
                 HStack(spacing: 8) {
                     Text(question.type.capitalized)
-                    if let languages = DisplayFormat.list(question.languages) {
+                    if let languages = DisplayFormat.languages(question.languages) {
                         Text(languages)
                     }
                 }
@@ -134,7 +134,7 @@ struct QuestionDetailView: View {
                 OptionalRow("Max score", question.maxScore.map { $0.formatted() })
                 OptionalRow("Recommended duration", question.recommendedDuration.map { "\($0) min" })
                 OptionalRow("Created", DisplayFormat.date(question.createdAt))
-                OptionalRow("Languages", DisplayFormat.list(question.languages))
+                OptionalRow("Languages", DisplayFormat.languages(question.languages))
                 OptionalRow("Skills", DisplayFormat.list(question.skills))
             }
 

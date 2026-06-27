@@ -204,7 +204,7 @@ struct TestDetailView: View {
                 OptionalRow("Starts", DisplayFormat.date(test.startTime))
                 OptionalRow("Ends", DisplayFormat.date(test.endTime))
                 OptionalRow("Created", DisplayFormat.date(test.createdAt))
-                OptionalRow("Languages", DisplayFormat.list(test.languages))
+                OptionalRow("Languages", DisplayFormat.languages(test.languages))
                 OptionalRow("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
                 OptionalRow("Shuffle questions", test.shuffleQuestions == true ? "Yes" : nil)
                 OptionalRow("Starred", test.starred == true ? "Yes" : nil)

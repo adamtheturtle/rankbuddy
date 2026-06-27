@@ -173,6 +173,10 @@ struct CandidateRow: View {
                     if let score = candidate.score {
                         Text("Score: \(score.formatted())")
                     }
+                    RelativeDateText(
+                        iso: candidate.attemptEndTime ?? candidate.attemptStartTime,
+                        prefix: "· Attempted"
+                    )
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
