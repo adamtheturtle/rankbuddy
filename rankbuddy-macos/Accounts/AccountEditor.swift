@@ -18,6 +18,8 @@ struct AccountEditor: View {
     @State private var baseURLOverride: String
     /// Validation progress, using buddy-kit's shared credential-validation state (#2).
     @State private var validation: CredentialValidationState = .idle
+    /// Whether the token is shown in clear text (#48), gated behind Touch ID when enabled.
+    @State private var isTokenRevealed = false
 
     init(existing: Account? = nil) {
         self.existing = existing
@@ -30,7 +32,15 @@ struct AccountEditor: View {
         Form {
             Section("Account") {
                 TextField("Label", text: $label)
-                SecureField("Personal access token", text: $token)
+                HStack {
+                    if isTokenRevealed {
+                        TextField("Personal access token", text: $token)
+                    } else {
+                        SecureField("Personal access token", text: $token)
+                    }
+                    Button(isTokenRevealed ? "Hide" : "Reveal") { toggleReveal() }
+                        .buttonStyle(.link)
+                }
                 TextField("Base URL (optional)", text: $baseURLOverride)
             }
 
@@ -86,6 +96,15 @@ struct AccountEditor: View {
             baseURLOverride: trimmedOverride.isEmpty ? nil : trimmedOverride,
             id: existing?.id ?? UUID()
         )
+    }
+
+    /// Reveals the token (challenging Touch ID first when that's enabled) or hides it again.
+    private func toggleReveal() {
+        if isTokenRevealed {
+            isTokenRevealed = false
+        } else {
+            Task { isTokenRevealed = await BiometricAuth.authenticateForReveal(reason: "reveal your token") }
+        }
     }
 
     private func validate() async {

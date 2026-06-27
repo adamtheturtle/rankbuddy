@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage(LivenessSettings.notifyKey) private var notifyNewInterviews = false
     @AppStorage(LivenessSettings.intervalMinutesKey)
     private var refreshMinutes = LivenessSettings.defaultIntervalMinutes
+    @AppStorage(BiometricAuth.revealSettingKey) private var biometricReveal = false
 
     var body: some View {
         TabView {
@@ -93,6 +94,14 @@ struct SettingsView: View {
                 Text("Keeps a count of scheduled interviews on the Dock icon and, optionally, " +
                     "posts a notification when new interviews appear — refreshed in the background " +
                     "even when no window is open.")
+            }
+
+            Section {
+                Toggle("Require Touch ID to reveal a token", isOn: $biometricReveal)
+            } header: {
+                Text("Security")
+            } footer: {
+                Text("When on, revealing an account's token in the editor asks for Touch ID first.")
             }
         }
         .formStyle(.grouped)
