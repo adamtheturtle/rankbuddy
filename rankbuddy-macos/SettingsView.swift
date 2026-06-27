@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
     @AppStorage(MenuBarPreferences.recentCountKey)
     private var menuBarRecentCount = MenuBarPreferences.defaultRecentCount
+    @AppStorage(LivenessSettings.backgroundUpdatesKey) private var backgroundUpdates = false
 
     var body: some View {
         TabView {
@@ -62,6 +63,19 @@ struct SettingsView: View {
                 Text("Menu Bar")
             } footer: {
                 Text("How many recently viewed items the menu bar lists. Set to 0 to hide the Recent section.")
+            }
+
+            Section {
+                Toggle("Show upcoming interviews on the Dock icon", isOn: $backgroundUpdates)
+                    .onChange(of: backgroundUpdates) { _, enabled in
+                        if enabled { LivenessMonitor.shared.requestBadgeAuthorization() }
+                        Task { await LivenessMonitor.shared.sweep(store: store) }
+                    }
+            } header: {
+                Text("Updates")
+            } footer: {
+                Text("Keeps a count of scheduled interviews on the Dock icon, refreshed in the " +
+                    "background even when no window is open.")
             }
         }
         .formStyle(.grouped)
