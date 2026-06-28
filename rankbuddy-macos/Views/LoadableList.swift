@@ -275,9 +275,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .rowContextMenu { contextMenu($0) }
                 .onTopRowChange { persistScrollAnchor($0) }
                 // Load-more keys off the *bottom* of the viewport (FastList #1, shipped in 0.3.0),
-                // so it fires on any window size — the top-row signal alone never reached the end
-                // on a normal window, stranding every list on its first page (#85).
-                .onReachEnd(threshold: 12) { Task { await loadMore() } }
+                // so it fires on any window size, never stranding a list on its first page (#85).
+                // Threshold is a generous prefetch lead so rows appear before the end, no stall (#87).
+                .onReachEnd(threshold: 32) { Task { await loadMore() } }
                 .scrollToRow(id: scrollTarget) { scrollTarget = nil }
                 .navigationSubtitle(subtitle(visibleCount: visible.count))
             }
