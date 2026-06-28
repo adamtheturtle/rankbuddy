@@ -32,6 +32,11 @@ struct RankBuddyObjectEntity: IndexedEntity {
     let accountID: String
     /// The object's own API identifier within its collection.
     let itemID: String
+    /// On-device-generated topical keywords (#92) attached to the Spotlight attribute set so the
+    /// item is found by topic, not just by words in its title. Not part of the identity, so the
+    /// composite `id` and routing are unchanged; empty until enrichment runs (and stays empty
+    /// when the on-device model is unavailable).
+    var keywords: [String] = []
 
     init(collection: FavoriteCollection, accountID: String, itemID: String, title: String) {
         self.collection = collection
@@ -58,6 +63,16 @@ struct RankBuddyObjectEntity: IndexedEntity {
             image: .init(systemName: collection.systemImage)
         )
     }
+
+    /// Augments the default title/subtitle attributes with the on-device-generated keywords
+    /// (#92). The default set must be added explicitly — the system does not merge it in.
+    var attributeSet: CSSearchableItemAttributeSet {
+        let set = defaultAttributeSet
+        if !keywords.isEmpty {
+            set.keywords = keywords
+        }
+        return set
+    }
 }
 
 /// Locates `RankBuddyObjectEntity` instances for Spotlight/Shortcuts by fetching the current
@@ -72,11 +87,17 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
     }
 
     func suggestedEntities() async throws -> [RankBuddyObjectEntity] {
-        let entities = try await Self.currentAccountEntities()
+        let enrichables = try await Self.currentAccountEnrichables()
+        let entities = enrichables.map(\.entity)
         // Best-effort: donate to a named Spotlight index whenever the system asks for
         // suggestions, so the same fetch also keeps Spotlight current — no extra network and
         // no launch-time work. Only the non-sensitive display metadata is indexed (#24).
         try? await CSSearchableIndex(name: RankBuddySpotlightIndex.name).indexAppEntities(entities)
+        // On-device keyword enrichment (#92): additive, gated on model availability, re-indexing
+        // the same ids with topical keywords. The source text is already in hand from the fetch
+        // above (no extra network). Detached so a slow generation never delays the suggestions
+        // the system asked for.
+        Task { await SpotlightKeywordEnricher.enrich(enrichables) }
         return entities
     }
 
@@ -84,6 +105,15 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
     /// maps them to entities. Returns `[]` when there is no current account.
     @MainActor
     static func currentAccountEntities() async throws -> [RankBuddyObjectEntity] {
+        try await currentAccountEnrichables().map(\.entity)
+    }
+
+    /// Fetches the current account's first pages and pairs each entity with the on-device text
+    /// its Spotlight keywords are generated from (#92). Returns `[]` when there is no current
+    /// account. The keyword source is built from fields already in the page response, so this
+    /// adds no network work over the plain entity fetch.
+    @MainActor
+    static func currentAccountEnrichables() async throws -> [EnrichableEntity] {
         guard let account = AccountStore.rankBuddy().currentAccount else { return [] }
 
         let client = HackerRankClient(account: account)
@@ -92,22 +122,35 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         async let questions = client.questionsPage()
         async let interviews = client.interviewsPage()
 
-        var entities: [RankBuddyObjectEntity] = []
-        entities += try await tests.items.map {
-            RankBuddyObjectEntity(collection: .tests, accountID: accountID, itemID: $0.id, title: $0.name)
-        }
-        entities += try await questions.items.map {
-            RankBuddyObjectEntity(collection: .questions, accountID: accountID, itemID: $0.id, title: $0.name)
-        }
-        entities += try await interviews.items.map {
-            RankBuddyObjectEntity(
-                collection: .interviews,
-                accountID: accountID,
-                itemID: $0.id,
-                title: $0.title ?? "Interview \($0.id)"
+        var enrichables: [EnrichableEntity] = []
+        enrichables += try await tests.items.map { test in
+            EnrichableEntity(
+                entity: RankBuddyObjectEntity(
+                    collection: .tests, accountID: accountID, itemID: test.id, title: test.name
+                ),
+                keywordSource: SpotlightKeywordSource.text(for: test) ?? ""
             )
         }
-        return entities
+        enrichables += try await questions.items.map { question in
+            EnrichableEntity(
+                entity: RankBuddyObjectEntity(
+                    collection: .questions, accountID: accountID, itemID: question.id, title: question.name
+                ),
+                keywordSource: SpotlightKeywordSource.text(for: question) ?? ""
+            )
+        }
+        enrichables += try await interviews.items.map { interview in
+            EnrichableEntity(
+                entity: RankBuddyObjectEntity(
+                    collection: .interviews,
+                    accountID: accountID,
+                    itemID: interview.id,
+                    title: interview.title ?? "Interview \(interview.id)"
+                ),
+                keywordSource: SpotlightKeywordSource.text(for: interview) ?? ""
+            )
+        }
+        return enrichables
     }
 }
 

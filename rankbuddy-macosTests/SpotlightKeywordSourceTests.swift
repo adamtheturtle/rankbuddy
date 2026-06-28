@@ -1,0 +1,75 @@
+//
+//  SpotlightKeywordSourceTests.swift
+//  rankbuddy-macosTests
+//
+
+import Foundation
+@testable import rankbuddy_macos
+import Testing
+
+@MainActor
+struct SpotlightKeywordSourceTests {
+    private func decode<T: Decodable>(_ type: T.Type, _ json: String) throws -> T {
+        try JSONDecoder().decode(type, from: Data(json.utf8))
+    }
+
+    @Test func `a question brief carries title, tags, skills, languages, and problem text`() throws {
+        let question = try decode(Question.self, #"""
+        {"id":"q1","type":"code","name":"Two Sum","tags":["arrays","hashing"],
+         "skills":["Problem Solving"],"languages":["python","cpp"],
+         "problem_statement":"Given an array, return indices of the two numbers that add up to a target."}
+        """#)
+
+        let source = try #require(SpotlightKeywordSource.text(for: question))
+        #expect(source.contains("Title: Two Sum"))
+        #expect(source.contains("Tags: arrays, hashing"))
+        #expect(source.contains("Skills: Problem Solving"))
+        #expect(source.contains("Languages: python, cpp"))
+        #expect(source.contains("add up to a target"))
+    }
+
+    @Test func `a question with only a title yields no brief`() throws {
+        let question = try decode(Question.self, #"""
+        {"id":"q2","type":"code","name":"Mystery"}
+        """#)
+
+        #expect(SpotlightKeywordSource.text(for: question) == nil)
+    }
+
+    @Test func `a test brief carries name, tags, languages, and condensed instructions`() throws {
+        let test = try decode(Test.self, #"""
+        {"id":"t1","name":"Backend Screen","tags":["sql","api"],"languages":["go"],
+         "instructions":"Complete   all\n\nquestions   within the time limit."}
+        """#)
+
+        let source = try #require(SpotlightKeywordSource.text(for: test))
+        #expect(source.contains("Name: Backend Screen"))
+        #expect(source.contains("Tags: sql, api"))
+        #expect(source.contains("Languages: go"))
+        // Runs of whitespace/newlines collapse to single spaces.
+        #expect(source.contains("Instructions: Complete all questions within the time limit."))
+    }
+
+    @Test func `a test with only a name yields no brief`() throws {
+        let test = try decode(Test.self, #"""
+        {"id":"t2","name":"Untitled"}
+        """#)
+
+        #expect(SpotlightKeywordSource.text(for: test) == nil)
+    }
+
+    @Test func `an interview brief needs notes; a title alone yields nothing`() throws {
+        let withNotes = try decode(Interview.self, #"""
+        {"id":"i1","status":"active","url":"https://x","title":"Systems Round",
+         "notes":"Assess distributed systems and caching."}
+        """#)
+        let source = try #require(SpotlightKeywordSource.text(for: withNotes))
+        #expect(source.contains("Title: Systems Round"))
+        #expect(source.contains("Notes: Assess distributed systems and caching."))
+
+        let titleOnly = try decode(Interview.self, #"""
+        {"id":"i2","status":"active","url":"https://x","title":"Quick Chat"}
+        """#)
+        #expect(SpotlightKeywordSource.text(for: titleOnly) == nil)
+    }
+}
