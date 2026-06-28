@@ -16,7 +16,7 @@ extension LoadableList {
         didRestore = false
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
-        path = []
+        detailItem = nil
         selection = []
         pagesLoaded = 1
 
@@ -84,7 +84,7 @@ extension LoadableList {
     /// different account, or only on a not-yet-loaded page) simply leaves the list at the top
     /// — no loops, no blank pane (#19).
     func restoreIfNeeded(_ items: [Item]) async {
-        guard !didRestore, path.isEmpty else { return }
+        guard !didRestore, detailItem == nil else { return }
 
         didRestore = true
 
@@ -93,16 +93,10 @@ extension LoadableList {
 
         switch ListRestoration.action(storedDetailID: storedDetail, storedAnchorID: storedAnchor, items: items) {
         case let .restoreDetail(item):
+            // Reselect the row and show its detail in the persistent pane (#53/#19).
             selection = [item.id]
+            detailItem = item
             scrollTarget = item.id
-            // Push the restored detail on the next runloop tick, after the cleared path (the
-            // loading reset in `reload()`) has committed. For a cached/mock page that resolves
-            // without suspending, clearing and re-pushing `path` would otherwise land in one
-            // frame, updating the NavigationStack observer twice per frame (#84).
-            await Task.yield()
-            guard path.isEmpty else { return }
-
-            path = [item]
 
         case let .restoreScroll(item):
             scrollTarget = item.id

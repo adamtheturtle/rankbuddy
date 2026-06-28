@@ -10,9 +10,10 @@ import SwiftUI
 /// liveness sweep.
 extension LoadableList {
     /// Reloads the list on the user's chosen cadence. The loop restarts when the interval
-    /// changes (`.task(id:)`) and stops when off. A tick refreshes only while the list root
-    /// shows, nothing is mid-load, and the user is on the first page — so it never pulls them
-    /// out of a detail or back up a deep, paged list.
+    /// changes (`.task(id:)`) and stops when off. A tick refreshes only while nothing is
+    /// mid-load and the user is on the first page — so it never interrupts a load or pulls them
+    /// back up a deep, paged list. The persistent detail pane (#53) is unaffected: it holds its
+    /// own item, so refreshing the list beside it never disturbs the open detail.
     func autoRefreshLoop() async {
         guard let interval = GeneralSettings.refreshInterval(raw: autoRefreshSeconds) else { return }
 
@@ -20,7 +21,7 @@ extension LoadableList {
             try? await Task.sleep(for: interval)
             if Task.isCancelled { break }
 
-            if path.isEmpty, !isLoading, !isLoadingMore, pagesLoaded == 1 {
+            if !isLoading, !isLoadingMore, pagesLoaded == 1 {
                 await quietRefresh()
             }
         }
@@ -34,5 +35,10 @@ extension LoadableList {
         items = page.items
         nextCursor = page.next
         onFirstPage(page.items)
+        // Drop the pane's item if the refresh removed it (e.g. deleted elsewhere), so the
+        // detail never shows a row that's no longer in the list.
+        if let detailItem, !items.contains(where: { $0.id == detailItem.id }) {
+            self.detailItem = nil
+        }
     }
 }

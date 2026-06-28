@@ -27,10 +27,11 @@ struct SortOption<Item>: Identifiable {
 /// live collections never drain up front (#34).
 ///
 /// Rows render through `FastList` (NSTableView-backed on macOS) for instant selection and
-/// smooth scrolling at large item counts (#31). Selection highlights a row; **double-click
-/// or Return opens** its detail by pushing onto the list's own `NavigationStack`. The
-/// selected detail, the chosen sort order, and the free-scroll position are persisted and
-/// restored per account (#19) when a `restorationKey` is set.
+/// smooth scrolling at large item counts (#31). The list sits beside a **persistent detail
+/// pane** in an `HSplitView` (#53): selecting a row (single-click, double-click, or Return)
+/// shows its detail in the pane — no push/pop. The shown detail, the chosen sort order, and the
+/// free-scroll position are persisted and restored per account (#19) when a `restorationKey` is
+/// set.
 struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail: View>: View {
     /// The first-load phase. Loaded items and the cursor live in their own state so further
     /// pages can append without disturbing this. Internal so the loading extension
@@ -116,9 +117,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// date constraint.
     @State var dateRange: String?
     @State var sortSelection: SortOption<Item>.ID?
-    /// The pushed-detail navigation path. Internal so the auto-refresh extension can skip a
-    /// tick while a detail is open (#69).
-    @State var path: [Item] = []
+    /// The item shown in the persistent detail pane (#53), or `nil` for the placeholder.
+    /// Internal so the loading/auto-refresh extensions can drive and reconcile it.
+    @State var detailItem: Item?
     /// The selected rows (FastList multi-selection): drives the highlight and the
     /// "Export Selected" bulk action (#44).
     @State var selection: Set<Item.ID> = []
@@ -133,10 +134,20 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @State var isFilterLoading = false // search-paging spinner vs. a premature "No results" (#86)
 
     var body: some View {
-        NavigationStack(path: $path) {
+        // Three-pane (#53): the list and a persistent detail pane sit side by side inside the
+        // window's detail column, so selecting a row shows its detail without a push/pop.
+        HSplitView {
+            listColumn
+                .frame(minWidth: 300, idealWidth: 380, maxWidth: .infinity)
+            detailColumn
+                .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity)
+        }
+    }
+
+    private var listColumn: some View {
+        NavigationStack {
             content
                 .navigationTitle(title)
-                .navigationDestination(for: Item.self, destination: detail)
                 // `.automatic`, not `.sidebar`: this list lives in the split view's detail
                 // column, where no sidebar location is in scope. `.sidebar` placement can't be
                 // realized here and logs a `sidebarPocket` "Invalid Configuration" fault (#77).
@@ -222,7 +233,25 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .onChange(of: selectedFacets) {
                     ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))
                 }
-                .onChange(of: path) { persistSelection() }
+                // Selecting a row (single-click) drives the detail pane and persists it (#53/#19).
+                .onChange(of: selection) { syncDetail() }
+        }
+    }
+
+    /// The persistent detail pane (#53): the selected item's detail, or a placeholder when
+    /// nothing is selected. Its own `NavigationStack` so detail-level drill-down (a test's
+    /// Candidates list) still pushes with a back button.
+    private var detailColumn: some View {
+        NavigationStack {
+            if let detailItem {
+                detail(detailItem)
+            } else {
+                ContentUnavailableView(
+                    "No Selection",
+                    systemImage: "square.righthalf.filled",
+                    description: Text("Select an item to see its details.")
+                )
+            }
         }
     }
 
@@ -297,11 +326,21 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         if case .loading = phase { true } else { false }
     }
 
-    /// Pushes an item's detail (or no-ops if it's already on top).
+    /// Opens an item's detail in the persistent pane (double-click / Return). Single-click
+    /// selection drives the same path via `syncDetail`; this also covers the keyboard case.
     private func open(_ item: Item) {
-        guard path.last != item else { return }
+        selection = [item.id]
+        detailItem = item
+    }
 
-        path = [item]
+    /// Reflects the row selection into the detail pane (#53): when exactly one row is selected,
+    /// that item's detail shows; a multi-select (bulk export, #44) or empty selection keeps the
+    /// last detail rather than flickering to the placeholder. Persists the choice for restore.
+    func syncDetail() {
+        if selection.count == 1, let id = selection.first, let item = items.first(where: { $0.id == id }) {
+            detailItem = item
+        }
+        persistSelection()
     }
 
     /// Persists the current top row as the free-scroll anchor for restoration (#19). Load-more
@@ -312,11 +351,11 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         UserDefaults.standard.set(String(describing: topID), forKey: scrollDefaultsKey)
     }
 
-    /// Remembers the currently selected item (the top of the path), or clears it on pop.
+    /// Remembers the item shown in the detail pane so it is reselected on relaunch (#19).
     private func persistSelection() {
         guard let restorationKey else { return }
 
-        if let selected = path.last {
+        if let selected = detailItem {
             UserDefaults.standard.set(String(describing: selected.id), forKey: restorationKey)
         } else {
             UserDefaults.standard.removeObject(forKey: restorationKey)
