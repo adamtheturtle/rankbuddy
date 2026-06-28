@@ -252,7 +252,7 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
     nonisolated func userNotificationCenter(
         _: UNUserNotificationCenter,
         didReceive _: UNNotificationResponse,
-        withCompletionHandler completionHandler: @escaping () -> Void
+        withCompletionHandler completionHandler: () -> Void
     ) {
         Task { @MainActor in
             UserDefaults.standard.set(SidebarSection.interviews.rawValue, forKey: "selectedSection")
