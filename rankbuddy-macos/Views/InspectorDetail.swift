@@ -14,13 +14,21 @@ import SwiftUI
 struct InspectorHeader: View {
     let title: String
     var badges: [StatusBadge] = []
+    /// When set, the title is inline-editable (#95): committing calls this with the new value
+    /// and returns whether the write succeeded. `nil` keeps the title static (the default), so
+    /// read-only detail panes are unchanged.
+    var onRename: ((String) async -> Bool)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.title2.weight(.semibold))
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
+            if let onRename {
+                InlineEditableTitle(title: title, isEditable: true, onCommit: onRename)
+            } else {
+                Text(title)
+                    .font(.title2.weight(.semibold))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             if !badges.isEmpty {
                 HFlow(spacing: 6) {

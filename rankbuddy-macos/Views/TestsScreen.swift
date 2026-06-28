@@ -236,7 +236,11 @@ struct TestDetailView: View {
 
     var body: some View {
         Form {
-            InspectorHeader(title: test.name, badges: test.inspectorBadges(now: Date()))
+            InspectorHeader(
+                title: test.name,
+                badges: test.inspectorBadges(now: Date()),
+                onRename: { newName in await rename(to: newName) }
+            )
 
             Section("Properties") {
                 OptionalRow("State", test.state?.capitalized)
@@ -354,6 +358,19 @@ struct TestDetailView: View {
             dismiss()
         } catch {
             deleteError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    /// Commits an inline rename of the test (#95), reusing the same write the editor sheet uses.
+    /// Returns whether it succeeded so the inline title can revert on failure; on success the
+    /// list refreshes (which re-pushes the renamed detail).
+    private func rename(to newName: String) async -> Bool {
+        do {
+            try await HackerRankClient(account: account).updateTest(testID: test.id, name: newName)
+            onChanged()
+            return true
+        } catch {
+            return false
         }
     }
 }
