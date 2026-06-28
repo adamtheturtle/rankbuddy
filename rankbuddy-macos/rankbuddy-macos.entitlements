@@ -11,6 +11,13 @@
 	     blocks NSPrintOperation with "This application does not support printing." -->
 	<key>com.apple.security.print</key>
 	<true/>
+	<!-- Lets the user pick a destination via NSSavePanel for the CSV (#39) and Markdown
+	     (#50) exports. Without it a sandboxed app traps in AppKit with
+	     REPORT_APP_ENTITLEMENTS_INSUFFICIENT the moment a save panel is created. The
+	     grant is scoped to what the user explicitly chooses in the panel — no broad
+	     filesystem access. -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
 	<!-- Team-ID-prefixed App Group (not the bare "group." form): a notarized
 	     Developer-ID build embeds no provisioning profile, and macOS only
 	     authorizes a "group."-prefixed App Group when it's listed in the profile.
