@@ -20,6 +20,8 @@ struct ContentView: View {
     @Environment(OpenLinkModel.self) private var openLink
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(InterviewTemplatesStore.self) private var templates
+    @Environment(InterviewTemplateLauncher.self) private var launcher
     @Environment(AccountHealthMonitor.self) private var health
 
     var body: some View {
@@ -89,6 +91,7 @@ struct ContentView: View {
                 await RankBuddyPalette.candidates(
                     store: store,
                     favorites: favorites,
+                    templates: InterviewTemplatePalette(store: templates, launcher: launcher),
                     selection: $selection,
                     openSettings: { NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) }
                 )
@@ -153,5 +156,7 @@ struct ContentView: View {
         .environment(PaletteModel())
         .environment(OpenLinkModel())
         .environment(favorites)
+        .environment(InterviewTemplatesStore(isTesting: true))
+        .environment(InterviewTemplateLauncher())
         .environment(AccountHealthMonitor())
 }

@@ -11,9 +11,14 @@ import SwiftUI
 struct InterviewsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(InterviewTemplatesStore.self) private var templates
+    @Environment(InterviewTemplateLauncher.self) private var launcher
     @Environment(\.openWindow) private var openWindow
     @State private var quickPadPresented = false
     @State private var schedulePresented = false
+    @State private var templatesPresented = false
+    /// A template chosen from the menu/palette, awaiting its pre-filled create sheet (#97).
+    @State private var runningTemplate: InterviewTemplate?
     @State private var reloadToken = 0
 
     var body: some View {
@@ -75,7 +80,7 @@ struct InterviewsScreen: View {
                         account: account.id
                     )
                 },
-                accessoryToolbar: { AnyView(newMenu) },
+                accessoryToolbar: { AnyView(newMenu(account: account)) },
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.interviews($0) },
                 csvFilename: "interviews",
@@ -88,6 +93,27 @@ struct InterviewsScreen: View {
             .sheet(isPresented: $schedulePresented) {
                 ScheduleInterviewSheet(account: account) { reloadToken += 1 }
             }
+            .sheet(isPresented: $templatesPresented) {
+                InterviewTemplatesView(accountID: account.id.uuidString, store: templates)
+            }
+            // Running a template (from the New menu or the ⌘K palette) opens the matching
+            // create flow pre-filled with the template's title (#97).
+            .sheet(item: $runningTemplate) { template in
+                switch template.kind {
+                case .quickPad:
+                    NewQuickPadSheet(account: account, initialTitle: template.seededTitle) { reloadToken += 1 }
+                case .scheduled:
+                    ScheduleInterviewSheet(account: account, initialTitle: template.seededTitle) { reloadToken += 1 }
+                }
+            }
+            // The palette sets a pending template; consume it here so both surfaces drive the
+            // same single run path.
+            .onChange(of: launcher.pending) { _, new in
+                if let new {
+                    runningTemplate = new
+                    launcher.pending = nil
+                }
+            }
         } else {
             NavigationStack {
                 NoAccountView()
@@ -96,8 +122,9 @@ struct InterviewsScreen: View {
         }
     }
 
-    private var newMenu: some View {
-        Menu {
+    private func newMenu(account: Account) -> some View {
+        let saved = templates.templates(accountID: account.id.uuidString)
+        return Menu {
             Button {
                 quickPadPresented = true
             } label: {
@@ -108,10 +135,29 @@ struct InterviewsScreen: View {
             } label: {
                 Label("Schedule Interview…", systemImage: "calendar.badge.plus")
             }
+
+            Divider()
+
+            if saved.isEmpty {
+                Text("No templates yet")
+            } else {
+                ForEach(saved) { template in
+                    Button {
+                        runningTemplate = template
+                    } label: {
+                        Label("Run \(template.name)", systemImage: template.kind.systemImage)
+                    }
+                }
+            }
+            Button {
+                templatesPresented = true
+            } label: {
+                Label("Manage Templates…", systemImage: "rectangle.stack")
+            }
         } label: {
             Label("New", systemImage: "plus")
         }
-        .help("Create a QuickPad or schedule an interview")
+        .help("Create a QuickPad, schedule an interview, or run a template")
     }
 
     /// Loads one merged page of interviews across every configured account (#17).
