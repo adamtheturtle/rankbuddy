@@ -54,9 +54,20 @@ struct MenuBarContent: View {
 
         Divider()
 
+        // Help and About mirror PadBuddy's menu-bar footer (#88), so the common entry points
+        // are reachable without first opening the main window.
+        Link("Get an API Key", destination: Self.apiKeyURL)
+
+        Button("About RankBuddy") { AboutPanel.show() }
+
+        Divider()
+
         Button("Quit RankBuddy") { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")
     }
+
+    /// Where a HackerRank for Work personal access token is generated (mirrors `GetAPIKeyLink`).
+    private static let apiKeyURL = URL(string: "https://www.hackerrank.com/work") ?? Account.defaultBaseURL
 
     /// Surfaces which account the menu's actions target, with an understandable state for
     /// the no-account and multi-account cases.

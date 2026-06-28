@@ -78,8 +78,8 @@ enum MenuBarPreferences {
     static let recentCountKey = "rb.menuBarRecentCount"
     /// The default (and historical) recent-item count.
     static let defaultRecentCount = 8
-    /// The largest value the stepper allows.
-    static let maxRecentCount = 20
+    /// The largest value the stepper allows (PadBuddy parity, #88).
+    static let maxRecentCount = 30
 
     /// The `@AppStorage` key for filtering the menu-bar list to active/upcoming items (#67).
     static let activeOnlyKey = "rb.menuBarActiveOnly"
