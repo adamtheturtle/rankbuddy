@@ -162,6 +162,7 @@ struct QuestionDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(question.name)
+        .advertisesItemActivity(collection: .questions, itemID: question.id, title: question.name)
         .toolbar {
             ToolbarItem {
                 PrintReportButton(jobTitle: "Question – \(question.name)") {

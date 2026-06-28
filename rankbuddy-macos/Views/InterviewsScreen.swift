@@ -301,6 +301,12 @@ struct InterviewDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(interview.title ?? "Interview")
+        .advertisesItemActivity(
+            collection: .interviews,
+            itemID: interview.id,
+            title: interview.title ?? "Interview \(interview.id)",
+            webURL: URL(string: interview.url)
+        )
         .toolbar {
             ToolbarItem {
                 PrintReportButton(jobTitle: "Interview – \(interview.title ?? interview.id)") {

@@ -293,6 +293,7 @@ struct TestDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(test.name)
+        .advertisesItemActivity(collection: .tests, itemID: test.id, title: test.name)
         .toolbar {
             ToolbarItem {
                 Button {

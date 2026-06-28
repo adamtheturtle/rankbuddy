@@ -2,12 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   Partial Info.plist. GENERATE_INFOPLIST_FILE stays YES, so Xcode overlays the
-  generated CFBundle* keys on top of this base at build time. This file exists
-  only to carry the NSServices array, which can't be expressed as a scalar
-  INFOPLIST_KEY_* build setting (#46).
+  generated CFBundle* keys on top of this base at build time. This file carries the
+  keys that can't be expressed as scalar INFOPLIST_KEY_* build settings: the
+  NSServices array (#46) and the NSUserActivityTypes array (#98).
 -->
 <plist version="1.0">
 <dict>
+	<!--
+	  Handoff / Continuity (#98). Declares the NSUserActivity type RankBuddy advertises
+	  while viewing a test, question, or interview, so the system will Hand Off, surface
+	  it in Spotlight, and offer it as a Siri Suggestion. Advertised in Handoff.swift;
+	  continued in ContentView via onContinueUserActivity.
+	-->
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.adamdangoor.rankbuddy.viewingItem</string>
+	</array>
 	<!--
 	  The "Open in RankBuddy" macOS Service (#46). Lets a HackerRank URL selected
 	  in any app deep-link into RankBuddy. The runtime handler is
