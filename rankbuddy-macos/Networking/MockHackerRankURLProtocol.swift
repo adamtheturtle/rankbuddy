@@ -169,6 +169,9 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     /// client's `next`-following path.
     private static func body(for url: URL) -> String {
         let path = url.path
+        if path.contains("/audit_log") {
+            return Self.auditLogJSON
+        }
         if path.contains("/candidates") {
             return candidatesJSON
         }
@@ -342,17 +345,6 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
       {"id":"u4","email":"noname@example.com"}
     ],"next":null}
     """#
-
-    private static let teamsJSON = #"""
-    {"data":[
-      {"id":"tm1","name":"Backend Hiring","owner":"u1","created_at":"2026-04-01T09:00:00Z",
-       "recruiter_count":3,"developer_count":12,"interviewer_count":8,
-       "locations":["London","Berlin"],"departments":["Engineering","Platform"]},
-      {"id":"tm2","name":"Data Science","owner":"u1","created_at":"2026-04-15T09:00:00Z",
-       "recruiter_count":1,"developer_count":5,"locations":["Remote"]},
-      {"id":"tm3","name":"Unstaffed Team"}
-    ],"next":null}
-    """#
 }
 
 extension MockHackerRankURLProtocol {
@@ -362,6 +354,19 @@ extension MockHackerRankURLProtocol {
     private nonisolated static let currentUserJSON = #"""
     {"id":"u-me","email":"demo@example.com","firstname":"Demo","lastname":"Owner",
      "country":"GB","role":"admin","status":"active","company_admin":true}
+    """#
+
+    /// The teams collection fixture, in an extension (like `currentUserJSON`) so it stays off the
+    /// class's type-body-length budget.
+    private nonisolated static let teamsJSON = #"""
+    {"data":[
+      {"id":"tm1","name":"Backend Hiring","owner":"u1","created_at":"2026-04-01T09:00:00Z",
+       "recruiter_count":3,"developer_count":12,"interviewer_count":8,
+       "locations":["London","Berlin"],"departments":["Engineering","Platform"]},
+      {"id":"tm2","name":"Data Science","owner":"u1","created_at":"2026-04-15T09:00:00Z",
+       "recruiter_count":1,"developer_count":5,"locations":["Remote"]},
+      {"id":"tm3","name":"Unstaffed Team"}
+    ],"next":null}
     """#
 }
 

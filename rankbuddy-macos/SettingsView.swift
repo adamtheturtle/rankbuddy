@@ -45,6 +45,11 @@ struct SettingsView: View {
                     Label("Accounts", systemImage: "person.crop.circle")
                 }
 
+            activityTab
+                .tabItem {
+                    Label("Activity", systemImage: "clock.arrow.circlepath")
+                }
+
             browserTab
                 .tabItem {
                     Label("Browser", systemImage: "safari")
