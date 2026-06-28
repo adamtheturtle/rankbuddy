@@ -258,6 +258,8 @@ struct CandidateDetailView: View {
                     Text(feedback).textSelection(.enabled)
                 }
             }
+
+            CandidateSummaryView(candidate: candidate)
         }
         .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
