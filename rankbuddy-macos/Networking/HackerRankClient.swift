@@ -361,7 +361,9 @@ struct HackerRankClient {
         "QuickPad — \(Date.now.formatted(date: .abbreviated, time: .shortened))"
     }
 
-    private static func pathSegment(_ value: String) -> String {
+    /// Internal (not private) so per-resource extensions (`HackerRankClient+Interview`) can
+    /// percent-encode an id into a path against the same rules, per the repo's split-file rule.
+    static func pathSegment(_ value: String) -> String {
         var allowed = CharacterSet.urlPathAllowed
         allowed.remove(charactersIn: "/?#[]@!$&'()*+,;=")
         return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value

@@ -176,7 +176,8 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
             return questionsJSON
         }
         if path.contains("/interviews") {
-            return interviewsJSON
+            // A single-interview read (#103) — detail or transcript — else the list.
+            return Self.interviewSingleBody(path: path) ?? interviewsJSON
         }
         // `/users/me` (#72) returns a single user object, not a paged envelope, so it must be
         // matched before the generic `/users` list route below.

@@ -259,69 +259,6 @@ struct InterviewRow: View {
     }
 }
 
-/// Read-only detail for a single interview.
-struct InterviewDetailView: View {
-    let interview: Interview
-
-    var body: some View {
-        Form {
-            InspectorHeader(title: interview.title ?? "Interview", badges: interview.inspectorBadges)
-
-            Section("Properties") {
-                OptionalRow("Status", interview.status.capitalized)
-                OptionalRow("Created", DisplayFormat.date(interview.createdAt))
-                OptionalRow("Updated", DisplayFormat.date(interview.updatedAt))
-                OptionalRow("Ended", DisplayFormat.date(interview.endedAt))
-                OptionalRow("Thumbs up", interview.thumbsUp.map(String.init))
-
-                if let url = URL(string: interview.url) {
-                    Link(destination: url) {
-                        Label("Open in browser", systemImage: "safari")
-                    }
-                }
-
-                if let report = interview.reportURL, let url = URL(string: report) {
-                    Link(destination: url) {
-                        Label("Open report", systemImage: "doc.text")
-                    }
-                }
-            }
-
-            if let notes = interview.notes, !notes.isEmpty {
-                Section("Notes") {
-                    Text(notes).textSelection(.enabled)
-                }
-            }
-
-            if let feedback = interview.feedback, !feedback.isEmpty {
-                Section("Feedback") {
-                    Text(feedback).textSelection(.enabled)
-                }
-            }
-        }
-        .formStyle(.grouped)
-        .navigationTitle(interview.title ?? "Interview")
-        .advertisesItemActivity(
-            collection: .interviews,
-            itemID: interview.id,
-            title: interview.title ?? "Interview \(interview.id)",
-            webURL: URL(string: interview.url)
-        )
-        .toolbar {
-            ToolbarItem {
-                PrintReportButton(jobTitle: "Interview – \(interview.title ?? interview.id)") {
-                    InterviewReport(interview: interview)
-                }
-            }
-            ToolbarItem {
-                MarkdownExportButton(suggestedName: interview.title ?? "interview-\(interview.id)") {
-                    MarkdownExport.interview(interview)
-                }
-            }
-        }
-    }
-}
-
 #Preview("List with date filter") {
     let json = #"""
     [
