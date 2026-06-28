@@ -176,6 +176,10 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
             return candidatesJSON
         }
         if path.contains("/questions") {
+            // A single-question read (#105) is anything past the bare collection path.
+            if !path.hasSuffix("/questions") {
+                return Self.questionDetailJSON
+            }
             return questionsJSON
         }
         if path.contains("/interviews") {
@@ -357,6 +361,15 @@ extension MockHackerRankURLProtocol {
     """#
 
     /// The teams collection fixture, in an extension (like `currentUserJSON`) so it stays off the
+    /// The richer single-question read served for `/questions/{id}` (#105): MCQ options, the
+    /// (sensitive) correct answer, and internal notes over the list shape.
+    nonisolated static let questionDetailJSON = #"""
+    {"id":"q3","unique_id":"sql-joins","type":"mcq","name":"SQL Joins","status":"published",
+     "max_score":50.0,"recommended_duration":10,"tags":["sql"],
+     "options":["INNER JOIN","LEFT JOIN","RIGHT JOIN","FULL OUTER JOIN"],
+     "answer":"INNER JOIN","internal_notes":"Swap in a CROSS JOIN distractor next revision."}
+    """#
+
     /// class's type-body-length budget.
     private nonisolated static let teamsJSON = #"""
     {"data":[

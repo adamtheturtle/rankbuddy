@@ -129,9 +129,15 @@ struct QuestionRow: View {
     }
 }
 
-/// Read-only detail for a single question.
+/// Read-only detail for a single question. Beyond the list row's fields, it fetches the richer
+/// single-question read on selection (#105) and merges the MCQ options, the (sensitive) correct
+/// answer — gated behind an explicit reveal — and the author's internal notes. The fetch is
+/// best-effort and skipped in the merged view, where the owning account is ambiguous.
 struct QuestionDetailView: View {
     let question: Question
+    @Environment(AccountStore.self) private var store
+    @State private var detail: QuestionDetail?
+    @State private var answerRevealed = false
 
     var body: some View {
         Form {
@@ -154,14 +160,48 @@ struct QuestionDetailView: View {
                 }
             }
 
+            if let detail, !detail.options.isEmpty {
+                Section("Options") {
+                    ForEach(Array(detail.options.enumerated()), id: \.offset) { index, option in
+                        Label(option, systemImage: isCorrect(option) ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(isCorrect(option) ? Color.green : Color.primary)
+                            .symbolRenderingMode(.hierarchical)
+                            .accessibilityLabel(isCorrect(option) ? "\(option), correct answer" : option)
+                            .id(index)
+                    }
+                }
+            }
+
+            if let answer = detail?.answer, !answer.isEmpty {
+                Section("Answer") {
+                    if answerRevealed {
+                        Text(answer).textSelection(.enabled)
+                    } else {
+                        Button {
+                            answerRevealed = true
+                        } label: {
+                            Label("Reveal answer", systemImage: "eye")
+                        }
+                        .help("Show the correct answer")
+                    }
+                }
+            }
+
             if let statement = question.problemStatement, !statement.isEmpty {
                 Section("Problem statement") {
                     HighlightedHTMLText(html: statement)
                 }
             }
+
+            if let notes = detail?.internalNotes, !notes.isEmpty {
+                Section("Internal notes") {
+                    Text(notes).textSelection(.enabled)
+                }
+            }
         }
         .formStyle(.grouped)
         .navigationTitle(question.name)
+        .task(id: question.id) { await loadDetail() }
         .advertisesItemActivity(collection: .questions, itemID: question.id, title: question.name)
         .toolbar {
             ToolbarItem {
@@ -173,5 +213,22 @@ struct QuestionDetailView: View {
                 MarkdownExportButton(suggestedName: question.name) { MarkdownExport.question(question) }
             }
         }
+    }
+
+    /// Whether an option matches the (revealed) correct answer, so it can be ticked in the list.
+    /// Only highlights once the answer has been revealed, keeping the answer hidden by default.
+    private func isCorrect(_ option: String) -> Bool {
+        answerRevealed && detail?.answer == option
+    }
+
+    /// Fetches the richer question detail on selection (#105). Best-effort — a failure leaves the
+    /// base list-row detail intact — and skipped in the merged view, where the owning account is
+    /// ambiguous, so the wrong account is never queried. Re-hides the answer for each question.
+    private func loadDetail() async {
+        detail = nil
+        answerRevealed = false
+        guard !store.isMergedView, let account = store.currentAccount else { return }
+
+        detail = try? await HackerRankClient(account: account).question(id: question.id)
     }
 }
