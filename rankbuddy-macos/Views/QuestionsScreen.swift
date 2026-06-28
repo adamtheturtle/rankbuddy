@@ -156,7 +156,7 @@ struct QuestionDetailView: View {
 
             if let statement = question.problemStatement, !statement.isEmpty {
                 Section("Problem statement") {
-                    HTMLText(html: statement)
+                    HighlightedHTMLText(html: statement)
                 }
             }
         }

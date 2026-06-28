@@ -1,0 +1,51 @@
+//
+//  HTMLCodeBlocksTests.swift
+//  rankbuddy-macosTests
+//
+
+@testable import rankbuddy_macos
+import Testing
+
+struct HTMLCodeBlocksTests {
+    @Test func `plain html with no code is a single prose segment`() {
+        let html = "<p>Hello <b>world</b></p>"
+        #expect(HTMLCodeBlocks.segments(html) == [.prose(html)])
+    }
+
+    @Test func `a code block is split out with prose around it`() {
+        let html = "<p>Before</p><pre><code class=\"language-python\">x = 1</code></pre><p>After</p>"
+        let segments = HTMLCodeBlocks.segments(html)
+        #expect(segments == [
+            .prose("<p>Before</p>"),
+            .code(languageHint: "python", code: "x = 1"),
+            .prose("<p>After</p>")
+        ])
+    }
+
+    @Test func `entities inside code are decoded`() {
+        let html = "<pre><code>if (a &lt; b &amp;&amp; b &gt; 0) {}</code></pre>"
+        let segments = HTMLCodeBlocks.segments(html)
+        #expect(segments == [.code(languageHint: nil, code: "if (a < b && b > 0) {}")])
+    }
+
+    @Test func `amp is decoded last so escaped entities survive`() {
+        // "&amp;lt;" is a literal "&lt;" in the rendered text, not a "<".
+        #expect(HTMLCodeBlocks.decodeEntities("&amp;lt;") == "&lt;")
+    }
+
+    @Test func `br and block tags inside code become newlines`() {
+        let html = "<pre>line one<br>line two</pre>"
+        #expect(HTMLCodeBlocks.segments(html) == [.code(languageHint: nil, code: "line one\nline two")])
+    }
+
+    @Test func `language hint reads from a lang attribute on pre`() {
+        let hint = HTMLCodeBlocks.languageHint(openTag: "<pre lang=\"swift\">", inner: "code")
+        #expect(hint == "swift")
+    }
+
+    @Test func `an unterminated pre keeps the remainder as prose`() {
+        let html = "<p>Intro</p><pre>broken"
+        let segments = HTMLCodeBlocks.segments(html)
+        #expect(segments == [.prose("<p>Intro</p>"), .prose("<pre>broken")])
+    }
+}

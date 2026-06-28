@@ -287,7 +287,7 @@ struct TestDetailView: View {
 
             if let instructions = test.instructions, !instructions.isEmpty {
                 Section("Instructions") {
-                    HTMLText(html: instructions)
+                    HighlightedHTMLText(html: instructions)
                 }
             }
         }
