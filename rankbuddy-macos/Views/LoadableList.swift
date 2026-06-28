@@ -132,6 +132,14 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// Guards restoration to once per load cycle, so navigating back doesn't re-push.
     @State var didRestore = false
     @State var isFilterLoading = false // search-paging spinner vs. a premature "No results" (#86)
+    /// On-device smart-search sheet state (#91): the entry, its presentation, the interpreting
+    /// spinner, and whether the last attempt grounded to nothing. Internal (not private) so the
+    /// `applySmartFilter` method in `LoadableList+Search.swift` can drive them, per the repo's
+    /// split-file rule.
+    @State var showSmartFilter = false
+    @State var smartFilterText = ""
+    @State var isInterpreting = false
+    @State var smartFilterFailed = false
 
     var body: some View {
         // Three-pane (#53): the list and a persistent detail pane sit side by side inside the
@@ -179,6 +187,19 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                         .help("Sort \(title)")
                     }
 
+                    // Plain-language filtering, interpreted on-device (#91). Hidden entirely
+                    // when the model is unavailable so the affordance never dead-ends.
+                    if SearchInterpreter.isAvailable {
+                        Button {
+                            smartFilterFailed = false
+                            showSmartFilter = true
+                        } label: {
+                            Label("Smart Filter", systemImage: "sparkle.magnifyingglass")
+                        }
+                        .help("Filter \(title) with a plain-language request, interpreted on your device")
+                        .keyboardShortcut("f", modifiers: [.command, .shift])
+                    }
+
                     if let restorationKey {
                         SavedSearchMenu(
                             title: title,
@@ -213,6 +234,16 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                     }
                     .keyboardShortcut("r", modifiers: .command)
                     .disabled(isLoading)
+                }
+                .sheet(isPresented: $showSmartFilter) {
+                    SmartFilterSheet(
+                        text: $smartFilterText,
+                        isInterpreting: isInterpreting,
+                        failed: smartFilterFailed,
+                        placeholder: "e.g. \(title.lowercased()) from last week",
+                        onSubmit: { Task { await applySmartFilter() } },
+                        onCancel: { showSmartFilter = false }
+                    )
                 }
                 // Re-runs when the account-scoped key changes, clearing any stale restored
                 // pane before loading the new account's data (#19).

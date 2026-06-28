@@ -7,6 +7,7 @@ import Foundation
 @testable import rankbuddy_macos
 import Testing
 
+@MainActor
 struct SearchInterpreterTests {
     private let languageFacet = SearchInterpreter.FacetDescriptor(
         id: "language", label: "Language", options: ["python", "cpp", "java"]
@@ -14,6 +15,27 @@ struct SearchInterpreterTests {
     private let statusFacet = SearchInterpreter.FacetDescriptor(
         id: "status", label: "Status", options: ["Active", "Ended", "Draft"]
     )
+
+    @Test func `parseModelResponse reads labeled fields and a multi-line filter block`() {
+        let reply = """
+        keywords: binary search
+        dateRange: last 7 days
+        filters:
+        language=python
+        status=Active
+        """
+        let fields = SearchInterpreter.parseModelResponse(reply)
+        #expect(fields.keywords == "binary search")
+        #expect(fields.dateRange == "last 7 days")
+        #expect(fields.filters == "language=python\nstatus=Active")
+    }
+
+    @Test func `parseModelResponse tolerates blank fields and spacing variants`() {
+        let fields = SearchInterpreter.parseModelResponse("Keywords:\nDate Range: last month\nfilters:")
+        #expect(fields.keywords.isEmpty)
+        #expect(fields.dateRange == "last month")
+        #expect(fields.filters.isEmpty)
+    }
 
     @Test func `parseFilters splits lines and semicolons into id=value pairs`() {
         let pairs = SearchInterpreter.parseFilters("language=python\nstatus=Active; language=java")
@@ -60,13 +82,13 @@ struct SearchInterpreterTests {
     @Test func `ground rejects over-filled values and keeps grounded ones`() {
         // The model named python (in query), a date (query says "last week"), and over-filled
         // status=Ended which the query never mentions.
-        let raw = ModelInterpretation(
+        let reply = SearchInterpreter.ParsedReply(
             keywords: "python linked list questions",
             dateRange: "last 7 days",
             filters: "language=python\nstatus=Ended"
         )
         let result = SearchInterpreter.ground(
-            raw,
+            reply,
             query: "python linked list questions from last week",
             facets: [languageFacet, statusFacet],
             dateRangeSupported: true,
@@ -81,9 +103,13 @@ struct SearchInterpreterTests {
     }
 
     @Test func `ground returns empty when nothing is supported`() {
-        let raw = ModelInterpretation(keywords: "all questions", dateRange: "last 7 days", filters: "status=Active")
+        let reply = SearchInterpreter.ParsedReply(
+            keywords: "all questions",
+            dateRange: "last 7 days",
+            filters: "status=Active"
+        )
         let result = SearchInterpreter.ground(
-            raw,
+            reply,
             query: "all questions",
             facets: [statusFacet],
             dateRangeSupported: true,

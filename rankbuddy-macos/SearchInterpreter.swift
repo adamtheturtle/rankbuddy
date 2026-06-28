@@ -17,7 +17,7 @@ import FoundationModels
 enum SearchInterpreter {
     /// A facet the list filters on, paired with the distinct values actually present, so the
     /// model maps onto real options rather than inventing them.
-    struct FacetDescriptor: Sendable {
+    struct FacetDescriptor {
         let id: String
         let label: String
         let options: [String]
@@ -25,7 +25,7 @@ enum SearchInterpreter {
 
     /// The structured filters derived from a query: the free-text keywords, an optional named
     /// date range, and the chosen values per facet id. Empty/`nil`/`[:]` when nothing applies.
-    struct Interpretation: Sendable, Equatable {
+    struct Interpretation: Equatable {
         var query: String
         var dateRange: String?
         var facets: [String: Set<String>]
@@ -56,11 +56,20 @@ enum SearchInterpreter {
         guard isAvailable, !trimmed.isEmpty else { return nil }
 
         let session = LanguageModelSession(instructions: instructions)
-        let prompt = prompt(for: trimmed, facets: facets, dateRangeSupported: dateRangeSupported, dateRangeOptions: dateRangeOptions)
+        let prompt = prompt(
+            for: trimmed,
+            facets: facets,
+            dateRangeSupported: dateRangeSupported,
+            dateRangeOptions: dateRangeOptions
+        )
         do {
-            let raw = try await session.respond(to: prompt, generating: ModelInterpretation.self).content
+            // A plain-text response (not `@Generable`): the `Generable.promptRepresentation`
+            // accessor the macro emits is absent on some shipping OS builds and aborts the
+            // process at dyld load, so — like `CandidateSummarizer` — this parses a labeled reply.
+            let response = try await session.respond(to: prompt).content
+            let fields = parseModelResponse(response)
             let grounded = ground(
-                raw,
+                fields,
                 query: trimmed,
                 facets: facets,
                 dateRangeSupported: dateRangeSupported,
@@ -70,6 +79,43 @@ enum SearchInterpreter {
         } catch {
             return nil
         }
+    }
+
+    /// The three raw, ungrounded fields read from the model's reply, before vetting.
+    struct ParsedReply: Equatable {
+        var keywords = ""
+        var dateRange = ""
+        var filters = ""
+    }
+
+    /// Parses the model's labeled plain-text reply into the three raw fields. Tolerant of
+    /// casing, spacing, missing labels, and stray prose: a line `keywords:`, `date range:`
+    /// (or `dateRange:`), or `filters:` sets that field, and once past `filters:` any later
+    /// `facetId=value` line is absorbed so a multi-line filter block survives.
+    static func parseModelResponse(_ text: String) -> ParsedReply {
+        var keywords = ""
+        var dateRange = ""
+        var filters = ""
+        var inFilters = false
+        for rawLine in text.split(whereSeparator: \.isNewline) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            guard !line.isEmpty else { continue }
+
+            if let colon = line.firstIndex(of: ":") {
+                let key = line[..<colon].lowercased().filter(\.isLetter)
+                let value = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+                switch key {
+                case "keywords": keywords = value; inFilters = false; continue
+                case "daterange": dateRange = value; inFilters = false; continue
+                case "filters": filters = value; inFilters = true; continue
+                default: break
+                }
+            }
+            if inFilters, line.contains("=") {
+                filters += filters.isEmpty ? line : "\n\(line)"
+            }
+        }
+        return ParsedReply(keywords: keywords, dateRange: dateRange, filters: filters)
     }
 
     // MARK: - Prompt
@@ -104,8 +150,11 @@ enum SearchInterpreter {
         lines.append("")
         lines.append(
             """
-            Respond with: keywords (topic words only, may be empty); dateRange (one of the ranges \
-            above or empty); filters as lines "facetId=value", one per chosen value (may be empty).
+            Reply in exactly this format, leaving a field blank when it doesn't apply:
+            keywords: <topic words only, no facet or date words>
+            dateRange: <one of the ranges above, or blank>
+            filters:
+            <facetId=value, one per line, only for values you chose>
             """
         )
         return lines.joined(separator: "\n")
@@ -125,7 +174,7 @@ enum SearchInterpreter {
     /// query actually supports, so the small model's habit of over-filling fields can't
     /// over-constrain the list to nothing.
     static func ground(
-        _ raw: ModelInterpretation,
+        _ reply: ParsedReply,
         query: String,
         facets: [FacetDescriptor],
         dateRangeSupported: Bool,
@@ -134,7 +183,7 @@ enum SearchInterpreter {
         var facetSelections: [String: Set<String>] = [:]
         let facetsByID = Dictionary(uniqueKeysWithValues: facets.map { ($0.id, $0) })
         var facetValueWords: Set<String> = []
-        for (facetID, value) in parseFilters(raw.filters) {
+        for (facetID, value) in parseFilters(reply.filters) {
             guard let facet = facetsByID[facetID],
                   let option = groundFacetValue(value, facetOptions: facet.options, query: query)
             else { continue }
@@ -144,10 +193,10 @@ enum SearchInterpreter {
         }
 
         let dateRange = dateRangeSupported
-            ? groundDateRange(resolveDateRange(raw.dateRange, options: dateRangeOptions), query: query)
+            ? groundDateRange(resolveDateRange(reply.dateRange, options: dateRangeOptions), query: query)
             : nil
 
-        let groundedQuery = groundText(raw.keywords, facetValueWords: facetValueWords)
+        let groundedQuery = groundText(reply.keywords, facetValueWords: facetValueWords)
         return Interpretation(query: groundedQuery, dateRange: dateRange, facets: facetSelections)
     }
 
@@ -197,7 +246,7 @@ enum SearchInterpreter {
     static func groundDateRange(_ range: String?, query: String) -> String? {
         guard let range else { return nil }
 
-        let dateWords: Set<String> = [
+        let dateWords: Set = [
             "today", "yesterday", "week", "weeks", "month", "months", "day", "days",
             "hour", "hours", "recent", "recently", "last", "past", "this",
             "24", "7", "30", "90", "year", "years"
@@ -241,19 +290,4 @@ enum SearchInterpreter {
         "today", "yesterday", "last", "recent", "recently", "past", "this",
         "day", "days", "week", "weeks", "month", "months", "hour", "hours", "year", "years"
     ]
-}
-
-/// The fixed schema the on-device model fills. Dynamic per-facet selections ride in `filters`
-/// as "facetId=value" lines, which `SearchInterpreter.ground` parses and vets — so one stable
-/// `@Generable` shape covers any list's facets.
-@Generable
-struct ModelInterpretation: Equatable {
-    @Guide(description: "Genuine topic words from the request (a question or test name). Empty if none.")
-    var keywords: String
-
-    @Guide(description: "One of the offered date ranges that matches the request, or empty.")
-    var dateRange: String
-
-    @Guide(description: "Chosen facet values as lines 'facetId=value', one per value. Empty if none.")
-    var filters: String
 }
