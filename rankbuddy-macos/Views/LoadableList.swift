@@ -363,27 +363,27 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
 
         didRestore = true
 
-        if let restorationKey,
-           let stored = UserDefaults.standard.string(forKey: restorationKey),
-           let item = items.first(where: { String(describing: $0.id) == stored }) {
+        let storedDetail = restorationKey.flatMap { UserDefaults.standard.string(forKey: $0) }
+        let storedAnchor = scrollDefaultsKey.flatMap { UserDefaults.standard.string(forKey: $0) }
+
+        switch ListRestoration.action(storedDetailID: storedDetail, storedAnchorID: storedAnchor, items: items) {
+        case let .restoreDetail(item):
             selection = [item.id]
             scrollTarget = item.id
-            // Push the restored detail on the next runloop tick, after the cleared path
-            // (the loading reset in `reload()`) has committed. If `loadPage` resolves
-            // without a real suspension — a cached or mock page — clearing and re-pushing
-            // `path` otherwise land in one frame, so the NavigationStack's path observer is
-            // asked to update twice per frame (#84). The yield forces a frame boundary.
+            // Push the restored detail on the next runloop tick, after the cleared path (the
+            // loading reset in `reload()`) has committed. For a cached/mock page that resolves
+            // without suspending, clearing and re-pushing `path` would otherwise land in one
+            // frame, updating the NavigationStack observer twice per frame (#84).
             await Task.yield()
             guard path.isEmpty else { return }
 
             path = [item]
-            return
-        }
 
-        if let scrollDefaultsKey,
-           let anchor = UserDefaults.standard.string(forKey: scrollDefaultsKey),
-           let item = items.first(where: { String(describing: $0.id) == anchor }) {
+        case let .restoreScroll(item):
             scrollTarget = item.id
+
+        case .startAtTop:
+            break
         }
     }
 
