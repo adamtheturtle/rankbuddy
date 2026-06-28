@@ -10,6 +10,7 @@ import Testing
 /// Coverage for the transport error layer (#3, #32): `HackerRankError`'s user-facing
 /// messages and `HackerRankErrorMapping`'s transient/permanent classification, which
 /// decides what `PaginatedRESTClient` retries.
+@MainActor
 struct TransportErrorMappingTests {
     private let mapping = HackerRankErrorMapping()
 

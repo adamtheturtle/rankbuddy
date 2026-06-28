@@ -257,7 +257,7 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
         Task { @MainActor in
             UserDefaults.standard.set(SidebarSection.interviews.rawValue, forKey: "selectedSection")
             NSApp.activate(ignoringOtherApps: true)
-            completionHandler()
         }
+        completionHandler()
     }
 }

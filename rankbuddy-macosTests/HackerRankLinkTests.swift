@@ -10,6 +10,7 @@ import Testing
 /// Coverage for the URL/ID parsing behind "Open by URL" (#42) and the "Open in RankBuddy"
 /// Service (#46, #32). `parse` finds a known collection segment and takes the segment after
 /// it; anything without one (a bare id) returns nil so the caller can fall back to a picker.
+@MainActor
 struct HackerRankLinkTests {
     @Test(arguments: [
         ("https://www.hackerrank.com/x/tests/abc123/edit", FavoriteCollection.tests, "abc123"),

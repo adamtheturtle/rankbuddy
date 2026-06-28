@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for the client-side email check that gates the invite action (#12, #32). It's
 /// intentionally lenient — these pin the obvious accept/reject cases, not RFC conformance.
+@MainActor
 struct EmailValidationTests {
     @Test(arguments: [
         "ada@example.com",

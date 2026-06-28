@@ -10,6 +10,7 @@ import Testing
 /// Coverage for the inspector-header status chips (#54): the per-model `inspectorBadges`
 /// extensions that drive the detail panes' header. The chip rendering is verified visually
 /// via the detail previews; these lock in the pure badge-derivation logic.
+@MainActor
 struct InspectorBadgesTests {
     @Test func `a team's chips report its developer and recruiter counts`() throws {
         let json = #"{"id":"tm1","name":"Backend Hiring","developer_count":12,"recruiter_count":3}"#

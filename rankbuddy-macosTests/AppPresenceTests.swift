@@ -10,6 +10,7 @@ import Testing
 
 /// Coverage for the app-presence setting (#66): which surfaces each option shows and the
 /// activation policy it maps to.
+@MainActor
 struct AppPresenceTests {
     @Test func `both shows the dock and the menu bar`() {
         #expect(AppPresence.both.showsDockIcon)

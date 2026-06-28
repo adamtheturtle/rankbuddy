@@ -12,6 +12,7 @@ import Testing
 /// endpoints. The scenario is environment-selected and defaults to `.success`, so these
 /// tests exercise the populated fixtures, the multi-page tests collection, and the path
 /// routing that distinguishes a test's candidates from the tests list.
+@MainActor
 struct MockHackerRankServerTests {
     private func fetch(_ path: String) async throws -> (HTTPURLResponse, Data) {
         let url = try #require(URL(string: "https://www.hackerrank.com/x/api/v3\(path)"))

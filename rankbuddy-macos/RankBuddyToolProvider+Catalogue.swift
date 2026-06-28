@@ -11,7 +11,7 @@ import Foundation
 extension RankBuddyToolProvider {
     /// The advertised read tool descriptors. All read-only (`readOnlyHint`); list/search tools
     /// take an optional `account` (label or id), search tools also a required `query`.
-    static let descriptors: [[String: Any]] = {
+    static var descriptors: [[String: Any]] {
         let account: [String: Any] = [
             "type": "string", "description": "Account label or id; defaults to the current account."
         ]
@@ -47,5 +47,5 @@ extension RankBuddyToolProvider {
             readOnly("search_interviews", "Search the account's interviews by title/status (bounded paging).",
                      properties: ["query": query, "account": account], required: ["query"])
         ]
-    }()
+    }
 }

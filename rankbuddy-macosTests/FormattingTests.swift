@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for the pure display helpers (#32): `DisplayFormat`'s date/list formatting and
 /// the `TestCandidate.integrityBadge` derivation that drives the plagiarism/integrity pill.
+@MainActor
 struct FormattingTests {
     // MARK: - DisplayFormat.languages
 

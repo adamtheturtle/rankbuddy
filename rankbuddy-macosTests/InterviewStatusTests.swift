@@ -8,6 +8,7 @@ import Foundation
 import Testing
 
 /// Coverage for `Interview.statusBadge` — the lifecycle pill shown in the interviews list.
+@MainActor
 struct InterviewStatusTests {
     private func interview(status: String) throws -> Interview {
         let json = #"{"id":"i1","status":"\#(status)","url":"https://example.com/i1"}"#

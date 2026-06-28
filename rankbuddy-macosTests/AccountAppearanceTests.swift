@@ -9,6 +9,7 @@ import SwiftUI
 import Testing
 
 /// Coverage for per-account icon + tint (#64): persistence, the icon default, and hex parsing.
+@MainActor
 struct AccountAppearanceTests {
     @Test func `icon and tint round-trip and are absent from older saved accounts`() throws {
         let account = Account(label: "Work", token: "t", iconSymbol: "briefcase", tintHex: "#3B82F6")

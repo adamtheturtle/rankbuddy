@@ -8,6 +8,7 @@ import Testing
 
 /// Coverage for the general list auto-refresh setting (#69): the human-readable interval
 /// label and the off/Duration mapping the timer reads.
+@MainActor
 struct GeneralSettingsTests {
     @Test func `the interval label reads off below the minimum`() {
         #expect(GeneralSettings.refreshIntervalLabel(0) == "Off")

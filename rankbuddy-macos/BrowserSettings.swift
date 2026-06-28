@@ -30,7 +30,7 @@ enum BrowserSettings {
             bundleID
         }
 
-        init?(appURL: URL) {
+        nonisolated init?(appURL: URL) {
             guard let id = Bundle(url: appURL)?.bundleIdentifier else { return nil }
 
             bundleID = id

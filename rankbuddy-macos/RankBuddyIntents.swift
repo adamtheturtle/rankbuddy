@@ -44,9 +44,9 @@ enum RankBuddySectionOption: String, AppEnum {
 /// forward; the deep-link itself is the shared persisted selection, which the main window
 /// observes live, so an already-frontmost app switches sections immediately.
 struct OpenRankBuddySectionIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Section"
-    static var description = IntentDescription("Opens RankBuddy to a specific section.")
-    static var openAppWhenRun = true
+    static let title: LocalizedStringResource = "Open Section"
+    static let description = IntentDescription("Opens RankBuddy to a specific section.")
+    static let openAppWhenRun = true
 
     @Parameter(title: "Section", default: .tests)
     var section: RankBuddySectionOption
@@ -64,9 +64,9 @@ struct OpenRankBuddySectionIntent: AppIntent {
 
 /// Brings RankBuddy's main window to the front (or launches it).
 struct OpenRankBuddyIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open RankBuddy"
-    static var description = IntentDescription("Opens the RankBuddy main window.")
-    static var openAppWhenRun = true
+    static let title: LocalizedStringResource = "Open RankBuddy"
+    static let description = IntentDescription("Opens the RankBuddy main window.")
+    static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
         .result()

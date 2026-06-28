@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for the People/Teams section display helpers (#36): `User.displayName` and
 /// `Team.memberSummary`, the pure derivations that drive the new rows.
+@MainActor
 struct SectionDisplayTests {
     private func decode<T: Decodable>(_: T.Type, _ json: String) throws -> T {
         try JSONDecoder().decode(T.self, from: Data(json.utf8))

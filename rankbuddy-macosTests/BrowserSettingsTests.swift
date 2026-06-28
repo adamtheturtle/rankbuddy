@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for the link-opening preferences (#63). Only the read-only LaunchServices queries
 /// are exercised — `open(_:)` is a side effect (it would launch a browser) and isn't called.
+@MainActor
 struct BrowserSettingsTests {
     @Test func `at least one browser is installed and resolves a bundle id`() {
         let browsers = BrowserSettings.installedBrowsers()

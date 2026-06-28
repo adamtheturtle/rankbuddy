@@ -8,6 +8,7 @@ import Foundation
 import Testing
 
 /// Coverage for CSV export (#39): RFC-4180 field escaping and the per-collection documents.
+@MainActor
 struct CSVExportTests {
     @Test func `fields are only quoted when they contain a comma, quote, or newline`() {
         #expect(CSVExport.field("plain") == "plain")

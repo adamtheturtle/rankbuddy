@@ -358,7 +358,7 @@ extension MockHackerRankURLProtocol {
     /// The single-user object returned by `/users/me` (#72): the demo account's own identity,
     /// in the same shape as a People-list entry but not wrapped in a paged envelope. In an
     /// extension so it doesn't count toward the class's type-body-length budget.
-    private static let currentUserJSON = #"""
+    nonisolated private static let currentUserJSON = #"""
     {"id":"u-me","email":"demo@example.com","firstname":"Demo","lastname":"Owner",
      "country":"GB","role":"admin","status":"active","company_admin":true}
     """#

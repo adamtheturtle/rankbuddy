@@ -211,6 +211,17 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         }
         return ["accounts": accounts, "count": accounts.count]
     }
+
+    /// Serialises the accounts payload on the main actor, returning a `Sendable` `String` so the
+    /// result can cross back to the nonisolated `readResource` caller without sharing the
+    /// non-`Sendable` `[String: Any]`.
+    @MainActor
+    private func accountsJSON() -> String {
+        let data = (try? JSONSerialization.data(
+            withJSONObject: accountsPayload(), options: [.prettyPrinted, .sortedKeys]
+        )) ?? Data("{}".utf8)
+        return String(data: data, encoding: .utf8) ?? "{}"
+    }
 }
 
 // MARK: - Search
@@ -325,11 +336,7 @@ extension RankBuddyToolProvider {
             throw MCPError.invalidParams("Unknown resource URI: \(uri)")
         }
 
-        let payload = await accountsPayload()
-        let data = (try? JSONSerialization.data(
-            withJSONObject: payload, options: [.prettyPrinted, .sortedKeys]
-        )) ?? Data("{}".utf8)
-        let json = String(data: data, encoding: .utf8) ?? "{}"
+        let json = await accountsJSON()
         return ReadResource.Result(contents: [.text(json, uri: uri, mimeType: "application/json")])
     }
 

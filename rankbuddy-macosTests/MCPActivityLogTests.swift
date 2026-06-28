@@ -8,6 +8,7 @@ import Foundation
 import Testing
 
 /// Coverage for the MCP activity log (#52): JSONL parsing and the record→read round-trip.
+@MainActor
 struct MCPActivityLogTests {
     private func tempURL() -> URL {
         FileManager.default.temporaryDirectory.appendingPathComponent("mcp-\(UUID().uuidString).jsonl")

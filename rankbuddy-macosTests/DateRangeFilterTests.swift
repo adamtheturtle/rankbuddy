@@ -10,6 +10,7 @@ import Testing
 
 /// Coverage for the list date-range filter (#19), driven with a fixed `now` so the
 /// calendar-anchored windows are deterministic.
+@MainActor
 struct DateRangeFilterTests {
     private struct Row: Equatable {
         let id: Int

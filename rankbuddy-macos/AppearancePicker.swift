@@ -123,7 +123,7 @@ private struct WindowThumbnail: View {
 
 /// The bottom-trailing triangle that reveals the dark half of the System swatch over the
 /// light one, so it reads as a split light/dark preview.
-private struct DiagonalSplit: Shape {
+private nonisolated struct DiagonalSplit: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: rect.maxX, y: rect.minY))

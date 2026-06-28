@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for the pure liveness derivations (#32): the scheduled-interview count and the
 /// Dock badge label behind the background-updates feature.
+@MainActor
 struct LivenessDigestTests {
     private func interview(id: String, status: String) throws -> Interview {
         let json = #"{"id":"\#(id)","status":"\#(status)","url":"https://example.com/x"}"#

@@ -31,7 +31,7 @@ enum MarkdownExport {
 
     /// Strips HTML tags and decodes the few common entities, for embedding an HTML field (e.g.
     /// a test's instructions) as plain Markdown text.
-    static func plainText(fromHTML html: String) -> String {
+    nonisolated static func plainText(fromHTML html: String) -> String {
         html
             .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
             .replacingOccurrences(of: "&amp;", with: "&")

@@ -8,6 +8,7 @@ import Foundation
 import Testing
 
 /// Coverage for the list-shaping helpers extracted from LoadableList (#19/#44).
+@MainActor
 struct ListQueryTests {
     private struct Row { let name: String }
 

@@ -11,6 +11,7 @@ import Testing
 
 /// Coverage for the recent-activity cache (#23): per-collection round-trip, the keep-limit,
 /// spanning collections, and account scoping. Uses a uniquely-named on-disk cache per test.
+@MainActor
 struct RecentActivityTests {
     private func store(_ name: String, limit: Int = 8) -> RecentActivityStore {
         let cache = DiskCache(

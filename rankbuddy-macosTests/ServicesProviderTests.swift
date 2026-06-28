@@ -7,6 +7,7 @@
 import Testing
 
 /// Coverage for the "Open in RankBuddy" Service's URL resolution (#46).
+@MainActor
 struct ServicesProviderTests {
     @Test func `a recognised URL resolves against the current account`() {
         let target = ServicesProvider.target(for: "https://www.hackerrank.com/x/tests/t1", currentAccountID: "ACC")

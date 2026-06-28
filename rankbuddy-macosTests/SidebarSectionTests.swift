@@ -10,6 +10,7 @@ import Testing
 /// window's sidebar and the command palette's `section.*` candidates, and its raw values
 /// are persisted via `@AppStorage("selectedSection")` (#19), so the case set, their order,
 /// raw values, titles, and SF Symbols are a stable contract.
+@MainActor
 struct SidebarSectionTests {
     @Test func `the sections are in display order`() {
         #expect(SidebarSection.allCases == [.tests, .questions, .interviews, .people, .teams])

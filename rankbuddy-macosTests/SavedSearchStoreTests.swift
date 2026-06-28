@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for saved-search persistence (#25). Uses a private `UserDefaults` suite so the
 /// tests never touch the real defaults and stay isolated.
+@MainActor
 struct SavedSearchStoreTests {
     private func makeDefaults() -> UserDefaults {
         // A unique suite per test, so the parallel suite can't cross-contaminate.

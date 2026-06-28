@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for the faceted filtering logic behind the filter bar (#55): facet matching,
 /// option derivation, and selection persistence — all pure, so they're tested directly.
+@MainActor
 struct ListQueryFacetTests {
     private struct Row {
         let state: String

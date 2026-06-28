@@ -264,7 +264,7 @@ extension RankBuddyToolProvider {
 extension RankBuddyToolProvider {
     /// The write tool descriptors, advertised only when `allowWrites` is on (#73). Each is flagged
     /// `readOnlyHint: false`; deletions/removals also carry `destructiveHint: true`.
-    static let writeDescriptors: [[String: Any]] = {
+    static var writeDescriptors: [[String: Any]] {
         let account: [String: Any] = [
             "type": "string", "description": "Account label or id; defaults to the current account."
         ]
@@ -333,5 +333,5 @@ extension RankBuddyToolProvider {
                   ],
                   required: ["title", "from"])
         ]
-    }()
+    }
 }

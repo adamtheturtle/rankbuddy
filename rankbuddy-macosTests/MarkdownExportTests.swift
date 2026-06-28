@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for Markdown export (#50): section/field rendering, HTML stripping, and the
 /// candidate document.
+@MainActor
 struct MarkdownExportTests {
     @Test func `a section lists only fields with values`() {
         let markdown = MarkdownExport.section("Candidate", [("Name", "Ada"), ("Score", nil), ("Email", "a@b.c")])

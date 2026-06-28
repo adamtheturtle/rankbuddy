@@ -8,6 +8,7 @@ import Foundation
 import Testing
 
 /// Coverage for the MCP client-configuration helper shown in Settings (#9).
+@MainActor
 struct MCPSetupTests {
     @Test func `the config is valid JSON with the server's launch command`() throws {
         let json = MCPSetup.clientConfigJSON(command: "/path/to/RankBuddy", serverName: "rankbuddy")

@@ -13,6 +13,7 @@ import Testing
 /// contract that keeps the deep-link working is that `RankBuddySectionOption`'s raw values
 /// stay aligned with `SidebarSection`'s, and that `perform()` writes a value that resolves
 /// back to a real section. Nothing exercised the intent before.
+@MainActor
 struct RankBuddyIntentsTests {
     /// The intent's automation enum is deliberately separate from `SidebarSection`; these
     /// are the cases it offers.

@@ -8,6 +8,7 @@ import Foundation
 import Testing
 
 /// Coverage for the sidebar Favourites reorder (#41).
+@MainActor
 struct FavoritesReorderTests {
     private func ref(_ id: String, account: String) -> FavoriteRef {
         FavoriteRef(accountID: account, collection: .tests, itemID: id, title: id)

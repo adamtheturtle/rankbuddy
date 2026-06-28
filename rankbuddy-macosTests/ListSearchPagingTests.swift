@@ -9,6 +9,7 @@ import Testing
 /// Coverage for the client-side filter auto-load policy (#86): while a filter (search, facet, or
 /// date) is active the list pages in more rows so the match isn't stuck on the first page, but
 /// stays bounded so a vague filter can't drain a huge collection.
+@MainActor
 struct ListSearchPagingTests {
     @Test func `keeps loading while filtering with more pages and few matches`() {
         #expect(ListSearchPaging.shouldKeepLoading(

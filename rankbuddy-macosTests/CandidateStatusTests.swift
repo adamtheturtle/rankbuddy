@@ -10,6 +10,7 @@ import Testing
 /// Coverage for the candidate status/ATS-state code labels (#37). The mapping is
 /// table-driven and deliberately conservative: stable codes get labels; transient codes,
 /// the unset value, and unknown codes return nil so the detail view omits the row.
+@MainActor
 struct CandidateStatusTests {
     private func candidate(status: Int? = nil, atsState: Int? = nil) throws -> TestCandidate {
         var fields = [#""id":"c1""#, #""email":"c@x.com""#]

@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for the open-in-new-window value (#49): it round-trips through Codable (so it can
 /// pass through openWindow) and titles the window.
+@MainActor
 struct DetailWindowValueTests {
     private func test(name: String) throws -> rankbuddy_macos.Test {
         try JSONDecoder().decode(rankbuddy_macos.Test.self, from: Data(#"{"id":"t1","name":"\#(name)"}"#.utf8))

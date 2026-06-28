@@ -9,6 +9,7 @@ import Testing
 
 /// Coverage for `Test.windowStatus(now:)` (the read-only window indicator). The reference
 /// "now" is injected so the classification is deterministic.
+@MainActor
 struct TestWindowStatusTests {
     private func test(start: String? = nil, end: String? = nil) throws -> rankbuddy_macos.Test {
         var fields = [#""id":"t1""#, #""name":"T""#]

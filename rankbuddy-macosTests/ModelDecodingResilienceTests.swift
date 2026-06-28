@@ -11,6 +11,7 @@ import Testing
 /// deliberately model only the fields the UI needs: every non-identifying field is optional,
 /// snake_case keys are mapped, and unmodelled keys must be ignored so live API responses keep
 /// decoding as HackerRank adds fields. These tests pin that contract for each model.
+@MainActor
 struct ModelDecodingResilienceTests {
     private func decode<T: Decodable>(_ type: T.Type, _ json: String) throws -> T {
         try JSONDecoder().decode(type, from: Data(json.utf8))

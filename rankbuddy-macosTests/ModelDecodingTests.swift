@@ -10,6 +10,7 @@ import Testing
 /// Decoding coverage for the HackerRank domain models (#4), shaped to match the live
 /// `/x/api/v3` responses confirmed against a real account (#3): snake_case keys, a
 /// `+0000` timezone, string ids, and extra unmodelled fields that must be ignored.
+@MainActor
 struct ModelDecodingTests {
     private func decode<T: Decodable>(_ type: T.Type, _ json: String) throws -> T {
         try JSONDecoder().decode(type, from: Data(json.utf8))
