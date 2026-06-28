@@ -33,8 +33,9 @@ struct SortOption<Item>: Identifiable {
 /// restored per account (#19) when a `restorationKey` is set.
 struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail: View>: View {
     /// The first-load phase. Loaded items and the cursor live in their own state so further
-    /// pages can append without disturbing this.
-    private enum Phase {
+    /// pages can append without disturbing this. Internal so the loading extension
+    /// (`LoadableList+Loading.swift`) can drive it, per the repo's split-file rule.
+    enum Phase {
         case loading
         case loaded
         case failed(String)
@@ -97,7 +98,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @AppStorage(GeneralSettings.refreshSecondsKey) var autoRefreshSeconds = GeneralSettings
         .defaultRefreshSeconds
 
-    @State private var phase: Phase = .loading
+    @State var phase: Phase = .loading
     /// `items`/`nextCursor`/`isLoadingMore`/`pagesLoaded` are internal so the auto-refresh
     /// extension (a separate file, for file_length) can reload in place (#69).
     @State var items: [Item] = []
@@ -125,9 +126,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// `visibleItems` extension reads it; restored/persisted per account.
     @State var selectedFacets: [String: Set<String>] = [:]
     /// A one-shot scroll target honoured on the next layout (restored selection/scroll).
-    @State private var scrollTarget: Item.ID?
+    /// Internal so the loading extension can set it during restoration.
+    @State var scrollTarget: Item.ID?
     /// Guards restoration to once per load cycle, so navigating back doesn't re-push.
-    @State private var didRestore = false
+    @State var didRestore = false
     @State var isFilterLoading = false // search-paging spinner vs. a premature "No results" (#86)
 
     var body: some View {
@@ -225,7 +227,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     }
 
     /// Where the free-scroll anchor is remembered (#19), or `nil` when persistence is off.
-    private var scrollDefaultsKey: String? {
+    /// Internal so the loading extension's restoration can read it.
+    var scrollDefaultsKey: String? {
         restorationKey.map { "scroll.\($0)" }
     }
 
@@ -307,84 +310,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         guard let scrollDefaultsKey, let topID else { return }
 
         UserDefaults.standard.set(String(describing: topID), forKey: scrollDefaultsKey)
-    }
-
-    /// Resets and loads the first page (initial load, refresh, or account switch).
-    private func reload() async {
-        didRestore = false
-        if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
-        if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
-        path = []
-        selection = []
-        phase = .loading
-        items = []
-        nextCursor = nil
-        pagesLoaded = 1
-        do {
-            let page = try await loadCurrentPage(nil)
-            items = page.items
-            nextCursor = page.next
-            phase = .loaded
-            onFirstPage(page.items)
-            await restoreIfNeeded(items)
-        } catch {
-            phase = .failed(message(for: error))
-        }
-    }
-
-    /// Appends the next page when the user nears the end. A failed load-more keeps the
-    /// items already shown and stops paging rather than discarding the list. Internal so the
-    /// search auto-load extension (`LoadableList+Search`) can drive it too.
-    func loadMore() async {
-        guard let cursor = nextCursor, !isLoadingMore else { return }
-
-        isLoadingMore = true
-        defer { isLoadingMore = false }
-        do {
-            let page = try await loadCurrentPage(cursor)
-            items.append(contentsOf: page.items)
-            nextCursor = page.next
-            pagesLoaded += 1
-        } catch {
-            nextCursor = nil
-        }
-    }
-
-    private func message(for error: Error) -> String {
-        (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
-
-    /// Once per load: re-opens the last-viewed item's detail and scrolls to it, or — when no
-    /// detail was open — scrolls to the saved free-scroll anchor. A missing item (deleted, a
-    /// different account, or only on a not-yet-loaded page) simply leaves the list at the top
-    /// — no loops, no blank pane (#19).
-    private func restoreIfNeeded(_ items: [Item]) async {
-        guard !didRestore, path.isEmpty else { return }
-
-        didRestore = true
-
-        let storedDetail = restorationKey.flatMap { UserDefaults.standard.string(forKey: $0) }
-        let storedAnchor = scrollDefaultsKey.flatMap { UserDefaults.standard.string(forKey: $0) }
-
-        switch ListRestoration.action(storedDetailID: storedDetail, storedAnchorID: storedAnchor, items: items) {
-        case let .restoreDetail(item):
-            selection = [item.id]
-            scrollTarget = item.id
-            // Push the restored detail on the next runloop tick, after the cleared path (the
-            // loading reset in `reload()`) has committed. For a cached/mock page that resolves
-            // without suspending, clearing and re-pushing `path` would otherwise land in one
-            // frame, updating the NavigationStack observer twice per frame (#84).
-            await Task.yield()
-            guard path.isEmpty else { return }
-
-            path = [item]
-
-        case let .restoreScroll(item):
-            scrollTarget = item.id
-
-        case .startAtTop:
-            break
-        }
     }
 
     /// Remembers the currently selected item (the top of the path), or clears it on pop.
