@@ -123,3 +123,40 @@ accepts UTC `…Z` form (e.g. `2026-03-30T00:00:00Z..2026-06-27T23:59:59Z`), whi
 The decoded model fields mirror the documented response shapes; see
 `rankbuddy-macos/Models/`. Unmodelled keys are ignored, so responses with extra fields
 decode without failure.
+
+## Full endpoint inventory (from `openapi.json`, audited 2026-06-28)
+
+The authoritative contract is [`adamtheturtle/hackerrank`](https://github.com/adamtheturtle/hackerrank)'s
+`openapi.json`. RankBuddy currently surfaces only the **list** endpoints plus
+`tests/{id}/candidates/{id}` and `users/me`. The spec documents much more; the gaps below
+are tracked as issues so coverage can be widened deliberately.
+
+**Read endpoints we do NOT yet use:**
+
+| Endpoint | Returns | Tracked |
+| --- | --- | --- |
+| `GET /interviews/{id}` | `InterviewShow` (+ `from`/`to`, `interviewers`, `resume_url`, `result_url`, `candidate`, `metadata`) | #103 |
+| `GET /interviews/{id}/transcript` | `InterviewTranscriptShow` = `{ messages: [{author,email,candidate,timestamp,text,messageId}] }` (conversation only — **no editor source code**) | #103 |
+| `GET /users/search?search=` | server-side user search (our notes wrongly said none exists) | #104 |
+| `GET /tests/{id}/candidates/search?search=` | server-side candidate search | #104 |
+| `GET /tests/{id}?additional_fields=` | `TestsShow` (+ `short_login_url`, `public_login_url`, `ide_config`, `master_password`, `test_admins`, security flags) | #105 |
+| `GET /tests/{id}/inviters` | test inviters | #105 |
+| `GET /questions/{id}` | `QuestionShow` (+ `options`, `answer` — MCQ answer is sensitive, `internal_notes`) | #105 |
+| `GET /users/{id}`, `GET /teams/{id}` | single-resource detail | #105 |
+| `GET /tests/{id}/candidates/{id}?additional_fields=questions,…` | per-question scores + **candidate submitted code** (the `questions` object; shape undocumented — needs a real scored attempt) | #13 |
+| `GET /audit_log?user_id=` | `AuditLogShow` = `{source_type,action,user,modified_fields,modified_values,ip_address,created_at}` — org change history | #106 |
+| `GET /interview_templates`, `GET /templates` | HackerRank-native interview/test templates | #97 (note) |
+
+**Key candidate fields documented but unmodelled** (immediate enrichment, no scored attempt
+needed): `performance_summary`, `integrity_summary`, `candidate_details` (`[{field_name,title,value}]`),
+`scores_skills_split`/`scores_tags_split`, `authenticated_report_url`, `evaluator_email`,
+`comments`, `attempt_events`, `max_code_similarity`, `proctor_images` (#13).
+
+**On "see the code":** the interview collaborative-pad **source is not exposed** by the REST
+API (neither `InterviewShow` nor the transcript carries it) — only the conversation transcript
+(#103) and the `url`/`report_url` browser links. Candidate submitted code *is* reachable via
+`additional_fields=questions` but its shape is undocumented (#13).
+
+Write/CRUD (`POST`/`PUT`/`DELETE`) exists for tests, questions (+ test cases/codestubs),
+interviews, interview_templates, users, teams, and candidates; the app's write flows (#12/#57–#60)
+cover a subset.
