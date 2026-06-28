@@ -45,6 +45,9 @@ struct RankBuddyApp: App {
             ? AccountStore.rankBuddy(isTesting: true, seed: [.demo])
             : AccountStore.rankBuddy()
         _accountStore = State(initialValue: store)
+        // Hand the single live store to the Focus-filter intent (#96), which runs in-process
+        // and must drive the same selection the UI observes rather than a detached copy.
+        SharedAccountStore.shared = store
         // Demo mode keeps favourites in-memory so it never reads or writes real favourites.
         let favorites = FavoritesStore(isTesting: isDemo)
         _favorites = State(initialValue: favorites)
