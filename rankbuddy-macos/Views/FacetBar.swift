@@ -41,6 +41,9 @@ struct FacetBar<Item>: View {
             .font(.callout)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
+            // Leading-align the chips against the window edge, matching PadBuddy's filter bar;
+            // without this the HFlow centres them in the column width, which reads as unpolished.
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
