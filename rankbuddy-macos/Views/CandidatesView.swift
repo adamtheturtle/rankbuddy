@@ -24,6 +24,12 @@ struct CandidatesList: View {
                 try await HackerRankClient(account: account)
                     .candidatesPage(testID: testID, after: $0)
             },
+            // The search field queries the server (#104), so a candidate deep in a long list is
+            // reachable — not just one already paged into the loaded rows.
+            serverSearch: { query, cursor in
+                try await HackerRankClient(account: account)
+                    .searchCandidates(testID: testID, query: query, after: cursor)
+            },
             searchableText: { "\($0.fullName ?? "") \($0.email) \($0.listStatusLabel ?? "")" },
             sortOptions: [
                 SortOption("Score") {

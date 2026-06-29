@@ -12,9 +12,12 @@ extension LoadableList {
     /// The items currently shown: filtered by search + date + facets, then sorted (#19, #55).
     var visibleItems: [Item] {
         // When the date range is applied server-side (#86), don't also filter locally — the
-        // loaded rows are already the server's date-filtered result.
+        // loaded rows are already the server's date-filtered result. Likewise when the search is
+        // resolved server-side (#104): the loaded rows are already the server's matches, so don't
+        // re-apply the local text filter (which could hide a match the server made on a field the
+        // row's `searchableText` doesn't include).
         let base = ListQuery.filtered(
-            items, query: query, searchableText: searchableText,
+            items, query: isServerSearching ? "" : query, searchableText: searchableText,
             date: serverDateFiltering ? nil : filterDate, dateRange: dateRange
         )
         .filter { ListQuery.matchesFacets($0, facets: facets, selected: selectedFacets) }
@@ -32,14 +35,57 @@ extension LoadableList {
         loadPageInDateRange != nil
     }
 
-    /// Loads one page, routing through the server-side date loader when one is set (passing the
-    /// active range) so the date chip filters the whole collection, not just loaded rows (#86).
+    /// The search field's text with surrounding whitespace removed.
+    var trimmedQuery: String {
+        query.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Whether a server-side search is currently in effect: a `serverSearch` loader is set and the
+    /// search field is non-empty (#104).
+    var isServerSearching: Bool {
+        serverSearch != nil && !trimmedQuery.isEmpty
+    }
+
+    /// The `.task(id:)` token that reloads a server-search list when its query changes (#104).
+    /// Empty for client-side lists, so their reload task never fires.
+    var serverSearchToken: String {
+        serverSearch == nil ? "" : trimmedQuery
+    }
+
+    /// Loads one page, routing through the server-side search loader when a query is active
+    /// (#104), then the server-side date loader when one is set (#86), else the plain page loader.
     func loadCurrentPage(_ cursor: String?) async throws -> Page<Item> {
+        if let serverSearch, isServerSearching {
+            return try await serverSearch(trimmedQuery, cursor)
+        }
         if let loadPageInDateRange {
             return try await loadPageInDateRange(cursor, dateRange)
         }
 
         return try await loadPage(cursor)
+    }
+
+    /// Reloads the first page when a server-search query changes (#104), debounced so each
+    /// keystroke doesn't fire a request. Clearing the field falls through `loadCurrentPage` to the
+    /// normal first page. Keeps the shown rows on failure rather than blanking the list.
+    func reloadForServerSearch() async {
+        guard serverSearch != nil else { return }
+
+        // Debounce: a rapid keystroke cancels this task (and this sleep) before any load.
+        try? await Task.sleep(for: .milliseconds(350))
+        guard !Task.isCancelled else { return }
+
+        detailItem = nil
+        selection = []
+        pagesLoaded = 1
+        do {
+            let page = try await loadCurrentPage(nil)
+            items = page.items
+            nextCursor = page.next
+            phase = .loaded
+        } catch {
+            if items.isEmpty { phase = .failed(message(for: error)) }
+        }
     }
 
     /// Where this list's chosen sort order is remembered between launches (#19). Keyed by title,

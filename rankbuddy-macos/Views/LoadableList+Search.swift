@@ -77,7 +77,9 @@ extension LoadableList {
     /// first page (#86). Driven by `.task(id: clientFilterToken)`, so SwiftUI cancels and restarts
     /// it as the filter changes — which also debounces typing via the initial sleep.
     func autoLoadWhileFiltering() async {
-        guard isClientFiltering, nextCursor != nil else { return }
+        // A server-side search (#104) already returns matches from the server, so don't also page
+        // in more rows to widen a client-side match.
+        guard !isServerSearching, isClientFiltering, nextCursor != nil else { return }
 
         // Debounce: a rapid keystroke/toggle cancels this task (and this sleep) before any load.
         try? await Task.sleep(for: .milliseconds(350))

@@ -169,6 +169,9 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     /// client's `next`-following path.
     private static func body(for url: URL) -> String {
         let path = url.path
+        // Server-side search (#104) — checked first because its paths also contain `/users` or
+        // `/candidates`, so the list routes below would otherwise swallow them.
+        if path.hasSuffix("/search") { return Self.searchBody(for: url) }
         if path.contains("/audit_log") {
             return Self.auditLogJSON
         }
@@ -198,13 +201,7 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
             return teamsJSON
         }
         if path.contains("/tests") {
-            // A single-test read (#105) is anything past the bare collection path (the paginated
-            // list keeps its offset in the query, so the list path still ends in "/tests").
-            if !path.hasSuffix("/tests") {
-                return Self.testDetailJSON
-            }
-            let isSecondPage = url.query?.contains("offset=3") ?? false
-            return isSecondPage ? testsPage2JSON : testsPage1JSON
+            return Self.testsBody(for: url)
         }
         return #"{"data":[],"next":null}"#
     }
@@ -357,6 +354,18 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
 }
 
 extension MockHackerRankURLProtocol {
+    /// The fixture for a `/tests` path: a single-test detail read (#105) for anything past the bare
+    /// collection path (the paginated list keeps its offset in the query, so the list path still
+    /// ends in "/tests"), else the paginated tests list. In an extension so the routing branches it
+    /// adds stay off both `body(for:)`'s cyclomatic budget and the class's type-body-length budget.
+    nonisolated static func testsBody(for url: URL) -> String {
+        if !url.path.hasSuffix("/tests") {
+            return testDetailJSON
+        }
+        let isSecondPage = url.query?.contains("offset=3") ?? false
+        return isSecondPage ? testsPage2JSON : testsPage1JSON
+    }
+
     /// The single-user object returned by `/users/me` (#72): the demo account's own identity,
     /// in the same shape as a People-list entry but not wrapped in a paged envelope. In an
     /// extension so it doesn't count toward the class's type-body-length budget.

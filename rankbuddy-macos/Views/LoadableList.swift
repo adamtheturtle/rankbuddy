@@ -53,6 +53,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// changing the range reloads, and the client-side date pass is skipped. `filterDate` is still
     /// set (it drives the chip and persistence) but isn't applied locally while this is set.
     var loadPageInDateRange: ((_ cursor: String?, _ range: String?) async throws -> Page<Item>)?
+    /// When set, a non-empty search field is resolved **server-side** (#104) — see
+    /// `LoadableList+Items`. `nil` keeps the client-side search the other lists use.
+    var serverSearch: ((_ query: String, _ cursor: String?) async throws -> Page<Item>)?
     /// The text a row is matched against when filtering by the search field.
     let searchableText: (Item) -> String
     /// The ways the list can be ordered; the first is the default. Empty hides the menu.
@@ -252,6 +255,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 // While a client-side filter (search/facet/date) is active, page in more (capped)
                 // so the match isn't limited to the first page — see `LoadableList+Search` (#86).
                 .task(id: clientFilterToken) { await autoLoadWhileFiltering() }
+                // Server-side search (#104): reload as the query changes; no-op for client lists.
+                .task(id: serverSearchToken) { await reloadForServerSearch() }
                 .onChange(of: reloadToken) { Task { await reload() } }
                 .onAppear { restoreSort() }
                 .onChange(of: sortSelection) { persistSort() }
