@@ -18,13 +18,16 @@ struct PeopleScreen: View {
             LoadableList(
                 title: "People",
                 emptyMessage: "No people",
-                // People is bounded (an org has a few thousand members) and the API has no
-                // name-search param, so load the whole list up front — fetched in parallel by
-                // `allUsers`, so it's a few seconds, not minutes — and present it as one page.
-                // Then search/sort/facets match every user instantly, with no fragile per-keystroke
-                // paging (#86).
+                // Browsing loads the whole bounded list up front — fetched in parallel by
+                // `allUsers`, so it's a few seconds, not minutes — and presents it as one page, so
+                // sort/facets cover every member (#86). A search query is sent to the server
+                // instead (#104), so on a large org a name match isn't gated on having loaded that
+                // member yet; clearing the field returns to the full list.
                 loadPage: { _ in
                     try await Page(items: HackerRankClient(account: account).allUsers(), next: nil)
+                },
+                serverSearch: { query, cursor in
+                    try await HackerRankClient(account: account).searchUsers(query: query, after: cursor)
                 },
                 searchableText: { "\($0.displayName) \($0.email) \($0.role ?? "")" },
                 sortOptions: [
