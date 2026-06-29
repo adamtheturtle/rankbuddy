@@ -3,12 +3,14 @@
 //  rankbuddy-macos
 //
 
+import BuddyDesignSystem
 import Flow
 import SwiftUI
 
 /// The faceted filter bar shown above a `LoadableList` (#55): a wrapping row of per-field
-/// multi-select dropdowns, each populated from the loaded items, plus a Clear-all button when
-/// any filter is active. Mirrors PadBuddy's list filter bar (State / Language / Owner …).
+/// multi-select chips, each populated from the loaded items, plus a Clear-all button when any
+/// filter is active. Each facet renders as PadBuddy's capsule `ChipMenuShell` — neutral when
+/// idle, accent with an inline × when active (#109) — the same chip vocabulary as the date chip.
 /// Renders nothing when no facets are declared, so unfaceted lists are unchanged.
 struct FacetBar<Item>: View {
     let facets: [ListFacet<Item>]
@@ -45,20 +47,24 @@ struct FacetBar<Item>: View {
     private func facetMenu(_ facet: ListFacet<Item>) -> some View {
         let options = ListQuery.facetOptions(facet, in: items)
         let chosen = selected[facet.id] ?? []
-        return Menu {
-            ForEach(options, id: \.self) { option in
-                Toggle(isOn: binding(facet.id, option)) { Text(option) }
+        let isActive = !chosen.isEmpty
+        return ChipMenuShell(
+            icon: facet.systemImage,
+            text: isActive ? "\(facet.label) (\(chosen.count))" : facet.label,
+            isActive: isActive,
+            fillColor: isActive ? Color.accentColor.opacity(0.18) : .chipIdleFill,
+            strokeColor: isActive ? Color.accentColor.opacity(0.4) : .subtleStroke,
+            labelColor: chipLabelColor(isActive: isActive),
+            menuDisabled: options.isEmpty,
+            clearLabel: "Clear \(facet.label) filter",
+            onClear: { selected[facet.id] = [] },
+            menu: {
+                // Multi-select: each value is a toggle, so several can be active at once.
+                ForEach(options, id: \.self) { option in
+                    Toggle(isOn: binding(facet.id, option)) { Text(option) }
+                }
             }
-
-            if !chosen.isEmpty {
-                Divider()
-                Button("Clear \(facet.label)") { selected[facet.id] = [] }
-            }
-        } label: {
-            Label(chosen.isEmpty ? facet.label : "\(facet.label) (\(chosen.count))", systemImage: facet.systemImage)
-        }
-        .fixedSize()
-        .disabled(options.isEmpty)
+        )
         .help("Filter by \(facet.label.lowercased())")
     }
 
