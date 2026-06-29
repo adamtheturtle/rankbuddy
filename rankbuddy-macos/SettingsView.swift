@@ -8,17 +8,20 @@ import SwiftUI
 
 /// The app's Settings scene: manage HackerRank accounts (add, edit, remove).
 struct SettingsView: View {
-    @Environment(AccountStore.self) private var store
+    // Internal so the Menu Bar tab extension (separate file) can drive the liveness sweep (#114).
+    @Environment(AccountStore.self) var store
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
-    @AppStorage(AppPresence.defaultsKey) private var presence: AppPresence = .both
+    @AppStorage(AppPresence.defaultsKey) var presence: AppPresence = .both
+    // The menu-bar / updates settings are internal so the Menu Bar tab (a separate file, for
+    // file_length) can read them (#114), like the MCP and Browser sections.
     @AppStorage(MenuBarPreferences.recentCountKey)
-    private var menuBarRecentCount = MenuBarPreferences.defaultRecentCount
-    @AppStorage(MenuBarPreferences.activeOnlyKey) private var menuBarActiveOnly = false
-    @AppStorage(LivenessSettings.backgroundUpdatesKey) private var backgroundUpdates = false
-    @AppStorage(LivenessSettings.notifyKey) private var notifyNewInterviews = false
+    var menuBarRecentCount = MenuBarPreferences.defaultRecentCount
+    @AppStorage(MenuBarPreferences.activeOnlyKey) var menuBarActiveOnly = false
+    @AppStorage(LivenessSettings.backgroundUpdatesKey) var backgroundUpdates = false
+    @AppStorage(LivenessSettings.notifyKey) var notifyNewInterviews = false
     @AppStorage(LivenessSettings.intervalMinutesKey)
-    private var refreshMinutes = LivenessSettings.defaultIntervalMinutes
-    @AppStorage(LivenessSettings.dockScopeKey) private var dockBadgeScope: DockBadgeScope = .currentAccount
+    var refreshMinutes = LivenessSettings.defaultIntervalMinutes
+    @AppStorage(LivenessSettings.dockScopeKey) var dockBadgeScope: DockBadgeScope = .currentAccount
     @AppStorage(BiometricAuth.revealSettingKey) private var biometricReveal = false
     @AppStorage(GeneralSettings.refreshSecondsKey)
     private var listRefreshSeconds = GeneralSettings.defaultRefreshSeconds
@@ -48,6 +51,11 @@ struct SettingsView: View {
             browserTab
                 .tabItem {
                     Label("Browser", systemImage: "safari")
+                }
+
+            menuBarTab
+                .tabItem {
+                    Label("Menu Bar", systemImage: "menubar.rectangle")
                 }
 
             mcpTab
@@ -103,60 +111,6 @@ struct SettingsView: View {
             } footer: {
                 Text("Periodically reload the list you're viewing. Off by default; refreshes only " +
                     "while you're on a list (not inside an item) and haven't scrolled past the first page.")
-            }
-
-            if presence.showsMenuBarIcon {
-                Section {
-                    Stepper(
-                        "Recent items in the menu bar: \(menuBarRecentCount)",
-                        value: $menuBarRecentCount,
-                        in: 0 ... MenuBarPreferences.maxRecentCount
-                    )
-
-                    Toggle("Show only active or upcoming items", isOn: $menuBarActiveOnly)
-                } header: {
-                    Text("Menu Bar")
-                } footer: {
-                    Text("How many recently viewed items the menu bar lists (0 hides the Recent section). " +
-                        "When filtered, it shows only open tests and scheduled interviews.")
-                }
-            }
-
-            Section {
-                Toggle("Show upcoming interviews on the Dock icon", isOn: $backgroundUpdates)
-                    .onChange(of: backgroundUpdates) { _, enabled in
-                        if enabled { LivenessMonitor.shared.requestBadgeAuthorization() }
-                        Task { await LivenessMonitor.shared.sweep(store: store) }
-                    }
-
-                Toggle("Notify me about new interviews", isOn: $notifyNewInterviews)
-                    .onChange(of: notifyNewInterviews) { _, enabled in
-                        if enabled { LivenessNotifier.shared.requestAuthorization() }
-                    }
-                    .disabled(!backgroundUpdates)
-
-                Picker("Check every", selection: $refreshMinutes) {
-                    ForEach(LivenessSettings.intervalOptions, id: \.self) { minutes in
-                        Text(minutes == 1 ? "1 minute" : "\(minutes) minutes").tag(minutes)
-                    }
-                }
-                .disabled(!backgroundUpdates)
-
-                Picker("Badge counts", selection: $dockBadgeScope) {
-                    ForEach(DockBadgeScope.allCases) { scope in
-                        Text(scope.label).tag(scope)
-                    }
-                }
-                .disabled(!backgroundUpdates)
-                .onChange(of: dockBadgeScope) {
-                    Task { await LivenessMonitor.shared.sweep(store: store) }
-                }
-            } header: {
-                Text("Updates")
-            } footer: {
-                Text("Keeps a count of scheduled interviews on the Dock icon and, optionally, " +
-                    "posts a notification when new interviews appear, refreshed in the background " +
-                    "even when no window is open. Badge counts the current account or every account.")
             }
 
             Section {
