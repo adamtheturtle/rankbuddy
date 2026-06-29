@@ -182,6 +182,7 @@ enum RankBuddyPalette {
 /// App menu commands: jump to a section (⌘1/⌘2/⌘3) and open the command palette (⌘K).
 struct AppCommands: Commands {
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
+    @Environment(\.openWindow) private var openWindow
     let palette: PaletteModel
     let openLink: OpenLinkModel
 
@@ -202,6 +203,9 @@ struct AppCommands: Commands {
             }
 
             Divider()
+
+            // The account activity feed now lives in its own window, not Settings (#115).
+            Button("Account Activity") { openWindow(id: WindowID.activity) }
 
             Button("Command Palette…") { palette.isPresented = true }
                 .keyboardShortcut("k", modifiers: .command)

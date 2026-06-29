@@ -105,6 +105,15 @@ struct RankBuddyApp: App {
                 .preferredColorScheme(appearance.colorScheme)
         }
 
+        // The account activity feed (audit log) lives in its own window rather than a Settings
+        // tab (#115), opened from the Window menu. A single unique window, like the main one.
+        Window("Account Activity", id: WindowID.activity) {
+            AccountActivityView()
+                .environment(accountStore)
+                .environment(\.openURL, browserOpenURLAction)
+                .preferredColorScheme(appearance.colorScheme)
+        }
+
         Settings {
             SettingsView()
                 .environment(accountStore)
@@ -140,4 +149,6 @@ enum WindowID {
     static let main = "main"
     /// The standalone item-detail window (#49).
     static let detail = "detail"
+    /// The account activity (audit log) window (#115).
+    static let activity = "activity"
 }

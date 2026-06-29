@@ -1,18 +1,10 @@
 //
-//  SettingsView+Activity.swift
+//  AccountActivity.swift
 //  rankbuddy-macos
 //
 
 import BuddyAppKit
 import SwiftUI
-
-extension SettingsView {
-    /// The Activity tab (#106): the current account's server-side audit log. In a separate file
-    /// so it doesn't count toward `SettingsView`'s body length, like the MCP/Browser sections.
-    var activityTab: some View {
-        AccountActivityView()
-    }
-}
 
 /// A read-only, paged view of the current account's audit log (#106) — the organisation's actual
 /// change history from `GET /audit_log` (who changed what, when, from where). Distinct from the
