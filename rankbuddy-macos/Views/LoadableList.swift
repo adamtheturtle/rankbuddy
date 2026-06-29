@@ -163,81 +163,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 // column, where no sidebar location is in scope. `.sidebar` placement can't be
                 // realized here and logs a `sidebarPocket` "Invalid Configuration" fault (#77).
                 .searchable(text: $query, placement: .automatic, prompt: "Search \(title)")
-                .toolbar {
-                    accessoryToolbar()
-
-                    if filterDate != nil {
-                        FilterChipMenu(
-                            title: dateFilterLabel,
-                            icon: "calendar",
-                            selected: $dateRange,
-                            options: NamedDateRange.options,
-                            formatter: { $0.capitalized }
-                        )
-                        .help("Filter \(title) by date")
-                    }
-
-                    if !sortOptions.isEmpty {
-                        Menu {
-                            Picker("Sort By", selection: $sortSelection) {
-                                ForEach(sortOptions) { option in
-                                    Text(option.label).tag(Optional(option.id))
-                                }
-                            }
-                        } label: {
-                            Label("Sort", systemImage: "arrow.up.arrow.down")
-                        }
-                        .help("Sort \(title)")
-                    }
-
-                    // Plain-language filtering, interpreted on-device (#91). Hidden entirely
-                    // when the model is unavailable so the affordance never dead-ends.
-                    if SearchInterpreter.isAvailable {
-                        Button {
-                            smartFilterFailed = false
-                            showSmartFilter = true
-                        } label: {
-                            Label("Smart Filter", systemImage: "sparkle.magnifyingglass")
-                        }
-                        .help("Filter \(title) with a plain-language request, interpreted on your device")
-                        .keyboardShortcut("f", modifiers: [.command, .shift])
-                    }
-
-                    if let restorationKey {
-                        SavedSearchMenu(
-                            title: title,
-                            restorationKey: restorationKey,
-                            query: $query,
-                            dateRange: $dateRange
-                        )
-                    }
-
-                    if let csvExport {
-                        Button {
-                            CSVExport.save(csvExport(visibleItems), suggestedName: csvFilename)
-                        } label: {
-                            Label("Export CSV…", systemImage: "tablecells")
-                        }
-                        .help("Export \(title) as CSV")
-
-                        if !selection.isEmpty {
-                            Button {
-                                CSVExport.save(csvExport(selectedItems), suggestedName: "\(csvFilename)-selected")
-                            } label: {
-                                Label("Export Selected (\(selection.count))…", systemImage: "tablecells.badge.ellipsis")
-                            }
-                            .help("Export the selected \(title) as CSV (#44)")
-                        }
-                    }
-
-                    Button {
-                        Task { await reload() }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                    .keyboardShortcut("r", modifiers: .command)
-                    .disabled(isLoading)
-                }
+                // A customizable toolbar (#101): only the primary actions show by default; the rest
+                // are available via "Customize Toolbar…". Built in `LoadableList+Toolbar`.
+                .toolbar(id: "list") { customToolbar }
                 .sheet(isPresented: $showSmartFilter) {
                     SmartFilterSheet(
                         text: $smartFilterText,
