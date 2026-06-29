@@ -59,11 +59,6 @@ struct SettingsView: View {
                 .tabItem {
                     Label("MCP", systemImage: "terminal")
                 }
-
-            aboutTab
-                .tabItem {
-                    Label("About", systemImage: "info.circle")
-                }
         }
         .frame(width: 520, height: 380)
         .alert("Couldn’t change the login item", isPresented: loginItemErrorPresented) {
