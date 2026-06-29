@@ -108,6 +108,45 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("query"))
     }
 
+    // MARK: - Server-side people/candidate search (#104)
+
+    @Test func `the catalogue advertises the server-side search tools`() async {
+        let names = await provider().tools().map(\.name)
+        #expect(names.contains("search_users"))
+        #expect(names.contains("search_candidates"))
+    }
+
+    @Test func `search_users matches a user server-side`() async {
+        let result = await provider().callTool("search_users", arguments: ["query": .string("rhea")])
+        let body = text(result)
+        #expect(result.isError != true)
+        #expect(body.contains("rhea@example.com"))
+        #expect(body.contains("\"matches\""))
+        #expect(!body.contains("\"count\" : 0"))
+    }
+
+    @Test func `search_users requires a query`() async {
+        let result = await provider().callTool("search_users", arguments: nil)
+        #expect(result.isError == true)
+        #expect(text(result).contains("query"))
+    }
+
+    @Test func `search_candidates matches a candidate in a test`() async {
+        let result = await provider().callTool(
+            "search_candidates", arguments: ["test_id": .string("t1"), "query": .string("ada")]
+        )
+        let body = text(result)
+        #expect(result.isError != true)
+        #expect(body.contains("Ada Lovelace"))
+        #expect(body.contains("\"test_id\" : \"t1\""))
+    }
+
+    @Test func `search_candidates requires a test_id`() async {
+        let result = await provider().callTool("search_candidates", arguments: ["query": .string("ada")])
+        #expect(result.isError == true)
+        #expect(text(result).contains("test_id"))
+    }
+
     // MARK: - Resources & prompts
 
     @Test func `the accounts resource is advertised and readable`() async throws {

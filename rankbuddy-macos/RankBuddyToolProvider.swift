@@ -71,6 +71,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         case "list_interviews": return await listInterviews(account: account)
         case "list_candidates", "search_tests", "search_questions", "search_interviews":
             return await callKeyedTool(name, arguments: arguments, account: account)
+        case "search_users", "search_candidates":
+            // Server-side people/candidate search (#104), in its own dispatch + file.
+            return await callPeopleSearchTool(name, arguments: arguments, account: account)
         default:
             return errorResult("Unknown tool: \(name)")
         }

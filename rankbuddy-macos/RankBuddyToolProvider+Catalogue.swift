@@ -45,7 +45,15 @@ extension RankBuddyToolProvider {
             readOnly("search_questions", "Search the account's questions by name (bounded paging).",
                      properties: ["query": query, "account": account], required: ["query"]),
             readOnly("search_interviews", "Search the account's interviews by title/status (bounded paging).",
-                     properties: ["query": query, "account": account], required: ["query"])
+                     properties: ["query": query, "account": account], required: ["query"]),
+            readOnly("search_users", "Search the organisation's users by name or email (server-side).",
+                     properties: ["query": query, "account": account], required: ["query"]),
+            readOnly("search_candidates", "Search a test's candidates by name or email (server-side).",
+                     properties: [
+                         "test_id": ["type": "string", "description": "The test's id."],
+                         "query": query, "account": account
+                     ],
+                     required: ["test_id", "query"])
         ]
     }
 }
