@@ -358,7 +358,7 @@ struct HackerRankClient {
     /// A dated fallback title for a QuickPad created without one (#83), so the optional title
     /// stays optional in the UI while the API still receives the title it requires.
     private static func defaultQuickPadTitle() -> String {
-        "QuickPad — \(Date.now.formatted(date: .abbreviated, time: .shortened))"
+        "QuickPad \(Date.now.formatted(date: .abbreviated, time: .shortened))"
     }
 
     /// Internal (not private) so per-resource extensions (`HackerRankClient+Interview`) can

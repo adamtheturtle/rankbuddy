@@ -115,7 +115,7 @@ struct TestDetailView: View {
                 .help("Delete this test")
             }
             ToolbarItem {
-                PrintReportButton(jobTitle: "Test – \(test.name)") {
+                PrintReportButton(jobTitle: "Test: \(test.name)") {
                     TestReport(test: test)
                 }
             }
@@ -136,7 +136,7 @@ struct TestDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(account.isMock
-                ? "Demo account — no real test is deleted."
+                ? "Demo account: no real test is deleted."
                 : "This permanently deletes the test on HackerRank. This can’t be undone.")
         }
         .alert("Couldn’t delete test", isPresented: deleteErrorPresented) {

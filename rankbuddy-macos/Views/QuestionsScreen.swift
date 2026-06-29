@@ -205,7 +205,7 @@ struct QuestionDetailView: View {
         .advertisesItemActivity(collection: .questions, itemID: question.id, title: question.name)
         .toolbar {
             ToolbarItem {
-                PrintReportButton(jobTitle: "Question – \(question.name)") {
+                PrintReportButton(jobTitle: "Question: \(question.name)") {
                     QuestionReport(question: question)
                 }
             }

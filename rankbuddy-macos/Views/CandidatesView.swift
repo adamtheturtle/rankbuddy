@@ -149,7 +149,7 @@ struct InviteCandidateSheet: View {
     /// surprise.
     private var consequenceText: String {
         if account.isMock {
-            return "Demo account — no real invitation is sent."
+            return "Demo account: no real invitation is sent."
         }
         return sendEmail
             ? "This invites a real candidate to this test on HackerRank and emails them the invitation."
@@ -271,7 +271,7 @@ struct CandidateDetailView: View {
         .navigationTitle(candidate.fullName ?? candidate.email)
         .toolbar {
             ToolbarItem {
-                PrintReportButton(jobTitle: "Candidate – \(candidate.fullName ?? candidate.email)") {
+                PrintReportButton(jobTitle: "Candidate: \(candidate.fullName ?? candidate.email)") {
                     CandidateReport(candidate: candidate)
                 }
             }

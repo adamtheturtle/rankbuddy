@@ -27,7 +27,7 @@ struct CreateTeamSheet: View {
                     TextField("Team name", text: $name)
                 } footer: {
                     Text(account.isMock
-                        ? "Demo account — no real team is created."
+                        ? "Demo account: no real team is created."
                         : "This creates a real team in your HackerRank for Work organisation.")
                         .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
                         .fixedSize(horizontal: false, vertical: true)
@@ -106,7 +106,7 @@ struct AddTeamMemberSheet: View {
                     }
                 } footer: {
                     Text(account.isMock
-                        ? "Demo account — no real member is added."
+                        ? "Demo account: no real member is added."
                         : "This adds a real member to the team on HackerRank.")
                         .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
                         .fixedSize(horizontal: false, vertical: true)

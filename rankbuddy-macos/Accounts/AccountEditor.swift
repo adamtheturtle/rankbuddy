@@ -94,7 +94,7 @@ struct AccountEditor: View {
                 ValidationStatusBanner(
                     validation,
                     validating: "Validating…",
-                    success: "Token is valid — connected to \(draft.baseURL.host() ?? "HackerRank")"
+                    success: "Token is valid: connected to \(draft.baseURL.host() ?? "HackerRank")"
                 )
             }
 

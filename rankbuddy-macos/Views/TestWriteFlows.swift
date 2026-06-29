@@ -87,8 +87,8 @@ struct TestEditorSheet: View {
     private var consequenceText: String {
         if account.isMock {
             return isEditing
-                ? "Demo account — no real test is changed."
-                : "Demo account — no real test is created."
+                ? "Demo account: no real test is changed."
+                : "Demo account: no real test is created."
         }
         return isEditing
             ? "This renames a real test in your HackerRank organisation."

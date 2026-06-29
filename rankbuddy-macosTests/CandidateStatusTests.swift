@@ -41,7 +41,7 @@ struct CandidateStatusTests {
     // MARK: - Pipeline (ATS) status
 
     @Test func `known pipeline codes get labels`() throws {
-        #expect(try candidate(atsState: 2).pipelineStatusLabel == "Test completed — qualified")
+        #expect(try candidate(atsState: 2).pipelineStatusLabel == "Test completed: qualified")
         #expect(try candidate(atsState: 9).pipelineStatusLabel == "Offer accepted")
         #expect(try candidate(atsState: 21).pipelineStatusLabel == "Hired")
         #expect(try candidate(atsState: 22).pipelineStatusLabel == "Rejected")

@@ -115,7 +115,7 @@ struct NoAccountView: View {
             } description: {
                 Text("RankBuddy connects to HackerRank for Work with a personal access token, " +
                     "then keeps your tests, candidates, questions, and interviews a click away. " +
-                    "Add an account to get started — or explore the demo first.")
+                    "Add an account to get started, or explore the demo first.")
             } actions: {
                 SettingsLink {
                     Text("Add Account…")

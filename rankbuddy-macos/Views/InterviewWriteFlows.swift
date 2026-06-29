@@ -26,7 +26,7 @@ struct NewQuickPadSheet: View {
                     TextField("Title (optional)", text: $title)
                 } footer: {
                     Text(account.isMock
-                        ? "Demo account — no real QuickPad is created."
+                        ? "Demo account: no real QuickPad is created."
                         : "This creates a real, ready-to-share QuickPad in your HackerRank organisation.")
                         .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
                         .fixedSize(horizontal: false, vertical: true)
@@ -115,7 +115,7 @@ struct ScheduleInterviewSheet: View {
                         .lineLimit(2 ... 4)
                 } footer: {
                     Text(account.isMock
-                        ? "Demo account — no real interview is scheduled."
+                        ? "Demo account: no real interview is scheduled."
                         : "This schedules a real interview in your HackerRank organisation.")
                         .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
                         .fixedSize(horizontal: false, vertical: true)

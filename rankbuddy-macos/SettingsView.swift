@@ -155,7 +155,7 @@ struct SettingsView: View {
                 Text("Updates")
             } footer: {
                 Text("Keeps a count of scheduled interviews on the Dock icon and, optionally, " +
-                    "posts a notification when new interviews appear — refreshed in the background " +
+                    "posts a notification when new interviews appear, refreshed in the background " +
                     "even when no window is open. Badge counts the current account or every account.")
             }
 
@@ -191,7 +191,7 @@ struct SettingsView: View {
                 Section {
                     Toggle("Allow the MCP server to make changes", isOn: $mcpAllowWrites)
                 } footer: {
-                    Text("Off by default. When on, the server also exposes write tools — creating " +
+                    Text("Off by default. When on, the server also exposes write tools: creating " +
                         "and deleting tests, inviting candidates, creating users/teams, and scheduling " +
                         "interviews. Only enable this if you trust the assistant with live data. Takes " +
                         "effect after you restart the assistant.")

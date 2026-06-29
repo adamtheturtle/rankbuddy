@@ -98,7 +98,7 @@ struct InterviewDetailView: View {
         )
         .toolbar {
             ToolbarItem {
-                PrintReportButton(jobTitle: "Interview – \(interview.title ?? interview.id)") {
+                PrintReportButton(jobTitle: "Interview: \(interview.title ?? interview.id)") {
                     InterviewReport(interview: interview)
                 }
             }

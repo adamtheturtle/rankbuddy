@@ -101,7 +101,7 @@ struct CreateUserSheet: View {
                     }
                 } footer: {
                     Text(account.isMock
-                        ? "Demo account — no real user is created."
+                        ? "Demo account: no real user is created."
                         : "This creates a real user in your HackerRank for Work organisation.")
                         .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
                         .fixedSize(horizontal: false, vertical: true)

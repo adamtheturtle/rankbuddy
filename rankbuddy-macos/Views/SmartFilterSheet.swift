@@ -27,7 +27,7 @@ struct SmartFilterSheet: View {
             Label("Smart Filter", systemImage: "sparkle.magnifyingglass")
                 .font(.headline)
 
-            Text("Describe what you're looking for in plain language — it's interpreted on your device.")
+            Text("Describe what you're looking for in plain language, it's interpreted on your device.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 

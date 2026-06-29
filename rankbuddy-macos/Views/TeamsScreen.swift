@@ -134,7 +134,7 @@ struct TeamMembersList: View {
             Button("Cancel", role: .cancel) {}
         } message: { member in
             Text(account.isMock
-                ? "Demo account — \(member.displayName) is not really removed."
+                ? "Demo account: \(member.displayName) is not really removed."
                 : "This removes \(member.displayName) from the team on HackerRank.")
         }
         .alert("Couldn’t remove member", isPresented: removalErrorPresented) {
