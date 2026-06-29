@@ -82,16 +82,31 @@ struct MenuBarContent: View {
             // A single account: a plain, non-interactive label is enough.
             Text("Account: \(store.currentAccount?.label ?? "")")
         } else {
-            // Multiple accounts: show the current target and let the user switch it.
-            Menu("Account: \(store.currentAccount?.label ?? "None")") {
+            // Multiple accounts: show the current target (or the merged view) and let the user
+            // switch — including to the combined "All Accounts" view — mirroring PadBuddy's
+            // Switch Account menu, with each account's own icon (#110, #17, #64).
+            Menu("Account: \(store.isMergedView ? "All Accounts" : (store.currentAccount?.label ?? "None"))") {
+                Button {
+                    store.showAllAccounts = true
+                } label: {
+                    if store.isMergedView {
+                        Label("All Accounts", systemImage: "checkmark")
+                    } else {
+                        Text("All Accounts")
+                    }
+                }
+
+                Divider()
+
                 ForEach(store.accounts) { account in
                     Button {
+                        store.showAllAccounts = false
                         store.currentAccountID = account.id
                     } label: {
-                        if account.id == store.currentAccount?.id {
+                        if !store.isMergedView, account.id == store.currentAccount?.id {
                             Label(account.label, systemImage: "checkmark")
                         } else {
-                            Text(account.label)
+                            Label(account.label, systemImage: account.displayIcon)
                         }
                     }
                 }
