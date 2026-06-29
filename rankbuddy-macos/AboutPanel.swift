@@ -11,7 +11,7 @@ import AppKit
 enum AboutPanel {
     /// The credits line shown under the version in the About panel.
     static let creditsText = """
-    A native macOS browser for HackerRank for Work — tests, candidates, questions, \
+    A native macOS browser for HackerRank for Work: tests, candidates, questions, \
     and interviews.
 
     © 2026 Adam Dangoor
