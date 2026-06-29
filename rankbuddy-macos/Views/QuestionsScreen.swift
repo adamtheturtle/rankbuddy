@@ -51,6 +51,14 @@ struct QuestionsScreen: View {
                 },
                 csvExport: { CSVExport.questions($0) },
                 csvFilename: "questions",
+                favoriteRef: { question in
+                    store.currentAccountID.map {
+                        FavoriteRef(
+                            accountID: $0.uuidString, collection: .questions,
+                            itemID: question.id, title: question.name
+                        )
+                    }
+                },
                 row: { QuestionRow(question: $0) },
                 detail: { QuestionDetailView(question: $0) }
             )

@@ -88,6 +88,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     var csvExport: (([Item]) -> String)?
     /// Suggested CSV file name (no extension).
     var csvFilename = "export"
+    /// The favourite a row maps to, so the row can be dragged onto the sidebar's Favourites
+    /// section to pin it (#89/#41). `nil` (the default) leaves rows non-draggable — the
+    /// read-only People/Teams and merged lists, which have no favourites, opt out by not setting it.
+    var favoriteRef: (Item) -> FavoriteRef? = { _ in nil }
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
@@ -269,6 +273,11 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .onDoubleClick { open($0) }
                 .onReturnKey { open($0) }
                 .rowContextMenu { contextMenu($0) }
+                // Drag a row onto the sidebar's Favourites section to pin it (#89/#41). Rows
+                // without a `favoriteRef` (People/Teams/merged) return nil and stay non-draggable.
+                // The session hooks reveal the sidebar's drop zone only while a favourite is in flight.
+                .onRowDrag { favoriteRef($0).flatMap(FavoritePasteboard.item(for:)) }
+                .onDragSession(began: FavoriteDragLifecycle.onBegan, ended: FavoriteDragLifecycle.onEnded)
                 .onTopRowChange { persistScrollAnchor($0) }
                 // Load-more keys off the *bottom* of the viewport (FastList #1, shipped in 0.3.0),
                 // so it fires on any window size, never stranding a list on its first page (#85).

@@ -103,4 +103,19 @@ struct FavoritesStoreTests {
     @Test func `the ref id combines account, collection, and item`() {
         #expect(ref("a", .questions, "q9").id == "a|questions|q9")
     }
+
+    @Test func `add pins an absent favourite`() {
+        let store = FavoritesStore(defaults: makeDefaults(#function))
+        store.add(ref())
+        #expect(store.isFavorite(collection: .tests, accountID: "acc1", itemID: "t1"))
+    }
+
+    @Test func `add is idempotent and never un-favourites`() {
+        let store = FavoritesStore(defaults: makeDefaults(#function))
+        store.add(ref())
+        // Dropping an already-pinned row again must leave it pinned, unlike toggle (#89).
+        store.add(ref("acc1", .tests, "t1", "Same id, new title"))
+        #expect(store.favorites.count == 1)
+        #expect(store.isFavorite(collection: .tests, accountID: "acc1", itemID: "t1"))
+    }
 }

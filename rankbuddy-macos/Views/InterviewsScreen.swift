@@ -84,6 +84,14 @@ struct InterviewsScreen: View {
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.interviews($0) },
                 csvFilename: "interviews",
+                favoriteRef: { interview in
+                    store.currentAccountID.map {
+                        FavoriteRef(
+                            accountID: $0.uuidString, collection: .interviews,
+                            itemID: interview.id, title: interview.title ?? "Interview \(interview.id)"
+                        )
+                    }
+                },
                 row: { InterviewRow(interview: $0) },
                 detail: { InterviewDetailView(interview: $0) }
             )

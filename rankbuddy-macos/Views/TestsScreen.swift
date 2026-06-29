@@ -68,6 +68,11 @@ struct TestsScreen: View {
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.tests($0) },
                 csvFilename: "tests",
+                favoriteRef: { test in
+                    store.currentAccountID.map {
+                        FavoriteRef(accountID: $0.uuidString, collection: .tests, itemID: test.id, title: test.name)
+                    }
+                },
                 row: { TestRow(test: $0) },
                 detail: { TestDetailView(test: $0, account: account, onChanged: { reloadToken += 1 }) }
             )

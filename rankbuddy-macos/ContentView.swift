@@ -7,6 +7,7 @@ import AppKit
 import BuddyAppKit
 import CommandPaletteKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The main window's root: a split view with a sidebar of the top-level sections and a
 /// detail pane that hosts the selected section's read-only list and detail views.
@@ -23,6 +24,10 @@ struct ContentView: View {
     @Environment(InterviewTemplatesStore.self) private var templates
     @Environment(InterviewTemplateLauncher.self) private var launcher
     @Environment(AccountHealthMonitor.self) private var health
+    /// Reveals the Favourites drop zone only while a favourite-able row is being dragged (#89).
+    @State private var dragMonitor = FavoriteDragMonitor.shared
+    /// Whether a drag is currently hovering the Favourites drop zone (drives its highlight).
+    @State private var isFavoriteDropTargeted = false
 
     var body: some View {
         @Bindable var palette = palette
@@ -38,21 +43,20 @@ struct ContentView: View {
                 }
 
                 let favourites = accountFavorites
-                if !favourites.isEmpty {
+                // The section also appears (empty) while a favourite-able row is being dragged,
+                // so there's always somewhere to drop it — the empty-state drop zone of #89.
+                if !favourites.isEmpty || dragMonitor.isDragging {
                     Section("Favourites") {
                         ForEach(favourites) { ref in
-                            Button { openFavorite(ref) } label: {
-                                Label(ref.title, systemImage: ref.collection.systemImage)
-                                    .lineLimit(1)
-                            }
-                            .buttonStyle(.plain)
-                            .contextMenu {
-                                Button("Remove from Favourites", role: .destructive) {
-                                    _ = favorites.toggle(ref)
-                                }
-                            }
+                            favoriteRow(ref)
                         }
                         .onMove(perform: moveFavorites)
+
+                        // Revealed only mid-drag (#89): a clear target that also covers the
+                        // empty-favourites case, where there's no row to drop onto.
+                        if dragMonitor.isDragging {
+                            favoriteDropZone
+                        }
                     }
                 }
             }
@@ -115,6 +119,57 @@ struct ContentView: View {
     private func openFavorite(_ ref: FavoriteRef) {
         RankBuddyDeepLink.open(collection: ref.collection, accountID: ref.accountID, itemID: ref.itemID)
         selection = ref.collection.section
+    }
+
+    /// One favourite row. Opening deep-links it; the context menu removes it; and the row is
+    /// itself a drop target, so dropping a dragged list row anywhere over the section pins it (#89).
+    private func favoriteRow(_ ref: FavoriteRef) -> some View {
+        Button { openFavorite(ref) } label: {
+            Label(ref.title, systemImage: ref.collection.systemImage)
+                .lineLimit(1)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button("Remove from Favourites", role: .destructive) {
+                _ = favorites.toggle(ref)
+            }
+        }
+        // `.onDrop`, not `.dropDestination(for:)`: the latter never fires its action inside a
+        // List row. Dropping onto an existing favourite adds the dragged item (it doesn't reorder).
+        .onDrop(of: [.rankBuddyFavorite], isTargeted: nil) { handleFavoriteDrop($0) }
+    }
+
+    /// The mid-drag drop zone (#89): a clear hint that also covers the empty-favourites case,
+    /// where there's no row to drop onto. Highlights Finder-style while a drag hovers it.
+    private var favoriteDropZone: some View {
+        Label("Drop to add to Favourites", systemImage: "plus.circle.dashed")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+            .background(
+                isFavoriteDropTargeted ? Color.accentColor.opacity(0.15) : .clear,
+                in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+            )
+            .onDrop(of: [.rankBuddyFavorite], isTargeted: $isFavoriteDropTargeted) { handleFavoriteDrop($0) }
+    }
+
+    /// Pins each dropped item to the account carried in its payload (so a drop pins to the
+    /// originating account, not whichever happens to be active). Returns whether anything ours
+    /// was accepted, which drives the drop animation.
+    private func handleFavoriteDrop(_ providers: [NSItemProvider]) -> Bool {
+        var accepted = false
+        let identifier = UTType.rankBuddyFavorite.identifier
+        for provider in providers where provider.hasItemConformingToTypeIdentifier(identifier) {
+            accepted = true
+            provider.loadDataRepresentation(forTypeIdentifier: identifier) { data, _ in
+                guard let data, let ref = FavoritePasteboard.decode(from: data) else { return }
+
+                Task { @MainActor in favorites.add(ref) }
+            }
+        }
+        return accepted
     }
 
     /// Persists a drag-reorder of the current account's favourites.

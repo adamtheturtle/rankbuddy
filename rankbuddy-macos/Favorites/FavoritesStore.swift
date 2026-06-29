@@ -94,6 +94,16 @@ final class FavoritesStore {
         }
     }
 
+    /// Pins the item if it isn't already favourited; a no-op when it is. Unlike `toggle`, a
+    /// repeated add never removes — the right semantics for drag-to-pin (#89), where dropping an
+    /// already-pinned row should leave it pinned rather than silently un-favourite it.
+    func add(_ ref: FavoriteRef) {
+        guard !favorites.contains(where: { $0.id == ref.id }) else { return }
+
+        favorites.append(ref)
+        persist()
+    }
+
     /// Adds the item when absent, removes it when present. Returns the resulting state.
     @discardableResult
     func toggle(_ ref: FavoriteRef) -> Bool {
