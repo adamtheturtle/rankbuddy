@@ -87,6 +87,9 @@ struct TeamRow: View {
                     .foregroundStyle(.secondary)
             }
         }
+        // Fill the row width so the content is left-aligned rather than centred in the column
+        // (#111) — teams rows carry no trailing badge to stretch them like the other lists.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 }

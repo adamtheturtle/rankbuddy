@@ -177,6 +177,10 @@ struct PersonRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+        // Fill the row width so the content is left-aligned rather than hugging its text and
+        // being centred in the column (#111) — the people/teams rows have no trailing badge to
+        // stretch them the way the tests/interviews rows do.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 }

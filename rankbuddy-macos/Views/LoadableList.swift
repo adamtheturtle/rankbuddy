@@ -153,9 +153,11 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         // window's detail column, so selecting a row shows its detail without a push/pop.
         HSplitView {
             listColumn
-                .frame(minWidth: 300, idealWidth: 380, maxWidth: .infinity)
+                // maxHeight so each pane fills the window's full height: without it the panes
+                // size to their content and the enclosing stack centres the short list (#111).
+                .frame(minWidth: 300, idealWidth: 380, maxWidth: .infinity, maxHeight: .infinity)
             detailColumn
-                .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity)
+                .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -284,12 +286,41 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 // Threshold is a generous prefetch lead so rows appear before the end, no stall (#87).
                 .onReachEnd(threshold: 32) { Task { await loadMore() } }
                 .scrollToRow(id: scrollTarget) { scrollTarget = nil }
+                // A floating pill at the bottom of the list while the next page loads, so it's
+                // clear more rows are on the way when scrolling to the end (rather than the list
+                // appearing to simply stop) (#85).
+                .overlay(alignment: .bottom) {
+                    if isLoadingMore { loadMoreIndicator }
+                }
+                .animation(.default, value: isLoadingMore)
                 .navigationSubtitle(subtitle(visibleCount: visible.count))
+                // Make the list itself greedy so it fills the column under the facet bar (#111).
+                // Inside a VStack, FastList is otherwise offered only its ideal height, so a few
+                // rows sized to content and the surrounding VStack centred them vertically.
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        // Fill the column and anchor to the top so a short list (e.g. a handful of tests or
-        // teams) starts at the top of the window rather than being vertically centered (#111).
+        // Anchor the facet bar + list to the top of the column (matters for the filtered-empty
+        // state, whose placeholder would otherwise float in the vertical centre) (#111).
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    /// A floating "Loading more…" pill shown over the bottom of the list while the next page
+    /// is being fetched (#85), so reaching the end reads as "more coming" rather than "the end".
+    private var loadMoreIndicator: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .controlSize(.small)
+            Text("Loading more…")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(.separator))
+        .padding(.bottom, 12)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     /// A loaded-count summary, with a `+` when more pages remain to be paged in.
