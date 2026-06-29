@@ -18,14 +18,12 @@ struct PeopleScreen: View {
             LoadableList(
                 title: "People",
                 emptyMessage: "No people",
-                // Browsing loads the whole bounded list up front — fetched in parallel by
-                // `allUsers`, so it's a few seconds, not minutes — and presents it as one page, so
-                // sort/facets cover every member (#86). A search query is sent to the server
-                // instead (#104), so on a large org a name match isn't gated on having loaded that
-                // member yet; clearing the field returns to the full list.
-                loadPage: { _ in
-                    try await Page(items: HackerRankClient(account: account).allUsers(), next: nil)
-                },
+                // Browse pages in 100 at a time so the first rows appear immediately instead of
+                // waiting for the whole org (thousands of members) to load up front (#108). A
+                // search query goes to the server (#104), so a name match isn't gated on having
+                // paged that member in; while a facet is active the list auto-pages (bounded by
+                // `searchPageCap`) so the facet still scans most of a large org (#86).
+                loadPage: { try await HackerRankClient(account: account).usersPage(after: $0) },
                 serverSearch: { query, cursor in
                     try await HackerRankClient(account: account).searchUsers(query: query, after: cursor)
                 },
@@ -38,6 +36,9 @@ struct PeopleScreen: View {
                     ListFacet("role", "Role", systemImage: "person.fill", value: { $0.role?.capitalized }),
                     ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.status?.capitalized })
                 ],
+                // People is bounded (a few thousand), so allow a deeper auto-load while a facet
+                // filter is active than the default, so the facet scans most of the org (#86).
+                searchPageCap: 40,
                 restorationKey: "selection.users.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
                 accessoryToolbar: { AnyView(createButton) },
