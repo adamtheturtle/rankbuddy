@@ -69,6 +69,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         case "list_tests": return await listTests(account: account)
         case "list_questions": return await listQuestions(account: account)
         case "list_interviews": return await listInterviews(account: account)
+        case "list_users", "list_teams":
+            // Org enumeration (#9), in its own dispatch + file.
+            return await callOrgListTool(name, account: account)
         case "list_candidates", "search_tests", "search_questions", "search_interviews":
             return await callKeyedTool(name, arguments: arguments, account: account)
         case "search_users", "search_candidates":

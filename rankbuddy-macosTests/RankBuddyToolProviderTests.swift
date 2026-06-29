@@ -42,9 +42,29 @@ struct RankBuddyToolProviderTests {
         #expect(names.contains("list_questions"))
         #expect(names.contains("list_interviews"))
         #expect(names.contains("list_candidates"))
+        #expect(names.contains("list_users"))
+        #expect(names.contains("list_teams"))
         // Every tool is flagged read-only.
         let tools = await provider().tools()
         #expect(tools.allSatisfy { $0.annotations.readOnlyHint == true })
+    }
+
+    @Test func `list_users returns the organisation's members`() async {
+        let result = await provider().callTool("list_users", arguments: nil)
+        let body = text(result)
+        #expect(result.isError != true)
+        #expect(body.contains("\"users\""))
+        #expect(body.contains("rhea@example.com"))
+        #expect(!body.contains("\"count\" : 0"))
+    }
+
+    @Test func `list_teams returns teams with member counts`() async {
+        let result = await provider().callTool("list_teams", arguments: nil)
+        let body = text(result)
+        #expect(result.isError != true)
+        #expect(body.contains("\"teams\""))
+        #expect(body.contains("Backend Hiring"))
+        #expect(body.contains("\"developers\""))
     }
 
     @Test func `list_accounts names the account without exposing a token`() async {
