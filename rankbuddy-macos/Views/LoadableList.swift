@@ -278,6 +278,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 .navigationSubtitle(subtitle(visibleCount: visible.count))
             }
         }
+        // Fill the column and anchor to the top so a short list (e.g. a handful of tests or
+        // teams) starts at the top of the window rather than being vertically centered (#111).
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     /// A loaded-count summary, with a `+` when more pages remain to be paged in.
