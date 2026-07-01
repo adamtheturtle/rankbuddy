@@ -45,7 +45,9 @@ extension AccountStore {
             // can't linger in system search (#24). The index repopulates with the current
             // account on the next suggestion request.
             onRemoved: { _ in Task { await RankBuddySpotlightIndex.clear() } },
-            onRekeyed: { _ in },
+            // A changed token/base URL may point at a different backend, so drop the cached
+            // first pages (memory and disk) that could otherwise show another org's rows (#102).
+            onRekeyed: { _ in ListPageCache.clear() },
             logger: logger
         )
         return AccountStore(config: config)

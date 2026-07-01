@@ -24,6 +24,8 @@ extension LoadableList {
             items = cached.items
             nextCursor = cached.cursor
             phase = .loaded
+            // Cached rows are shown immediately; the load below is a background refresh (#102).
+            isBackgroundRefreshing = true
             onFirstPage(cached.items)
             await restoreIfNeeded(items)
         } else {
@@ -31,6 +33,9 @@ extension LoadableList {
             items = []
             nextCursor = nil
         }
+
+        // Always clear the refresh hint once the fresh load settles, whichever way it goes.
+        defer { isBackgroundRefreshing = false }
 
         do {
             let page = try await loadCurrentPage(nil)

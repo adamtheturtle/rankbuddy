@@ -32,7 +32,11 @@ struct SortOption<Item>: Identifiable {
 /// shows its detail in the pane — no push/pop. The shown detail, the chosen sort order, and the
 /// free-scroll position are persisted and restored per account (#19) when a `restorationKey` is
 /// set.
-struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail: View>: View {
+///
+/// `Item: Codable` so the first page can be cached to disk and restored instantly after a
+/// relaunch (#102). Every list's concrete item already conforms; only the merged lists' wrapper
+/// (`AccountScoped`, which never caches — it has no restoration key) needed conformance added.
+struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: View, Detail: View>: View {
     /// The first-load phase. Loaded items and the cursor live in their own state so further
     /// pages can append without disturbing this. Internal so the loading extension
     /// (`LoadableList+Loading.swift`) can drive it, per the repo's split-file rule.
@@ -139,6 +143,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     /// Guards restoration to once per load cycle, so navigating back doesn't re-push.
     @State var didRestore = false
     @State var isFilterLoading = false // search-paging spinner vs. a premature "No results" (#86)
+    /// True while a fresh load runs *behind already-shown cached rows* (#102), so re-entering a
+    /// section reads as "refreshing" in the subtitle rather than silently or with a full spinner.
+    /// Set by the loading extension; only ever true when rows are already on screen.
+    @State var isBackgroundRefreshing = false
     /// On-device smart-search sheet state (#91): the entry, its presentation, the interpreting
     /// spinner, and whether the last attempt grounded to nothing. Internal (not private) so the
     /// `applySmartFilter` method in `LoadableList+Search.swift` can drive them, per the repo's
@@ -147,6 +155,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @State var smartFilterText = ""
     @State var isInterpreting = false
     @State var smartFilterFailed = false
+    /// The list's saved searches, shown as recall chips in the filter bar (#25). Loaded on appear
+    /// and when the account-scoped key changes; mutated as the user saves or deletes one. Internal
+    /// so the `LoadableList+FilterBar` extension can drive them, per the repo's split-file rule.
+    @State var savedSearches: [SavedSearch] = []
+    /// Drives the "Save Search" naming alert raised by the bar's Save action (#25).
+    @State var isNamingSearch = false
+    @State var newSearchName = ""
 
     var body: some View {
         // Three-pane (#53): the list and a persistent detail pane sit side by side inside the
@@ -192,7 +207,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
                 // Server-side search (#104): reload as the query changes; no-op for client lists.
                 .task(id: serverSearchToken) { await reloadForServerSearch() }
                 .onChange(of: reloadToken) { Task { await reload() } }
-                .onAppear { restoreSort() }
+                .onAppear {
+                    restoreSort()
+                    loadSavedSearches()
+                }
+                // Re-load the recall chips when the account-scoped key changes, so each account
+                // shows only its own saved searches (#25).
+                .onChange(of: restorationKey) { loadSavedSearches() }
                 .onChange(of: sortSelection) { persistSort() }
                 .onChange(of: dateRange) {
                     ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
@@ -257,8 +278,11 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
     @ViewBuilder private var loadedList: some View {
         let visible = visibleItems
         VStack(spacing: 0) {
-            // Renders nothing when no facets are declared, so unfaceted lists are unchanged (#55).
-            FacetBar(facets: facets, items: items, selected: $selectedFacets)
+            // PadBuddy-style filter bar (#55/#25/#19/#91): a saved-search recall row above the
+            // facet chips, the inline date chip, and the Smart Filter / Save / Clear actions. Each
+            // row renders nothing when it has nothing to show, so plain lists are unchanged.
+            savedSearchesBar
+            filterBar
 
             if visible.isEmpty {
                 filterEmptyState
@@ -323,10 +347,12 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable, Row: View, Detail:
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
-    /// A loaded-count summary, with a `+` when more pages remain to be paged in.
+    /// A loaded-count summary, with a `+` when more pages remain to be paged in, and a quiet
+    /// "Refreshing…" hint while cached rows are being refreshed behind the scenes (#102).
     private func subtitle(visibleCount: Int) -> String {
         let suffix = nextCursor != nil ? "+" : ""
-        return "\(visibleCount)\(suffix) \(visibleCount == 1 ? "item" : "items")"
+        let count = "\(visibleCount)\(suffix) \(visibleCount == 1 ? "item" : "items")"
+        return isBackgroundRefreshing ? "\(count) · Refreshing…" : count
     }
 
     var isLoading: Bool {

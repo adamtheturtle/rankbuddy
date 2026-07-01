@@ -55,9 +55,45 @@ struct SavedSearchStoreTests {
         #expect(defaults.data(forKey: SavedSearchStore.defaultsKey(for: "tests.acc")) == nil)
     }
 
-    @Test func `a search with no query and no range is empty`() {
+    @Test func `a search with no query, range, or facets is empty`() {
         #expect(SavedSearch(name: "x", query: "  ", dateRange: nil).isEmpty)
         #expect(!SavedSearch(name: "x", query: "a", dateRange: nil).isEmpty)
         #expect(!SavedSearch(name: "x", query: "", dateRange: "today").isEmpty)
+        #expect(!SavedSearch(name: "x", query: "", dateRange: nil, facets: ["state": ["Active"]]).isEmpty)
+        // An all-empty facet set carries no constraint, so it's still empty.
+        #expect(SavedSearch(name: "x", query: "", dateRange: nil, facets: ["state": []]).isEmpty)
+    }
+
+    @Test func `facet selections round-trip through persistence`() {
+        let defaults = makeDefaults()
+        let searches = [
+            SavedSearch(name: "JS failures", query: "failed", dateRange: "last 7 days",
+                        facets: ["language": ["JavaScript", "TypeScript"], "status": ["Failed"]])
+        ]
+        SavedSearchStore.save(searches, restorationKey: "tests.acc", defaults: defaults)
+
+        let loaded = SavedSearchStore.load(restorationKey: "tests.acc", defaults: defaults)
+        #expect(loaded == searches)
+        #expect(loaded.first?.facetSelection == ["language": ["JavaScript", "TypeScript"], "status": ["Failed"]])
+    }
+
+    @Test func `a snapshot saved before facets existed still decodes`() throws {
+        // A legacy payload with no `facets` key, as written before facet capture.
+        let legacy = """
+        [{"id":"\(UUID().uuidString)","name":"Old","query":"x","dateRange":"today"}]
+        """
+        let decoded = try JSONDecoder().decode([SavedSearch].self, from: Data(legacy.utf8))
+        #expect(decoded.first?.facets.isEmpty == true)
+        #expect(decoded.first?.query == "x")
+    }
+
+    @Test func `matches reflects the live query, range, and facets`() {
+        let search = SavedSearch(name: "x", query: "go", dateRange: "today", facets: ["status": ["Open"]])
+        #expect(search.matches(query: "go", dateRange: "today", facets: ["status": ["Open"]]))
+        // Empty per-facet sets on the live side are ignored, not treated as a mismatch.
+        #expect(search.matches(query: "go", dateRange: "today", facets: ["status": ["Open"], "lang": []]))
+        #expect(!search.matches(query: "go", dateRange: "today", facets: ["status": ["Closed"]]))
+        #expect(!search.matches(query: "rust", dateRange: "today", facets: ["status": ["Open"]]))
+        #expect(!search.matches(query: "go", dateRange: nil, facets: ["status": ["Open"]]))
     }
 }

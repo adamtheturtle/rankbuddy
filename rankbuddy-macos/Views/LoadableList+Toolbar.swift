@@ -10,10 +10,12 @@ import SwiftUI
 extension LoadableList {
     /// The list's customizable toolbar (#101). Built as identified `ToolbarItem`s so the window's
     /// "Customize Toolbar…" sheet can add, remove, and reorder them. The day-to-day actions — the
-    /// section's write action and Refresh — show by default; the rarer ones (Smart Filter, Saved
-    /// Searches, CSV export) are `defaultCustomization(.hidden)`, so the default toolbar stays
-    /// uncluttered while every action remains one customization away. Items only appear when the
-    /// list actually offers the capability (a date chip, sorting, export, …).
+    /// section's write action and Refresh — show by default; the rarer ones (CSV export) are
+    /// `defaultCustomization(.hidden)`, so the default toolbar stays uncluttered while every action
+    /// remains one customization away. Items only appear when the list actually offers the
+    /// capability (sorting, export, …). Filtering itself — the facet/date chips, Smart Filter, and
+    /// Saved Searches — lives in the filter bar above the rows (see `LoadableList+FilterBar`), not
+    /// the toolbar, mirroring PadBuddy.
     @ToolbarContentBuilder
     var customToolbar: some CustomizableToolbarContent {
         // The section's write action (e.g. "Invite Candidate", "Create User"); empty for the
@@ -22,19 +24,6 @@ extension LoadableList {
             accessoryToolbar()
         }
         .customizationBehavior(.disabled)
-
-        if filterDate != nil {
-            ToolbarItem(id: "dateFilter", placement: .automatic) {
-                FilterChipMenu(
-                    title: dateFilterLabel,
-                    icon: "calendar",
-                    selected: $dateRange,
-                    options: NamedDateRange.options,
-                    formatter: { $0.capitalized }
-                )
-                .help("Filter \(title) by date")
-            }
-        }
 
         if !sortOptions.isEmpty {
             ToolbarItem(id: "sort", placement: .automatic) {
@@ -49,34 +38,6 @@ extension LoadableList {
                 }
                 .help("Sort \(title)")
             }
-        }
-
-        // Plain-language filtering, interpreted on-device (#91). Hidden by default and entirely
-        // absent when the model is unavailable, so the affordance never dead-ends.
-        if SearchInterpreter.isAvailable {
-            ToolbarItem(id: "smartFilter", placement: .automatic) {
-                Button {
-                    smartFilterFailed = false
-                    showSmartFilter = true
-                } label: {
-                    Label("Smart Filter", systemImage: "sparkle.magnifyingglass")
-                }
-                .help("Filter \(title) with a plain-language request, interpreted on your device")
-                .keyboardShortcut("f", modifiers: [.command, .shift])
-            }
-            .defaultCustomization(.hidden)
-        }
-
-        if let restorationKey {
-            ToolbarItem(id: "savedSearch", placement: .automatic) {
-                SavedSearchMenu(
-                    title: title,
-                    restorationKey: restorationKey,
-                    query: $query,
-                    dateRange: $dateRange
-                )
-            }
-            .defaultCustomization(.hidden)
         }
 
         if let csvExport {
@@ -94,7 +55,8 @@ extension LoadableList {
                 Button {
                     CSVExport.save(csvExport(selectedItems), suggestedName: "\(csvFilename)-selected")
                 } label: {
-                    Label("Export Selected (\(selection.count))…", systemImage: "tablecells.badge.ellipsis")
+                    let title = selection.isEmpty ? "Export Selected…" : "Export Selected (\(selection.count))…"
+                    Label(title, systemImage: "tablecells.badge.ellipsis")
                 }
                 .help("Export the selected \(title) as CSV (#44)")
             }

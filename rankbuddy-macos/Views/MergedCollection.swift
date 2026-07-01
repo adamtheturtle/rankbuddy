@@ -23,6 +23,11 @@ nonisolated struct AccountScoped<Item: Identifiable & Hashable & Sendable>: Iden
     }
 }
 
+/// `Codable` to satisfy `LoadableList`'s item bound (#102). Merged lists never persist a page —
+/// they pass no restoration key — so this conformance only ever type-checks; it never writes an
+/// account's token to disk.
+extension AccountScoped: Codable where Item: Codable {}
+
 /// Loads the first page of a collection from several accounts and merges the results (#17).
 enum MergedLoader {
     /// Fetches each account's first page, tagging every item with its account. Accounts whose

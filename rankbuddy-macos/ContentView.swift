@@ -75,6 +75,13 @@ struct ContentView: View {
             // Re-probe whenever the active account changes, so switching to a revoked
             // account flags it without waiting for the periodic check (#40).
             .task(id: store.currentAccountID) { await health.check(store: store) }
+            // Warm every section's first page in the background so the first visit to a tab is
+            // instant rather than a spinner (#102). Single-account only — merged lists don't cache.
+            .task(id: store.currentAccountID) {
+                if let account = store.currentAccount, !store.isMergedView {
+                    await SectionPrefetch.warm(account: account)
+                }
+            }
         }
         // Drop favourites for accounts that have since been removed, so they never leave
         // dangling palette/navigation entries (#25).
