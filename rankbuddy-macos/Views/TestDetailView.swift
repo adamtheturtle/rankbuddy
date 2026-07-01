@@ -97,8 +97,10 @@ struct TestDetailView: View {
         .navigationTitle(test.name)
         .task(id: test.id) { await loadDetail() }
         .advertisesItemActivity(collection: .tests, itemID: test.id, title: test.name)
-        .toolbar {
-            ToolbarItem {
+        // Edit and Delete stay on the bar; Print and Markdown export are off by default but one
+        // Customize Toolbar away.
+        .toolbar(id: "testDetail") {
+            ToolbarItem(id: "edit") {
                 Button {
                     editPresented = true
                 } label: {
@@ -106,7 +108,7 @@ struct TestDetailView: View {
                 }
                 .help("Rename this test")
             }
-            ToolbarItem {
+            ToolbarItem(id: "delete") {
                 Button(role: .destructive) {
                     deletePresented = true
                 } label: {
@@ -114,14 +116,16 @@ struct TestDetailView: View {
                 }
                 .help("Delete this test")
             }
-            ToolbarItem {
+            ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Test: \(test.name)") {
                     TestReport(test: test)
                 }
             }
-            ToolbarItem {
+            .defaultCustomization(.hidden)
+            ToolbarItem(id: "exportMarkdown") {
                 MarkdownExportButton(suggestedName: test.name) { MarkdownExport.test(test) }
             }
+            .defaultCustomization(.hidden)
         }
         .sheet(isPresented: $editPresented) {
             TestEditorSheet(account: account, mode: .edit(testID: test.id, currentName: test.name)) {

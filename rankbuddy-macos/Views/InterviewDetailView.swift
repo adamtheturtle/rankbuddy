@@ -96,17 +96,20 @@ struct InterviewDetailView: View {
             title: interview.title ?? "Interview \(interview.id)",
             webURL: URL(string: interview.url)
         )
-        .toolbar {
-            ToolbarItem {
+        // Print and Markdown export are off the bar by default but one Customize Toolbar away.
+        .toolbar(id: "interviewDetail") {
+            ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Interview: \(interview.title ?? interview.id)") {
                     InterviewReport(interview: interview)
                 }
             }
-            ToolbarItem {
+            .defaultCustomization(.hidden)
+            ToolbarItem(id: "exportMarkdown") {
                 MarkdownExportButton(suggestedName: interview.title ?? "interview-\(interview.id)") {
                     MarkdownExport.interview(interview)
                 }
             }
+            .defaultCustomization(.hidden)
         }
     }
 

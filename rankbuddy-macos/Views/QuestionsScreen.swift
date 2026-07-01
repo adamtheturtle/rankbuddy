@@ -203,7 +203,7 @@ struct QuestionDetailView: View {
 
             if let notes = detail?.internalNotes, !notes.isEmpty {
                 Section("Internal notes") {
-                    Text(notes).textSelection(.enabled)
+                    HTMLText(html: notes)
                 }
             }
         }
@@ -211,15 +211,18 @@ struct QuestionDetailView: View {
         .navigationTitle(question.name)
         .task(id: question.id) { await loadDetail() }
         .advertisesItemActivity(collection: .questions, itemID: question.id, title: question.name)
-        .toolbar {
-            ToolbarItem {
+        // Print and Markdown export are off the bar by default but one Customize Toolbar away.
+        .toolbar(id: "questionDetail") {
+            ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Question: \(question.name)") {
                     QuestionReport(question: question)
                 }
             }
-            ToolbarItem {
+            .defaultCustomization(.hidden)
+            ToolbarItem(id: "exportMarkdown") {
                 MarkdownExportButton(suggestedName: question.name) { MarkdownExport.question(question) }
             }
+            .defaultCustomization(.hidden)
         }
     }
 

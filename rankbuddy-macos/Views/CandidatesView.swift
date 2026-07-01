@@ -269,17 +269,20 @@ struct CandidateDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
-        .toolbar {
-            ToolbarItem {
+        // Print and Markdown export are off the bar by default but one Customize Toolbar away.
+        .toolbar(id: "candidateDetail") {
+            ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Candidate: \(candidate.fullName ?? candidate.email)") {
                     CandidateReport(candidate: candidate)
                 }
             }
-            ToolbarItem {
+            .defaultCustomization(.hidden)
+            ToolbarItem(id: "exportMarkdown") {
                 MarkdownExportButton(suggestedName: candidate.fullName ?? candidate.email) {
                     MarkdownExport.candidate(candidate)
                 }
             }
+            .defaultCustomization(.hidden)
         }
     }
 }
