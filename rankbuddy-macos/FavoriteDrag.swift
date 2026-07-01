@@ -6,7 +6,8 @@
 //  (#89/#41). A list row (tests / questions / interviews) carries its `FavoriteRef` as an
 //  in-process pasteboard item; the sidebar's Favourites section is a drop target that pins
 //  the dropped item to the account carried in the payload. The whole drag never leaves the
-//  app, so the type is exported (not declared in Info.plist) — only our own sidebar reads it.
+//  app, but `UTType(exportedAs:)` still requires the identifier be backed by a
+//  UTExportedTypeDeclarations entry in Info.plist or the runtime won't register it.
 //
 
 import AppKit
@@ -14,10 +15,11 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 extension UTType {
-    /// In-process type for an internal favourite drag. Exported (not declared in Info.plist)
-    /// since the drag never leaves the app — only the sidebar drop target reads it, so no
-    /// other process needs to recognise the identifier. `nonisolated` so the pasteboard
-    /// helpers (which build in a nonisolated context) can reference it.
+    /// In-process type for an internal favourite drag. Exported and backed by a
+    /// UTExportedTypeDeclarations entry in Info.plist — `exportedAs:` requires it even
+    /// though the drag never leaves the app and only the sidebar drop target reads it.
+    /// `nonisolated` so the pasteboard helpers (which build in a nonisolated context) can
+    /// reference it.
     nonisolated static let rankBuddyFavorite = UTType(exportedAs: "com.rankbuddy.favorite")
 }
 

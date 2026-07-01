@@ -4,10 +4,30 @@
   Partial Info.plist. GENERATE_INFOPLIST_FILE stays YES, so Xcode overlays the
   generated CFBundle* keys on top of this base at build time. This file carries the
   keys that can't be expressed as scalar INFOPLIST_KEY_* build settings: the
-  NSServices array (#46) and the NSUserActivityTypes array (#98).
+  NSServices array (#46), the NSUserActivityTypes array (#98), and the
+  UTExportedTypeDeclarations array (#89).
 -->
 <plist version="1.0">
 <dict>
+	<!--
+	  The in-process favourite drag type (#89). FavoriteDrag.swift declares it with
+	  UTType(exportedAs: "com.rankbuddy.favorite"); an exported type must be backed by
+	  this declaration or the runtime won't register the identifier. The drag never
+	  leaves the app, so it conforms only to public.data and carries no filename tags.
+	-->
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.rankbuddy.favorite</string>
+			<key>UTTypeDescription</key>
+			<string>RankBuddy Favourite</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+		</dict>
+	</array>
 	<!--
 	  Handoff / Continuity (#98). Declares the NSUserActivity type RankBuddy advertises
 	  while viewing a test, question, or interview, so the system will Hand Off, surface
