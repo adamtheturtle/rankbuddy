@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import AsyncAlgorithms
 import BuddyAppKit
 import Foundation
 import UserNotifications
@@ -113,24 +114,29 @@ enum LivenessDigest {
 @MainActor
 final class LivenessMonitor {
     static let shared = LivenessMonitor()
-    private var loop: RepeatingTask?
+    private var loop: Task<Void, Never>?
     private init() {}
 
     /// Starts the sweep loop (idempotent). Runs one sweep immediately, then re-reads the
     /// configured cadence before each subsequent sweep, so a changed interval (or toggled
     /// opt-in) takes effect without restarting the timer. Tests can pin the cadence via
-    /// `interval`. Built on buddy-kit's `RepeatingTask` (#643) rather than a hand-rolled loop.
+    /// `interval`.
     func start(store: AccountStore, every interval: Duration? = nil) {
         guard loop == nil else { return }
 
-        let loop = RepeatingTask(
-            runImmediately: true,
-            interval: { interval ?? LivenessSettings.currentInterval() }
-        ) { [weak self] in
+        loop = Task { [weak self] in
             await self?.sweep(store: store)
+
+            while !Task.isCancelled {
+                let nextInterval = interval ?? LivenessSettings.currentInterval()
+                for await _ in AsyncTimerSequence.repeating(every: nextInterval) {
+                    guard !Task.isCancelled else { return }
+
+                    await self?.sweep(store: store)
+                    break
+                }
+            }
         }
-        self.loop = loop
-        loop.start()
     }
 
     /// One sweep: when enabled, fetch the in-scope accounts' interviews and badge the total

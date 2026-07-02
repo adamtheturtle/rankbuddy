@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import AsyncAlgorithms
 import SwiftUI
 
 /// The list auto-refresh loop (#69), split out so `LoadableList.swift` stays under the
@@ -17,10 +18,7 @@ extension LoadableList {
     func autoRefreshLoop() async {
         guard let interval = GeneralSettings.refreshInterval(raw: autoRefreshSeconds) else { return }
 
-        while !Task.isCancelled {
-            try? await Task.sleep(for: interval)
-            if Task.isCancelled { break }
-
+        for await _ in AsyncTimerSequence.repeating(every: interval) {
             if !isLoading, !isLoadingMore, pagesLoaded == 1 {
                 await quietRefresh()
             }

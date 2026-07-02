@@ -11,6 +11,7 @@
 		66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D162FEB0FB800352492 /* BuddyDesignSystem */; };
 		66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
 		6638044A2FF64E51004A9FCE /* MCPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 663804492FF64E51004A9FCE /* MCPKit */; };
+		663804522FF65BBB004A9FCE /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 663804512FF65BBB004A9FCE /* AsyncAlgorithms */; };
 		66769E002FED4A320023907A /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66769DFF2FED4A320023907A /* PaginatedRESTClient */; };
 		6676A0A82FEEB2410023907A /* FastList in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0A72FEEB2410023907A /* FastList */; };
 		6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AA2FEEB24F0023907A /* Sparkle */; };
@@ -59,6 +60,7 @@
 				66769E002FED4A320023907A /* PaginatedRESTClient in Frameworks */,
 				66062D152FEB0FB800352492 /* BuddyAppKit in Frameworks */,
 				668CA7EB2FEC7BFA00420E24 /* CommandPaletteKit in Frameworks */,
+				663804522FF65BBB004A9FCE /* AsyncAlgorithms in Frameworks */,
 			);
 		};
 		662C2C522FEC525200FE99C0 /* Frameworks */ = {
@@ -122,6 +124,7 @@
 				6676A0AA2FEEB24F0023907A /* Sparkle */,
 				6676A0AD2FEEB2710023907A /* MCP */,
 				663804492FF64E51004A9FCE /* MCPKit */,
+				663804512FF65BBB004A9FCE /* AsyncAlgorithms */,
 			);
 			productName = "rankbuddy-macos";
 			productReference = 000000000000000000000120 /* rankbuddy-macos.app */;
@@ -184,6 +187,7 @@
 				6676A0A92FEEB24F0023907A /* XCRemoteSwiftPackageReference "Sparkle" */,
 				6676A0AC2FEEB2710023907A /* XCRemoteSwiftPackageReference "swift-sdk" */,
 				663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */,
+				663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -544,6 +548,14 @@
 				minimumVersion = 0.1.0;
 			};
 		};
+		663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-async-algorithms";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.5;
+			};
+		};
 		66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/adamtheturtle/PaginatedRESTClient.git";
@@ -606,6 +618,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */;
 			productName = MCPKit;
+		};
+		663804512FF65BBB004A9FCE /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
 		};
 		66769DFF2FED4A320023907A /* PaginatedRESTClient */ = {
 			isa = XCSwiftPackageProductDependency;

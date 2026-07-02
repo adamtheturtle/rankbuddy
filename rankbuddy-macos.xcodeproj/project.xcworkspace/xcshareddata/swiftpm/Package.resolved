@@ -1,5 +1,5 @@
 {
-  "originHash" : "940bea473a0cb3e2e1e30fb7e82c79c32b41f43e0181e25c4ad8c601a58898c5",
+  "originHash" : "76b5f57d7a587ce9f176592cbfe458b90476b6eae7e6c7d11f183d452ad8ba80",
   "pins" : [
     {
       "identity" : "buddy-kit",
@@ -62,6 +62,15 @@
       "state" : {
         "revision" : "d46d456107feacc80711b21847b82b07bd9fb46e",
         "version" : "2.9.3"
+      }
+    },
+    {
+      "identity" : "swift-async-algorithms",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-async-algorithms",
+      "state" : {
+        "revision" : "3da39bbc4e687d4192af7c9cf4eab805745a0b9c",
+        "version" : "1.1.5"
       }
     },
     {
