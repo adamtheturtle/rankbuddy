@@ -7,7 +7,7 @@ import Foundation
 import MCPKit
 
 /// One recorded MCP tool call (#52).
-nonisolated struct MCPActivityEntry: Codable, Identifiable, Hashable, Sendable {
+nonisolated struct MCPActivityEntry: Codable, Identifiable, Hashable {
     let timestamp: String
     let tool: String
     let detail: String

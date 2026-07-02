@@ -7,9 +7,9 @@ name: CI
 # The expensive macOS build+test lane is nightly/manual only — macOS runners bill
 # at 10x minutes, so a full compile is not paid for on every push.
 #
-# The app scheme exists, so scheduled/manual macOS builds are blocking and retain
-# result artifacts on failure. Dedicated Fast/Full/TSan test plans still need test
-# targets before they can replace the plain build lane.
+# The app scheme and test plans exist, so scheduled/manual macOS validation runs
+# the Full test plan, a Release build, and an opt-in TSan test lane while retaining
+# result artifacts on failure.
 
 on:
   push:
@@ -41,7 +41,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Run actionlint
         # Pin the version for reproducibility; the download script is fetched at
@@ -64,7 +64,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Run shellcheck
         run: |
@@ -102,7 +102,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       # The full Swift image ships git but not the unzip/curl this job uses to
       # fetch and unpack the pinned release binaries.
@@ -136,26 +136,22 @@ jobs:
           ./swiftformat_linux --version
           ./swiftformat_linux . --lint --reporter github-actions-log
 
-  build:
-    name: Build (${{ matrix.configuration }})
-    # The full macOS build is expensive (10x-billed minutes), so it stays
+  full-tests:
+    name: Full tests
+    # The full macOS test lane is expensive (10x-billed minutes), so it stays
     # nightly/manual only — push and pull_request events skip it and rely on the
     # cheap gates above. `needs` makes it wait for the style gate so a nightly run
     # fails fast on style before paying for the compile.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: swift-lint
-    # macos-26 is the supported runtime/toolchain image for this app target. Once
-    # the project lowers its deployment target, add a separate minimum-runtime
-    # matrix row without sharing DerivedData across rows.
+    # macos-26 is the supported runtime/toolchain image for this app target. Add a
+    # separate minimum-runtime row when GitHub hosts an older supported image that
+    # can run this Xcode/project combination, without sharing DerivedData.
     runs-on: macos-26
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        configuration: [Debug, Release]
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       # Pin an explicit Xcode rather than the image default, which drifts as Apple
       # ships updates. 26.5 is the newest stable on the macos-26 image.
@@ -167,26 +163,106 @@ jobs:
       - name: Show schemes
         run: xcodebuild -list -project rankbuddy-macos.xcodeproj
 
-      - name: Build ${{ matrix.configuration }}
+      - name: Test Full plan
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project rankbuddy-macos.xcodeproj \
+            -scheme rankbuddy-macos \
+            -testPlan Full \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath DerivedData-Full \
+            -resultBundlePath Full.xcresult \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload Full test result
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-tests-xcresult
+          path: Full.xcresult
+          if-no-files-found: ignore
+
+  release-build:
+    name: Release build
+    # Release catches optimization-only compiler and type-check-budget failures
+    # without also paying for a second test run.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: swift-lint
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.5.app
+          xcodebuild -version
+
+      - name: Build Release
         run: |
           set -o pipefail
           xcodebuild build \
             -project rankbuddy-macos.xcodeproj \
             -scheme rankbuddy-macos \
-            -configuration "${{ matrix.configuration }}" \
+            -configuration Release \
             -destination 'platform=macOS' \
-            -derivedDataPath "DerivedData-${{ matrix.configuration }}" \
-            -resultBundlePath "Build-${{ matrix.configuration }}.xcresult" \
+            -derivedDataPath DerivedData-Release \
+            -resultBundlePath Release.xcresult \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Upload build result
+      - name: Upload Release build result
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.configuration }}-xcresult
-          path: Build-${{ matrix.configuration }}.xcresult
+          name: release-build-xcresult
+          path: Release.xcresult
+          if-no-files-found: ignore
+
+  tsan-tests:
+    name: TSan tests
+    # TSan is intentionally manual-only; it is useful before releases and
+    # concurrency-heavy changes, but too expensive for every nightly run.
+    if: github.event_name == 'workflow_dispatch'
+    needs: swift-lint
+    runs-on: macos-26
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.5.app
+          xcodebuild -version
+
+      - name: Test TSan plan
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project rankbuddy-macos.xcodeproj \
+            -scheme rankbuddy-macos \
+            -testPlan TSan \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath DerivedData-TSan \
+            -resultBundlePath TSan.xcresult \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload TSan test result
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tsan-tests-xcresult
+          path: TSan.xcresult
           if-no-files-found: ignore
 
   # Dead-code detection (#21). Periphery compiles the app, so it stays on the
@@ -203,7 +279,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Select Xcode
         run: |

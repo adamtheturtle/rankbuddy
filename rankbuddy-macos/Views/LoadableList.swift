@@ -193,7 +193,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                         isInterpreting: isInterpreting,
                         failed: smartFilterFailed,
                         placeholder: "e.g. \(title.lowercased()) from last week",
-                        failedMessage: "Couldn't match that to any filter. Try naming a status, language, or a time like \"last 7 days\".",
+                        failedMessage: "Couldn't match that to any filter. Try naming a status, language, or a time like \"last 7 days\".", // swiftlint:disable:this line_length
                         hintMessage: "Name a status, language, or a time like \"last 7 days\".",
                         onSubmit: { Task { await applySmartFilter() } },
                         onCancel: { showSmartFilter = false }
