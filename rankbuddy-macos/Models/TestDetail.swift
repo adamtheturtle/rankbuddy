@@ -35,11 +35,11 @@ nonisolated struct TestDetail: Decodable, Hashable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        shortLoginURL = container.lenientDecodeIfPresent(String.self, forKey: .shortLoginURL)
-        publicLoginURL = container.lenientDecodeIfPresent(String.self, forKey: .publicLoginURL)
-        accessPassword = container.lenientDecodeIfPresent(String.self, forKey: .accessPassword)
-        mcqCorrectScore = container.lenientDecodeIfPresent(Double.self, forKey: .mcqCorrectScore)
-        mcqIncorrectScore = container.lenientDecodeIfPresent(Double.self, forKey: .mcqIncorrectScore)
+        shortLoginURL = try? container.decodeIfPresent(String.self, forKey: .shortLoginURL)
+        publicLoginURL = try? container.decodeIfPresent(String.self, forKey: .publicLoginURL)
+        accessPassword = try? container.decodeIfPresent(String.self, forKey: .accessPassword)
+        mcqCorrectScore = try? container.decodeIfPresent(Double.self, forKey: .mcqCorrectScore)
+        mcqIncorrectScore = try? container.decodeIfPresent(Double.self, forKey: .mcqIncorrectScore)
     }
 
     /// Whether the detail adds a login link worth a dedicated section, so the UI can avoid an

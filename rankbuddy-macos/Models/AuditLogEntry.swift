@@ -49,20 +49,20 @@ nonisolated struct AuditLogEntry: Decodable, Hashable, Identifiable {
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         sourceID = Self.flexibleString(container, .sourceID)
-        sourceType = container.lenientDecodeIfPresent(String.self, forKey: .sourceType)
-        action = container.lenientDecodeIfPresent(String.self, forKey: .action)
-        modifiedFields = container.lenientDecodeIfPresent([String].self, forKey: .modifiedFields) ?? []
-        ipAddress = container.lenientDecodeIfPresent(String.self, forKey: .ipAddress)
-        createdAt = container.lenientDecodeIfPresent(String.self, forKey: .createdAt)
-        userLabel = container.lenientDecodeIfPresent(InterviewPerson.self, forKey: .user)?.displayName
+        sourceType = try? container.decodeIfPresent(String.self, forKey: .sourceType)
+        action = try? container.decodeIfPresent(String.self, forKey: .action)
+        modifiedFields = (try? container.decodeIfPresent([String].self, forKey: .modifiedFields)) ?? []
+        ipAddress = try? container.decodeIfPresent(String.self, forKey: .ipAddress)
+        createdAt = try? container.decodeIfPresent(String.self, forKey: .createdAt)
+        userLabel = (try? container.decodeIfPresent(InterviewPerson.self, forKey: .user))?.displayName
     }
 
     /// Decodes a key that may arrive as either a JSON string or a number, returning its string
     /// form either way (`source_id` is documented as a string but live records sometimes carry
     /// a numeric id).
     private static func flexibleString(_ container: KeyedDecodingContainer<CodingKeys>, _ key: CodingKeys) -> String? {
-        if let string = container.lenientDecodeIfPresent(String.self, forKey: key) { return string }
-        if let number = container.lenientDecodeIfPresent(Int.self, forKey: key) { return String(number) }
+        if let string = try? container.decodeIfPresent(String.self, forKey: key) { return string }
+        if let number = try? container.decodeIfPresent(Int.self, forKey: key) { return String(number) }
         return nil
     }
 }

@@ -60,16 +60,16 @@ extension User {
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
-        email = container.lenientDecodeIfPresent(String.self, forKey: .email) ?? ""
-        firstName = container.lenientDecodeIfPresent(String.self, forKey: .firstName)
-        lastName = container.lenientDecodeIfPresent(String.self, forKey: .lastName)
-        country = container.lenientDecodeIfPresent(String.self, forKey: .country)
-        role = container.lenientDecodeIfPresent(String.self, forKey: .role)
-        status = container.lenientDecodeIfPresent(String.self, forKey: .status)
-        teams = container.lenientDecodeIfPresent([String].self, forKey: .teams)
-        activated = container.lenientDecodeIfPresent(Bool.self, forKey: .activated)
-        companyAdmin = container.lenientDecodeIfPresent(Bool.self, forKey: .companyAdmin)
-        teamAdmin = container.lenientDecodeIfPresent(Bool.self, forKey: .teamAdmin)
-        lastActivityTime = container.lenientDecodeIfPresent(String.self, forKey: .lastActivityTime)
+        email = (try? container.decodeIfPresent(String.self, forKey: .email)) ?? ""
+        firstName = try? container.decodeIfPresent(String.self, forKey: .firstName)
+        lastName = try? container.decodeIfPresent(String.self, forKey: .lastName)
+        country = try? container.decodeIfPresent(String.self, forKey: .country)
+        role = try? container.decodeIfPresent(String.self, forKey: .role)
+        status = try? container.decodeIfPresent(String.self, forKey: .status)
+        teams = try? container.decodeIfPresent([String].self, forKey: .teams)
+        activated = try? container.decodeIfPresent(Bool.self, forKey: .activated)
+        companyAdmin = try? container.decodeIfPresent(Bool.self, forKey: .companyAdmin)
+        teamAdmin = try? container.decodeIfPresent(Bool.self, forKey: .teamAdmin)
+        lastActivityTime = try? container.decodeIfPresent(String.self, forKey: .lastActivityTime)
     }
 }

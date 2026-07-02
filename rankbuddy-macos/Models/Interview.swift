@@ -62,16 +62,16 @@ extension Interview {
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
-        status = container.lenientDecodeIfPresent(String.self, forKey: .status) ?? ""
-        url = container.lenientDecodeIfPresent(String.self, forKey: .url) ?? ""
-        title = container.lenientDecodeIfPresent(String.self, forKey: .title)
-        feedback = container.lenientDecodeIfPresent(String.self, forKey: .feedback)
-        thumbsUp = container.lenientDecodeIfPresent(Int.self, forKey: .thumbsUp)
-        notes = container.lenientDecodeIfPresent(String.self, forKey: .notes)
-        createdAt = container.lenientDecodeIfPresent(String.self, forKey: .createdAt)
-        updatedAt = container.lenientDecodeIfPresent(String.self, forKey: .updatedAt)
-        endedAt = container.lenientDecodeIfPresent(String.self, forKey: .endedAt)
-        interviewTemplateID = container.lenientDecodeIfPresent(Int.self, forKey: .interviewTemplateID)
-        reportURL = container.lenientDecodeIfPresent(String.self, forKey: .reportURL)
+        status = (try? container.decodeIfPresent(String.self, forKey: .status)) ?? ""
+        url = (try? container.decodeIfPresent(String.self, forKey: .url)) ?? ""
+        title = try? container.decodeIfPresent(String.self, forKey: .title)
+        feedback = try? container.decodeIfPresent(String.self, forKey: .feedback)
+        thumbsUp = try? container.decodeIfPresent(Int.self, forKey: .thumbsUp)
+        notes = try? container.decodeIfPresent(String.self, forKey: .notes)
+        createdAt = try? container.decodeIfPresent(String.self, forKey: .createdAt)
+        updatedAt = try? container.decodeIfPresent(String.self, forKey: .updatedAt)
+        endedAt = try? container.decodeIfPresent(String.self, forKey: .endedAt)
+        interviewTemplateID = try? container.decodeIfPresent(Int.self, forKey: .interviewTemplateID)
+        reportURL = try? container.decodeIfPresent(String.self, forKey: .reportURL)
     }
 }

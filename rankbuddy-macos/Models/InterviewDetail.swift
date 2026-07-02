@@ -39,13 +39,13 @@ nonisolated struct InterviewDetail: Codable, Hashable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        scheduledFrom = container.lenientDecodeIfPresent(String.self, forKey: .scheduledFrom)
-        scheduledTo = container.lenientDecodeIfPresent(String.self, forKey: .scheduledTo)
-        resumeURL = container.lenientDecodeIfPresent(String.self, forKey: .resumeURL)
-        resultURL = container.lenientDecodeIfPresent(String.self, forKey: .resultURL)
-        interviewers = container.lenientDecodeIfPresent([InterviewPerson].self, forKey: .interviewers) ?? []
-        user = container.lenientDecodeIfPresent(InterviewPerson.self, forKey: .user)
-        candidate = container.lenientDecodeIfPresent(InterviewPerson.self, forKey: .candidate)
+        scheduledFrom = try? container.decodeIfPresent(String.self, forKey: .scheduledFrom)
+        scheduledTo = try? container.decodeIfPresent(String.self, forKey: .scheduledTo)
+        resumeURL = try? container.decodeIfPresent(String.self, forKey: .resumeURL)
+        resultURL = try? container.decodeIfPresent(String.self, forKey: .resultURL)
+        interviewers = (try? container.decodeIfPresent([InterviewPerson].self, forKey: .interviewers)) ?? []
+        user = try? container.decodeIfPresent(InterviewPerson.self, forKey: .user)
+        candidate = try? container.decodeIfPresent(InterviewPerson.self, forKey: .candidate)
     }
 
     /// Whether the detail carries any people worth a dedicated section, so the UI can avoid an
@@ -88,10 +88,10 @@ nonisolated struct InterviewPerson: Codable, Hashable {
         }
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
-            email: container.lenientDecodeIfPresent(String.self, forKey: .email),
-            firstName: container.lenientDecodeIfPresent(String.self, forKey: .firstName),
-            lastName: container.lenientDecodeIfPresent(String.self, forKey: .lastName),
-            name: container.lenientDecodeIfPresent(String.self, forKey: .name)
+            email: try? container.decodeIfPresent(String.self, forKey: .email),
+            firstName: try? container.decodeIfPresent(String.self, forKey: .firstName),
+            lastName: try? container.decodeIfPresent(String.self, forKey: .lastName),
+            name: try? container.decodeIfPresent(String.self, forKey: .name)
         )
     }
 
@@ -119,7 +119,7 @@ nonisolated struct InterviewTranscript: Codable, Hashable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        messages = container.lenientDecodeIfPresent([InterviewMessage].self, forKey: .messages) ?? []
+        messages = (try? container.decodeIfPresent([InterviewMessage].self, forKey: .messages)) ?? []
     }
 }
 
@@ -152,11 +152,11 @@ nonisolated struct InterviewMessage: Codable, Hashable, Identifiable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        messageID = container.lenientDecodeIfPresent(String.self, forKey: .messageID)
-        author = container.lenientDecodeIfPresent(String.self, forKey: .author)
-        email = container.lenientDecodeIfPresent(String.self, forKey: .email)
-        candidate = container.lenientDecodeIfPresent(Bool.self, forKey: .candidate)
-        timestamp = container.lenientDecodeIfPresent(Int.self, forKey: .timestamp)
-        text = container.lenientDecodeIfPresent(String.self, forKey: .text)
+        messageID = try? container.decodeIfPresent(String.self, forKey: .messageID)
+        author = try? container.decodeIfPresent(String.self, forKey: .author)
+        email = try? container.decodeIfPresent(String.self, forKey: .email)
+        candidate = try? container.decodeIfPresent(Bool.self, forKey: .candidate)
+        timestamp = try? container.decodeIfPresent(Int.self, forKey: .timestamp)
+        text = try? container.decodeIfPresent(String.self, forKey: .text)
     }
 }

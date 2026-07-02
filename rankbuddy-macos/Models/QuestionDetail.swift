@@ -28,9 +28,9 @@ nonisolated struct QuestionDetail: Decodable, Hashable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        options = container.lenientDecodeIfPresent([String].self, forKey: .options) ?? []
-        answer = container.lenientDecodeIfPresent(String.self, forKey: .answer)
-        internalNotes = container.lenientDecodeIfPresent(String.self, forKey: .internalNotes)
+        options = (try? container.decodeIfPresent([String].self, forKey: .options)) ?? []
+        answer = try? container.decodeIfPresent(String.self, forKey: .answer)
+        internalNotes = try? container.decodeIfPresent(String.self, forKey: .internalNotes)
     }
 
     /// Whether the detail adds anything worth showing over the list row, so the UI can avoid
