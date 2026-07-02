@@ -35,6 +35,16 @@ enum AppAppearance: String, CaseIterable, Identifiable {
         case .dark: .dark
         }
     }
+
+    /// Maps back from an optional `ColorScheme` (buddy-kit's `AppearancePicker` binding, #638)
+    /// to the stored case; a `nil` scheme follows the system.
+    init(colorScheme: ColorScheme?) {
+        switch colorScheme {
+        case .light: self = .light
+        case .dark: self = .dark
+        default: self = .system
+        }
+    }
 }
 
 /// General list behaviour shared by the Settings control and `LoadableList` (#69).

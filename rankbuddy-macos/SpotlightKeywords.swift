@@ -10,9 +10,9 @@
 //
 
 import AppIntents
+import BuddyAppKit
 import CoreSpotlight
 import Foundation
-import FoundationModels
 import os
 
 /// A donated entity paired with the on-device text its keywords are generated from. The source
@@ -106,7 +106,7 @@ enum SpotlightKeywordSource {
 enum SpotlightKeywordEnricher {
     /// Whether the on-device model is ready, so the pass is skipped entirely otherwise.
     static var isAvailable: Bool {
-        SystemLanguageModel.default.isAvailable
+        SpotlightKeywordGenerator.isAvailable
     }
 
     /// How many items one pass will enrich. Each enrichment runs the language model, so a big
@@ -121,14 +121,6 @@ enum SpotlightKeywordEnricher {
     private static var isEnriching = false
 
     private static let logger = Logger(subsystem: "com.adamdangoor.rankbuddy", category: "spotlight")
-
-    /// The instructions that set the model's tone and guardrails for every keyword set.
-    private static let instructions = """
-    You generate concise search keywords for coding-test items (tests, questions, interviews) so \
-    they can be found by topic. Return three to six short, lowercase keywords — data structures, \
-    algorithms, skills, languages, or problem themes — separated by commas. No sentences, no \
-    explanations, and no numbering.
-    """
 
     /// Enriches a bounded set of the donated entities with on-device keywords and re-indexes
     /// them. Re-indexing reuses each entity's id, so it updates the existing Spotlight item in
@@ -157,27 +149,12 @@ enum SpotlightKeywordEnricher {
         for enrichable in bounded {
             // Record the attempt up front so a no-keyword or failed item isn't retried forever.
             enrichedIDs.insert(enrichable.entity.id)
-            guard let keywords = await keywords(from: enrichable.keywordSource) else { continue }
+            let keywords = await SpotlightKeywordGenerator.keywords(from: enrichable.keywordSource)
+            guard !keywords.isEmpty else { continue }
 
             var entity = enrichable.entity
             entity.keywords = keywords
             try? await index.indexAppEntities([entity])
-        }
-    }
-
-    /// A few topical keywords for a brief, or `nil` when the model is unavailable or generation
-    /// produced nothing usable. On-device only; the source text never leaves the device.
-    private static func keywords(from source: String) async -> [String]? {
-        let session = LanguageModelSession(instructions: instructions)
-        do {
-            let response = try await session.respond(to: source)
-            let parsed = response.content
-                .split(whereSeparator: { $0 == "," || $0 == "\n" })
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
-                .filter { !$0.isEmpty }
-            return parsed.isEmpty ? nil : Array(parsed.prefix(6))
-        } catch {
-            return nil
         }
     }
 }

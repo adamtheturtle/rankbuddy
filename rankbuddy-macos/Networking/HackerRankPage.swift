@@ -3,20 +3,9 @@
 //  rankbuddy-macos
 //
 
+import BuddyAppKit
 import Foundation
 import PaginatedRESTClient
-
-/// Wraps a decodable element so a per-element decode failure yields `nil` instead of failing
-/// the whole array. A local, `nonisolated` equivalent of buddy-kit's `LenientElement` so its
-/// `value` can be read from the off-main, nonisolated page decode (buddy-kit's type is
-/// main-actor-isolated under that module's default isolation).
-private nonisolated struct LenientItem<Wrapped: Decodable>: Decodable {
-    let value: Wrapped?
-
-    init(from decoder: any Decoder) {
-        value = try? decoder.singleValueContainer().decode(Wrapped.self)
-    }
-}
 
 /// The HackerRank for Work list-response envelope: `{ "data": [...], "next": "<url>", ... }`.
 ///
@@ -46,7 +35,7 @@ nonisolated struct HackerRankPage<Item: Decodable & Sendable>: PagedResponse {
 
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let lenient = try container.decode([LenientItem<Item>].self, forKey: .data)
+        let lenient = try container.decode([LenientElement<Item>].self, forKey: .data)
         data = lenient.compactMap(\.value)
         next = try container.decodeIfPresent(String.self, forKey: .next)
         totalCount = try? container.decodeIfPresent(Int.self, forKey: .total)

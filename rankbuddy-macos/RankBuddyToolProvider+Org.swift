@@ -3,9 +3,9 @@
 //  rankbuddy-macos
 //
 
-import BuddyMCP
 import Foundation
 import MCP
+import MCPKit
 
 /// Org-enumeration read tools (#9): `list_users` and `list_teams`. Split out of
 /// `RankBuddyToolProvider` so its file stays within the length budget. Like the other list

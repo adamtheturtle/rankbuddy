@@ -11,6 +11,7 @@
 //  `SearchInterpreter`.
 //
 
+import BuddyAppKit
 import Foundation
 import FoundationModels
 
@@ -161,9 +162,9 @@ enum SearchInterpreter {
     }
 
     /// A short, comma-separated option list to steer the model, capped so a big org's value
-    /// list can't dominate the prompt.
+    /// list can't dominate the prompt. Delegates to buddy-kit's shared grounding core (#639).
     static func optionList(_ values: [String], limit: Int) -> String {
-        values.prefix(limit).joined(separator: ", ")
+        SearchGrounding.optionList(values, limit: limit)
     }
 
     private static let optionLimit = 40
@@ -242,52 +243,26 @@ enum SearchInterpreter {
     }
 
     /// Keeps a resolved date window only when the query mentions a time frame, so the model can't
-    /// attach a range the request never implied.
+    /// attach a range the request never implied. Delegates to buddy-kit's shared core (#639).
     static func groundDateRange(_ range: String?, query: String) -> String? {
-        guard let range else { return nil }
-
-        let dateWords: Set = [
-            "today", "yesterday", "week", "weeks", "month", "months", "day", "days",
-            "hour", "hours", "recent", "recently", "last", "past", "this",
-            "24", "7", "30", "90", "year", "years"
-        ]
-        return tokens(query).isDisjoint(with: dateWords) ? nil : range
+        SearchGrounding.groundDateRange(range, query: query)
     }
 
     /// Strips the model's free-text down to genuine title keywords: drops filter stop-words and
     /// every word of a matched facet value, so a query the model echoes wholesale collapses to
-    /// the real topic (or empty) and the structured filters do the work.
+    /// the real topic (or empty) and the structured filters do the work. Delegates to buddy-kit's
+    /// shared `groundText(raw:drop:)` (#639) with the app's assembled drop set.
     static func groundText(_ raw: String, facetValueWords: Set<String>) -> String {
-        let drop = filterStopWords.union(facetValueWords)
-        let kept = raw
-            .split(whereSeparator: { $0 == " " || $0 == "\n" || $0 == "\t" })
-            .map(String.init)
-            .filter { word in
-                let key = word.lowercased().filter { $0.isLetter || $0.isNumber }
-                return !key.isEmpty && !drop.contains(key)
-            }
-        return kept.joined(separator: " ")
+        SearchGrounding.groundText(raw: raw, drop: filterStopWords.union(facetValueWords))
     }
 
     /// Lowercased alphanumeric word tokens of `text`, for whole-word comparison (so "lin" doesn't
-    /// match inside "linked").
+    /// match inside "linked"). Delegates to buddy-kit's shared core (#639).
     static func tokens(_ text: String) -> Set<String> {
-        Set(
-            text.lowercased()
-                .split { !$0.isLetter && !$0.isNumber }
-                .map(String.init)
-                .filter { !$0.isEmpty }
-        )
+        SearchGrounding.tokens(text)
     }
 
     /// Words that name a filter concept rather than a list-item title, so they must never survive
-    /// into the free-text search.
-    static let filterStopWords: Set<String> = [
-        "test", "tests", "question", "questions", "interview", "interviews", "candidate",
-        "candidates", "user", "users", "team", "teams",
-        "by", "from", "the", "a", "an", "of", "in", "on", "for", "with", "and", "or",
-        "my", "me", "mine", "show", "find", "all", "owned", "created", "made", "that", "are",
-        "today", "yesterday", "last", "recent", "recently", "past", "this",
-        "day", "days", "week", "weeks", "month", "months", "hour", "hours", "year", "years"
-    ]
+    /// into the free-text search. The shared superset from buddy-kit's grounding core (#639).
+    static let filterStopWords = SearchGrounding.filterStopWords
 }

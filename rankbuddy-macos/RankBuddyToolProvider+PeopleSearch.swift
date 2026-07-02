@@ -3,9 +3,9 @@
 //  rankbuddy-macos
 //
 
-import BuddyMCP
 import Foundation
 import MCP
+import MCPKit
 
 /// The server-side people/candidate search tools (#104), split out of `RankBuddyToolProvider`
 /// so its file and `callKeyedTool` stay within the length/complexity budgets. Unlike the

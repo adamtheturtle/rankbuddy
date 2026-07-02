@@ -4,9 +4,9 @@
 //
 
 import BuddyAppKit
-import BuddyMCP
 import Foundation
 import MCP
+import MCPKit
 
 /// The outcome of a bounded search: the matches plus how much of the collection was scanned.
 private struct SearchHits<Item> {
@@ -16,7 +16,7 @@ private struct SearchHits<Item> {
 }
 
 /// The RankBuddy MCP tool catalogue (#9): read-only, account-aware tools over the HackerRank
-/// for Work data, served via buddy-kit's `BuddyMCPServer`.
+/// for Work data, served via buddy-kit's `MCPServer`.
 ///
 /// Read-only by default — no write/create tools (those would need an explicit, separately
 /// reviewed opt-in). Every tool resolves a target account (an `account` argument matching a

@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import BuddyAppKit
 import Foundation
 
 /// The richer single-test read (`GET /tests/{id}` → `TestsShow`), carrying fields the list item
@@ -34,11 +35,11 @@ nonisolated struct TestDetail: Decodable, Hashable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        shortLoginURL = container.lenient(String.self, .shortLoginURL)
-        publicLoginURL = container.lenient(String.self, .publicLoginURL)
-        accessPassword = container.lenient(String.self, .accessPassword)
-        mcqCorrectScore = container.lenient(Double.self, .mcqCorrectScore)
-        mcqIncorrectScore = container.lenient(Double.self, .mcqIncorrectScore)
+        shortLoginURL = container.lenientDecodeIfPresent(String.self, forKey: .shortLoginURL)
+        publicLoginURL = container.lenientDecodeIfPresent(String.self, forKey: .publicLoginURL)
+        accessPassword = container.lenientDecodeIfPresent(String.self, forKey: .accessPassword)
+        mcqCorrectScore = container.lenientDecodeIfPresent(Double.self, forKey: .mcqCorrectScore)
+        mcqIncorrectScore = container.lenientDecodeIfPresent(Double.self, forKey: .mcqIncorrectScore)
     }
 
     /// Whether the detail adds a login link worth a dedicated section, so the UI can avoid an

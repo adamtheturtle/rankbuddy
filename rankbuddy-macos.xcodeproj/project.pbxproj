@@ -10,11 +10,11 @@
 		66062D152FEB0FB800352492 /* BuddyAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D142FEB0FB800352492 /* BuddyAppKit */; };
 		66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D162FEB0FB800352492 /* BuddyDesignSystem */; };
 		66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
+		6638044A2FF64E51004A9FCE /* MCPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 663804492FF64E51004A9FCE /* MCPKit */; };
 		66769E002FED4A320023907A /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66769DFF2FED4A320023907A /* PaginatedRESTClient */; };
 		6676A0A82FEEB2410023907A /* FastList in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0A72FEEB2410023907A /* FastList */; };
 		6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AA2FEEB24F0023907A /* Sparkle */; };
 		6676A0AE2FEEB2710023907A /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AD2FEEB2710023907A /* MCP */; };
-		6676A3532FEF19070023907A /* BuddyMCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A3522FEF19070023907A /* BuddyMCP */; };
 		668CA7EB2FEC7BFA00420E24 /* CommandPaletteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */; };
 /* End PBXBuildFile section */
 
@@ -50,7 +50,7 @@
 		000000000000000130000000 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				6676A3532FEF19070023907A /* BuddyMCP in Frameworks */,
+				6638044A2FF64E51004A9FCE /* MCPKit in Frameworks */,
 				6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */,
 				66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */,
 				66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */,
@@ -121,7 +121,7 @@
 				6676A0A72FEEB2410023907A /* FastList */,
 				6676A0AA2FEEB24F0023907A /* Sparkle */,
 				6676A0AD2FEEB2710023907A /* MCP */,
-				6676A3522FEF19070023907A /* BuddyMCP */,
+				663804492FF64E51004A9FCE /* MCPKit */,
 			);
 			productName = "rankbuddy-macos";
 			productReference = 000000000000000000000120 /* rankbuddy-macos.app */;
@@ -183,6 +183,7 @@
 				6676A0A62FEEB2410023907A /* XCRemoteSwiftPackageReference "FastList" */,
 				6676A0A92FEEB24F0023907A /* XCRemoteSwiftPackageReference "Sparkle" */,
 				6676A0AC2FEEB2710023907A /* XCRemoteSwiftPackageReference "swift-sdk" */,
+				663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -532,7 +533,15 @@
 			repositoryURL = "https://github.com/adamtheturtle/buddy-kit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.7.2;
+				version = 0.11.0;
+			};
+		};
+		663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamtheturtle/MCPKit/";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.0;
 			};
 		};
 		66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */ = {
@@ -593,6 +602,11 @@
 			package = 66062D132FEB0FB800352492 /* XCRemoteSwiftPackageReference "buddy-kit" */;
 			productName = PaginatedRESTClient;
 		};
+		663804492FF64E51004A9FCE /* MCPKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */;
+			productName = MCPKit;
+		};
 		66769DFF2FED4A320023907A /* PaginatedRESTClient */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */;
@@ -612,11 +626,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6676A0AC2FEEB2710023907A /* XCRemoteSwiftPackageReference "swift-sdk" */;
 			productName = MCP;
-		};
-		6676A3522FEF19070023907A /* BuddyMCP */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 66062D132FEB0FB800352492 /* XCRemoteSwiftPackageReference "buddy-kit" */;
-			productName = BuddyMCP;
 		};
 		668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */ = {
 			isa = XCSwiftPackageProductDependency;

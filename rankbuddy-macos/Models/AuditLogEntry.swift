@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import BuddyAppKit
 import Foundation
 
 /// One entry in the organisation's server-side audit log (`GET /audit_log` → `AuditLogShow`):
@@ -48,20 +49,20 @@ nonisolated struct AuditLogEntry: Decodable, Hashable, Identifiable {
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         sourceID = Self.flexibleString(container, .sourceID)
-        sourceType = container.lenient(String.self, .sourceType)
-        action = container.lenient(String.self, .action)
-        modifiedFields = container.lenient([String].self, .modifiedFields) ?? []
-        ipAddress = container.lenient(String.self, .ipAddress)
-        createdAt = container.lenient(String.self, .createdAt)
-        userLabel = container.lenient(InterviewPerson.self, .user)?.displayName
+        sourceType = container.lenientDecodeIfPresent(String.self, forKey: .sourceType)
+        action = container.lenientDecodeIfPresent(String.self, forKey: .action)
+        modifiedFields = container.lenientDecodeIfPresent([String].self, forKey: .modifiedFields) ?? []
+        ipAddress = container.lenientDecodeIfPresent(String.self, forKey: .ipAddress)
+        createdAt = container.lenientDecodeIfPresent(String.self, forKey: .createdAt)
+        userLabel = container.lenientDecodeIfPresent(InterviewPerson.self, forKey: .user)?.displayName
     }
 
     /// Decodes a key that may arrive as either a JSON string or a number, returning its string
     /// form either way (`source_id` is documented as a string but live records sometimes carry
     /// a numeric id).
     private static func flexibleString(_ container: KeyedDecodingContainer<CodingKeys>, _ key: CodingKeys) -> String? {
-        if let string = container.lenient(String.self, key) { return string }
-        if let number = container.lenient(Int.self, key) { return String(number) }
+        if let string = container.lenientDecodeIfPresent(String.self, forKey: key) { return string }
+        if let number = container.lenientDecodeIfPresent(Int.self, forKey: key) { return String(number) }
         return nil
     }
 }

@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import BuddyAppKit
 import Foundation
 
 /// The richer single-question read (`GET /questions/{id}` → `QuestionShow`), carrying fields the
@@ -27,9 +28,9 @@ nonisolated struct QuestionDetail: Decodable, Hashable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        options = container.lenient([String].self, .options) ?? []
-        answer = container.lenient(String.self, .answer)
-        internalNotes = container.lenient(String.self, .internalNotes)
+        options = container.lenientDecodeIfPresent([String].self, forKey: .options) ?? []
+        answer = container.lenientDecodeIfPresent(String.self, forKey: .answer)
+        internalNotes = container.lenientDecodeIfPresent(String.self, forKey: .internalNotes)
     }
 
     /// Whether the detail adds anything worth showing over the list row, so the UI can avoid

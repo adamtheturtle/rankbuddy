@@ -55,8 +55,9 @@ enum RankBuddyUserActivity {
         webURL: URL?
     ) {
         activity.title = title
-        activity.isEligibleForHandoff = true
-        activity.isEligibleForSearch = true
+        // Handoff + Spotlight eligibility via buddy-kit's shared `applyBuddyHandoffFlags` (#645),
+        // now `nonisolated` (buddy-kit 0.11.0 / #5) so this `nonisolated` builder can call it.
+        activity.applyBuddyHandoffFlags()
         activity.webpageURL = webURL
         activity.userInfo = [
             Key.collection: ref.collection.rawValue,
@@ -88,7 +89,7 @@ enum RankBuddyUserActivity {
             RankBuddyDeepLink.open(
                 collection: target.collection, accountID: target.accountID, itemID: target.itemID
             )
-            NSApp.activate(ignoringOtherApps: true)
+            AppActivator.bringToFront()
             return true
         }
         if let url = activity.webpageURL {

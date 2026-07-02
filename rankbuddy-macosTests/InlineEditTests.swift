@@ -3,6 +3,7 @@
 //  rankbuddy-macosTests
 //
 
+import BuddyDesignSystem
 @testable import rankbuddy_macos
 import Testing
 

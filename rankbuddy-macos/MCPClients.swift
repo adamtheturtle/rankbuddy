@@ -4,10 +4,12 @@
 //
 
 import Foundation
+import MCPKit
 
 /// The assistants RankBuddy gives MCP setup instructions for (#74). Each carries the config
 /// shape its client expects and where its logs live, so the MCP settings pane shows a tab per
-/// assistant instead of only the Claude-Desktop JSON.
+/// assistant instead of only the Claude-Desktop JSON. The shared snippet builder is buddy-kit's
+/// `MCPKit.MCPClient` (#647); RankBuddy keeps its own location/troubleshooting copy below.
 enum MCPClient: String, CaseIterable, Identifiable {
     case claudeDesktop
     case claudeCode
@@ -16,6 +18,16 @@ enum MCPClient: String, CaseIterable, Identifiable {
 
     var id: String {
         rawValue
+    }
+
+    /// The buddy-kit client this maps to, for the shared display name and config-snippet builder.
+    var buddyClient: MCPKit.MCPClient {
+        switch self {
+        case .claudeDesktop: .claudeDesktop
+        case .claudeCode: .claudeCode
+        case .codex: .codex
+        case .cursor: .cursor
+        }
     }
 
     var displayName: String {
@@ -49,22 +61,10 @@ enum MCPClient: String, CaseIterable, Identifiable {
     }
 
     /// The ready-to-use configuration (or command) for this client, for the given server
-    /// launch `command` (RankBuddy's own executable path).
+    /// launch `command` (RankBuddy's own executable path). Delegates to buddy-kit's shared
+    /// `configSnippet` (#647) so the JSON/command/TOML builders live in one place.
     func configText(command: String, serverName: String = "rankbuddy") -> String {
-        switch format {
-        case .json:
-            MCPSetup.clientConfigJSON(command: command, serverName: serverName)
-        case .command:
-            // Claude Code registers an MCP server from the CLI; `--` separates RankBuddy's
-            // own args from claude's so `--mcp` reaches RankBuddy.
-            "claude mcp add \(serverName) -- \"\(command)\" --mcp"
-        case .toml:
-            """
-            [mcp_servers.\(serverName)]
-            command = "\(command)"
-            args = ["--mcp"]
-            """
-        }
+        buddyClient.configSnippet(command: command, serverName: serverName)
     }
 
     /// Where this client keeps its config (or how to apply it), shown as a hint. The path may

@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import BuddyAppKit
 import Foundation
 
 /// A HackerRank for Work interview.
@@ -61,16 +62,16 @@ extension Interview {
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
-        status = container.lenient(String.self, .status) ?? ""
-        url = container.lenient(String.self, .url) ?? ""
-        title = container.lenient(String.self, .title)
-        feedback = container.lenient(String.self, .feedback)
-        thumbsUp = container.lenient(Int.self, .thumbsUp)
-        notes = container.lenient(String.self, .notes)
-        createdAt = container.lenient(String.self, .createdAt)
-        updatedAt = container.lenient(String.self, .updatedAt)
-        endedAt = container.lenient(String.self, .endedAt)
-        interviewTemplateID = container.lenient(Int.self, .interviewTemplateID)
-        reportURL = container.lenient(String.self, .reportURL)
+        status = container.lenientDecodeIfPresent(String.self, forKey: .status) ?? ""
+        url = container.lenientDecodeIfPresent(String.self, forKey: .url) ?? ""
+        title = container.lenientDecodeIfPresent(String.self, forKey: .title)
+        feedback = container.lenientDecodeIfPresent(String.self, forKey: .feedback)
+        thumbsUp = container.lenientDecodeIfPresent(Int.self, forKey: .thumbsUp)
+        notes = container.lenientDecodeIfPresent(String.self, forKey: .notes)
+        createdAt = container.lenientDecodeIfPresent(String.self, forKey: .createdAt)
+        updatedAt = container.lenientDecodeIfPresent(String.self, forKey: .updatedAt)
+        endedAt = container.lenientDecodeIfPresent(String.self, forKey: .endedAt)
+        interviewTemplateID = container.lenientDecodeIfPresent(Int.self, forKey: .interviewTemplateID)
+        reportURL = container.lenientDecodeIfPresent(String.self, forKey: .reportURL)
     }
 }

@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import BuddyAppKit
 
 /// Where RankBuddy shows itself: in the Dock, in the Menu Bar, or both (#66). Mirrors
 /// PadBuddy's "Show PadBuddy in" control. `RawRepresentable`/`String` so it persists directly
@@ -57,7 +58,7 @@ enum AppPresence: String, CaseIterable, Identifiable {
 
         NSApp.setActivationPolicy(activationPolicy)
         if showsDockIcon {
-            NSApp.activate(ignoringOtherApps: true)
+            AppActivator.bringToFront()
         }
     }
 }

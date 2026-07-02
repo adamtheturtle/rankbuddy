@@ -1,13 +1,13 @@
 {
-  "originHash" : "2e9700c2b37b440c933dd9712f16b821349449d94a411b23c55ee11da183c363",
+  "originHash" : "940bea473a0cb3e2e1e30fb7e82c79c32b41f43e0181e25c4ad8c601a58898c5",
   "pins" : [
     {
       "identity" : "buddy-kit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/buddy-kit",
       "state" : {
-        "revision" : "1a1326cecaf416d094bf204a676982a2dadcd477",
-        "version" : "0.7.2"
+        "revision" : "ac9591b25433c320ee64eeaf9539da37da39f6bc",
+        "version" : "0.11.0"
       }
     },
     {
@@ -35,6 +35,15 @@
       "state" : {
         "revision" : "b3ea8ea6e5401b7bc5139392d47bb7eaa825758c",
         "version" : "0.4.1"
+      }
+    },
+    {
+      "identity" : "mcpkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/MCPKit/",
+      "state" : {
+        "revision" : "29cd39ff8d7d15e024807a634ab1efb51ea9005c",
+        "version" : "0.1.0"
       }
     },
     {

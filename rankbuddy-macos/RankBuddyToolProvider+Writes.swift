@@ -4,9 +4,9 @@
 //
 
 import BuddyAppKit
-import BuddyMCP
 import Foundation
 import MCP
+import MCPKit
 
 /// The MCP write tools (#73): create/update/delete over the HackerRank for Work data, mirroring
 /// the app's own write flows (#12, #57–#60). Advertised and runnable only when the separate

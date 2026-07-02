@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import BuddyAppKit
 
 /// A macOS Service, "Open in RankBuddy", that takes a selected HackerRank URL in any app and
 /// deep-links to the matching item (#46). Mirrors PadBuddy's "Open Pad in CoderPad" service.
@@ -51,7 +52,7 @@ final class ServicesProvider: NSObject {
         guard let target = target(for: text, currentAccountID: currentID) else { return }
 
         RankBuddyDeepLink.open(collection: target.collection, accountID: target.accountID, itemID: target.itemID)
-        NSApp.activate(ignoringOtherApps: true)
+        AppActivator.bringToFront()
         NSApp.windows.first(where: \.canBecomeMain)?.makeKeyAndOrderFront(nil)
     }
 }

@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import BuddyAppKit
 
 /// Minimal app delegate, used for the Dock right-click menu (#45). PadBuddy offers quick
 /// section jumps from its Dock icon; this mirrors that — each item selects a sidebar section
@@ -37,7 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let raw = sender.representedObject as? String else { return }
 
         UserDefaults.standard.set(raw, forKey: SidebarSection.defaultsKey)
-        NSApp.activate(ignoringOtherApps: true)
+        AppActivator.bringToFront()
         NSApp.windows.first(where: \.canBecomeMain)?.makeKeyAndOrderFront(nil)
     }
 }

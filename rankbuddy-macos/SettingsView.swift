@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import BuddyDesignSystem
 import SwiftUI
 
 /// The app's Settings scene: manage HackerRank accounts (add, edit, remove).
@@ -74,8 +75,11 @@ struct SettingsView: View {
     private var generalTab: some View {
         Form {
             Section("Appearance") {
-                AppearancePicker(selection: $appearance)
-                    .padding(.vertical, 4)
+                AppearancePicker(selection: Binding(
+                    get: { appearance.colorScheme },
+                    set: { appearance = AppAppearance(colorScheme: $0) }
+                ))
+                .padding(.vertical, 4)
             }
 
             Section {
@@ -193,7 +197,7 @@ private extension SettingsView {
                     biometricReveal = true
                 } else {
                     Task {
-                        if await BiometricAuth.authenticateToDisableGate(
+                        if await BiometricGate.authenticateToDisableGate(
                             reason: "turn off the Touch ID requirement"
                         ) {
                             biometricReveal = false

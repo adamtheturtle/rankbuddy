@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import BuddyAppKit
 import Foundation
 
 /// A HackerRank for Work user (a member of the organisation).
@@ -59,16 +60,16 @@ extension User {
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
-        email = container.lenient(String.self, .email) ?? ""
-        firstName = container.lenient(String.self, .firstName)
-        lastName = container.lenient(String.self, .lastName)
-        country = container.lenient(String.self, .country)
-        role = container.lenient(String.self, .role)
-        status = container.lenient(String.self, .status)
-        teams = container.lenient([String].self, .teams)
-        activated = container.lenient(Bool.self, .activated)
-        companyAdmin = container.lenient(Bool.self, .companyAdmin)
-        teamAdmin = container.lenient(Bool.self, .teamAdmin)
-        lastActivityTime = container.lenient(String.self, .lastActivityTime)
+        email = container.lenientDecodeIfPresent(String.self, forKey: .email) ?? ""
+        firstName = container.lenientDecodeIfPresent(String.self, forKey: .firstName)
+        lastName = container.lenientDecodeIfPresent(String.self, forKey: .lastName)
+        country = container.lenientDecodeIfPresent(String.self, forKey: .country)
+        role = container.lenientDecodeIfPresent(String.self, forKey: .role)
+        status = container.lenientDecodeIfPresent(String.self, forKey: .status)
+        teams = container.lenientDecodeIfPresent([String].self, forKey: .teams)
+        activated = container.lenientDecodeIfPresent(Bool.self, forKey: .activated)
+        companyAdmin = container.lenientDecodeIfPresent(Bool.self, forKey: .companyAdmin)
+        teamAdmin = container.lenientDecodeIfPresent(Bool.self, forKey: .teamAdmin)
+        lastActivityTime = container.lenientDecodeIfPresent(String.self, forKey: .lastActivityTime)
     }
 }

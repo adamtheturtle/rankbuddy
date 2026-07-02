@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import BuddyAppKit
 import Foundation
 
 /// The richer single-interview read (`GET /interviews/{id}` → `InterviewShow`), carrying the
@@ -38,13 +39,13 @@ nonisolated struct InterviewDetail: Codable, Hashable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        scheduledFrom = container.lenient(String.self, .scheduledFrom)
-        scheduledTo = container.lenient(String.self, .scheduledTo)
-        resumeURL = container.lenient(String.self, .resumeURL)
-        resultURL = container.lenient(String.self, .resultURL)
-        interviewers = container.lenient([InterviewPerson].self, .interviewers) ?? []
-        user = container.lenient(InterviewPerson.self, .user)
-        candidate = container.lenient(InterviewPerson.self, .candidate)
+        scheduledFrom = container.lenientDecodeIfPresent(String.self, forKey: .scheduledFrom)
+        scheduledTo = container.lenientDecodeIfPresent(String.self, forKey: .scheduledTo)
+        resumeURL = container.lenientDecodeIfPresent(String.self, forKey: .resumeURL)
+        resultURL = container.lenientDecodeIfPresent(String.self, forKey: .resultURL)
+        interviewers = container.lenientDecodeIfPresent([InterviewPerson].self, forKey: .interviewers) ?? []
+        user = container.lenientDecodeIfPresent(InterviewPerson.self, forKey: .user)
+        candidate = container.lenientDecodeIfPresent(InterviewPerson.self, forKey: .candidate)
     }
 
     /// Whether the detail carries any people worth a dedicated section, so the UI can avoid an
@@ -87,10 +88,10 @@ nonisolated struct InterviewPerson: Codable, Hashable {
         }
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
-            email: container.lenient(String.self, .email),
-            firstName: container.lenient(String.self, .firstName),
-            lastName: container.lenient(String.self, .lastName),
-            name: container.lenient(String.self, .name)
+            email: container.lenientDecodeIfPresent(String.self, forKey: .email),
+            firstName: container.lenientDecodeIfPresent(String.self, forKey: .firstName),
+            lastName: container.lenientDecodeIfPresent(String.self, forKey: .lastName),
+            name: container.lenientDecodeIfPresent(String.self, forKey: .name)
         )
     }
 
@@ -118,7 +119,7 @@ nonisolated struct InterviewTranscript: Codable, Hashable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        messages = container.lenient([InterviewMessage].self, .messages) ?? []
+        messages = container.lenientDecodeIfPresent([InterviewMessage].self, forKey: .messages) ?? []
     }
 }
 
@@ -151,11 +152,11 @@ nonisolated struct InterviewMessage: Codable, Hashable, Identifiable {
 
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        messageID = container.lenient(String.self, .messageID)
-        author = container.lenient(String.self, .author)
-        email = container.lenient(String.self, .email)
-        candidate = container.lenient(Bool.self, .candidate)
-        timestamp = container.lenient(Int.self, .timestamp)
-        text = container.lenient(String.self, .text)
+        messageID = container.lenientDecodeIfPresent(String.self, forKey: .messageID)
+        author = container.lenientDecodeIfPresent(String.self, forKey: .author)
+        email = container.lenientDecodeIfPresent(String.self, forKey: .email)
+        candidate = container.lenientDecodeIfPresent(Bool.self, forKey: .candidate)
+        timestamp = container.lenientDecodeIfPresent(Int.self, forKey: .timestamp)
+        text = container.lenientDecodeIfPresent(String.self, forKey: .text)
     }
 }

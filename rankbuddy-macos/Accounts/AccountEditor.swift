@@ -175,7 +175,12 @@ struct AccountEditor: View {
         if isTokenRevealed {
             isTokenRevealed = false
         } else {
-            Task { isTokenRevealed = await BiometricAuth.authenticateForReveal(reason: "reveal your token") }
+            Task {
+                isTokenRevealed = await BiometricGate.authenticateForReveal(
+                    settingEnabled: UserDefaults.standard.bool(forKey: BiometricAuth.revealSettingKey),
+                    reason: "reveal your token"
+                )
+            }
         }
     }
 

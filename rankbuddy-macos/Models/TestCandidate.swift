@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import BuddyAppKit
 import Foundation
 
 /// A candidate associated with a HackerRank for Work test.
@@ -82,23 +83,23 @@ extension TestCandidate {
     nonisolated init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
-        email = container.lenient(String.self, .email) ?? ""
-        fullName = container.lenient(String.self, .fullName)
-        score = container.lenient(Double.self, .score)
-        percentageScore = container.lenient(Double.self, .percentageScore)
-        test = container.lenient(String.self, .test)
-        status = container.lenient(Int.self, .status)
-        atsState = container.lenient(Int.self, .atsState)
-        integrityStatus = container.lenient(String.self, .integrityStatus)
-        attemptStartTime = container.lenient(String.self, .attemptStartTime)
-        attemptEndTime = container.lenient(String.self, .attemptEndTime)
-        tags = container.lenient([String].self, .tags)
-        feedback = container.lenient(String.self, .feedback)
-        reportURL = container.lenient(String.self, .reportURL)
-        pdfURL = container.lenient(String.self, .pdfURL)
-        plagiarismStatus = container.lenient(Bool.self, .plagiarismStatus)
-        outOfWindowEvents = container.lenient(Int.self, .outOfWindowEvents)
-        outOfWindowDuration = container.lenient(Double.self, .outOfWindowDuration)
-        editorPasteCount = container.lenient(Int.self, .editorPasteCount)
+        email = container.lenientDecodeIfPresent(String.self, forKey: .email) ?? ""
+        fullName = container.lenientDecodeIfPresent(String.self, forKey: .fullName)
+        score = container.lenientDecodeIfPresent(Double.self, forKey: .score)
+        percentageScore = container.lenientDecodeIfPresent(Double.self, forKey: .percentageScore)
+        test = container.lenientDecodeIfPresent(String.self, forKey: .test)
+        status = container.lenientDecodeIfPresent(Int.self, forKey: .status)
+        atsState = container.lenientDecodeIfPresent(Int.self, forKey: .atsState)
+        integrityStatus = container.lenientDecodeIfPresent(String.self, forKey: .integrityStatus)
+        attemptStartTime = container.lenientDecodeIfPresent(String.self, forKey: .attemptStartTime)
+        attemptEndTime = container.lenientDecodeIfPresent(String.self, forKey: .attemptEndTime)
+        tags = container.lenientDecodeIfPresent([String].self, forKey: .tags)
+        feedback = container.lenientDecodeIfPresent(String.self, forKey: .feedback)
+        reportURL = container.lenientDecodeIfPresent(String.self, forKey: .reportURL)
+        pdfURL = container.lenientDecodeIfPresent(String.self, forKey: .pdfURL)
+        plagiarismStatus = container.lenientDecodeIfPresent(Bool.self, forKey: .plagiarismStatus)
+        outOfWindowEvents = container.lenientDecodeIfPresent(Int.self, forKey: .outOfWindowEvents)
+        outOfWindowDuration = container.lenientDecodeIfPresent(Double.self, forKey: .outOfWindowDuration)
+        editorPasteCount = container.lenientDecodeIfPresent(Int.self, forKey: .editorPasteCount)
     }
 }

@@ -85,7 +85,7 @@ struct OpenLinkSheet: View {
         let target = HackerRankLink.parse(trimmed) ?? (collection: collection, id: trimmed)
         RankBuddyDeepLink.open(collection: target.collection, accountID: accountID, itemID: target.id)
         dismiss()
-        NSApp.activate(ignoringOtherApps: true)
+        AppActivator.bringToFront()
     }
 }
 

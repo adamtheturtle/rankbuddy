@@ -113,25 +113,24 @@ enum LivenessDigest {
 @MainActor
 final class LivenessMonitor {
     static let shared = LivenessMonitor()
-    private var task: Task<Void, Never>?
+    private var loop: RepeatingTask?
     private init() {}
 
     /// Starts the sweep loop (idempotent). Runs one sweep immediately, then re-reads the
     /// configured cadence before each subsequent sweep, so a changed interval (or toggled
     /// opt-in) takes effect without restarting the timer. Tests can pin the cadence via
-    /// `interval`.
+    /// `interval`. Built on buddy-kit's `RepeatingTask` (#643) rather than a hand-rolled loop.
     func start(store: AccountStore, every interval: Duration? = nil) {
-        guard task == nil else { return }
+        guard loop == nil else { return }
 
-        task = Task { [weak self] in
+        let loop = RepeatingTask(
+            runImmediately: true,
+            interval: { interval ?? LivenessSettings.currentInterval() }
+        ) { [weak self] in
             await self?.sweep(store: store)
-            while !Task.isCancelled {
-                try? await Task.sleep(for: interval ?? LivenessSettings.currentInterval())
-                if Task.isCancelled { break }
-
-                await self?.sweep(store: store)
-            }
         }
+        self.loop = loop
+        loop.start()
     }
 
     /// One sweep: when enabled, fetch the in-scope accounts' interviews and badge the total
@@ -139,7 +138,7 @@ final class LivenessMonitor {
     /// the badge. New-interview notifications stay per-account.
     func sweep(store: AccountStore) async {
         guard UserDefaults.standard.bool(forKey: LivenessSettings.backgroundUpdatesKey) else {
-            NSApp.dockTile.badgeLabel = nil
+            DockBadge.set(count: 0)
             return
         }
 
@@ -153,9 +152,7 @@ final class LivenessMonitor {
             notifyIfNeeded(interviews, accountID: account.id)
         }
 
-        NSApp.dockTile.badgeLabel = accounts.isEmpty
-            ? nil
-            : LivenessDigest.badgeLabel(scheduledCount: scheduled)
+        DockBadge.set(count: accounts.isEmpty ? 0 : scheduled)
     }
 
     /// Compares this sweep's interviews against the account's last-seen set, posting a
@@ -256,7 +253,7 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
     ) {
         Task { @MainActor in
             UserDefaults.standard.set(SidebarSection.interviews.rawValue, forKey: "selectedSection")
-            NSApp.activate(ignoringOtherApps: true)
+            AppActivator.bringToFront()
         }
         completionHandler()
     }
