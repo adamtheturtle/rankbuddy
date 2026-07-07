@@ -46,6 +46,14 @@ extension LoadableList {
         serverSearch != nil && !trimmedQuery.isEmpty
     }
 
+    /// Whether visible rows are narrowed locally after the server result set is loaded. In that
+    /// case the API total describes the wider server result, not the currently visible rows.
+    var isLocalFiltering: Bool {
+        (!isServerSearching && !trimmedQuery.isEmpty)
+            || selectedFacets.contains { !$0.value.isEmpty }
+            || (!serverDateFiltering && filterDate != nil && dateRange != nil)
+    }
+
     /// The `.task(id:)` token that reloads a server-search list when its query changes (#104).
     /// Empty for client-side lists, so their reload task never fires.
     var serverSearchToken: String {
@@ -82,6 +90,7 @@ extension LoadableList {
             let page = try await loadCurrentPage(nil)
             items = page.items
             nextCursor = page.next
+            totalCount = page.totalCount
             phase = .loaded
         } catch {
             if items.isEmpty { phase = .failed(message(for: error)) }

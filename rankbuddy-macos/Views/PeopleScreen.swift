@@ -43,6 +43,7 @@ struct PeopleScreen: View {
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
                 accessoryToolbar: { AnyView(createButton) },
                 reloadToken: reloadToken,
+                rowDate: { DisplayFormat.parseDate($0.lastActivityTime) },
                 row: { PersonRow(user: $0) },
                 detail: { PersonDetailView(user: $0) }
             )
@@ -164,8 +165,8 @@ struct PersonRow: View {
     let user: User
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(user.displayName).font(.headline)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(user.displayName).font(.callout.weight(.medium))
             HStack(spacing: 8) {
                 if let role = user.role {
                     Text(role.capitalized)

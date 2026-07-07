@@ -23,6 +23,7 @@ extension LoadableList {
         if let key = cacheKey, let cached = ListPageCache.cached([Item].self, for: key), !cached.items.isEmpty {
             items = cached.items
             nextCursor = cached.cursor
+            totalCount = nil
             phase = .loaded
             // Cached rows are shown immediately; the load below is a background refresh (#102).
             isBackgroundRefreshing = true
@@ -32,6 +33,7 @@ extension LoadableList {
             phase = .loading
             items = []
             nextCursor = nil
+            totalCount = nil
         }
 
         // Always clear the refresh hint once the fresh load settles, whichever way it goes.
@@ -41,6 +43,7 @@ extension LoadableList {
             let page = try await loadCurrentPage(nil)
             items = page.items
             nextCursor = page.next
+            totalCount = page.totalCount
             phase = .loaded
             onFirstPage(page.items)
             if let key = cacheKey { ListPageCache.store(items: page.items, cursor: page.next, for: key) }
@@ -74,6 +77,7 @@ extension LoadableList {
             let page = try await loadCurrentPage(cursor)
             items.append(contentsOf: page.items)
             nextCursor = page.next
+            totalCount = page.totalCount ?? totalCount
             pagesLoaded += 1
         } catch {
             nextCursor = nil

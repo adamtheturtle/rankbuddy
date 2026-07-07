@@ -25,11 +25,18 @@ struct NewQuickPadSheet: View {
                 Section {
                     TextField("Title (optional)", text: $title)
                 } footer: {
-                    Text(account.isMock
-                        ? "Demo account: no real QuickPad is created."
-                        : "This creates a real, ready-to-share QuickPad in your HackerRank organisation.")
-                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(account.isMock
+                            ? "Demo account: no real QuickPad is created."
+                            : "This creates a real, ready-to-share QuickPad in your HackerRank organisation.")
+                            .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+
+                        if !account.isMock {
+                            Text("Opens in your browser, which may be signed in to a different HackerRank account.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {
@@ -65,8 +72,11 @@ struct NewQuickPadSheet: View {
         errorMessage = nil
         defer { isSending = false }
         do {
-            try await HackerRankClient(account: account).createQuickPad(title: title)
+            let created = try await HackerRankClient(account: account).createQuickPad(title: title)
             onCreated()
+            if !account.isMock, let rawURL = created.url, let url = URL(string: rawURL) {
+                BrowserSettings.open(url)
+            }
             dismiss()
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription

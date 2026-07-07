@@ -33,6 +33,7 @@ struct TeamsScreen: View {
                 contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.name) },
                 accessoryToolbar: { AnyView(createButton) },
                 reloadToken: reloadToken,
+                rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { TeamRow(team: $0) },
                 detail: { TeamDetailView(team: $0, account: account) }
             )
@@ -79,8 +80,8 @@ struct TeamRow: View {
     let team: Team
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(team.name).font(.headline)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(team.name).font(.callout.weight(.medium))
             if let summary = team.memberSummary {
                 Text(summary)
                     .font(.caption)
@@ -120,6 +121,7 @@ struct TeamMembersList: View {
             contextMenu: { memberMenuItems(for: $0) },
             accessoryToolbar: { AnyView(addButton) },
             reloadToken: reloadToken,
+            rowDate: { DisplayFormat.parseDate($0.lastActivityTime) },
             row: { PersonRow(user: $0) },
             detail: { PersonDetailView(user: $0) }
         )

@@ -60,6 +60,7 @@ struct CandidatesList: View {
             reloadToken: reloadToken,
             csvExport: { CSVExport.candidates($0) },
             csvFilename: "candidates",
+            rowDate: { DisplayFormat.parseDate($0.attemptEndTime ?? $0.attemptStartTime) },
             row: { CandidateRow(candidate: $0) },
             detail: { CandidateDetailView(candidate: $0) }
         )
@@ -181,17 +182,13 @@ struct CandidateRow: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(candidate.fullName ?? candidate.email).font(.headline)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(candidate.fullName ?? candidate.email).font(.callout.weight(.medium))
                 HStack(spacing: 8) {
                     Text(candidate.email)
                     if let score = candidate.score {
                         Text("Score: \(score.formatted())")
                     }
-                    RelativeDateText(
-                        iso: candidate.attemptEndTime ?? candidate.attemptStartTime,
-                        prefix: "· Attempted"
-                    )
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)

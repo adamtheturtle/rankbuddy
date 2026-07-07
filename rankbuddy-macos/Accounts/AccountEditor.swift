@@ -65,7 +65,7 @@ struct AccountEditor: View {
             } header: {
                 Text("Account")
             } footer: {
-                GetAPIKeyLink()
+                GetTokenLink()
             }
 
             Section {

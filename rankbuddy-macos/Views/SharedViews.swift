@@ -71,6 +71,30 @@ func rowMenuItems(
     return items
 }
 
+/// Fixed metrics for `FastList` rows, matching PadBuddy so RankBuddy's lists share the same
+/// comfortable row height instead of sizing tightly to a row's content (which read as squished).
+enum FastListRowMetrics {
+    /// Fixed hosted-row height for the AppKit `FastList` backend. Giving `NSTableView` one
+    /// stable intrinsic height (rather than per-row automatic height discovery as it recycles
+    /// SwiftUI hosting cells during fast scrolls) both smooths scrolling and gives every row the
+    /// same breathing room PadBuddy's rows have.
+    static let macHeight: CGFloat = 64
+}
+
+extension View {
+    /// Frames a `FastList` row's hosted content to the shared fixed height on macOS, so rows
+    /// centre their content at a consistent, comfortable height (matching PadBuddy). A no-op on
+    /// other platforms, where the row sizes to its content.
+    @ViewBuilder
+    func fixedFastListRowHeight() -> some View {
+        #if os(macOS)
+            frame(height: FastListRowMetrics.macHeight)
+        #else
+            self
+        #endif
+    }
+}
+
 /// A relative timestamp ("2 months ago") parsed from an ISO string, with the absolute date
 /// as a tooltip. Renders nothing when the string is missing or unparseable. Matches
 /// PadBuddy's list rows via buddy-kit's memoised `RelativeDateLabel`.
@@ -87,18 +111,58 @@ struct RelativeDateText: View {
     }
 }
 
-/// A small star shown on a favourited row. Renders nothing when `isFavorite` is false, so
-/// rows stay clean at rest (#25).
-struct FavoriteIndicator: View {
+/// A clickable favourite star for a list row, matching PadBuddy: always shown (faint when the
+/// item isn't favourited), toggling the favourite on click with a symbol-swap animation.
+///
+/// It is interactive, so it must sit *outside* a row's hit-transparent content (see the
+/// accessory column in `LoadableList`): a click on the star toggles the favourite, while a click
+/// anywhere else on the row still falls through to the table for selection.
+struct FavoriteStarButton: View {
     let isFavorite: Bool
+    /// The row's title, used only to phrase the accessibility label.
+    let title: String
+    let toggle: () -> Void
 
     var body: some View {
-        if isFavorite {
-            Image(systemName: "star.fill")
-                .font(.caption2)
-                .foregroundStyle(.yellow)
-                .accessibilityLabel("Favourite")
+        Button(action: toggle) {
+            Image(systemName: isFavorite ? "star.fill" : "star")
+                .font(.caption)
+                .foregroundStyle(isFavorite ? AnyShapeStyle(.yellow) : AnyShapeStyle(.secondary))
+                .contentTransition(.symbolEffect(.replace))
         }
+        .buttonStyle(.plain)
+        // Keep non-favourite stars faint but present, so the toggle is discoverable on every
+        // row without the star competing with the row's own content (matches PadBuddy).
+        .opacity(isFavorite ? 1 : 0.35)
+        .help(isFavorite ? "Remove from Favourites" : "Add to Favourites")
+        .accessibilityLabel(isFavorite ? "Remove \(title) from Favourites"
+            : "Add \(title) to Favourites")
+    }
+}
+
+/// A right-aligned relative date ("2 months ago") in a fixed-width trailing column for a list
+/// row, matching PadBuddy's rows. Reserves its column width even when the date is missing, so
+/// stars and titles stay vertically aligned across rows whether or not a row has a date.
+struct RowDateLabel: View {
+    let date: Date?
+
+    /// The shared trailing-column width, so every list's date column lines up.
+    static let columnWidth: CGFloat = 78
+
+    var body: some View {
+        Group {
+            if let date {
+                let labels = RelativeDateLabel.labels(for: date)
+                Text(labels.relative)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .help(labels.tooltip)
+            } else {
+                Color.clear
+            }
+        }
+        .frame(width: Self.columnWidth, alignment: .trailing)
     }
 }
 
@@ -124,7 +188,7 @@ struct NoAccountView: View {
 
                 Button("Add Demo Account") { store.add(.demo) }
 
-                GetAPIKeyLink()
+                GetTokenLink()
             }
         } else {
             ContentUnavailableView {
@@ -142,12 +206,12 @@ struct NoAccountView: View {
 }
 
 /// A link to where a HackerRank for Work personal access token is generated, so a new user
-/// can find their key before connecting an account.
-struct GetAPIKeyLink: View {
-    private static let url = URL(string: "https://www.hackerrank.com/work") ?? Account.defaultBaseURL
+/// can find their token before connecting an account.
+struct GetTokenLink: View {
+    private static let url = URL(string: "https://www.hackerrank.com/work/settings/token") ?? Account.defaultBaseURL
 
     var body: some View {
-        Link("Get an API key", destination: Self.url)
+        Link("Get a Token", destination: Self.url)
             .font(.callout)
     }
 }

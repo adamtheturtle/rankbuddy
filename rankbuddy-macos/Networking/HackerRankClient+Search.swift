@@ -48,7 +48,7 @@ extension HackerRankClient {
     ) async throws -> Page<Item> {
         let url = try searchURL(path: path, query: query, cursor: cursor)
         let response = try await rest.performWithRetry(HackerRankPage<Item>.self, request: rest.authorizedGET(url))
-        return Page(items: response.data, next: response.next)
+        return Page(items: response.data, next: response.next, totalCount: response.totalCount)
     }
 
     private func searchURL(path: String, query: String, cursor: String?) throws -> URL {

@@ -97,7 +97,7 @@ struct HighlightedHTMLText: View {
             ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
                 switch segment {
                 case let .prose(prose):
-                    HTMLText(html: prose)
+                    HTMLFragmentText(html: prose)
                 case let .code(hint, code):
                     CodeBlock(code: code, languageHint: hint)
                 }

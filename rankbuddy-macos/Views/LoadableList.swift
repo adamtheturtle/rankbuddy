@@ -96,6 +96,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// section to pin it (#89/#41). `nil` (the default) leaves rows non-draggable — the
     /// read-only People/Teams and merged lists, which have no favourites, opt out by not setting it.
     var favoriteRef: (Item) -> FavoriteRef? = { _ in nil }
+    /// The date shown in each row's trailing relative-date column (e.g. created/attempted/last
+    /// active), matching PadBuddy's rows. `nil` (the default) hides the column, so lists with no
+    /// meaningful per-row date are unchanged.
+    var rowDate: ((Item) -> Date?)?
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
@@ -116,6 +120,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @State var items: [Item] = []
     /// The absolute URL of the next page, or `nil` once every page is loaded.
     @State var nextCursor: String?
+    /// Exact collection total from the most recent page envelope, when the endpoint provides one.
+    @State var totalCount: Int?
     @State var isLoadingMore = false
     /// How many pages are currently loaded. Auto-refresh only fires on the first page, so it
     /// never yanks a user who has paged deep back to the top (#69).
@@ -277,6 +283,30 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
         }
     }
 
+    /// The interactive trailing column shared by every row: a clickable favourite star (for
+    /// lists that map rows to a `favoriteRef`) and a fixed-width relative-date column (for lists
+    /// that set `rowDate`), matching PadBuddy. Rendered outside the row's hit-transparent content
+    /// so the star toggles on click while the rest of the row still selects.
+    @ViewBuilder private func rowAccessory(_ item: Item) -> some View {
+        HStack(spacing: 8) {
+            if let ref = favoriteRef(item) {
+                FavoriteStarButton(
+                    isFavorite: favorites.isFavorite(
+                        collection: ref.collection,
+                        accountID: ref.accountID,
+                        itemID: ref.itemID
+                    ),
+                    title: ref.title,
+                    toggle: { favorites.toggle(ref) }
+                )
+            }
+            if let rowDate {
+                RowDateLabel(date: rowDate(item))
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+
     @ViewBuilder private var loadedList: some View {
         let visible = visibleItems
         VStack(spacing: 0) {
@@ -290,13 +320,25 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 filterEmptyState
             } else {
                 FastList(visible, selection: $selection) { item in
-                    // Re-inject the stores the rows read, because FastList's per-row NSHostingView
-                    // doesn't inherit the SwiftUI environment. Non-interactive so a click falls
-                    // through to the table for selection (the favourite star is a passive indicator).
-                    row(item)
-                        .environment(accountStore)
-                        .environment(favorites)
-                        .allowsHitTesting(false)
+                    HStack(spacing: 8) {
+                        // The row's own content stays hit-transparent so a click anywhere on it
+                        // falls through to the table for selection; only the trailing star (below)
+                        // is interactive, matching PadBuddy's rows.
+                        row(item)
+                            .allowsHitTesting(false)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        rowAccessory(item)
+                    }
+                    // Re-inject the stores the row + accessory read, because FastList's per-row
+                    // NSHostingView doesn't inherit the SwiftUI environment (#31).
+                    .environment(accountStore)
+                    .environment(favorites)
+                    // Pad and pin each row to the shared fixed height so content breathes and
+                    // centres consistently, matching PadBuddy's rows (they read as squished when
+                    // sized tightly to content).
+                    .padding(.vertical, 4)
+                    .padding(.trailing, 12)
+                    .fixedFastListRowHeight()
                 }
                 .onDoubleClick { open($0) }
                 .onReturnKey { open($0) }
@@ -349,11 +391,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
-    /// A loaded-count summary, with a `+` when more pages remain to be paged in, and a quiet
-    /// "Refreshing…" hint while cached rows are being refreshed behind the scenes (#102).
+    /// A loaded-count summary. Prefer the API's exact total when available; fall back to the
+    /// loaded visible count with a `+` while more pages remain.
     private func subtitle(visibleCount: Int) -> String {
-        let suffix = nextCursor != nil ? "+" : ""
-        let count = "\(visibleCount)\(suffix) \(visibleCount == 1 ? "item" : "items")"
+        let exactTotal = isLocalFiltering ? nil : totalCount
+        let displayedCount = exactTotal ?? visibleCount
+        let suffix = exactTotal == nil && nextCursor != nil ? "+" : ""
+        let count = "\(displayedCount)\(suffix) \(displayedCount == 1 ? "item" : "items")"
         return isBackgroundRefreshing ? "\(count) · Refreshing…" : count
     }
 

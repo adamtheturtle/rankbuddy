@@ -92,6 +92,7 @@ struct InterviewsScreen: View {
                         )
                     }
                 },
+                rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { InterviewRow(interview: $0) },
                 detail: { InterviewDetailView(interview: $0) }
             )
@@ -197,11 +198,12 @@ struct InterviewsScreen: View {
                     link: $0.item.url
                 )
             },
+            rowDate: { DisplayFormat.parseDate($0.item.createdAt) },
             row: {
                 MergedRow(
                     title: $0.item.title ?? "Interview \($0.item.id)",
                     subtitle: $0.item.status.capitalized,
-                    accountLabel: $0.account.label
+                    account: $0.account
                 )
             },
             detail: { InterviewDetailView(interview: $0.item) }
@@ -232,35 +234,15 @@ extension Interview {
 /// One row in the interviews list.
 struct InterviewRow: View {
     let interview: Interview
-    @Environment(AccountStore.self) private var store
-    @Environment(FavoritesStore.self) private var favorites
 
     private var displayTitle: String {
         interview.title ?? "Interview \(interview.id)"
     }
 
-    private var favoriteRef: FavoriteRef? {
-        store.currentAccountID.map {
-            FavoriteRef(accountID: $0.uuidString, collection: .interviews, itemID: interview.id, title: displayTitle)
-        }
-    }
-
-    private var isFavorite: Bool {
-        guard let favoriteRef else { return false }
-
-        return favorites.isFavorite(collection: .interviews, accountID: favoriteRef.accountID, itemID: interview.id)
-    }
-
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(displayTitle).font(.headline)
-                RelativeDateText(iso: interview.createdAt, prefix: "Created")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(displayTitle).font(.callout.weight(.medium))
             Spacer()
-            FavoriteIndicator(isFavorite: isFavorite)
             interview.statusBadge
         }
         .accessibilityElement(children: .combine)

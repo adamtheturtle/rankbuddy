@@ -47,6 +47,14 @@ nonisolated struct Test: Codable, Hashable, Identifiable {
     let cutoffScore: Int?
     /// Tags applied to the test.
     let tags: [String]?
+    /// The source library or collection this test belongs to, when reported by the API.
+    let library: String?
+    /// The hiring role or job family this test targets, when reported by the API.
+    let role: String?
+    /// Skills assessed by the test, when reported by the API.
+    let skills: [String]?
+    /// The test category or assessment type, when reported by the API.
+    let type: String?
     /// Identifiers of the questions in the test.
     let questions: [String]?
     /// Whether question order is shuffled per candidate.
@@ -73,10 +81,51 @@ nonisolated struct Test: Codable, Hashable, Identifiable {
         case languages
         case cutoffScore = "cutoff_score"
         case tags
+        case library
+        case role
+        case skills
+        case type
         case questions
         case shuffleQuestions = "shuffle_questions"
         case enableProctoring = "enable_proctoring"
         case sections
+    }
+}
+
+extension Test {
+    /// The Library chip should still offer a useful value for the native HackerRank tests list,
+    /// even when the API omits explicit library metadata.
+    var libraryFilterValues: [String] {
+        cleanFilterValues([library ?? "HackerRank"])
+    }
+
+    var roleFilterValues: [String] {
+        cleanFilterValues([role])
+    }
+
+    var skillFilterValues: [String] {
+        cleanFilterValues((skills ?? []).map(Optional.some))
+    }
+
+    var typeFilterValues: [String] {
+        let sectionTypes = (sections ?? []).map { Optional.some($0.displayName) }
+        return cleanFilterValues([type] + sectionTypes)
+    }
+
+    var metadataSearchText: String {
+        [libraryFilterValues, roleFilterValues, skillFilterValues, typeFilterValues]
+            .flatMap { $0 }
+            .joined(separator: " ")
+    }
+
+    private func cleanFilterValues(_ values: [String?]) -> [String] {
+        values.compactMap { value in
+            guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else {
+                return nil
+            }
+
+            return value == value.lowercased() ? value.capitalized : value
+        }
     }
 }
 

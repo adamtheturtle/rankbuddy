@@ -19,14 +19,33 @@ struct MenuBarContent: View {
     @AppStorage(MenuBarPreferences.activeOnlyKey) private var activeOnly = false
     @Environment(\.openWindow) private var openWindow
     @Environment(AccountStore.self) private var store
+    @State private var createSheet: MenuBarCreateSheet?
 
     var body: some View {
+        Group {
+            menuItems
+        }
+        .sheet(item: $createSheet) { sheet in
+            switch sheet {
+            case let .quickPad(account):
+                NewQuickPadSheet(account: account) { finishCreate(in: .interviews) }
+            case let .scheduledInterview(account):
+                ScheduleInterviewSheet(account: account) { finishCreate(in: .interviews) }
+            case let .test(account):
+                TestEditorSheet(account: account, mode: .create) { finishCreate(in: .tests) }
+            }
+        }
+    }
+
+    @ViewBuilder private var menuItems: some View {
         if NetworkMonitor.shared.isOffline {
             Label("Offline", systemImage: "wifi.slash")
             Divider()
         }
 
         accountSection
+
+        createSection
 
         Divider()
 
@@ -56,7 +75,7 @@ struct MenuBarContent: View {
 
         // Help and About mirror PadBuddy's menu-bar footer (#88), so the common entry points
         // are reachable without first opening the main window.
-        Link("Get an API Key", destination: Self.apiKeyURL)
+        Link("Get a Token", destination: Self.tokenURL)
 
         Button("About RankBuddy") { AboutPanel.show() }
 
@@ -66,8 +85,14 @@ struct MenuBarContent: View {
             .keyboardShortcut("q")
     }
 
-    /// Where a HackerRank for Work personal access token is generated (mirrors `GetAPIKeyLink`).
-    private static let apiKeyURL = URL(string: "https://www.hackerrank.com/work") ?? Account.defaultBaseURL
+    /// Where a HackerRank for Work personal access token is generated (mirrors `GetTokenLink`).
+    private static let tokenURL = URL(string: "https://www.hackerrank.com/work/settings/token") ?? Account.defaultBaseURL
+
+    private var writableAccount: Account? {
+        guard !NetworkMonitor.shared.isOffline, !store.isMergedView else { return nil }
+
+        return store.currentAccount
+    }
 
     /// Surfaces which account the menu's actions target, with an understandable state for
     /// the no-account and multi-account cases.
@@ -114,6 +139,41 @@ struct MenuBarContent: View {
         }
     }
 
+    /// PadBuddy-style create actions from the menu bar (#121), reusing the existing write sheets
+    /// so the menu does not grow a separate HackerRank write path.
+    @ViewBuilder private var createSection: some View {
+        if !store.accounts.isEmpty {
+            Divider()
+            Section("Create") {
+                Button {
+                    if let account = writableAccount { createSheet = .quickPad(account) }
+                } label: {
+                    Label("New QuickPad…", systemImage: "bolt")
+                }
+                .disabled(writableAccount == nil)
+
+                Button {
+                    if let account = writableAccount { createSheet = .scheduledInterview(account) }
+                } label: {
+                    Label("Schedule Interview…", systemImage: "calendar.badge.plus")
+                }
+                .disabled(writableAccount == nil)
+
+                Button {
+                    if let account = writableAccount { createSheet = .test(account) }
+                } label: {
+                    Label("New Test…", systemImage: "doc.badge.plus")
+                }
+                .disabled(writableAccount == nil)
+
+                if store.isMergedView {
+                    Text("Choose an account to create items")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
     /// Recent items the current account has listed, read from the on-disk cache the main
     /// window populates — no second network stack (#23). Hidden when there's nothing cached.
     @ViewBuilder private var recentSection: some View {
@@ -140,8 +200,29 @@ struct MenuBarContent: View {
         }
     }
 
+    private func finishCreate(in section: SidebarSection) {
+        selection = section
+        showMainWindow()
+    }
+
     private func showMainWindow() {
         openWindow(id: WindowID.main)
         NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+}
+
+/// The create sheet the menu bar is currently presenting (#121). The account is captured when
+/// the action is chosen so a later account switch does not retarget an already-open sheet.
+private enum MenuBarCreateSheet: Identifiable {
+    case quickPad(Account)
+    case scheduledInterview(Account)
+    case test(Account)
+
+    var id: String {
+        switch self {
+        case let .quickPad(account): "quick-pad-\(account.id.uuidString)"
+        case let .scheduledInterview(account): "scheduled-interview-\(account.id.uuidString)"
+        case let .test(account): "test-\(account.id.uuidString)"
+        }
     }
 }

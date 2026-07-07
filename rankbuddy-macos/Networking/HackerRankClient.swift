@@ -297,7 +297,7 @@ struct HackerRankClient {
     ) async throws -> Page<Item> {
         let url = try pageURL(path: path, cursor: cursor, query: query)
         let response = try await rest.performWithRetry(HackerRankPage<Item>.self, request: rest.authorizedGET(url))
-        return Page(items: response.data, next: response.next)
+        return Page(items: response.data, next: response.next, totalCount: response.totalCount)
     }
 
     /// The absolute `cursor` URL when continuing, or the first-page URL (base + path +
@@ -375,4 +375,12 @@ struct HackerRankClient {
 nonisolated struct Page<Item: Sendable> {
     let items: [Item]
     let next: String?
+    /// The collection's exact total from the API envelope, when the endpoint provides one.
+    let totalCount: Int?
+
+    init(items: [Item], next: String?, totalCount: Int? = nil) {
+        self.items = items
+        self.next = next
+        self.totalCount = totalCount
+    }
 }

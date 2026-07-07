@@ -24,13 +24,17 @@ struct TestsScreen: View {
                 title: "Tests",
                 emptyMessage: "No tests",
                 loadPage: { try await HackerRankClient(account: account).testsPage(after: $0) },
-                searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "")" },
+                searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "") \($0.metadataSearchText)" },
                 sortOptions: [
                     SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
                     SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
                     SortOption("Start Time") { ($0.startTime ?? "") > ($1.startTime ?? "") }
                 ],
                 facets: [
+                    ListFacet("library", "Library", systemImage: "books.vertical") { $0.libraryFilterValues },
+                    ListFacet("role", "Role", systemImage: "person.text.rectangle") { $0.roleFilterValues },
+                    ListFacet("skill", "Skill", systemImage: "target") { $0.skillFilterValues },
+                    ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.typeFilterValues },
                     ListFacet("state", "State", systemImage: "circle.fill", value: { $0.state?.capitalized }),
                     // Derived from the scheduling window (#55): lets a recruiter narrow to the
                     // tests candidates can still take (Open) vs. Upcoming/Closed.
@@ -73,6 +77,7 @@ struct TestsScreen: View {
                         FavoriteRef(accountID: $0.uuidString, collection: .tests, itemID: test.id, title: test.name)
                     }
                 },
+                rowDate: { DisplayFormat.parseDate($0.startTime) },
                 row: { TestRow(test: $0) },
                 detail: { TestDetailView(test: $0, account: account, onChanged: { reloadToken += 1 }) }
             )
@@ -111,15 +116,24 @@ struct TestsScreen: View {
             title: "Tests",
             emptyMessage: "No tests",
             loadPage: loadMergedTests,
-            searchableText: { "\($0.item.name) \($0.account.label)" },
+            searchableText: { "\($0.item.name) \($0.account.label) \($0.item.metadataSearchText)" },
             sortOptions: [
                 SortOption("Name") { $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending },
                 SortOption("Account", by: AccountScoped.byAccountLabel),
                 SortOption("Newest") { ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "") }
             ],
+            facets: [
+                ListFacet("account", "Account", systemImage: "person.crop.circle", value: { $0.account.label }),
+                ListFacet("library", "Library", systemImage: "books.vertical") { $0.item.libraryFilterValues },
+                ListFacet("role", "Role", systemImage: "person.text.rectangle") { $0.item.roleFilterValues },
+                ListFacet("skill", "Skill", systemImage: "target") { $0.item.skillFilterValues },
+                ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.item.typeFilterValues },
+                ListFacet("state", "State", systemImage: "circle.fill", value: { $0.item.state?.capitalized })
+            ],
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
+            rowDate: { DisplayFormat.parseDate($0.item.startTime) },
             row: {
-                MergedRow(title: $0.item.name, subtitle: $0.item.state?.capitalized, accountLabel: $0.account.label)
+                MergedRow(title: $0.item.name, subtitle: $0.item.state?.capitalized, account: $0.account)
             },
             detail: { TestDetailView(test: $0.item, account: $0.account) }
         )
@@ -129,31 +143,14 @@ struct TestsScreen: View {
 /// One row in the tests list.
 struct TestRow: View {
     let test: Test
-    @Environment(AccountStore.self) private var store
-    @Environment(FavoritesStore.self) private var favorites
-
-    private var favoriteRef: FavoriteRef? {
-        store.currentAccountID.map {
-            FavoriteRef(accountID: $0.uuidString, collection: .tests, itemID: test.id, title: test.name)
-        }
-    }
-
-    private var isFavorite: Bool {
-        guard let favoriteRef else { return false }
-
-        return favorites.isFavorite(collection: .tests, accountID: favoriteRef.accountID, itemID: test.id)
-    }
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(test.name).font(.headline)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(test.name).font(.callout.weight(.medium))
                 HStack(spacing: 8) {
                     if let state = test.state {
                         Text(state.capitalized)
-                    }
-                    if let start = DisplayFormat.date(test.startTime) {
-                        Text(start)
                     }
                 }
                 .font(.caption)
@@ -161,7 +158,6 @@ struct TestRow: View {
             }
             Spacer()
             HStack(spacing: 6) {
-                FavoriteIndicator(isFavorite: isFavorite)
                 test.windowBadge(now: Date())
                 if test.enableProctoring == true {
                     StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .blue)

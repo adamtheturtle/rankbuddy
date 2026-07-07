@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import BuddyDesignSystem
 import SwiftUI
 
 /// An item paired with the account it came from, for the multi-account merged lists (#17).
@@ -60,17 +61,20 @@ enum MergedLoader {
     }
 }
 
-/// A merged-list row: the item's title/subtitle plus a trailing badge naming its account, so
-/// rows from different accounts stay distinguishable (#17).
+/// A merged-list row: the item's title/subtitle plus a trailing chip naming its source account,
+/// so rows from different accounts stay distinguishable (#17). The chip uses the account's own
+/// avatar (its tint + chosen icon, or initials) rather than a generic person glyph — matching
+/// PadBuddy and the avatar shown in the switcher and sidebar — so multi-account users can tell at
+/// a glance which account a row belongs to.
 struct MergedRow: View {
     let title: String
     var subtitle: String?
-    let accountLabel: String
+    let account: Account
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.callout.weight(.medium))
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.caption)
@@ -78,7 +82,18 @@ struct MergedRow: View {
                 }
             }
             Spacer()
-            StatusBadge(text: accountLabel, systemImage: "person.crop.circle", tint: .secondary)
+            HStack(spacing: 4) {
+                AvatarCircle(
+                    label: account.label,
+                    diameter: 16,
+                    tint: account.tintColor ?? .accentColor,
+                    symbol: account.displayIcon
+                )
+                Text(account.label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
         .accessibilityElement(children: .combine)
     }

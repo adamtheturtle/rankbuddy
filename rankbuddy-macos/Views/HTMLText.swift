@@ -22,6 +22,90 @@ struct HTMLText: View {
     }
 }
 
+/// Renders HTML fragments with first-class layout for ordered lists.
+struct HTMLFragmentText: View {
+    let html: String
+
+    var body: some View {
+        let segments = HTMLFragmentSegment.segments(from: html)
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
+                switch segment {
+                case let .prose(prose):
+                    if !prose.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        HTMLText(html: prose)
+                    }
+                case let .orderedList(items):
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                Text("\(index + 1).")
+                                    .font(.body.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 24, alignment: .trailing)
+
+                                HTMLText(html: item)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+        }
+    }
+}
+
+private enum HTMLFragmentSegment {
+    case prose(String)
+    case orderedList([String])
+
+    static func segments(from html: String) -> [HTMLFragmentSegment] {
+        let listPattern = #"(?is)<ol\b[^>]*>(.*?)</ol>"#
+        guard let listExpression = try? NSRegularExpression(pattern: listPattern) else {
+            return [.prose(html)]
+        }
+
+        let nsHTML = html as NSString
+        let fullRange = NSRange(location: 0, length: nsHTML.length)
+        var segments: [HTMLFragmentSegment] = []
+        var cursor = 0
+
+        for match in listExpression.matches(in: html, range: fullRange) {
+            if match.range.location > cursor {
+                segments.append(.prose(nsHTML.substring(with: NSRange(location: cursor, length: match.range.location - cursor))))
+            }
+
+            let listHTML = nsHTML.substring(with: match.range(at: 1))
+            let items = orderedListItems(from: listHTML)
+            if items.isEmpty {
+                segments.append(.prose(nsHTML.substring(with: match.range)))
+            } else {
+                segments.append(.orderedList(items))
+            }
+
+            cursor = match.range.location + match.range.length
+        }
+
+        if cursor < nsHTML.length {
+            segments.append(.prose(nsHTML.substring(from: cursor)))
+        }
+
+        return segments.isEmpty ? [.prose(html)] : segments
+    }
+
+    private static func orderedListItems(from html: String) -> [String] {
+        let itemPattern = #"(?is)<li\b[^>]*>(.*?)</li>"#
+        guard let itemExpression = try? NSRegularExpression(pattern: itemPattern) else { return [] }
+
+        let nsHTML = html as NSString
+        let fullRange = NSRange(location: 0, length: nsHTML.length)
+        return itemExpression.matches(in: html, range: fullRange).map { match in
+            nsHTML.substring(with: match.range(at: 1))
+        }
+    }
+}
+
 extension AttributedString {
     /// Builds an `AttributedString` from an HTML fragment, normalised for in-app display.
     ///

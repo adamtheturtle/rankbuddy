@@ -16,7 +16,7 @@ extension HackerRankClient {
             HackerRankPage<AuditLogEntry>.self,
             request: rest.authorizedGET(url)
         )
-        return Page(items: response.data, next: response.next)
+        return Page(items: response.data, next: response.next, totalCount: response.totalCount)
     }
 
     /// The absolute `cursor` URL when continuing, or the first-page URL (base + path + `limit`,

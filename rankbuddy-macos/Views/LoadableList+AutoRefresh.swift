@@ -32,6 +32,7 @@ extension LoadableList {
 
         items = page.items
         nextCursor = page.next
+        totalCount = page.totalCount
         onFirstPage(page.items)
         // Drop the pane's item if the refresh removed it (e.g. deleted elsewhere), so the
         // detail never shows a row that's no longer in the list.

@@ -59,6 +59,7 @@ struct QuestionsScreen: View {
                         )
                     }
                 },
+                rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { QuestionRow(question: $0) },
                 detail: { QuestionDetailView(question: $0) }
             )
@@ -91,8 +92,9 @@ struct QuestionsScreen: View {
                 SortOption("Type") { $0.item.type.localizedStandardCompare($1.item.type) == .orderedAscending }
             ],
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
+            rowDate: { DisplayFormat.parseDate($0.item.createdAt) },
             row: {
-                MergedRow(title: $0.item.name, subtitle: $0.item.type.capitalized, accountLabel: $0.account.label)
+                MergedRow(title: $0.item.name, subtitle: $0.item.type.capitalized, account: $0.account)
             },
             detail: { QuestionDetailView(question: $0.item) }
         )
@@ -102,25 +104,11 @@ struct QuestionsScreen: View {
 /// One row in the questions list.
 struct QuestionRow: View {
     let question: Question
-    @Environment(AccountStore.self) private var store
-    @Environment(FavoritesStore.self) private var favorites
-
-    private var favoriteRef: FavoriteRef? {
-        store.currentAccountID.map {
-            FavoriteRef(accountID: $0.uuidString, collection: .questions, itemID: question.id, title: question.name)
-        }
-    }
-
-    private var isFavorite: Bool {
-        guard let favoriteRef else { return false }
-
-        return favorites.isFavorite(collection: .questions, accountID: favoriteRef.accountID, itemID: question.id)
-    }
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(question.name).font(.headline)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(question.name).font(.callout.weight(.medium))
                 HStack(spacing: 8) {
                     Text(question.type.capitalized)
                     if let languages = DisplayFormat.languages(question.languages) {
@@ -131,7 +119,6 @@ struct QuestionRow: View {
                 .foregroundStyle(.secondary)
             }
             Spacer()
-            FavoriteIndicator(isFavorite: isFavorite)
         }
         .accessibilityElement(children: .combine)
     }

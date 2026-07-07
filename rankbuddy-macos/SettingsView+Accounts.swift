@@ -166,7 +166,7 @@ struct AccountsSettingsView: View {
             } description: {
                 Text("Add a HackerRank account to get started, then select it to edit.")
             } actions: {
-                GetAPIKeyLink()
+                GetTokenLink()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

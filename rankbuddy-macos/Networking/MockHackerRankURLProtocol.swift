@@ -254,14 +254,17 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
       {"id":"t1","unique_id":"backend-screen","name":"Backend Engineer Screen","state":"active",
        "start_time":"2026-05-01T09:00:00Z","end_time":"2026-06-01T09:00:00Z","duration":90,
        "languages":["python","go","java"],"cutoff_score":70,"tags":["backend","screening"],
+       "library":"HackerRank","role":"Backend Engineer","skills":["APIs","Data Structures"],"type":"Screen",
        "enable_proctoring":true,"instructions":"Solve all questions within the time limit.","questions":["q1","q2"],
        "sections":[{"uuid":"s1","name":"Coding","questions":2,"duration":60},
                    {"uuid":"s2","name":"Multiple Choice","questions":5,"duration":30}]},
       {"id":"t2","unique_id":"frontend-takehome","name":"Frontend Take-Home","state":"active",
        "start_time":"2026-05-10T09:00:00Z","duration":120,"languages":["javascript","typescript"],
-       "cutoff_score":65,"tags":["frontend"]},
+       "cutoff_score":65,"tags":["frontend"],"library":"HackerRank","role":"Frontend Engineer",
+       "skills":["React","Accessibility"],"type":"Take Home"},
       {"id":"t3","unique_id":"ds-quiz","name":"Data Structures Quiz","state":"archived",
-       "duration":45,"languages":["cpp"],"cutoff_score":80,"tags":["algorithms","mcq"]}
+       "duration":45,"languages":["cpp"],"cutoff_score":80,"tags":["algorithms","mcq"],
+       "library":"HackerRank","role":"General Engineering","skills":["Algorithms"],"type":"Quiz"}
     ],"next":"https://www.hackerrank.com/x/api/v3/tests?limit=3&offset=3"}
     """#
 
@@ -269,9 +272,11 @@ final nonisolated class MockHackerRankURLProtocol: URLProtocol {
     {"data":[
       {"id":"t4","unique_id":"sre-screen","name":"SRE On-Call Screen","state":"active",
        "start_time":"2026-05-15T09:00:00Z","duration":75,"languages":["python","bash"],
-       "cutoff_score":72,"tags":["sre","backend"],"draft":true},
+       "cutoff_score":72,"tags":["sre","backend"],"library":"HackerRank","role":"SRE",
+       "skills":["Incident Response","Shell"],"type":"Screen","draft":true},
       {"id":"t5","unique_id":"ml-fundamentals","name":"ML Fundamentals","state":"active",
-       "duration":60,"languages":["python"],"cutoff_score":68,"tags":["ml"],"locked":true}
+       "duration":60,"languages":["python"],"cutoff_score":68,"tags":["ml"],"library":"HackerRank",
+       "role":"Machine Learning Engineer","skills":["Machine Learning","Python"],"type":"Screen","locked":true}
     ],"next":null}
     """#
 
