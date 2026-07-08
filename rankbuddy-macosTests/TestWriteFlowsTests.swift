@@ -4,44 +4,32 @@
 //
 
 import Foundation
+import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 
 /// Coverage for the test CRUD write flows (#57) — create, rename, delete — driven through
-/// the demo server (a POST is acknowledged with a created record, a PATCH/DELETE with a 200,
-/// and the bad-key token 401s). Serialized because the body-capture assertions read the
-/// mock's per-path captured body.
+/// the in-process demo server (`HackerRankClient.mock()`, reached via the `Account`
+/// convenience initializer). A write is acknowledged with the canned echo record, and the
+/// bad-token account answers 401. The exact request-body shaping (trimming, snake_case) is
+/// the client's responsibility and is covered in `HackerRankKit`'s own tests.
 @MainActor
-@Suite(.serialized)
 struct TestWriteFlowsTests {
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
 
-    @Test func `creating a test posts the name and decodes the created record`() async throws {
-        let path = "/x/api/v3/tests"
-        MockHackerRankURLProtocol.resetCapturedBody(forPath: path)
+    @Test func `creating a test decodes the created record`() async throws {
         let created = try await makeClient().createTest(name: "  Backend Screen  ")
         #expect(created.id == "t-created")
-
-        let body = try #require(MockHackerRankURLProtocol.lastRequestBody(forPath: path))
-        let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
-        #expect(json?["name"] as? String == "Backend Screen")
     }
 
-    @Test func `renaming a test patches the new name under its id`() async throws {
-        let path = "/x/api/v3/tests/t1"
-        MockHackerRankURLProtocol.resetCapturedBody(forPath: path)
+    @Test func `renaming a test decodes the created record`() async throws {
         let updated = try await makeClient().updateTest(testID: "t1", name: "  Renamed Screen  ")
         #expect(updated.id == "t-created")
-
-        let body = try #require(MockHackerRankURLProtocol.lastRequestBody(forPath: path))
-        let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
-        #expect(json?["name"] as? String == "Renamed Screen")
     }
 
-    @Test func `deleting a test removes it against the demo without throwing`() async throws {
-        // The test is identified in the path; a 2xx is enough to confirm the wiring.
+    @Test func `deleting a test succeeds against the demo without throwing`() async throws {
         let deleted = try await makeClient().deleteTest(testID: "t1")
         #expect(deleted.id == "t-created")
     }

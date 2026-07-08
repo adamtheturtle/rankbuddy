@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// The Questions section: a list of the account's questions with read-only detail.
@@ -61,6 +62,14 @@ struct QuestionsScreen: View {
                         )
                     }
                 },
+                rowTransfer: { question in
+                    RowTransfer(title: question.name, subtitle: question.type.capitalized, fields: [
+                        ("Name", question.name),
+                        ("Type", question.type.capitalized),
+                        ("Unique ID", question.uniqueID ?? ""),
+                        ("Status", question.status?.capitalized ?? "")
+                    ])
+                },
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { QuestionRow(question: $0) },
                 detail: { QuestionDetailView(question: $0) }
@@ -94,6 +103,14 @@ struct QuestionsScreen: View {
                 SortOption("Type") { $0.item.type.localizedStandardCompare($1.item.type) == .orderedAscending }
             ],
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
+            rowTransfer: { scoped in
+                RowTransfer(title: scoped.item.name, subtitle: scoped.account.label, fields: [
+                    ("Name", scoped.item.name),
+                    ("Account", scoped.account.label),
+                    ("Type", scoped.item.type.capitalized),
+                    ("Unique ID", scoped.item.uniqueID ?? "")
+                ])
+            },
             rowDate: { DisplayFormat.parseDate($0.item.createdAt) },
             row: {
                 MergedRow(title: $0.item.name, subtitle: $0.item.type.capitalized, account: $0.account)

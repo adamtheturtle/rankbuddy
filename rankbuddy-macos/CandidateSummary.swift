@@ -4,6 +4,7 @@
 //
 
 import FoundationModels
+import HackerRankKit
 import SwiftUI
 
 /// Assembles the factual brief that feeds the on-device candidate summary (#93).

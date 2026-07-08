@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 
@@ -24,7 +25,7 @@ struct ModelDecodingTests {
          "created_at":"2026-06-22T04:10:51+0000","duration":60,
          "sections":[],"permission":"owner","test_type":"coding"}
         """
-        let test = try decode(Test.self, json)
+        let test = try decode(HackerRankKit.Test.self, json)
         #expect(test.id == "2360707")
         #expect(test.startTime == "2026-06-22T04:10:51+0000")
         #expect(test.endTime == "2026-07-01T00:00:00+0000")

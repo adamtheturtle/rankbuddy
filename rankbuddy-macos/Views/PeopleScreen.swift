@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// The People section: the organisation's users (members), with read-only detail (#36) and

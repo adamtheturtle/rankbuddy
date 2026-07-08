@@ -7,6 +7,7 @@ import AppIntents
 import BuddyAppKit
 import CoreSpotlight
 import Foundation
+import HackerRankKit
 
 /// A findable RankBuddy object — a test, question, or interview — exposed to Spotlight and
 /// Shortcuts (#24). One entity type covers the three top-level collections (each carries its
@@ -188,9 +189,52 @@ struct OpenRankBuddyObjectIntent: OpenIntent {
 /// The deep-link writes the main window observes: the per-account selection key the list
 /// restores from, plus the selected section. Shared by the open intent and tested directly.
 enum RankBuddyDeepLink {
+    /// The restoration key a list persists its selected detail under, for the given collection and
+    /// account. Matches each screen's `restorationKey`, so a deep link can target the right list.
+    static func selectionKey(collection: FavoriteCollection, accountID: String) -> String {
+        "selection.\(collection.rawValue).\(accountID)"
+    }
+
     @MainActor
     static func open(collection: FavoriteCollection, accountID: String, itemID: String) {
-        UserDefaults.standard.set(itemID, forKey: "selection.\(collection.rawValue).\(accountID)")
+        UserDefaults.standard.set(itemID, forKey: selectionKey(collection: collection, accountID: accountID))
         UserDefaults.standard.set(collection.section.rawValue, forKey: "selectedSection")
+        // Poke the router so a list that is *already on screen* (e.g. clicking a favourite for the
+        // section you're already viewing) jumps to the item immediately (#122). A cold launch or a
+        // cross-section switch is still served by the UserDefaults restore above, which runs when
+        // the target list mounts and loads.
+        DeepLinkRouter.shared.open(
+            key: selectionKey(collection: collection, accountID: accountID),
+            itemID: itemID
+        )
+    }
+}
+
+/// A live deep-link target that already-mounted lists observe (#122). `RankBuddyDeepLink.open`
+/// persists the selection for cold-launch/section-switch restore *and* posts here, so a list
+/// showing the targeted collection reveals the item without waiting for a reload that a same-
+/// section click never triggers.
+@MainActor
+@Observable
+final class DeepLinkRouter {
+    static let shared = DeepLinkRouter()
+
+    /// A request to reveal one item in the list whose `restorationKey` equals `key`.
+    struct Request: Identifiable, Equatable {
+        /// A fresh identity per request, so re-opening the *same* item still registers as a change
+        /// the observing list reacts to (otherwise clicking a favourite twice would be a no-op).
+        let id = UUID()
+        /// The `restorationKey` of the list to target.
+        let key: String
+        /// The id of the item to select and scroll to.
+        let itemID: String
+    }
+
+    /// The most recent open request, cleared once the matching list consumes it.
+    var request: Request?
+
+    /// Posts a request for the list keyed by `key` to reveal `itemID`.
+    func open(key: String, itemID: String) {
+        request = Request(key: key, itemID: itemID)
     }
 }

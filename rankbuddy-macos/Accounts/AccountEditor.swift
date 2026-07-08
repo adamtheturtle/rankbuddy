@@ -5,6 +5,7 @@
 
 import BuddyAppKit
 import BuddyDesignSystem
+import HackerRankKit
 import SwiftUI
 
 /// A form for adding or editing a HackerRank account: label, personal access token, and

@@ -17,6 +17,10 @@
 		6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AA2FEEB24F0023907A /* Sparkle */; };
 		6676A0AE2FEEB2710023907A /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AD2FEEB2710023907A /* MCP */; };
 		668CA7EB2FEC7BFA00420E24 /* CommandPaletteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */; };
+		66AE79CE2FFE5C93003A66B1 /* PrintableView in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79CD2FFE5C93003A66B1 /* PrintableView */; };
+		66AE79D22FFE6820003A66B1 /* HackerRankKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D12FFE6820003A66B1 /* HackerRankKit */; };
+		66AE79D42FFE6820003A66B1 /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D32FFE6820003A66B1 /* HackerRankKitMock */; };
+		66AE79D62FFE6843003A66B1 /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D52FFE6843003A66B1 /* HackerRankKitMock */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,9 +38,22 @@
 		662C2C552FEC525200FE99C0 /* rankbuddy-macosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "rankbuddy-macosTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		66AE79CF2FFE5D28003A66B1 /* Exceptions for "rankbuddy-macos" folder in "rankbuddy-macos" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 000000000000000100000000 /* rankbuddy-macos */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		000000000000000000000010 /* rankbuddy-macos */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				66AE79CF2FFE5D28003A66B1 /* Exceptions for "rankbuddy-macos" folder in "rankbuddy-macos" target */,
+			);
 			path = "rankbuddy-macos";
 			sourceTree = "<group>";
 		};
@@ -52,7 +69,10 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				6638044A2FF64E51004A9FCE /* MCPKit in Frameworks */,
+				66AE79CE2FFE5C93003A66B1 /* PrintableView in Frameworks */,
 				6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */,
+				66AE79D42FFE6820003A66B1 /* HackerRankKitMock in Frameworks */,
+				66AE79D22FFE6820003A66B1 /* HackerRankKit in Frameworks */,
 				66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */,
 				66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */,
 				6676A0AE2FEEB2710023907A /* MCP in Frameworks */,
@@ -66,6 +86,7 @@
 		662C2C522FEC525200FE99C0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				66AE79D62FFE6843003A66B1 /* HackerRankKitMock in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -125,6 +146,9 @@
 				6676A0AD2FEEB2710023907A /* MCP */,
 				663804492FF64E51004A9FCE /* MCPKit */,
 				663804512FF65BBB004A9FCE /* AsyncAlgorithms */,
+				66AE79CD2FFE5C93003A66B1 /* PrintableView */,
+				66AE79D12FFE6820003A66B1 /* HackerRankKit */,
+				66AE79D32FFE6820003A66B1 /* HackerRankKitMock */,
 			);
 			productName = "rankbuddy-macos";
 			productReference = 000000000000000000000120 /* rankbuddy-macos.app */;
@@ -147,6 +171,9 @@
 				662C2C562FEC525200FE99C0 /* rankbuddy-macosTests */,
 			);
 			name = "rankbuddy-macosTests";
+			packageProductDependencies = (
+				66AE79D52FFE6843003A66B1 /* HackerRankKitMock */,
+			);
 			productName = "rankbuddy-macosTests";
 			productReference = 662C2C552FEC525200FE99C0 /* rankbuddy-macosTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -188,6 +215,8 @@
 				6676A0AC2FEEB2710023907A /* XCRemoteSwiftPackageReference "swift-sdk" */,
 				663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */,
 				663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
+				66AE79CC2FFE5C93003A66B1 /* XCRemoteSwiftPackageReference "PrintableView" */,
+				66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -529,7 +558,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/buddy-kit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.11.0;
+				version = 0.14.0;
 			};
 		};
 		663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */ = {
@@ -561,7 +590,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/FastList";
 			requirement = {
 				kind = exactVersion;
-				version = 0.4.1;
+				version = 0.5.0;
 			};
 		};
 		6676A0A92FEEB24F0023907A /* XCRemoteSwiftPackageReference "Sparkle" */ = {
@@ -583,6 +612,22 @@
 		668CA7E92FEC7BFA00420E24 /* XCRemoteSwiftPackageReference "CommandPaletteKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/adamtheturtle/CommandPaletteKit";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.0;
+			};
+		};
+		66AE79CC2FFE5C93003A66B1 /* XCRemoteSwiftPackageReference "PrintableView" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamtheturtle/PrintableView";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.1;
+			};
+		};
+		66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamtheturtle/HackerRankKit";
 			requirement = {
 				kind = exactVersion;
 				version = 0.1.0;
@@ -640,6 +685,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 668CA7E92FEC7BFA00420E24 /* XCRemoteSwiftPackageReference "CommandPaletteKit" */;
 			productName = CommandPaletteKit;
+		};
+		66AE79CD2FFE5C93003A66B1 /* PrintableView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66AE79CC2FFE5C93003A66B1 /* XCRemoteSwiftPackageReference "PrintableView" */;
+			productName = PrintableView;
+		};
+		66AE79D12FFE6820003A66B1 /* HackerRankKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */;
+			productName = HackerRankKit;
+		};
+		66AE79D32FFE6820003A66B1 /* HackerRankKitMock */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */;
+			productName = HackerRankKitMock;
+		};
+		66AE79D52FFE6843003A66B1 /* HackerRankKitMock */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */;
+			productName = HackerRankKitMock;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// Identifies an item to show in its own window (#49). `Codable` + `Hashable` so it can pass

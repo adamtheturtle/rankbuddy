@@ -3,9 +3,11 @@
 //  rankbuddy-macos
 //
 
+import AppKit
 import BuddyAppKit
 import BuddyDesignSystem
 import FastList
+import HackerRankKit
 import SwiftUI
 
 /// A named way to order a list's items, shown in the list's sort menu.
@@ -96,6 +98,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// section to pin it (#89/#41). `nil` (the default) leaves rows non-draggable — the
     /// read-only People/Teams and merged lists, which have no favourites, opt out by not setting it.
     var favoriteRef: (Item) -> FavoriteRef? = { _ in nil }
+    /// Public copy/drag data for a row (#123/#124). When absent, the row still participates in
+    /// internal favourite dragging if `favoriteRef` is set, but Command-C is disabled.
+    var rowTransfer: (Item) -> RowTransfer? = { _ in nil }
     /// The date shown in each row's trailing relative-date column (e.g. created/attempted/last
     /// active), matching PadBuddy's rows. `nil` (the default) hides the column, so lists with no
     /// meaningful per-row date are unchanged.
@@ -108,6 +113,12 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @Environment(AccountStore.self) private var accountStore
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.undoManager) var undoManager
+
+    /// The live deep-link target (#122). Held as `@State` so this list observes it: when a deep
+    /// link (a favourite, Open-by-URL, the menu bar) targets this list's `restorationKey`, the
+    /// list reveals the item even though it is already on screen and won't reload on its own.
+    /// Internal so the loading extension can consume the request, per the repo's split-file rule.
+    @State var deepLinkRouter = DeepLinkRouter.shared
 
     /// The user's chosen list auto-refresh cadence in seconds (#69). `0`/below the minimum is
     /// off. Changing it restarts the refresh task. Internal (not private) so the auto-refresh
@@ -235,6 +246,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 }
                 // Selecting a row (single-click) drives the detail pane and persists it (#53/#19).
                 .onChange(of: selection) { syncDetail() }
+                // Reveal a deep-linked item when this list is already on screen (#122): a
+                // same-section favourite/Open-by-URL never changes `restorationKey`, so nothing
+                // else re-reads the persisted selection.
+                .onChange(of: deepLinkRouter.request) { Task { await consumeDeepLinkIfMatching() } }
         }
     }
 
@@ -288,7 +303,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// lists that map rows to a `favoriteRef`) and a fixed-width relative-date column (for lists
     /// that set `rowDate`), matching PadBuddy. Rendered outside the row's hit-transparent content
     /// so the star toggles on click while the rest of the row still selects.
-    @ViewBuilder private func rowAccessory(_ item: Item) -> some View {
+    private func rowAccessory(_ item: Item) -> some View {
         HStack(spacing: 8) {
             if let ref = favoriteRef(item) {
                 FavoriteStarButton(
@@ -412,6 +427,26 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     private func open(_ item: Item) {
         selection = [item.id]
         detailItem = item
+    }
+
+    /// Providers for the system Copy command. Multi-selection copies every selected visible row;
+    /// an empty selection falls back to the detail row so Command-C after opening a detail still
+    /// has useful behavior.
+    private func copySelectionProviders() -> [NSItemProvider] {
+        RowTransfer.itemProviders(for: activeTransfers)
+    }
+
+    private var activeTransfers: [RowTransfer] {
+        let rows = selectedItems.isEmpty ? detailItem.map { [$0] } ?? [] : selectedItems
+        return rows.compactMap(rowTransfer)
+    }
+
+    private func dragPasteboardItem(for item: Item) -> NSPasteboardItem? {
+        let ref = favoriteRef(item)
+        if let transfer = rowTransfer(item) {
+            return transfer.pasteboardItem(favoriteRef: ref)
+        }
+        return ref.flatMap(FavoritePasteboard.item(for:))
     }
 
     /// Reflects the row selection into the detail pane (#53): when exactly one row is selected,

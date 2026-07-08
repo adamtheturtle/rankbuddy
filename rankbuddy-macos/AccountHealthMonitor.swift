@@ -5,6 +5,7 @@
 
 import BuddyAppKit
 import Foundation
+import HackerRankKit
 
 /// Re-checks the current account's token on a timer (default 30 min) so a token **revoked
 /// mid-session** surfaces a banner without needing a section switch or relaunch (#40). A thin

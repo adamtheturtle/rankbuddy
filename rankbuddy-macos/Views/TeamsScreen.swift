@@ -5,6 +5,7 @@
 
 import BuddyAppKit
 import FastList
+import HackerRankKit
 import SwiftUI
 
 /// The Teams section: the organisation's teams, with read-only detail (#36) and a

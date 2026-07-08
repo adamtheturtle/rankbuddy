@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import HackerRankKit
 import SwiftUI
 
 /// Manages an account's saved interview templates (#97): a master/detail sheet listing the

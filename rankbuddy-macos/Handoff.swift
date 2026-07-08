@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// Handoff / Continuity (#98): advertises the test, question, or interview currently on screen

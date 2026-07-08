@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// The Tests section: a list of the account's tests, each opening a read-only detail
@@ -79,6 +80,15 @@ struct TestsScreen: View {
                         FavoriteRef(accountID: $0.uuidString, collection: .tests, itemID: test.id, title: test.name)
                     }
                 },
+                rowTransfer: { test in
+                    RowTransfer(title: test.name, subtitle: test.state?.capitalized, fields: [
+                        ("Name", test.name),
+                        ("State", test.state?.capitalized ?? ""),
+                        ("Unique ID", test.uniqueID ?? ""),
+                        ("Starts", test.startTime ?? ""),
+                        ("Ends", test.endTime ?? "")
+                    ])
+                },
                 rowDate: { DisplayFormat.parseDate($0.startTime) },
                 row: { TestRow(test: $0) },
                 detail: { TestDetailView(test: $0, account: account, onChanged: { reloadToken += 1 }) }
@@ -133,6 +143,14 @@ struct TestsScreen: View {
                 ListFacet("state", "State", systemImage: "circle.fill", value: { $0.item.state?.capitalized })
             ],
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
+            rowTransfer: { scoped in
+                RowTransfer(title: scoped.item.name, subtitle: scoped.account.label, fields: [
+                    ("Name", scoped.item.name),
+                    ("Account", scoped.account.label),
+                    ("State", scoped.item.state?.capitalized ?? ""),
+                    ("Unique ID", scoped.item.uniqueID ?? "")
+                ])
+            },
             rowDate: { DisplayFormat.parseDate($0.item.startTime) },
             row: {
                 MergedRow(title: $0.item.name, subtitle: $0.item.state?.capitalized, account: $0.account)

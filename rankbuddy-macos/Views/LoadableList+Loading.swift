@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import HackerRankKit
 import SwiftUI
 
 extension LoadableList {
@@ -113,5 +114,44 @@ extension LoadableList {
         case .startAtTop:
             break
         }
+    }
+
+    /// Handles a live deep-link request (#122) when it targets this list. Consumes the request so
+    /// it fires once, then reveals the item — selecting its row and scrolling to it — paging in
+    /// further rows (capped) if it isn't on a loaded page yet.
+    func consumeDeepLinkIfMatching() async {
+        guard let request = deepLinkRouter.request, request.key == restorationKey else { return }
+
+        deepLinkRouter.request = nil
+        await revealItem(id: request.itemID)
+    }
+
+    /// Selects and scrolls to the item with the given persisted id. If it isn't among the loaded
+    /// rows, pages in more (bounded by `searchPageCap`, mirroring the filter auto-load) until it
+    /// appears or the list is exhausted; a still-missing item leaves the list untouched.
+    private func revealItem(id: String) async {
+        if select(id: id) { return }
+
+        var pagesLoadedThisReveal = 0
+        while nextCursor != nil, pagesLoadedThisReveal < searchPageCap {
+            let countBeforeLoad = items.count
+            await loadMore()
+            pagesLoadedThisReveal += 1
+            if select(id: id) { return }
+            // Stop if a load made no progress (e.g. it failed and cleared the cursor).
+            if items.count == countBeforeLoad { return }
+        }
+    }
+
+    /// Selects the loaded item matching the persisted id and drives the detail pane, returning
+    /// whether it was found among the current rows.
+    @discardableResult
+    private func select(id: String) -> Bool {
+        guard let item = items.first(where: { String(describing: $0.id) == id }) else { return false }
+
+        selection = [item.id]
+        detailItem = item
+        scrollTarget = item.id
+        return true
     }
 }

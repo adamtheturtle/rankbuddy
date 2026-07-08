@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// The Interviews section: a list of the account's interviews with read-only detail, plus

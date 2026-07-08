@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 

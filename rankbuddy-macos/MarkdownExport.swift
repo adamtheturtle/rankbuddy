@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import HackerRankKit
 import SwiftUI
 import UniformTypeIdentifiers
 

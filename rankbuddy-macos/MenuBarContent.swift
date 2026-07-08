@@ -5,6 +5,7 @@
 
 import AppKit
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// The contents of the menu bar extra: account-aware status, quick navigation to each

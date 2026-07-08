@@ -6,6 +6,7 @@
 import AppKit
 import BuddyAppKit
 import CommandPaletteKit
+import HackerRankKit
 import SwiftUI
 
 /// Shared state for the command palette, toggled from the menu/keyboard and observed by

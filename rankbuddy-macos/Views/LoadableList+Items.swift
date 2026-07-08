@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 
 /// The list's derived collections, split out of `LoadableList.swift` to keep that file within
 /// the file-length budget. `extension` (internal), not `private extension`, so the view's body

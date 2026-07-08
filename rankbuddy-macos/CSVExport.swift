@@ -5,6 +5,7 @@
 
 import AppKit
 import Foundation
+import HackerRankKit
 import UniformTypeIdentifiers
 
 /// CSV export for the read-only lists (#39) — a recruiter can pull a test's candidates (or

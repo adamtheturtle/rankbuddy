@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import HackerRankKit
 import SwiftUI
 
 /// A sheet that creates an instant QuickPad collaborative interview (`POST /interviews`,

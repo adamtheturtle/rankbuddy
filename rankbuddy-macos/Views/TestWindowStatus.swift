@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import HackerRankKit
 import SwiftUI
 
 extension Test {

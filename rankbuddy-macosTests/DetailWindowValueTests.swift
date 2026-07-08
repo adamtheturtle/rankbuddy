@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 
@@ -11,8 +12,8 @@ import Testing
 /// pass through openWindow) and titles the window.
 @MainActor
 struct DetailWindowValueTests {
-    private func test(name: String) throws -> rankbuddy_macos.Test {
-        try JSONDecoder().decode(rankbuddy_macos.Test.self, from: Data(#"{"id":"t1","name":"\#(name)"}"#.utf8))
+    private func test(name: String) throws -> HackerRankKit.Test {
+        try JSONDecoder().decode(HackerRankKit.Test.self, from: Data(#"{"id":"t1","name":"\#(name)"}"#.utf8))
     }
 
     @Test func `it round-trips through Codable`() throws {

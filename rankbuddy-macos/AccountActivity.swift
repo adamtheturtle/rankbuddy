@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// A read-only, paged view of the current account's audit log (#106) — the organisation's actual

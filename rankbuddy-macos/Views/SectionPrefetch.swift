@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 
 /// Warms each sidebar section's first-page cache for the active account in the background, so the
 /// first visit to a tab in a session is instant instead of spinning (#102).

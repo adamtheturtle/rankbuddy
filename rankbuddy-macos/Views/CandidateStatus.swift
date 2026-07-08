@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 
 /// Human-readable labels for the candidate `status` (test-attempt state) and `ats_state`
 /// (recruitment-pipeline position) integer codes (#37).

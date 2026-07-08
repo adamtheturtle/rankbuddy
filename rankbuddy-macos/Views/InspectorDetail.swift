@@ -5,6 +5,7 @@
 
 import BuddyDesignSystem
 import Flow
+import HackerRankKit
 import SwiftUI
 
 /// A reusable inspector-style header for the detail panes (#54). It shows the item's title in

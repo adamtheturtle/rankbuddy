@@ -1,13 +1,13 @@
 {
-  "originHash" : "76b5f57d7a587ce9f176592cbfe458b90476b6eae7e6c7d11f183d452ad8ba80",
+  "originHash" : "d8d7bc0c526924fb9d2edf077a7bdfe780bc4a5adf9216cd904ca1ed8c5d1396",
   "pins" : [
     {
       "identity" : "buddy-kit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/buddy-kit",
       "state" : {
-        "revision" : "ac9591b25433c320ee64eeaf9539da37da39f6bc",
-        "version" : "0.11.0"
+        "revision" : "133a289f58c7ad9e3063f988b5b27cacb9a80a94",
+        "version" : "0.14.0"
       }
     },
     {
@@ -33,8 +33,26 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/FastList",
       "state" : {
-        "revision" : "b3ea8ea6e5401b7bc5139392d47bb7eaa825758c",
-        "version" : "0.4.1"
+        "revision" : "460f4e8deb7aa5f89d53492127920f6ea35b9e7f",
+        "version" : "0.5.0"
+      }
+    },
+    {
+      "identity" : "hackerrankkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/HackerRankKit",
+      "state" : {
+        "revision" : "76c39073af664a0e106c4cce25ebb4014669ce66",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "highlightr",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/raspu/Highlightr",
+      "state" : {
+        "revision" : "05e7fcc63b33925cd0c1faaa205cdd5681e7bbef",
+        "version" : "2.3.0"
       }
     },
     {
@@ -53,6 +71,15 @@
       "state" : {
         "revision" : "e1a71374d7b01dfe223db509c561463e90723ba1",
         "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "printableview",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/PrintableView",
+      "state" : {
+        "revision" : "a84ec12f7d6e45c48855eaafd529563213a0fbdd",
+        "version" : "0.1.1"
       }
     },
     {

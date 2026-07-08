@@ -4,9 +4,9 @@
 //
 
 import BuddyAppKit
-import BuddyMCP
 import Foundation
 import MCP
+import MCPKit
 @testable import rankbuddy_macos
 import Testing
 

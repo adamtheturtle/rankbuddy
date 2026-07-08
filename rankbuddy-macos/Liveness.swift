@@ -7,6 +7,7 @@ import AppKit
 import AsyncAlgorithms
 import BuddyAppKit
 import Foundation
+import HackerRankKit
 import UserNotifications
 
 /// Opt-in "liveness" settings: a background sweep keeps a Dock-icon count of upcoming

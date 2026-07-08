@@ -4,6 +4,8 @@
 //
 
 import BuddyDesignSystem
+import HackerRankKit
+import PrintableView
 import SwiftUI
 
 // Print / Save-as-PDF support for the read-only detail views (#13), built on buddy-kit

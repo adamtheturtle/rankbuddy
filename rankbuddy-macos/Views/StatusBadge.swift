@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import HackerRankKit
 import SwiftUI
 
 /// A small pill badge used to flag status (e.g. proctoring, plagiarism, integrity).

@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import HackerRankKit
 import SwiftUI
 
 /// Whether the test editor is creating a new test or renaming an existing one (#57).

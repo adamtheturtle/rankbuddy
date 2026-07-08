@@ -5,6 +5,7 @@
 
 import BuddyAppKit
 import Foundation
+import HackerRankKit
 import MCP
 import MCPKit
 

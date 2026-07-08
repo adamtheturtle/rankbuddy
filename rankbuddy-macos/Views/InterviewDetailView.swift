@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// Read-only detail for a single interview. Beyond the list row's fields, it fetches the

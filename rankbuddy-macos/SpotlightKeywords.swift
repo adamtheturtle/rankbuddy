@@ -13,6 +13,7 @@ import AppIntents
 import BuddyAppKit
 import CoreSpotlight
 import Foundation
+import HackerRankKit
 import os
 
 /// A donated entity paired with the on-device text its keywords are generated from. The source

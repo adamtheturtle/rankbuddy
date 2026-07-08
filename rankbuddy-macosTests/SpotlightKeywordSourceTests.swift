@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 
@@ -37,7 +38,7 @@ struct SpotlightKeywordSourceTests {
     }
 
     @Test func `a test brief carries name, tags, languages, and condensed instructions`() throws {
-        let test = try decode(Test.self, #"""
+        let test = try decode(HackerRankKit.Test.self, #"""
         {"id":"t1","name":"Backend Screen","tags":["sql","api"],"languages":["go"],
          "instructions":"Complete   all\n\nquestions   within the time limit."}
         """#)
@@ -51,7 +52,7 @@ struct SpotlightKeywordSourceTests {
     }
 
     @Test func `a test with only a name yields no brief`() throws {
-        let test = try decode(Test.self, #"""
+        let test = try decode(HackerRankKit.Test.self, #"""
         {"id":"t2","name":"Untitled"}
         """#)
 

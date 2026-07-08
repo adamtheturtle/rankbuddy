@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 
@@ -11,12 +12,12 @@ import Testing
 /// "now" is injected so the classification is deterministic.
 @MainActor
 struct TestWindowStatusTests {
-    private func test(start: String? = nil, end: String? = nil) throws -> rankbuddy_macos.Test {
+    private func test(start: String? = nil, end: String? = nil) throws -> HackerRankKit.Test {
         var fields = [#""id":"t1""#, #""name":"T""#]
         if let start { fields.append("\"start_time\":\"\(start)\"") }
         if let end { fields.append("\"end_time\":\"\(end)\"") }
         let json = "{\(fields.joined(separator: ","))}"
-        return try JSONDecoder().decode(rankbuddy_macos.Test.self, from: Data(json.utf8))
+        return try JSONDecoder().decode(HackerRankKit.Test.self, from: Data(json.utf8))
     }
 
     private func date(_ iso: String) throws -> Date {

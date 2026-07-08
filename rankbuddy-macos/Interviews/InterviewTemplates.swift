@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 import Observation
 
 /// Which write flow a template seeds: an instant QuickPad or a scheduled interview (#60/#97).

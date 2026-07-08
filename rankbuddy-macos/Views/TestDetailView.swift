@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import HackerRankKit
 import SwiftUI
 
 /// Read-only detail for a single test, plus opt-in edit/delete affordances (#57). The

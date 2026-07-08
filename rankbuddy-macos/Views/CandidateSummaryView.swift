@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import HackerRankKit
 import SwiftUI
 
 /// An opt-in "Summarise" affordance on the candidate detail (#93): a single button that asks the

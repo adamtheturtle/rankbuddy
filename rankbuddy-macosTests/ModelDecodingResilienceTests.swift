@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 
@@ -20,7 +21,7 @@ struct ModelDecodingResilienceTests {
     // MARK: - Test
 
     @Test func `decodes with only the required id and name`() throws {
-        let test = try decode(Test.self, #"{"id":"t1","name":"Screen"}"#)
+        let test = try decode(HackerRankKit.Test.self, #"{"id":"t1","name":"Screen"}"#)
         #expect(test.id == "t1")
         #expect(test.name == "Screen")
         #expect(test.startTime == nil)
@@ -33,7 +34,7 @@ struct ModelDecodingResilienceTests {
         let json = #"""
         {"id":"t1","name":"Screen","brand_new_field":42,"nested":{"a":1},"list":[1,2,3]}
         """#
-        let test = try decode(Test.self, json)
+        let test = try decode(HackerRankKit.Test.self, json)
         #expect(test.id == "t1")
         #expect(test.name == "Screen")
     }
@@ -44,7 +45,7 @@ struct ModelDecodingResilienceTests {
          "end_time":"2026-06-01T09:00:00Z","cutoff_score":70,"enable_proctoring":true,
          "shuffle_questions":false,"languages":["python","go"],"questions":["q1","q2"]}
         """#
-        let test = try decode(Test.self, json)
+        let test = try decode(HackerRankKit.Test.self, json)
         #expect(test.uniqueID == "uid")
         #expect(test.startTime == "2026-05-01T09:00:00Z")
         #expect(test.cutoffScore == 70)
@@ -56,7 +57,7 @@ struct ModelDecodingResilienceTests {
 
     @Test func `fails when a required field is missing`() throws {
         #expect(throws: DecodingError.self) {
-            try decode(Test.self, #"{"name":"No id"}"#)
+            try decode(HackerRankKit.Test.self, #"{"name":"No id"}"#)
         }
     }
 
@@ -70,7 +71,7 @@ struct ModelDecodingResilienceTests {
           {}
         ]}
         """#
-        let test = try decode(Test.self, json)
+        let test = try decode(HackerRankKit.Test.self, json)
         let sections = try #require(test.sections)
         #expect(sections.count == 3)
         #expect(sections[0].uuid == nil)
@@ -84,14 +85,14 @@ struct ModelDecodingResilienceTests {
 
     @Test func `a uuid-less section does not break the surrounding page`() throws {
         // Reproduces the live failure: one test deep in a page had a section with no `uuid`,
-        // which previously failed the whole `HackerRankPage<Test>` decode.
+        // which previously failed the whole `HackerRankPage<HackerRankKit.Test>` decode.
         let json = #"""
         {"data":[
           {"id":"t1","name":"First"},
           {"id":"t2","name":"Second","sections":[{"name":"Part 1","questions":3}]}
         ],"next":null}
         """#
-        let page = try decode(HackerRankPage<rankbuddy_macos.Test>.self, json)
+        let page = try decode(HackerRankPage<HackerRankKit.Test>.self, json)
         #expect(page.pageItems.count == 2)
         #expect(page.pageItems[1].sections?.first?.displayName == "Part 1")
     }
@@ -209,7 +210,7 @@ struct ModelDecodingResilienceTests {
         {"data":[{"id":"t1","name":"One"},{"id":"t2","name":"Two"}],
          "next":"https://www.hackerrank.com/x/api/v3/tests?limit=2&offset=2","count":99}
         """#
-        let page = try decode(HackerRankPage<rankbuddy_macos.Test>.self, json)
+        let page = try decode(HackerRankPage<HackerRankKit.Test>.self, json)
         #expect(page.pageItems.count == 2)
         #expect(page.nextPage == "https://www.hackerrank.com/x/api/v3/tests?limit=2&offset=2")
         // `total` is intentionally nil so the transport uses its next-walk, not page numbers.
@@ -232,7 +233,7 @@ struct ModelDecodingResilienceTests {
           {"id":"t3","name":"Also good"}
         ],"next":null}
         """#
-        let page = try decode(HackerRankPage<rankbuddy_macos.Test>.self, json)
+        let page = try decode(HackerRankPage<HackerRankKit.Test>.self, json)
         #expect(page.pageItems.map(\.id) == ["t1", "t3"])
     }
 

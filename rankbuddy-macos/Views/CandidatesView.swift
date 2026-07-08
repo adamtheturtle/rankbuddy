@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import HackerRankKit
 import SwiftUI
 
 /// The candidates for a test, pushed from `TestDetailView`. Read-only list + detail, with
