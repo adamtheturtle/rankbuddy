@@ -49,6 +49,29 @@ struct RankBuddyEntitiesTests {
         #expect(UserDefaults.standard.string(forKey: "selectedSection") == "tests")
     }
 
+    @Test func `the selection key matches the deep-link router request`() {
+        // The router lets an already-on-screen list reveal a same-section favourite without a
+        // reload (#122). Its request key must equal the key the list restores from, or no list
+        // would ever match it.
+        RankBuddyDeepLink.open(collection: .questions, accountID: "acctQ", itemID: "q7")
+
+        let key = RankBuddyDeepLink.selectionKey(collection: .questions, accountID: "acctQ")
+        #expect(key == "selection.questions.acctQ")
+        #expect(DeepLinkRouter.shared.request?.key == key)
+        #expect(DeepLinkRouter.shared.request?.itemID == "q7")
+    }
+
+    @Test func `re-opening the same item posts a distinct request`() {
+        // A fresh request identity per open means clicking the same favourite twice still
+        // registers as a change the list reacts to (#122).
+        RankBuddyDeepLink.open(collection: .tests, accountID: "acctR", itemID: "t1")
+        let first = DeepLinkRouter.shared.request
+        RankBuddyDeepLink.open(collection: .tests, accountID: "acctR", itemID: "t1")
+        let second = DeepLinkRouter.shared.request
+
+        #expect(first != second)
+    }
+
     @Test func `the spotlight index name is shared by donation and clearing`() {
         // Donation (suggestedEntities) and deletion-on-removal must target the same index, or a
         // deleted account's items would linger (#24). Pin the name so the two can't drift apart.
