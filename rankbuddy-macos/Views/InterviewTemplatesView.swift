@@ -13,6 +13,7 @@ struct InterviewTemplatesView: View {
     @Bindable var store: InterviewTemplatesStore
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.undoManager) private var undoManager
     @State private var selection: String?
 
     private var templates: [InterviewTemplate] {
@@ -85,7 +86,7 @@ struct InterviewTemplatesView: View {
 
     @ViewBuilder private var editor: some View {
         if let id = selection, let template = templates.first(where: { $0.id == id }) {
-            TemplateEditor(template: template) { store.update($0) }
+            TemplateEditor(template: template) { store.update($0, undoManager: undoManager) }
                 .id(id)
         } else {
             ContentUnavailableView(
@@ -98,14 +99,14 @@ struct InterviewTemplatesView: View {
 
     private func addTemplate() {
         let template = InterviewTemplate(accountID: accountID, name: "New Template", kind: .quickPad)
-        store.add(template)
+        store.add(template, undoManager: undoManager)
         selection = template.id
     }
 
     private func removeSelected() {
         guard let id = selection else { return }
 
-        store.remove(id: id)
+        store.remove(id: id, undoManager: undoManager)
         selection = templates.first?.id
     }
 }

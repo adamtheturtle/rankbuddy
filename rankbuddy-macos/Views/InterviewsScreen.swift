@@ -14,6 +14,7 @@ struct InterviewsScreen: View {
     @Environment(InterviewTemplatesStore.self) private var templates
     @Environment(InterviewTemplateLauncher.self) private var launcher
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.undoManager) private var undoManager
     @State private var quickPadPresented = false
     @State private var schedulePresented = false
     @State private var templatesPresented = false
@@ -61,7 +62,8 @@ struct InterviewsScreen: View {
                             accountID: store.currentAccountID,
                             collection: .interviews,
                             itemID: interview.id,
-                            title: title
+                            title: title,
+                            undoManager: undoManager
                         ),
                         openInWindow: { openWindow(value: DetailWindowValue.interview(interview)) }
                     )
@@ -92,6 +94,7 @@ struct InterviewsScreen: View {
                         )
                     }
                 },
+                rowTransfer: interviewTransfer,
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { InterviewRow(interview: $0) },
                 detail: { InterviewDetailView(interview: $0) }
@@ -108,12 +111,7 @@ struct InterviewsScreen: View {
             // Running a template (from the New menu or the ⌘K palette) opens the matching
             // create flow pre-filled with the template's title (#97).
             .sheet(item: $runningTemplate) { template in
-                switch template.kind {
-                case .quickPad:
-                    NewQuickPadSheet(account: account, initialTitle: template.seededTitle) { reloadToken += 1 }
-                case .scheduled:
-                    ScheduleInterviewSheet(account: account, initialTitle: template.seededTitle) { reloadToken += 1 }
-                }
+                templateSheet(template, account: account)
             }
             // The palette sets a pending template; consume it here so both surfaces drive the
             // same single run path.
@@ -129,6 +127,39 @@ struct InterviewsScreen: View {
                     .navigationTitle("Interviews")
             }
         }
+    }
+
+    @ViewBuilder
+    private func templateSheet(_ template: InterviewTemplate, account: Account) -> some View {
+        switch template.kind {
+        case .quickPad:
+            NewQuickPadSheet(account: account, initialTitle: template.seededTitle) { reloadToken += 1 }
+        case .scheduled:
+            ScheduleInterviewSheet(account: account, initialTitle: template.seededTitle) { reloadToken += 1 }
+        }
+    }
+
+    private func interviewTransfer(_ interview: Interview) -> RowTransfer {
+        let title = interview.title ?? "Interview \(interview.id)"
+        let rawURL = interview.url
+        return RowTransfer(
+            title: title,
+            subtitle: interview.status.capitalized,
+            url: URL(string: rawURL),
+            fields: [
+                ("Title", title),
+                ("Status", interview.status.capitalized),
+                ("Created", interview.createdAt ?? ""),
+                ("URL", rawURL)
+            ]
+        )
+    }
+
+    private func mergedInterviewTransfer(_ scoped: AccountScoped<Interview>) -> RowTransfer {
+        var transfer = interviewTransfer(scoped.item)
+        transfer.subtitle = scoped.account.label
+        transfer.fields.insert(("Account", scoped.account.label), at: 1)
+        return transfer
     }
 
     private func newMenu(account: Account) -> some View {
@@ -198,6 +229,7 @@ struct InterviewsScreen: View {
                     link: $0.item.url
                 )
             },
+            rowTransfer: mergedInterviewTransfer,
             rowDate: { DisplayFormat.parseDate($0.item.createdAt) },
             row: {
                 MergedRow(

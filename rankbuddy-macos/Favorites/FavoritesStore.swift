@@ -97,23 +97,22 @@ final class FavoritesStore {
     /// Pins the item if it isn't already favourited; a no-op when it is. Unlike `toggle`, a
     /// repeated add never removes — the right semantics for drag-to-pin (#89), where dropping an
     /// already-pinned row should leave it pinned rather than silently un-favourite it.
-    func add(_ ref: FavoriteRef) {
+    func add(_ ref: FavoriteRef, undoManager: UndoManager? = nil) {
         guard !favorites.contains(where: { $0.id == ref.id }) else { return }
 
-        favorites.append(ref)
-        persist()
+        replace(with: favorites + [ref], undoManager: undoManager, actionName: "Add Favourite")
     }
 
     /// Adds the item when absent, removes it when present. Returns the resulting state.
     @discardableResult
-    func toggle(_ ref: FavoriteRef) -> Bool {
+    func toggle(_ ref: FavoriteRef, undoManager: UndoManager? = nil) -> Bool {
         if let index = favorites.firstIndex(where: { $0.id == ref.id }) {
-            favorites.remove(at: index)
-            persist()
+            var updated = favorites
+            updated.remove(at: index)
+            replace(with: updated, undoManager: undoManager, actionName: "Remove Favourite")
             return false
         }
-        favorites.append(ref)
-        persist()
+        replace(with: favorites + [ref], undoManager: undoManager, actionName: "Add Favourite")
         return true
     }
 
@@ -139,11 +138,26 @@ final class FavoritesStore {
 
     /// Replaces the whole set, e.g. when adopting an incoming iCloud change (#22). No-op when
     /// the set is unchanged, so it doesn't churn observers or re-trigger a sync.
-    func replace(with refs: [FavoriteRef]) {
-        guard refs != favorites else { return }
+    func replace(
+        with refs: [FavoriteRef],
+        undoManager: UndoManager? = nil,
+        actionName: String = "Change Favourites"
+    ) {
+        let previous = favorites
+        guard refs != previous else { return }
 
         favorites = refs
         persist()
+        registerUndo(previous, undoManager: undoManager, actionName: actionName)
+    }
+
+    private func registerUndo(_ previous: [FavoriteRef], undoManager: UndoManager?, actionName: String) {
+        guard let undoManager else { return }
+
+        undoManager.registerUndo(withTarget: self) { store in
+            store.replace(with: previous, undoManager: undoManager, actionName: actionName)
+        }
+        undoManager.setActionName(actionName)
     }
 
     private func persist() {
@@ -159,7 +173,8 @@ final class FavoritesStore {
         accountID: UUID?,
         collection: FavoriteCollection,
         itemID: String,
-        title: String
+        title: String,
+        undoManager: UndoManager? = nil
     ) -> (isFavorite: Bool, toggle: () -> Void)? {
         guard let accountID else { return nil }
 
@@ -169,6 +184,9 @@ final class FavoritesStore {
             itemID: itemID,
             title: title
         )
-        return (isFavorite(collection: collection, accountID: ref.accountID, itemID: itemID), { self.toggle(ref) })
+        return (
+            isFavorite(collection: collection, accountID: ref.accountID, itemID: itemID),
+            { self.toggle(ref, undoManager: undoManager) }
+        )
     }
 }

@@ -107,6 +107,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     // does not inherit the SwiftUI environment, so rows that read these stores would trap (#31).
     @Environment(AccountStore.self) private var accountStore
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(\.undoManager) var undoManager
 
     /// The user's chosen list auto-refresh cadence in seconds (#69). `0`/below the minimum is
     /// off. Changing it restarts the refresh task. Internal (not private) so the auto-refresh
@@ -297,7 +298,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                         itemID: ref.itemID
                     ),
                     title: ref.title,
-                    toggle: { favorites.toggle(ref) }
+                    toggle: { favorites.toggle(ref, undoManager: undoManager) }
                 )
             }
             if let rowDate {
@@ -343,10 +344,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 .onDoubleClick { open($0) }
                 .onReturnKey { open($0) }
                 .rowContextMenu { contextMenu($0) }
-                // Drag a row onto the sidebar's Favourites section to pin it (#89/#41). Rows
-                // without a `favoriteRef` (People/Teams/merged) return nil and stay non-draggable.
+                // Drag a row onto the sidebar's Favourites section to pin it (#89/#41). The same
+                // drag now carries public text/URL fallbacks when the screen supplies them (#124).
                 // The session hooks reveal the sidebar's drop zone only while a favourite is in flight.
-                .onRowDrag { favoriteRef($0).flatMap(FavoritePasteboard.item(for:)) }
+                .onRowDrag { dragPasteboardItem(for: $0) }
                 .onDragSession(began: FavoriteDragLifecycle.onBegan, ended: FavoriteDragLifecycle.onEnded)
                 .onTopRowChange { persistScrollAnchor($0) }
                 // Load-more keys off the *bottom* of the viewport (FastList #1, shipped in 0.3.0),
@@ -354,6 +355,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 // Threshold is a generous prefetch lead so rows appear before the end, no stall (#87).
                 .onReachEnd(threshold: 32) { Task { await loadMore() } }
                 .scrollToRow(id: scrollTarget) { scrollTarget = nil }
+                .onCopyCommand(perform: copySelectionProviders)
                 // A floating pill at the bottom of the list while the next page loads, so it's
                 // clear more rows are on the way when scrolling to the end (rather than the list
                 // appearing to simply stop) (#85).

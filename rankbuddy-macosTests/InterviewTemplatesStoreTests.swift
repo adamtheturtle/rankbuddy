@@ -96,7 +96,9 @@ struct InterviewTemplatesStoreTests {
 
         let template = InterviewTemplate(accountID: "a", name: "T", kind: .quickPad)
         store.add(template)
-        store.update(template)
+        var edited = template
+        edited.name = "Edited"
+        store.update(edited)
         store.remove(id: template.id)
 
         #expect(count == 3)
@@ -108,5 +110,34 @@ struct InterviewTemplatesStoreTests {
 
         let prefixed = InterviewTemplate(accountID: "a", name: "Backend", kind: .quickPad, titlePrefix: "Backend —")
         #expect(prefixed.seededTitle == "Backend —")
+    }
+
+    @Test func `undo restores template add edit and remove`() {
+        let store = InterviewTemplatesStore(isTesting: true)
+        let undoManager = UndoManager()
+        let template = InterviewTemplate(accountID: "a", name: "Backend", kind: .quickPad)
+
+        store.add(template, undoManager: undoManager)
+        #expect(store.templates.count == 1)
+
+        undoManager.undo()
+        #expect(store.templates.isEmpty)
+
+        undoManager.redo()
+        #expect(store.templates.count == 1)
+
+        var edited = template
+        edited.name = "Frontend"
+        store.update(edited, undoManager: undoManager)
+        #expect(store.templates.first?.name == "Frontend")
+
+        undoManager.undo()
+        #expect(store.templates.first?.name == "Backend")
+
+        store.remove(id: template.id, undoManager: undoManager)
+        #expect(store.templates.isEmpty)
+
+        undoManager.undo()
+        #expect(store.templates.first?.id == template.id)
     }
 }

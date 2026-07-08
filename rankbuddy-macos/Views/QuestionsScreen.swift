@@ -11,6 +11,7 @@ struct QuestionsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.undoManager) private var undoManager
 
     var body: some View {
         if store.isMergedView {
@@ -35,7 +36,8 @@ struct QuestionsScreen: View {
                             accountID: store.currentAccountID,
                             collection: .questions,
                             itemID: question.id,
-                            title: question.name
+                            title: question.name,
+                            undoManager: undoManager
                         ),
                         openInWindow: { openWindow(value: DetailWindowValue.question(question)) }
                     )

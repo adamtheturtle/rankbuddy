@@ -24,6 +24,7 @@ struct ContentView: View {
     @Environment(InterviewTemplatesStore.self) private var templates
     @Environment(InterviewTemplateLauncher.self) private var launcher
     @Environment(AccountHealthMonitor.self) private var health
+    @Environment(\.undoManager) private var undoManager
     /// Reveals the Favourites drop zone only while a favourite-able row is being dragged (#89).
     @State private var dragMonitor = FavoriteDragMonitor.shared
     /// Whether a drag is currently hovering the Favourites drop zone (drives its highlight).
@@ -138,7 +139,7 @@ struct ContentView: View {
         .buttonStyle(.plain)
         .contextMenu {
             Button("Remove from Favourites", role: .destructive) {
-                _ = favorites.toggle(ref)
+                _ = favorites.toggle(ref, undoManager: undoManager)
             }
         }
         // `.onDrop`, not `.dropDestination(for:)`: the latter never fires its action inside a
@@ -173,7 +174,7 @@ struct ContentView: View {
             provider.loadDataRepresentation(forTypeIdentifier: identifier) { data, _ in
                 guard let data, let ref = FavoritePasteboard.decode(from: data) else { return }
 
-                Task { @MainActor in favorites.add(ref) }
+                Task { @MainActor in favorites.add(ref, undoManager: undoManager) }
             }
         }
         return accepted
@@ -183,9 +184,13 @@ struct ContentView: View {
     private func moveFavorites(from source: IndexSet, to destination: Int) {
         guard let accountID = store.currentAccount?.id.uuidString else { return }
 
-        favorites.replace(with: FavoritesReorder.apply(
-            all: favorites.favorites, accountID: accountID, from: source, to: destination
-        ))
+        favorites.replace(
+            with: FavoritesReorder.apply(
+                all: favorites.favorites, accountID: accountID, from: source, to: destination
+            ),
+            undoManager: undoManager,
+            actionName: "Reorder Favourites"
+        )
     }
 
     /// A `List` selection binding that never clears to nil, so a section is always shown.

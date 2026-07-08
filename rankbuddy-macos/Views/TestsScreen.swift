@@ -13,6 +13,7 @@ struct TestsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.undoManager) private var undoManager
     @State private var createPresented = false
     @State private var reloadToken = 0
 
@@ -54,7 +55,8 @@ struct TestsScreen: View {
                             accountID: store.currentAccountID,
                             collection: .tests,
                             itemID: test.id,
-                            title: test.name
+                            title: test.name,
+                            undoManager: undoManager
                         ),
                         openInWindow: { openWindow(value: DetailWindowValue.test(test)) }
                     )

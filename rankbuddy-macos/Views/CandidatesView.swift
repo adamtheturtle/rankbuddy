@@ -60,6 +60,20 @@ struct CandidatesList: View {
             reloadToken: reloadToken,
             csvExport: { CSVExport.candidates($0) },
             csvFilename: "candidates",
+            rowTransfer: { candidate in
+                RowTransfer(
+                    title: candidate.fullName ?? candidate.email,
+                    subtitle: candidate.email,
+                    url: candidate.reportURL.flatMap { URL(string: $0) },
+                    fields: [
+                        ("Name", candidate.fullName ?? ""),
+                        ("Email", candidate.email),
+                        ("Score", candidate.score.map { String($0) } ?? ""),
+                        ("Status", candidate.listStatusLabel ?? ""),
+                        ("Report", candidate.reportURL ?? "")
+                    ]
+                )
+            },
             rowDate: { DisplayFormat.parseDate($0.attemptEndTime ?? $0.attemptStartTime) },
             row: { CandidateRow(candidate: $0) },
             detail: { CandidateDetailView(candidate: $0) }

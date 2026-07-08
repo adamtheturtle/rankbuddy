@@ -225,15 +225,35 @@ extension LoadableList {
         )
         guard !name.isEmpty, !search.isEmpty else { return }
 
-        savedSearches.append(search)
-        SavedSearchStore.save(savedSearches, restorationKey: restorationKey)
+        replaceSavedSearches(savedSearches + [search], restorationKey: restorationKey, actionName: "Save Search")
     }
 
     private func deleteSavedSearch(_ search: SavedSearch) {
         guard let restorationKey else { return }
 
-        savedSearches.removeAll { $0.id == search.id }
-        SavedSearchStore.save(savedSearches, restorationKey: restorationKey)
+        replaceSavedSearches(
+            savedSearches.filter { $0.id != search.id },
+            restorationKey: restorationKey,
+            actionName: "Delete Saved Search"
+        )
+    }
+
+    private func replaceSavedSearches(
+        _ searches: [SavedSearch],
+        restorationKey: String,
+        actionName: String
+    ) {
+        let previous = savedSearches
+        guard previous != searches else { return }
+
+        savedSearches = searches
+        SavedSearchStore.save(searches, restorationKey: restorationKey)
+        undoManager?.registerUndo(withTarget: UndoAction {
+            replaceSavedSearches(previous, restorationKey: restorationKey, actionName: actionName)
+        }) { target in
+            target.perform()
+        }
+        undoManager?.setActionName(actionName)
     }
 
     /// Clears every narrowing filter at once — the bar's Clear action (#55).

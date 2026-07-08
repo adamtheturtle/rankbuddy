@@ -43,6 +43,14 @@ struct PeopleScreen: View {
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
                 accessoryToolbar: { AnyView(createButton) },
                 reloadToken: reloadToken,
+                rowTransfer: { user in
+                    RowTransfer(title: user.displayName, subtitle: user.email, fields: [
+                        ("Name", user.displayName),
+                        ("Email", user.email),
+                        ("Role", user.role?.capitalized ?? ""),
+                        ("Status", user.status?.capitalized ?? "")
+                    ])
+                },
                 rowDate: { DisplayFormat.parseDate($0.lastActivityTime) },
                 row: { PersonRow(user: $0) },
                 detail: { PersonDetailView(user: $0) }

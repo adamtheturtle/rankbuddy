@@ -33,6 +33,14 @@ struct TeamsScreen: View {
                 contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.name) },
                 accessoryToolbar: { AnyView(createButton) },
                 reloadToken: reloadToken,
+                rowTransfer: { team in
+                    RowTransfer(title: team.name, subtitle: team.memberSummary, fields: [
+                        ("Name", team.name),
+                        ("Members", team.memberSummary ?? ""),
+                        ("Recruiters", team.recruiterCount.map(String.init) ?? ""),
+                        ("Developers", team.developerCount.map(String.init) ?? "")
+                    ])
+                },
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { TeamRow(team: $0) },
                 detail: { TeamDetailView(team: $0, account: account) }
@@ -121,6 +129,14 @@ struct TeamMembersList: View {
             contextMenu: { memberMenuItems(for: $0) },
             accessoryToolbar: { AnyView(addButton) },
             reloadToken: reloadToken,
+            rowTransfer: { user in
+                RowTransfer(title: user.displayName, subtitle: user.email, fields: [
+                    ("Name", user.displayName),
+                    ("Email", user.email),
+                    ("Role", user.role?.capitalized ?? ""),
+                    ("Status", user.status?.capitalized ?? "")
+                ])
+            },
             rowDate: { DisplayFormat.parseDate($0.lastActivityTime) },
             row: { PersonRow(user: $0) },
             detail: { PersonDetailView(user: $0) }

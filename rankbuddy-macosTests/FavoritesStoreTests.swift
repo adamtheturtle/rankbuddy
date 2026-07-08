@@ -118,4 +118,33 @@ struct FavoritesStoreTests {
         #expect(store.favorites.count == 1)
         #expect(store.isFavorite(collection: .tests, accountID: "acc1", itemID: "t1"))
     }
+
+    @Test func `undo restores favourite toggle state`() {
+        let store = FavoritesStore(defaults: makeDefaults(#function))
+        let undoManager = UndoManager()
+        let item = ref()
+
+        store.toggle(item, undoManager: undoManager)
+        #expect(store.isFavorite(collection: .tests, accountID: "acc1", itemID: "t1"))
+
+        undoManager.undo()
+        #expect(!store.isFavorite(collection: .tests, accountID: "acc1", itemID: "t1"))
+
+        undoManager.redo()
+        #expect(store.isFavorite(collection: .tests, accountID: "acc1", itemID: "t1"))
+    }
+
+    @Test func `undo restores favourite reorder`() {
+        let store = FavoritesStore(defaults: makeDefaults(#function))
+        let undoManager = UndoManager()
+        store.add(ref("acc1", .tests, "a", "A"))
+        store.add(ref("acc1", .tests, "b", "B"))
+
+        store.replace(with: [ref("acc1", .tests, "b", "B"), ref("acc1", .tests, "a", "A")],
+                      undoManager: undoManager, actionName: "Reorder Favourites")
+        #expect(store.favorites.map(\.itemID) == ["b", "a"])
+
+        undoManager.undo()
+        #expect(store.favorites.map(\.itemID) == ["a", "b"])
+    }
 }

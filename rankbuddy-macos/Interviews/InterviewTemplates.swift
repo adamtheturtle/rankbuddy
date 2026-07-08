@@ -109,26 +109,25 @@ final class InterviewTemplatesStore {
     }
 
     /// Adds a new template (most-recently-added shows first).
-    func add(_ template: InterviewTemplate) {
-        templates.append(template)
-        persist()
+    func add(_ template: InterviewTemplate, undoManager: UndoManager? = nil) {
+        replace(with: templates + [template], undoManager: undoManager, actionName: "Add Template")
     }
 
     /// Replaces an existing template by id; no-op when the id is unknown.
-    func update(_ template: InterviewTemplate) {
+    func update(_ template: InterviewTemplate, undoManager: UndoManager? = nil) {
         guard let index = templates.firstIndex(where: { $0.id == template.id }) else { return }
 
-        templates[index] = template
-        persist()
+        var updated = templates
+        updated[index] = template
+        replace(with: updated, undoManager: undoManager, actionName: "Edit Template")
     }
 
     /// Removes the template with the given id; no-op when the id is unknown.
-    func remove(id: String) {
+    func remove(id: String, undoManager: UndoManager? = nil) {
         let kept = templates.filter { $0.id != id }
         guard kept.count != templates.count else { return }
 
-        templates = kept
-        persist()
+        replace(with: kept, undoManager: undoManager, actionName: "Remove Template")
     }
 
     /// Drops every template whose account is no longer configured, so a removed account leaves
@@ -143,11 +142,26 @@ final class InterviewTemplatesStore {
 
     /// Replaces the whole set, e.g. when adopting an incoming iCloud change (#22). No-op when
     /// unchanged, so it doesn't churn observers or re-trigger a sync.
-    func replace(with templates: [InterviewTemplate]) {
-        guard templates != self.templates else { return }
+    func replace(
+        with templates: [InterviewTemplate],
+        undoManager: UndoManager? = nil,
+        actionName: String = "Change Templates"
+    ) {
+        let previous = self.templates
+        guard templates != previous else { return }
 
         self.templates = templates
         persist()
+        registerUndo(previous, undoManager: undoManager, actionName: actionName)
+    }
+
+    private func registerUndo(_ previous: [InterviewTemplate], undoManager: UndoManager?, actionName: String) {
+        guard let undoManager else { return }
+
+        undoManager.registerUndo(withTarget: self) { store in
+            store.replace(with: previous, undoManager: undoManager, actionName: actionName)
+        }
+        undoManager.setActionName(actionName)
     }
 
     private func persist() {
