@@ -109,33 +109,40 @@ struct ScopeToAccountFocusFilter: SetFocusFilterIntent {
 
     func perform() async throws -> some IntentResult {
         await MainActor.run {
-            let store = SharedAccountStore.resolve()
-            let defaults = UserDefaults.standard
-
-            if let account, let uuid = UUID(uuidString: account.id),
-               store.accounts.contains(where: { $0.id == uuid }) {
-                // Entering a Focus-scoped state: snapshot the pre-Focus selection once, so a
-                // later Focus switch (account A -> account B with no "off" between) keeps the
-                // original snapshot to restore at the end.
-                if defaults.object(forKey: Self.savedShowAllKey) == nil {
-                    defaults.set(store.showAllAccounts, forKey: Self.savedShowAllKey)
-                    defaults.set(store.currentAccountID?.uuidString ?? "", forKey: Self.savedCurrentKey)
-                }
-                store.showAllAccounts = false
-                store.currentAccountID = uuid
-            } else if defaults.object(forKey: Self.savedShowAllKey) != nil {
-                // Focus turned off: restore whatever was selected before it began.
-                let savedShowAll = defaults.bool(forKey: Self.savedShowAllKey)
-                if let savedID = defaults.string(forKey: Self.savedCurrentKey),
-                   let uuid = UUID(uuidString: savedID),
-                   store.accounts.contains(where: { $0.id == uuid }) {
-                    store.currentAccountID = uuid
-                }
-                store.showAllAccounts = savedShowAll
-                defaults.removeObject(forKey: Self.savedShowAllKey)
-                defaults.removeObject(forKey: Self.savedCurrentKey)
-            }
+            Self.apply(accountID: account?.id, store: SharedAccountStore.resolve(), defaults: .standard)
         }
         return .result()
+    }
+
+    /// Applies the Focus scope to `store`, or restores the pre-Focus selection when `accountID`
+    /// is nil or unknown (Focus off). The pre-Focus selection is snapshotted in `defaults` on the
+    /// first scoping, so a Focus-to-Focus switch (A -> B with no "off" between) still restores the
+    /// original selection at the end. Split out of `perform()` so the snapshot/restore logic is
+    /// unit-testable without the AppIntents runtime (#96).
+    @MainActor
+    static func apply(accountID: String?, store: AccountStore, defaults: UserDefaults) {
+        if let accountID, let uuid = UUID(uuidString: accountID),
+           store.accounts.contains(where: { $0.id == uuid }) {
+            // Entering a Focus-scoped state: snapshot the pre-Focus selection once, so a
+            // later Focus switch (account A -> account B with no "off" between) keeps the
+            // original snapshot to restore at the end.
+            if defaults.object(forKey: savedShowAllKey) == nil {
+                defaults.set(store.showAllAccounts, forKey: savedShowAllKey)
+                defaults.set(store.currentAccountID?.uuidString ?? "", forKey: savedCurrentKey)
+            }
+            store.showAllAccounts = false
+            store.currentAccountID = uuid
+        } else if defaults.object(forKey: savedShowAllKey) != nil {
+            // Focus turned off: restore whatever was selected before it began.
+            let savedShowAll = defaults.bool(forKey: savedShowAllKey)
+            if let savedID = defaults.string(forKey: savedCurrentKey),
+               let uuid = UUID(uuidString: savedID),
+               store.accounts.contains(where: { $0.id == uuid }) {
+                store.currentAccountID = uuid
+            }
+            store.showAllAccounts = savedShowAll
+            defaults.removeObject(forKey: savedShowAllKey)
+            defaults.removeObject(forKey: savedCurrentKey)
+        }
     }
 }
