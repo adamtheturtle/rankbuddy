@@ -111,11 +111,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
-    // Forwarded into each FastList row: FastList hosts rows in their own NSHostingView, which
-    // does not inherit the SwiftUI environment, so rows that read these stores would trap (#31).
+    /// Forwarded into each FastList row: FastList hosts rows in their own NSHostingView, which
+    /// does not inherit the SwiftUI environment, so rows that read these stores would trap (#31).
     @Environment(AccountStore.self) private var accountStore
-    @Environment(FavoritesStore.self) private var favorites
-    @Environment(AppCommandContext.self) private var commandContext
+    // Internal (not private) so the row-accessory and command-registration helpers in
+    // `LoadableList+Interaction.swift` can read them, per the repo's split-file rule.
+    @Environment(FavoritesStore.self) var favorites
+    @Environment(AppCommandContext.self) var commandContext
     @Environment(\.undoManager) var undoManager
 
     /// The live deep-link target (#122). Held as `@State` so this list observes it: when a deep
