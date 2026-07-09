@@ -80,7 +80,9 @@ struct InterviewsScreen: View {
                 },
                 accessoryToolbar: { AnyView(newMenu(account: account)) },
                 primaryMenuAction: AppCommandContext.Action(title: "New Pad…") { padPresented = true },
-                secondaryMenuAction: AppCommandContext.Action(title: "Schedule Interview…") { schedulePresented = true },
+                secondaryMenuAction: AppCommandContext.Action(title: "Schedule Interview…") {
+                    schedulePresented = true
+                },
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.interviews($0) },
                 csvFilename: "interviews",
@@ -237,9 +239,9 @@ struct InterviewRow: View {
     let json = #"""
     [
       {"id":"i1","status":"completed","url":"https://example.com/i1",
-       "title":"Senior Backend — Pairing","created_at":"2026-05-05T13:00:00Z"},
+       "title":"Senior Backend - Pairing","created_at":"2026-05-05T13:00:00Z"},
       {"id":"i2","status":"scheduled","url":"https://example.com/i2",
-       "title":"Frontend — Live Coding","created_at":"2026-05-12T16:00:00Z"}
+       "title":"Frontend - Live Coding","created_at":"2026-05-12T16:00:00Z"}
     ]
     """#
     let interviews = (try? JSONDecoder().decode([Interview].self, from: Data(json.utf8))) ?? []
@@ -263,10 +265,10 @@ struct InterviewRow: View {
     let json = #"""
     [
       {"id":"i1","status":"completed","url":"https://example.com/i1",
-       "title":"Senior Backend — Pairing","created_at":"2026-05-05T13:00:00Z"},
+       "title":"Senior Backend - Pairing","created_at":"2026-05-05T13:00:00Z"},
       {"id":"i2","status":"scheduled","url":"https://example.com/i2",
-       "title":"Frontend — Live Coding","created_at":"2026-05-12T16:00:00Z"},
-      {"id":"i3","status":"cancelled","url":"https://example.com/i3","title":"Platform — Screen"}
+       "title":"Frontend - Live Coding","created_at":"2026-05-12T16:00:00Z"},
+      {"id":"i3","status":"cancelled","url":"https://example.com/i3","title":"Platform - Screen"}
     ]
     """#
     let interviews = (try? JSONDecoder().decode([Interview].self, from: Data(json.utf8))) ?? []

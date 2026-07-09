@@ -185,7 +185,7 @@ struct TranscriptMessageRow: View {
       {"messageId":"m1","author":"Ian Interviewer","candidate":false,
        "timestamp":1746450000,"text":"Welcome! Let's start with a brief warm-up question."},
       {"messageId":"m2","author":"Ada Lovelace","candidate":true,
-       "timestamp":1746450060,"text":"Sounds good — I'm ready when you are."},
+       "timestamp":1746450060,"text":"Sounds good, I'm ready when you are."},
       {"messageId":"m3","author":"Ian Interviewer","candidate":false,
        "timestamp":1746450120,"text":"Great. Can you walk me through your approach to the problem?"}
     ]}
