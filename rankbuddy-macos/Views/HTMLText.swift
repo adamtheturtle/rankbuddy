@@ -35,6 +35,7 @@ struct HTMLFragmentText: View {
                     if !prose.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         HTMLText(html: prose)
                     }
+
                 case let .orderedList(items):
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(Array(items.enumerated()), id: \.offset) { index, item in
@@ -60,20 +61,23 @@ private enum HTMLFragmentSegment {
     case prose(String)
     case orderedList([String])
 
-    static func segments(from html: String) -> [HTMLFragmentSegment] {
+    static func segments(from html: String) -> [Self] {
         let listPattern = #"(?is)<ol\b[^>]*>(.*?)</ol>"#
         guard let listExpression = try? NSRegularExpression(pattern: listPattern) else {
             return [.prose(html)]
         }
 
+        // NSRegularExpression works in terms of NSString ranges, so the bridge is required here.
+        // swiftlint:disable:next legacy_objc_type
         let nsHTML = html as NSString
         let fullRange = NSRange(location: 0, length: nsHTML.length)
-        var segments: [HTMLFragmentSegment] = []
+        var segments: [Self] = []
         var cursor = 0
 
         for match in listExpression.matches(in: html, range: fullRange) {
             if match.range.location > cursor {
-                segments.append(.prose(nsHTML.substring(with: NSRange(location: cursor, length: match.range.location - cursor))))
+                let range = NSRange(location: cursor, length: match.range.location - cursor)
+                segments.append(.prose(nsHTML.substring(with: range)))
             }
 
             let listHTML = nsHTML.substring(with: match.range(at: 1))
@@ -98,6 +102,7 @@ private enum HTMLFragmentSegment {
         let itemPattern = #"(?is)<li\b[^>]*>(.*?)</li>"#
         guard let itemExpression = try? NSRegularExpression(pattern: itemPattern) else { return [] }
 
+        // swiftlint:disable:next legacy_objc_type
         let nsHTML = html as NSString
         let fullRange = NSRange(location: 0, length: nsHTML.length)
         return itemExpression.matches(in: html, range: fullRange).map { match in

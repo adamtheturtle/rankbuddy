@@ -49,12 +49,12 @@ nonisolated struct RowTransfer {
 
     /// A multi-row plain-text representation that keeps each row readable when pasted into a
     /// normal text field.
-    static func plainText(_ rows: [RowTransfer]) -> String {
+    static func plainText(_ rows: [Self]) -> String {
         rows.map(\.plainText).joined(separator: "\n\n")
     }
 
     /// A multi-row TSV representation suitable for Numbers, Excel, and Google Sheets.
-    static func tabularText(_ rows: [RowTransfer]) -> String {
+    static func tabularText(_ rows: [Self]) -> String {
         rows.map { row in
             row.tabularRow.map(Self.escapeTabularField).joined(separator: "\t")
         }
@@ -63,21 +63,27 @@ nonisolated struct RowTransfer {
 
     /// Builds copy providers for Command-C. The first provider is the readable plain-text form;
     /// the second is TSV when the selected rows expose tabular fields.
-    static func itemProviders(for rows: [RowTransfer]) -> [NSItemProvider] {
+    static func itemProviders(for rows: [Self]) -> [NSItemProvider] {
         guard !rows.isEmpty else { return [] }
 
+        // NSItemProvider(object:) requires an NSItemProviderWriting reference type, so the
+        // bridged NSString/NSURL casts here are load-bearing rather than avoidable.
+        // swiftlint:disable:next legacy_objc_type
         var providers = [NSItemProvider(object: plainText(rows) as NSString)]
         if rows.contains(where: { !$0.fields.isEmpty }) {
             let tsv = tabularText(rows)
             let provider = NSItemProvider()
-            provider.registerDataRepresentation(forTypeIdentifier: UTType.tabSeparatedText.identifier, visibility: .all) {
-                completion in
+            provider.registerDataRepresentation(
+                forTypeIdentifier: UTType.tabSeparatedText.identifier,
+                visibility: .all
+            ) { completion in
                 completion(Data(tsv.utf8), nil)
                 return nil
             }
             providers.append(provider)
         }
         if rows.count == 1, let url = rows.first?.url {
+            // swiftlint:disable:next legacy_objc_type
             providers.append(NSItemProvider(object: url as NSURL))
         }
         return providers
@@ -87,7 +93,7 @@ nonisolated struct RowTransfer {
     /// selection is dragged (#124): plain text and TSV keep all rows, and the URL type carries the
     /// first row's link so URL-only drop targets (a browser tab) still receive something useful.
     /// Returns `nil` for an empty selection so the caller can fall back to the single-row path.
-    static func pasteboardItem(for rows: [RowTransfer]) -> NSPasteboardItem? {
+    static func pasteboardItem(for rows: [Self]) -> NSPasteboardItem? {
         guard !rows.isEmpty else { return nil }
 
         let item = NSPasteboardItem()
