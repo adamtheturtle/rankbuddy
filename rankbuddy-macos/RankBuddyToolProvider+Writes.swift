@@ -18,7 +18,7 @@ extension RankBuddyToolProvider {
     /// The names of the write tools, used to gate dispatch behind the opt-in.
     static let writeToolNames: Set<String> = [
         "create_test", "update_test", "delete_test", "invite_candidate", "create_user",
-        "create_team", "add_team_member", "remove_team_member", "create_quickpad", "schedule_interview"
+        "create_team", "add_team_member", "remove_team_member", "create_pad", "schedule_interview"
     ]
 
     /// Whether `name` is a write tool (so `callTool` can gate it on `allowWrites`).
@@ -56,7 +56,7 @@ extension RankBuddyToolProvider {
         case "create_team": await createTeamTool(arguments, account: account)
         case "add_team_member": await addTeamMemberTool(arguments, account: account)
         case "remove_team_member": await removeTeamMemberTool(arguments, account: account)
-        case "create_quickpad": await createQuickPadTool(arguments, account: account)
+        case "create_pad": await createPadTool(arguments, account: account)
         case "schedule_interview": await scheduleInterviewTool(arguments, account: account)
         default: nil
         }
@@ -219,18 +219,18 @@ extension RankBuddyToolProvider {
     // MARK: - Interviews
 
     @MainActor
-    private func createQuickPadTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
+    private func createPadTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let created = try await HackerRankClient(account: resolved)
-                .createQuickPad(title: stringArgument(arguments, "title"))
+                .createPad(title: stringArgument(arguments, "title"))
             return jsonResult([
                 "account": resolved.label,
                 "created_interview": ["id": created.id ?? "", "url": created.url ?? ""]
             ])
         } catch {
-            return errorResult("Couldn't create QuickPad: \(error.localizedDescription)")
+            return errorResult("Couldn't create Pad: \(error.localizedDescription)")
         }
     }
 
@@ -323,7 +323,7 @@ extension RankBuddyToolProvider {
                   properties: ["team_id": string("The team's id."), "user_id": string("The member's user id."),
                                "account": account],
                   required: ["team_id", "user_id"], destructive: true),
-            write("create_quickpad", "Create an instant QuickPad interview.",
+            write("create_pad", "Create an instant collaborative Pad interview.",
                   properties: ["title": string("The pad's title (optional)."), "account": account], required: []),
             write("schedule_interview", "Schedule an interview at an ISO-8601 start time.",
                   properties: [

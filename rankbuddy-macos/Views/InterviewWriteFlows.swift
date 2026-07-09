@@ -6,10 +6,10 @@
 import HackerRankKit
 import SwiftUI
 
-/// A sheet that creates an instant QuickPad collaborative interview (`POST /interviews`,
+/// A sheet that creates an instant collaborative Pad interview (`POST /interviews`,
 /// #60) — a write flow. States plainly when it touches a real organisation, and refreshes
 /// the list on success.
-struct NewQuickPadSheet: View {
+struct NewPadSheet: View {
     let account: Account
     var onCreated: () -> Void
 
@@ -26,8 +26,8 @@ struct NewQuickPadSheet: View {
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(account.isMock
-                            ? "Demo account: no real QuickPad is created."
-                            : "This creates a real, ready-to-share QuickPad in your HackerRank organisation.")
+                            ? "Demo account: no real Pad is created."
+                            : "This creates a real, ready-to-share Pad in your HackerRank organisation.")
                             .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
 
                         if !account.isMock {
@@ -47,7 +47,7 @@ struct NewQuickPadSheet: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle("New QuickPad")
+            .navigationTitle("New Pad")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -70,7 +70,7 @@ struct NewQuickPadSheet: View {
         errorMessage = nil
         defer { isSending = false }
         do {
-            let created = try await HackerRankClient(account: account).createQuickPad(title: title)
+            let created = try await HackerRankClient(account: account).createPad(title: title)
             onCreated()
             if !account.isMock, let rawURL = created.url, let url = URL(string: rawURL) {
                 BrowserSettings.open(url)
@@ -174,8 +174,8 @@ struct ScheduleInterviewSheet: View {
     }
 }
 
-#Preview("New QuickPad (demo)") {
-    NewQuickPadSheet(account: .demo) {}
+#Preview("New Pad (demo)") {
+    NewPadSheet(account: .demo) {}
 }
 
 #Preview("Schedule (live)") {

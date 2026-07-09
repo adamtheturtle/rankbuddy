@@ -28,8 +28,6 @@ struct MenuBarContent: View {
         }
         .sheet(item: $createSheet) { sheet in
             switch sheet {
-            case let .quickPad(account):
-                NewQuickPadSheet(account: account) { finishCreate(in: .interviews) }
             case let .scheduledInterview(account):
                 ScheduleInterviewSheet(account: account) { finishCreate(in: .interviews) }
             case let .test(account):
@@ -140,16 +138,17 @@ struct MenuBarContent: View {
         }
     }
 
-    /// PadBuddy-style create actions from the menu bar (#121), reusing the existing write sheets
-    /// so the menu does not grow a separate HackerRank write path.
+    /// PadBuddy-style create actions from the menu bar (#121). "New Pad" creates and opens in
+    /// the browser directly (PadBuddy-style); the interview/test flows reuse the existing write
+    /// sheets so the menu does not grow a separate HackerRank write path.
     @ViewBuilder private var createSection: some View {
         if !store.accounts.isEmpty {
             Divider()
             Section("Create") {
                 Button {
-                    if let account = writableAccount { createSheet = .quickPad(account) }
+                    if let account = writableAccount { Task { await createPad(in: account) } }
                 } label: {
-                    Label("New QuickPad…", systemImage: "bolt")
+                    Label("New Pad…", systemImage: "bolt")
                 }
                 .disabled(writableAccount == nil)
 
@@ -201,6 +200,28 @@ struct MenuBarContent: View {
         }
     }
 
+    /// Creates an instant Pad for `account` and opens it in the browser, mirroring PadBuddy's
+    /// menu-bar "New Pad" (which creates and opens directly). A sheet can't be used here:
+    /// SwiftUI sheets don't present from a `.menu`-style `MenuBarExtra`, so the fuller
+    /// `NewPadSheet` flow stays on the main window.
+    private func createPad(in account: Account) async {
+        do {
+            let created = try await HackerRankClient(account: account).createPad()
+            if !account.isMock, let rawURL = created.url, let url = URL(string: rawURL) {
+                // Success: open the new pad in the browser. No need to steal focus with the
+                // main window — `BrowserSettings.open` brings the browser forward instead.
+                BrowserSettings.open(url)
+            } else {
+                // Demo account (or a missing URL): nothing to open, so surface the item in-app.
+                finishCreate(in: .interviews)
+            }
+        } catch {
+            // Offline/auth failure: bring the main window forward on Interviews so the failure
+            // isn't silent and the user can retry from the full create flow.
+            finishCreate(in: .interviews)
+        }
+    }
+
     private func finishCreate(in section: SidebarSection) {
         selection = section
         showMainWindow()
@@ -215,13 +236,11 @@ struct MenuBarContent: View {
 /// The create sheet the menu bar is currently presenting (#121). The account is captured when
 /// the action is chosen so a later account switch does not retarget an already-open sheet.
 private enum MenuBarCreateSheet: Identifiable {
-    case quickPad(Account)
     case scheduledInterview(Account)
     case test(Account)
 
     var id: String {
         switch self {
-        case let .quickPad(account): "quick-pad-\(account.id.uuidString)"
         case let .scheduledInterview(account): "scheduled-interview-\(account.id.uuidString)"
         case let .test(account): "test-\(account.id.uuidString)"
         }

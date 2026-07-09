@@ -8,13 +8,13 @@ import HackerRankKit
 import SwiftUI
 
 /// The Interviews section: a list of the account's interviews with read-only detail, plus
-/// "New QuickPad" and "Schedule Interview" write actions (#60).
+/// "New Pad" and "Schedule Interview" write actions (#60).
 struct InterviewsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.openWindow) private var openWindow
     @Environment(\.undoManager) private var undoManager
-    @State private var quickPadPresented = false
+    @State private var padPresented = false
     @State private var schedulePresented = false
     @State private var reloadToken = 0
 
@@ -79,7 +79,7 @@ struct InterviewsScreen: View {
                     )
                 },
                 accessoryToolbar: { AnyView(newMenu(account: account)) },
-                primaryMenuAction: AppCommandContext.Action(title: "New QuickPad…") { quickPadPresented = true },
+                primaryMenuAction: AppCommandContext.Action(title: "New Pad…") { padPresented = true },
                 secondaryMenuAction: AppCommandContext.Action(title: "Schedule Interview…") { schedulePresented = true },
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.interviews($0) },
@@ -97,8 +97,8 @@ struct InterviewsScreen: View {
                 row: { InterviewRow(interview: $0) },
                 detail: { InterviewDetailView(interview: $0) }
             )
-            .sheet(isPresented: $quickPadPresented) {
-                NewQuickPadSheet(account: account) { reloadToken += 1 }
+            .sheet(isPresented: $padPresented) {
+                NewPadSheet(account: account) { reloadToken += 1 }
             }
             .sheet(isPresented: $schedulePresented) {
                 ScheduleInterviewSheet(account: account) { reloadToken += 1 }
@@ -137,9 +137,9 @@ struct InterviewsScreen: View {
     private func newMenu(account _: Account) -> some View {
         Menu {
             Button {
-                quickPadPresented = true
+                padPresented = true
             } label: {
-                Label("New QuickPad…", systemImage: "bolt")
+                Label("New Pad…", systemImage: "bolt")
             }
             Button {
                 schedulePresented = true
@@ -149,7 +149,7 @@ struct InterviewsScreen: View {
         } label: {
             Label("New", systemImage: "plus")
         }
-        .help("Create a QuickPad or schedule an interview")
+        .help("Create a Pad or schedule an interview")
     }
 
     /// Loads one merged page of interviews across every configured account (#17).

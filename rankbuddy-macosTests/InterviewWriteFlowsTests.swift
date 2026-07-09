@@ -8,7 +8,7 @@ import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 
-/// Coverage for the interview write flows (#60) — create a QuickPad and schedule an
+/// Coverage for the interview write flows (#60) — create a Pad and schedule an
 /// interview — driven through the in-process demo server (`HackerRankClient.mock()`): a POST
 /// is acknowledged with the canned interview echo and the bad-token account answers 401.
 @MainActor
@@ -17,16 +17,16 @@ struct InterviewWriteFlowsTests {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
 
-    @Test func `creating a QuickPad decodes the created record`() async throws {
-        let created = try await makeClient().createQuickPad(title: "  Pairing Pad  ")
+    @Test func `creating a Pad decodes the created record`() async throws {
+        let created = try await makeClient().createPad(title: "  Pairing Pad  ")
         #expect(created.id == "i-created")
         #expect(created.url?.contains("i-created") == true)
     }
 
-    @Test func `a blank QuickPad title still succeeds via the client's default`() async throws {
+    @Test func `a blank Pad title still succeeds via the client's default`() async throws {
         // The API rejects a titleless interview with HTTP 400 (#83); the client substitutes a
         // dated default, so a blank title is accepted.
-        let created = try await makeClient().createQuickPad(title: "   ")
+        let created = try await makeClient().createPad(title: "   ")
         #expect(created.id == "i-created")
     }
 
@@ -43,7 +43,7 @@ struct InterviewWriteFlowsTests {
     @Test func `interview writes against the bad-key account surface the server's 401`() async {
         let client = HackerRankClient(account: .badKeyDemo)
         await #expect(throws: HackerRankError.self) {
-            try await client.createQuickPad(title: "Nope")
+            try await client.createPad(title: "Nope")
         }
         await #expect(throws: HackerRankError.self) {
             try await client.scheduleInterview(title: "Nope", from: Date(timeIntervalSince1970: 0))
