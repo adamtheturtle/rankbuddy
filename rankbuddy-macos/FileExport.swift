@@ -22,12 +22,14 @@ enum FileExport {
 
         guard let window = NSApp.keyWindow ?? NSApp.mainWindow else {
             guard panel.runModal() == .OK, let url = panel.url else { return }
+
             write(content, to: url, failureTitle: failureTitle)
             return
         }
 
         panel.beginSheetModal(for: window) { response in
             guard response == .OK, let url = panel.url else { return }
+
             Task { @MainActor in write(content, to: url, failureTitle: failureTitle) }
         }
     }

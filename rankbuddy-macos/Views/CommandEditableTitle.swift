@@ -36,6 +36,7 @@ struct CommandEditableTitle: View {
 
     private var showsPencil: Bool {
         guard editingAllowed else { return false }
+
         #if os(macOS)
             return isHovering
         #else

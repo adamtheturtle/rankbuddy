@@ -15,7 +15,7 @@ import SwiftUI
 // to drop in a `PrintReportButton`.
 
 @MainActor
-func printReport<Report: View>(_ report: Report, jobTitle: String) {
+func printReport(_ report: some View, jobTitle: String) {
     printDocument(report, jobTitle: jobTitle)
 }
 
