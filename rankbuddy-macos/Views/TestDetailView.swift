@@ -22,7 +22,8 @@ struct TestDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(AppCommandContext.self) private var commandContext
-    @State private var editPresented = false
+    /// Bumped by the Edit toolbar button to open the inline title rename (#95).
+    @State private var titleEditRequest = 0
     @State private var deletePresented = false
     @State private var deleteError: String?
     @State private var detail: TestDetail?
@@ -33,7 +34,8 @@ struct TestDetailView: View {
             InspectorHeader(
                 title: test.name,
                 badges: test.inspectorBadges(now: Date()),
-                onRename: { newName in await rename(to: newName) }
+                onRename: { newName in await rename(to: newName) },
+                editRequest: titleEditRequest
             )
 
             Section("Properties") {
@@ -110,7 +112,7 @@ struct TestDetailView: View {
         .toolbar(id: "testDetail") {
             ToolbarItem(id: "edit") {
                 Button {
-                    editPresented = true
+                    titleEditRequest += 1
                 } label: {
                     Label("Edit", systemImage: "pencil")
                 }
@@ -134,12 +136,6 @@ struct TestDetailView: View {
                 MarkdownExportButton(suggestedName: test.name) { MarkdownExport.test(test) }
             }
             .defaultCustomization(.hidden)
-        }
-        .sheet(isPresented: $editPresented) {
-            TestEditorSheet(account: account, mode: .edit(testID: test.id, currentName: test.name)) {
-                onChanged()
-                dismiss()
-            }
         }
         .confirmationDialog("Delete “\(test.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
             Button("Delete Test", role: .destructive) {

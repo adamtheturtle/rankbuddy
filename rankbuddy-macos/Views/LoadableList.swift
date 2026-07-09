@@ -451,6 +451,15 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     }
 
     private func dragPasteboardItem(for item: Item) -> NSPasteboardItem? {
+        // Dragging one row of a multi-selection carries every selected row's public data, so a
+        // drop onto TextEdit, Numbers, or a browser receives them all (#124), matching PadBuddy.
+        // The app-private favourite payload is single-row only (one drop pins one item), so a
+        // multi-row drag intentionally omits it.
+        if selection.count > 1, selection.contains(item.id),
+           let multi = RowTransfer.pasteboardItem(for: selectedItems.compactMap(rowTransfer)) {
+            return multi
+        }
+
         let ref = favoriteRef(item)
         if let transfer = rowTransfer(item) {
             return transfer.pasteboardItem(favoriteRef: ref)

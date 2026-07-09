@@ -22,23 +22,16 @@ struct RankBuddyPaletteTests {
         Binding(get: { box.value }, set: { box.value = $0 })
     }
 
-    /// Builds the static candidates with empty templates by default, so existing tests stay
-    /// focused on the surfaces they assert on.
+    /// Builds the static candidates, keeping tests focused on the surfaces they assert on.
     private func staticCandidates(
         store: AccountStore,
         favorites: FavoritesStore,
         selection: Binding<SidebarSection>,
-        templates: InterviewTemplatesStore? = nil,
-        launcher: InterviewTemplateLauncher? = nil,
         openSettings: @escaping @MainActor () -> Void = {}
     ) -> [PaletteResult] {
         RankBuddyPalette.staticCandidates(
             store: store,
             favorites: favorites,
-            templates: InterviewTemplatePalette(
-                store: templates ?? InterviewTemplatesStore(isTesting: true),
-                launcher: launcher ?? InterviewTemplateLauncher()
-            ),
             selection: selection,
             openSettings: openSettings
         )
@@ -124,29 +117,5 @@ struct RankBuddyPaletteTests {
             selection: makeBinding(SectionBox())
         )
         #expect(!results.contains { $0.id.hasPrefix("favorite.") })
-    }
-
-    @Test func `running an interview template routes to interviews and sets the launcher`() throws {
-        let store = AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Work", token: "t1")])
-        let account = try #require(store.currentAccount)
-        let templates = InterviewTemplatesStore(isTesting: true)
-        let template = InterviewTemplate(accountID: account.id.uuidString, name: "Backend Screen", kind: .scheduled)
-        templates.add(template)
-        let launcher = InterviewTemplateLauncher()
-
-        let box = SectionBox()
-        let results = staticCandidates(
-            store: store,
-            favorites: FavoritesStore(isTesting: true),
-            selection: makeBinding(box),
-            templates: templates,
-            launcher: launcher
-        )
-
-        let run = try #require(results.first { $0.id == "template.\(template.id)" })
-        #expect(run.title == "Run Backend Screen")
-        run.action()
-        #expect(box.value == .interviews)
-        #expect(launcher.pending == template)
     }
 }

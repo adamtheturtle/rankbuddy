@@ -20,11 +20,15 @@ struct InspectorHeader: View {
     /// and returns whether the write succeeded. `nil` keeps the title static (the default), so
     /// read-only detail panes are unchanged.
     var onRename: ((String) async -> Bool)?
+    /// The host increments this to open the inline rename editor from an Edit command/toolbar
+    /// button (#95), so Edit enters the same affordance a click on the title would. Ignored when
+    /// `onRename` is `nil`; at its default `0` the title behaves as a plain click-to-edit heading.
+    var editRequest = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let onRename {
-                InlineEditableTitle(title: title, isEditable: true, onCommit: onRename)
+                CommandEditableTitle(title: title, isEditable: true, editRequest: editRequest, onCommit: onRename)
             } else {
                 Text(title)
                     .font(.title2.weight(.semibold))

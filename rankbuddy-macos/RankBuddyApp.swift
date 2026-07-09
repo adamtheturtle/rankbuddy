@@ -26,10 +26,6 @@ struct RankBuddyApp: App {
     @State private var favorites: FavoritesStore
     /// Mirrors favourites to iCloud when the capability is present; nil in demo mode (#22).
     @State private var favoritesSync: FavoritesSyncCoordinator?
-    /// Account-aware interview templates, shared with the Interviews screen and palette (#97).
-    @State private var interviewTemplates: InterviewTemplatesStore
-    /// Routes a "run template" request from the palette to the Interviews screen (#97).
-    @State private var templateLauncher = InterviewTemplateLauncher()
     /// The user's chosen appearance (General settings), applied to the main window.
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
     /// Where the app shows itself — Dock, Menu Bar, or both (#66). Drives the activation policy
@@ -53,8 +49,6 @@ struct RankBuddyApp: App {
         // Demo mode keeps favourites in-memory so it never reads or writes real favourites.
         let favorites = FavoritesStore(isTesting: isDemo)
         _favorites = State(initialValue: favorites)
-        // Templates follow favourites: demo mode keeps them in-memory only.
-        _interviewTemplates = State(initialValue: InterviewTemplatesStore(isTesting: isDemo))
         // Sync real favourites to iCloud (gated on the capability inside the coordinator);
         // demo mode stays local-only.
         _favoritesSync = State(
@@ -75,8 +69,6 @@ struct RankBuddyApp: App {
                 .environment(openLink)
                 .environment(commandContext)
                 .environment(favorites)
-                .environment(interviewTemplates)
-                .environment(templateLauncher)
                 .environment(health)
                 .environment(\.openURL, browserOpenURLAction)
                 .task {

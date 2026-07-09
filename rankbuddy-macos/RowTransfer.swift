@@ -83,6 +83,22 @@ nonisolated struct RowTransfer {
         return providers
     }
 
+    /// A single drag pasteboard item carrying every row's public data, used when a multi-row
+    /// selection is dragged (#124): plain text and TSV keep all rows, and the URL type carries the
+    /// first row's link so URL-only drop targets (a browser tab) still receive something useful.
+    /// Returns `nil` for an empty selection so the caller can fall back to the single-row path.
+    static func pasteboardItem(for rows: [RowTransfer]) -> NSPasteboardItem? {
+        guard !rows.isEmpty else { return nil }
+
+        let item = NSPasteboardItem()
+        item.setString(plainText(rows), forType: .string)
+        item.setString(tabularText(rows), forType: NSPasteboard.PasteboardType(UTType.tabSeparatedText.identifier))
+        if let url = rows.lazy.compactMap(\.url).first {
+            item.setString(url.absoluteString, forType: .URL)
+        }
+        return item
+    }
+
     /// Builds an AppKit pasteboard item for row dragging. The optional favourite ref is the
     /// app-private in-process payload; public string and URL types let other apps receive useful
     /// data from the same drag.

@@ -11,8 +11,6 @@ import SwiftUI
 /// the list on success.
 struct NewQuickPadSheet: View {
     let account: Account
-    /// Seeds the title field, e.g. when launched from a saved template (#97).
-    var initialTitle: String = ""
     var onCreated: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -49,7 +47,6 @@ struct NewQuickPadSheet: View {
                 }
             }
             .formStyle(.grouped)
-            .onAppear { if title.isEmpty { title = initialTitle } }
             .navigationTitle("New QuickPad")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -89,8 +86,6 @@ struct NewQuickPadSheet: View {
 /// touches a real organisation, and refreshes the list on success.
 struct ScheduleInterviewSheet: View {
     let account: Account
-    /// Seeds the title field, e.g. when launched from a saved template (#97).
-    var initialTitle: String = ""
     var onScheduled: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -141,7 +136,6 @@ struct ScheduleInterviewSheet: View {
                 }
             }
             .formStyle(.grouped)
-            .onAppear { if title.isEmpty { title = initialTitle } }
             .navigationTitle("Schedule Interview")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

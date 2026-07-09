@@ -28,7 +28,6 @@ enum RankBuddyPalette {
     static func staticCandidates(
         store: AccountStore,
         favorites: FavoritesStore,
-        templates: InterviewTemplatePalette,
         selection: Binding<SidebarSection>,
         openSettings: @escaping @MainActor () -> Void
     ) -> [PaletteResult] {
@@ -44,14 +43,11 @@ enum RankBuddyPalette {
             ) { selection.wrappedValue = section })
         }
 
-        // The current account's favourites (shown at rest) and interview templates (#25/#97);
-        // both contribute nothing — no empty group — when there are none.
+        // The current account's favourites (shown at rest); contributes nothing — no empty
+        // group — when there are none (#25).
         if let account = store.currentAccount {
             results.append(contentsOf: favoriteCandidates(
                 account: account, favorites: favorites, selection: selection
-            ))
-            results.append(contentsOf: templateCandidates(
-                account: account, templates: templates, selection: selection
             ))
         }
 
@@ -104,31 +100,6 @@ enum RankBuddyPalette {
         }
     }
 
-    /// The current account's interview templates as run-with-one-action palette results (#97):
-    /// activating one routes through the launcher and switches to the Interviews section, where
-    /// the pre-filled create sheet appears. Search-only so they don't crowd the empty palette.
-    @MainActor
-    private static func templateCandidates(
-        account: Account,
-        templates: InterviewTemplatePalette,
-        selection: Binding<SidebarSection>
-    ) -> [PaletteResult] {
-        templates.store.templates(accountID: account.id.uuidString).map { template in
-            PaletteResult(
-                id: "template.\(template.id)",
-                title: "Run \(template.name)",
-                subtitle: template.kind.label,
-                category: "Interview Template",
-                systemImage: template.kind.systemImage,
-                searchText: "\(template.name) interview template run \(template.kind.label)",
-                showsOnlyWhenSearching: true
-            ) {
-                templates.launcher.pending = template
-                selection.wrappedValue = .interviews
-            }
-        }
-    }
-
     /// The current account's tests, loaded from the API and routed to open in the Tests
     /// section. Search-only so they don't flood the empty palette, and tolerant of load
     /// failure (an offline or token-less account simply contributes no test rows).
@@ -164,14 +135,12 @@ enum RankBuddyPalette {
     static func candidates(
         store: AccountStore,
         favorites: FavoritesStore,
-        templates: InterviewTemplatePalette,
         selection: Binding<SidebarSection>,
         openSettings: @escaping @MainActor () -> Void
     ) async -> [PaletteResult] {
         var results = staticCandidates(
             store: store,
             favorites: favorites,
-            templates: templates,
             selection: selection,
             openSettings: openSettings
         )
