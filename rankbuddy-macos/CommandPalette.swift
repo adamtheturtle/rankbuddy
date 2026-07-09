@@ -186,6 +186,7 @@ struct AppCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     let palette: PaletteModel
     let openLink: OpenLinkModel
+    let commandContext: AppCommandContext
 
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
@@ -195,6 +196,29 @@ struct AppCommands: Commands {
         CommandGroup(after: .newItem) {
             Button("Open by URL…") { openLink.isPresented = true }
                 .keyboardShortcut("o", modifiers: .command)
+
+            Divider()
+
+            if let primaryNew = commandContext.primaryNew {
+                CommandActionButton(action: primaryNew, fallbackTitle: "New RankBuddy Item…")
+            } else {
+                CommandActionButton(action: nil, fallbackTitle: "New RankBuddy Item…")
+            }
+
+            if let secondaryNew = commandContext.secondaryNew {
+                CommandActionButton(action: secondaryNew, fallbackTitle: "New RankBuddy Item…")
+            }
+        }
+
+        CommandGroup(after: .saveItem) {
+            CommandActionButton(action: commandContext.exportCSV, fallbackTitle: "Export CSV…")
+            CommandActionButton(action: commandContext.exportSelectedCSV, fallbackTitle: "Export Selected CSV…")
+            CommandActionButton(action: commandContext.exportMarkdown, fallbackTitle: "Export as Markdown…")
+        }
+
+        CommandGroup(replacing: .printItem) {
+            CommandActionButton(action: commandContext.print, fallbackTitle: "Print…")
+                .keyboardShortcut("p", modifiers: .command)
         }
 
         CommandMenu("Go") {

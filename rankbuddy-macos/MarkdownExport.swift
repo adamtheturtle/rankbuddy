@@ -116,12 +116,12 @@ enum MarkdownExport {
 
     @MainActor
     static func save(_ markdown: String, suggestedName: String) {
-        let panel = NSSavePanel()
-        panel.nameFieldStringValue = "\(suggestedName).md"
-        panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-
-        try? markdown.write(to: url, atomically: true, encoding: .utf8)
+        FileExport.save(
+            markdown,
+            suggestedName: "\(suggestedName).md",
+            allowedContentTypes: [UTType(filenameExtension: "md") ?? .plainText],
+            failureTitle: "Couldn’t export Markdown"
+        )
     }
 }
 

@@ -150,6 +150,7 @@ struct QuestionRow: View {
 struct QuestionDetailView: View {
     let question: Question
     @Environment(AccountStore.self) private var store
+    @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: QuestionDetail?
     @State private var answerRevealed = false
 
@@ -216,6 +217,8 @@ struct QuestionDetailView: View {
         .formStyle(.grouped)
         .navigationTitle(question.name)
         .task(id: question.id) { await loadDetail() }
+        .onAppear { registerDetailCommands() }
+        .onDisappear { commandContext.clearDetailActions() }
         .advertisesItemActivity(collection: .questions, itemID: question.id, title: question.name)
         // Print and Markdown export are off the bar by default but one Customize Toolbar away.
         .toolbar(id: "questionDetail") {
@@ -236,6 +239,15 @@ struct QuestionDetailView: View {
     /// Only highlights once the answer has been revealed, keeping the answer hidden by default.
     private func isCorrect(_ option: String) -> Bool {
         answerRevealed && detail?.answer == option
+    }
+
+    private func registerDetailCommands() {
+        commandContext.print = AppCommandContext.Action(title: "Print Question…") {
+            printReport(QuestionReport(question: question), jobTitle: "Question: \(question.name)")
+        }
+        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Question as Markdown…") {
+            MarkdownExport.save(MarkdownExport.question(question), suggestedName: question.name)
+        }
     }
 
     /// Fetches the richer question detail on selection (#105). Best-effort — a failure leaves the

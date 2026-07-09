@@ -43,6 +43,7 @@ struct PeopleScreen: View {
                 restorationKey: "selection.users.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
                 accessoryToolbar: { AnyView(createButton) },
+                primaryMenuAction: AppCommandContext.Action(title: "Create User…") { createPresented = true },
                 reloadToken: reloadToken,
                 rowTransfer: { user in
                     RowTransfer(title: user.displayName, subtitle: user.email, fields: [

@@ -87,6 +87,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// Extra leading toolbar content (e.g. a write action like "Invite Candidate", #12).
     /// Defaults to nothing, keeping read-only lists unchanged.
     var accessoryToolbar: () -> AnyView = { AnyView(EmptyView()) }
+    /// The matching menu commands for the section's write actions (#101).
+    var primaryMenuAction: AppCommandContext.Action?
+    var secondaryMenuAction: AppCommandContext.Action?
     /// Bump this from the caller to force a reload (e.g. after a successful write refreshes
     /// the list). Changing the value re-runs the first-page load.
     var reloadToken: Int = 0
@@ -112,6 +115,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     // does not inherit the SwiftUI environment, so rows that read these stores would trap (#31).
     @Environment(AccountStore.self) private var accountStore
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(AppCommandContext.self) private var commandContext
     @Environment(\.undoManager) var undoManager
 
     /// The live deep-link target (#122). Held as `@State` so this list observes it: when a deep
@@ -230,7 +234,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 .onAppear {
                     restoreSort()
                     loadSavedSearches()
+                    registerListCommands()
                 }
+                .onDisappear { commandContext.clearListActions() }
                 // Re-load the recall chips when the account-scoped key changes, so each account
                 // shows only its own saved searches (#25).
                 .onChange(of: restorationKey) { loadSavedSearches() }
@@ -245,7 +251,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                     ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))
                 }
                 // Selecting a row (single-click) drives the detail pane and persists it (#53/#19).
-                .onChange(of: selection) { syncDetail() }
+                .onChange(of: selection) {
+                    syncDetail()
+                    registerListCommands()
+                }
                 // Reveal a deep-linked item when this list is already on screen (#122): a
                 // same-section favourite/Open-by-URL never changes `restorationKey`, so nothing
                 // else re-reads the persisted selection.
@@ -447,6 +456,26 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             return transfer.pasteboardItem(favoriteRef: ref)
         }
         return ref.flatMap(FavoritePasteboard.item(for:))
+    }
+
+    private func registerListCommands() {
+        commandContext.primaryNew = primaryMenuAction
+        commandContext.secondaryNew = secondaryMenuAction
+        guard let csvExport else {
+            commandContext.exportCSV = nil
+            commandContext.exportSelectedCSV = nil
+            return
+        }
+
+        commandContext.exportCSV = AppCommandContext.Action(title: "Export \(title) CSV…") {
+            CSVExport.save(csvExport(visibleItems), suggestedName: csvFilename)
+        }
+        commandContext.exportSelectedCSV = AppCommandContext.Action(
+            title: selection.isEmpty ? "Export Selected CSV…" : "Export Selected CSV (\(selection.count))…",
+            isEnabled: { !selection.isEmpty }
+        ) {
+            CSVExport.save(csvExport(selectedItems), suggestedName: "\(csvFilename)-selected")
+        }
     }
 
     /// Reflects the row selection into the detail pane (#53): when exactly one row is selected,

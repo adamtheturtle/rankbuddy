@@ -58,6 +58,7 @@ struct CandidatesList: View {
                 )
             },
             accessoryToolbar: { AnyView(inviteButton) },
+            primaryMenuAction: AppCommandContext.Action(title: "Invite Candidate…") { invitePresented = true },
             reloadToken: reloadToken,
             csvExport: { CSVExport.candidates($0) },
             csvFilename: "candidates",
@@ -224,6 +225,7 @@ struct CandidateRow: View {
 /// Read-only detail for a single candidate.
 struct CandidateDetailView: View {
     let candidate: TestCandidate
+    @Environment(AppCommandContext.self) private var commandContext
 
     var body: some View {
         Form {
@@ -281,6 +283,8 @@ struct CandidateDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
+        .onAppear { registerDetailCommands() }
+        .onDisappear { commandContext.clearDetailActions() }
         // Print and Markdown export are off the bar by default but one Customize Toolbar away.
         .toolbar(id: "candidateDetail") {
             ToolbarItem(id: "print") {
@@ -295,6 +299,16 @@ struct CandidateDetailView: View {
                 }
             }
             .defaultCustomization(.hidden)
+        }
+    }
+
+    private func registerDetailCommands() {
+        let title = candidate.fullName ?? candidate.email
+        commandContext.print = AppCommandContext.Action(title: "Print Candidate…") {
+            printReport(CandidateReport(candidate: candidate), jobTitle: "Candidate: \(title)")
+        }
+        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Candidate as Markdown…") {
+            MarkdownExport.save(MarkdownExport.candidate(candidate), suggestedName: title)
         }
     }
 }

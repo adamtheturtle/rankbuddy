@@ -14,6 +14,11 @@ import SwiftUI
 // `printDocument` call and the `PrintSection` layout here means the detail views only need
 // to drop in a `PrintReportButton`.
 
+@MainActor
+func printReport<Report: View>(_ report: Report, jobTitle: String) {
+    printDocument(report, jobTitle: jobTitle)
+}
+
 /// A toolbar button that prints (or saves as PDF) the supplied report, bound to ⌘P.
 struct PrintReportButton<Report: View>: View {
     let jobTitle: String
@@ -21,7 +26,7 @@ struct PrintReportButton<Report: View>: View {
 
     var body: some View {
         Button {
-            printDocument(report(), jobTitle: jobTitle)
+            printReport(report(), jobTitle: jobTitle)
         } label: {
             Label("Print…", systemImage: "printer")
         }

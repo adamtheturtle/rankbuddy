@@ -33,6 +33,7 @@ struct TeamsScreen: View {
                 restorationKey: "selection.teams.\(account.id)",
                 contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.name) },
                 accessoryToolbar: { AnyView(createButton) },
+                primaryMenuAction: AppCommandContext.Action(title: "New Team…") { createPresented = true },
                 reloadToken: reloadToken,
                 rowTransfer: { team in
                     RowTransfer(title: team.name, subtitle: team.memberSummary, fields: [

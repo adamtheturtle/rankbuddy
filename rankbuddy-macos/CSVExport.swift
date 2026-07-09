@@ -95,11 +95,11 @@ enum CSVExport {
     /// Presents the save panel and writes `csv` to the chosen file. No-op if cancelled.
     @MainActor
     static func save(_ csv: String, suggestedName: String) {
-        let panel = NSSavePanel()
-        panel.nameFieldStringValue = "\(suggestedName).csv"
-        panel.allowedContentTypes = [.commaSeparatedText]
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-
-        try? csv.write(to: url, atomically: true, encoding: .utf8)
+        FileExport.save(
+            csv,
+            suggestedName: "\(suggestedName).csv",
+            allowedContentTypes: [.commaSeparatedText],
+            failureTitle: "Couldn’t export CSV"
+        )
     }
 }

@@ -20,6 +20,8 @@ struct RankBuddyApp: App {
     @State private var palette = PaletteModel()
     /// Open-by-URL sheet presentation state, shared with the File command (#42).
     @State private var openLink = OpenLinkModel()
+    /// The active view's menu-addressable actions (#101).
+    @State private var commandContext = AppCommandContext()
     /// Account-aware favourites, shared with the lists and the palette (#25).
     @State private var favorites: FavoritesStore
     /// Mirrors favourites to iCloud when the capability is present; nil in demo mode (#22).
@@ -71,6 +73,7 @@ struct RankBuddyApp: App {
                 .environment(accountStore)
                 .environment(palette)
                 .environment(openLink)
+                .environment(commandContext)
                 .environment(favorites)
                 .environment(interviewTemplates)
                 .environment(templateLauncher)
@@ -88,7 +91,7 @@ struct RankBuddyApp: App {
                 .preferredColorScheme(appearance.colorScheme)
         }
         .commands {
-            AppCommands(palette: palette, openLink: openLink)
+            AppCommands(palette: palette, openLink: openLink, commandContext: commandContext)
             UpdateCommands()
             // Adds the standard View ▸ Show/Hide Toolbar and Customize Toolbar… items (#107),
             // which drive the customizable list toolbar (#101).
@@ -101,6 +104,7 @@ struct RankBuddyApp: App {
             DetailWindowContent(value: value)
                 .environment(accountStore)
                 .environment(favorites)
+                .environment(commandContext)
                 .environment(\.openURL, browserOpenURLAction)
                 .preferredColorScheme(appearance.colorScheme)
         }

@@ -84,6 +84,8 @@ struct InterviewsScreen: View {
                     )
                 },
                 accessoryToolbar: { AnyView(newMenu(account: account)) },
+                primaryMenuAction: AppCommandContext.Action(title: "New QuickPad…") { quickPadPresented = true },
+                secondaryMenuAction: AppCommandContext.Action(title: "Schedule Interview…") { schedulePresented = true },
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.interviews($0) },
                 csvFilename: "interviews",

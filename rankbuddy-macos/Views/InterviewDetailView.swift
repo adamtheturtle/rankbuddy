@@ -13,6 +13,7 @@ import SwiftUI
 struct InterviewDetailView: View {
     let interview: Interview
     @Environment(AccountStore.self) private var store
+    @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: InterviewDetail?
     @State private var transcript: InterviewTranscript?
 
@@ -91,6 +92,8 @@ struct InterviewDetailView: View {
         .formStyle(.grouped)
         .navigationTitle(interview.title ?? "Interview")
         .task(id: interview.id) { await loadDetail() }
+        .onAppear { registerDetailCommands() }
+        .onDisappear { commandContext.clearDetailActions() }
         .advertisesItemActivity(
             collection: .interviews,
             itemID: interview.id,
@@ -111,6 +114,16 @@ struct InterviewDetailView: View {
                 }
             }
             .defaultCustomization(.hidden)
+        }
+    }
+
+    private func registerDetailCommands() {
+        let title = interview.title ?? "Interview \(interview.id)"
+        commandContext.print = AppCommandContext.Action(title: "Print Interview…") {
+            printReport(InterviewReport(interview: interview), jobTitle: "Interview: \(title)")
+        }
+        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Interview as Markdown…") {
+            MarkdownExport.save(MarkdownExport.interview(interview), suggestedName: title)
         }
     }
 

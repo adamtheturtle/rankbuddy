@@ -21,6 +21,7 @@ struct TestDetailView: View {
     var onChanged: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppCommandContext.self) private var commandContext
     @State private var editPresented = false
     @State private var deletePresented = false
     @State private var deleteError: String?
@@ -101,6 +102,8 @@ struct TestDetailView: View {
         .formStyle(.grouped)
         .navigationTitle(test.name)
         .task(id: test.id) { await loadDetail() }
+        .onAppear { registerDetailCommands() }
+        .onDisappear { commandContext.clearDetailActions() }
         .advertisesItemActivity(collection: .tests, itemID: test.id, title: test.name)
         // Edit and Delete stay on the bar; Print and Markdown export are off by default but one
         // Customize Toolbar away.
@@ -187,6 +190,15 @@ struct TestDetailView: View {
 
     private var deleteErrorPresented: Binding<Bool> {
         Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
+    }
+
+    private func registerDetailCommands() {
+        commandContext.print = AppCommandContext.Action(title: "Print Test…") {
+            printReport(TestReport(test: test), jobTitle: "Test: \(test.name)")
+        }
+        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Test as Markdown…") {
+            MarkdownExport.save(MarkdownExport.test(test), suggestedName: test.name)
+        }
     }
 
     /// Fetches the richer test detail on selection (#105). Best-effort, and re-hides the master

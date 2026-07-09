@@ -72,6 +72,7 @@ struct TestsScreen: View {
                     )
                 },
                 accessoryToolbar: { AnyView(createButton) },
+                primaryMenuAction: AppCommandContext.Action(title: "New Test…") { createPresented = true },
                 reloadToken: reloadToken,
                 csvExport: { CSVExport.tests($0) },
                 csvFilename: "tests",
