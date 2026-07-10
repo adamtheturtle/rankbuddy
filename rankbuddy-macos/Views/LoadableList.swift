@@ -195,8 +195,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 // maxHeight so each pane fills the window's full height: without it the panes
                 // size to their content and the enclosing stack centres the short list (#111).
                 .frame(minWidth: 300, idealWidth: 380, maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(nsColor: .textBackgroundColor))
             detailColumn
                 .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
+                .background(.regularMaterial)
         }
     }
 
