@@ -27,6 +27,7 @@ struct TestDetailView: View {
     @State private var deletePresented = false
     @State private var deleteError: String?
     @State private var detail: TestDetail?
+    @State private var inviters: [TestInviter] = []
     @State private var passwordRevealed = false
 
     var body: some View {
@@ -93,6 +94,24 @@ struct TestDetailView: View {
                 } label: {
                     Label("Candidates", systemImage: "person.2")
                 }
+
+                if !inviters.isEmpty {
+                    ForEach(inviters) { inviter in
+                        LabeledContent(inviter.displayName) {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                if !inviter.email.isEmpty {
+                                    Text(inviter.email)
+                                }
+                                if let role = inviter.role, !role.isEmpty {
+                                    Text(role)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .textSelection(.enabled)
+                        }
+                    }
+                }
             }
 
             if let instructions = test.instructions, !instructions.isEmpty {
@@ -107,9 +126,13 @@ struct TestDetailView: View {
         .onAppear { registerDetailCommands() }
         .onDisappear { commandContext.clearDetailActions() }
         .advertisesItemActivity(collection: .tests, itemID: test.id, title: test.name)
-        // Edit and Delete stay on the bar; Print and Markdown export are off by default but one
-        // Customize Toolbar away.
+        // Share and Open (the test on HackerRank) lead the bar like PadBuddy; Edit and Delete
+        // follow; Print and Markdown export are off by default but one Customize Toolbar away.
         .toolbar(id: "testDetail") {
+            DetailLinkToolbarContent(
+                url: RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: test.id),
+                noun: "test"
+            )
             ToolbarItem(id: "edit") {
                 Button {
                     titleEditRequest += 1
@@ -201,8 +224,14 @@ struct TestDetailView: View {
     /// password for each test.
     private func loadDetail() async {
         detail = nil
+        inviters = []
         passwordRevealed = false
-        detail = try? await HackerRankClient(account: account).test(id: test.id)
+        let client = HackerRankClient(account: account)
+        async let loadedDetail = try? client.test(id: test.id)
+        async let loadedInviters = try? client.testInviters(testID: test.id)
+
+        detail = await loadedDetail
+        inviters = (await loadedInviters)?.items ?? []
     }
 
     private func delete() async {
@@ -226,6 +255,23 @@ struct TestDetailView: View {
         } catch {
             return false
         }
+    }
+}
+
+private extension TestInviter {
+    var displayName: String {
+        let fullName = [firstName, lastName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+
+        if !fullName.isEmpty {
+            return fullName
+        }
+        if !email.isEmpty {
+            return email
+        }
+        return id
     }
 }
 

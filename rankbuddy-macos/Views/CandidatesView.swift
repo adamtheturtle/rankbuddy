@@ -57,6 +57,7 @@ struct CandidatesList: View {
                     openInWindow: { openWindow(value: DetailWindowValue.candidate(candidate)) }
                 )
             },
+            openInWindow: { openWindow(value: DetailWindowValue.candidate($0)) },
             accessoryToolbar: { AnyView(inviteButton) },
             primaryMenuAction: AppCommandContext.Action(title: "Invite Candidate…") { invitePresented = true },
             reloadToken: reloadToken,
@@ -78,7 +79,7 @@ struct CandidatesList: View {
             },
             rowDate: { DisplayFormat.parseDate($0.attemptEndTime ?? $0.attemptStartTime) },
             row: { CandidateRow(candidate: $0) },
-            detail: { CandidateDetailView(candidate: $0) }
+            detail: { CandidateDetailView(candidate: $0, testID: testID, account: account) }
         )
         .sheet(isPresented: $invitePresented) {
             InviteCandidateSheet(testID: testID, account: account) { reloadToken += 1 }
@@ -225,9 +226,19 @@ struct CandidateRow: View {
 /// Read-only detail for a single candidate.
 struct CandidateDetailView: View {
     let candidate: TestCandidate
+    var testID: String?
+    var account: Account?
+
     @Environment(AppCommandContext.self) private var commandContext
+    @State private var detail: TestCandidate?
+
+    private var displayedCandidate: TestCandidate {
+        detail ?? candidate
+    }
 
     var body: some View {
+        let candidate = displayedCandidate
+
         Form {
             InspectorHeader(title: candidate.fullName ?? candidate.email, badges: candidate.inspectorBadges)
 
@@ -283,6 +294,7 @@ struct CandidateDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
+        .task(id: self.candidate.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
         .onDisappear { commandContext.clearDetailActions() }
         // Print and Markdown export are off the bar by default but one Customize Toolbar away.
@@ -303,6 +315,7 @@ struct CandidateDetailView: View {
     }
 
     private func registerDetailCommands() {
+        let candidate = displayedCandidate
         let title = candidate.fullName ?? candidate.email
         commandContext.print = AppCommandContext.Action(title: "Print Candidate…") {
             printReport(CandidateReport(candidate: candidate), jobTitle: "Candidate: \(title)")
@@ -310,6 +323,15 @@ struct CandidateDetailView: View {
         commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Candidate as Markdown…") {
             MarkdownExport.save(MarkdownExport.candidate(candidate), suggestedName: title)
         }
+    }
+
+    private func loadDetail() async {
+        guard let testID, let account else { return }
+        detail = try? await HackerRankClient(account: account).candidate(
+            testID: testID,
+            candidateID: candidate.id
+        )
+        registerDetailCommands()
     }
 }
 

@@ -22,4 +22,10 @@ extension HackerRankClient {
             self.init(token: account.token, baseURL: account.baseURL)
         }
     }
+
+    /// Product-facing Pad naming for the HackerRankKit QuickPad endpoint.
+    @discardableResult
+    func createPad(title: String? = nil) async throws -> CreatedInterview {
+        try await createQuickPad(title: title)
+    }
 }
