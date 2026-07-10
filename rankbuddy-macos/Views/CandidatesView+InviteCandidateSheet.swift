@@ -1,0 +1,189 @@
+//
+//  CandidatesView+InviteCandidateSheet.swift
+//  rankbuddy-macos
+//
+
+import HackerRankKit
+import SwiftUI
+
+/// A sheet that invites a candidate to a test (#12) — the app's first write flow. It states
+/// plainly when the action affects a real HackerRank account, and refreshes the list on
+/// success.
+struct InviteCandidateSheet: View {
+    let testID: String
+    let account: Account
+    /// Called after a successful invite so the caller can refresh the candidates list.
+    var onInvited: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var email = ""
+    @State private var fullName = ""
+    @State private var sendEmail = true
+    @State private var additionalTime = ""
+    @State private var validFrom = ""
+    @State private var validUntil = ""
+    @State private var emailSubject = ""
+    @State private var emailMessage = ""
+    @State private var evaluatorEmail = ""
+    @State private var tags = ""
+    @State private var atsCandidateID = ""
+    @State private var atsRequisitionID = ""
+    @State private var isSending = false
+    @State private var errorMessage: String?
+
+    private var trimmedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isEmailValid: Bool {
+        EmailValidation.isLikelyValid(email)
+    }
+
+    private var evaluatorEmailValid: Bool {
+        trimmed(evaluatorEmail).map(EmailValidation.isLikelyValid) ?? true
+    }
+
+    private var additionalTimeMinutes: Int? {
+        trimmed(additionalTime).flatMap(Int.init)
+    }
+
+    private var additionalTimeValid: Bool {
+        trimmed(additionalTime) == nil || additionalTimeMinutes.map { $0 >= 0 } == true
+    }
+
+    private var canInvite: Bool {
+        isEmailValid && evaluatorEmailValid && additionalTimeValid
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Email", text: $email)
+                        .textContentType(.emailAddress)
+                        .disableAutocorrection(true)
+                    TextField("Full name (optional)", text: $fullName)
+                    Toggle("Send invitation email", isOn: $sendEmail)
+                } footer: {
+                    Text(consequenceText)
+                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Section {
+                    TextField("Additional time (minutes)", text: $additionalTime)
+                    TextField("Valid from (ISO-8601, optional)", text: $validFrom)
+                    TextField("Valid until (ISO-8601, optional)", text: $validUntil)
+                    TextField("Tags (comma-separated)", text: $tags)
+                    TextField("Evaluator email", text: $evaluatorEmail)
+                        .textContentType(.emailAddress)
+                        .disableAutocorrection(true)
+                    TextField("ATS candidate ID", text: $atsCandidateID)
+                    TextField("ATS requisition ID", text: $atsRequisitionID)
+                    TextField("Email subject", text: $emailSubject)
+                    TextField("Email message", text: $emailMessage, axis: .vertical)
+                        .lineLimit(2 ... 4)
+                } header: {
+                    Text("Invite options")
+                } footer: {
+                    if !additionalTimeValid {
+                        Text("Additional time must be a non-negative whole number of minutes.")
+                            .foregroundStyle(.red)
+                    } else if !evaluatorEmailValid {
+                        Text("Evaluator email must look like an email address.")
+                            .foregroundStyle(.red)
+                    }
+                }
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Invite Candidate")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .disabled(isSending)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if isSending {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Button("Invite") { Task { await invite() } }
+                            .disabled(!canInvite)
+                    }
+                }
+            }
+        }
+        .frame(width: 500, height: 560)
+    }
+
+    /// The footer text spelling out what the invite will do, so a live action is never a
+    /// surprise.
+    private var consequenceText: String {
+        if account.isMock {
+            return "Demo account: no real invitation is sent."
+        }
+        return sendEmail
+            ? "This invites a real candidate to this test on HackerRank and emails them the invitation."
+            : "This invites a real candidate to this test on HackerRank (no email is sent)."
+    }
+
+    private func trimmed(_ value: String) -> String? {
+        let result = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return result.isEmpty ? nil : result
+    }
+
+    private func parsedTags(_ value: String) -> [String]? {
+        let result = value.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return result.isEmpty ? nil : result
+    }
+
+    private func invite() async {
+        isSending = true
+        errorMessage = nil
+        defer { isSending = false }
+        do {
+            try await HackerRankClient(account: account).inviteCandidate(
+                testID: testID,
+                email: trimmedEmail,
+                fullName: fullName,
+                sendEmail: sendEmail,
+                options: CandidateInviteOptions(
+                    validFrom: trimmed(validFrom),
+                    validUntil: trimmed(validUntil),
+                    emailSubject: trimmed(emailSubject),
+                    emailMessage: trimmed(emailMessage),
+                    evaluatorEmail: trimmed(evaluatorEmail),
+                    tags: parsedTags(tags),
+                    additionalTime: additionalTimeMinutes,
+                    atsCandidateID: trimmed(atsCandidateID),
+                    atsRequisitionID: trimmed(atsRequisitionID)
+                )
+            )
+            onInvited()
+            dismiss()
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+}
+
+#Preview("Invite (demo)") {
+    InviteCandidateSheet(testID: "t1", account: .demo) {}
+}
+
+#Preview("Invite (live)") {
+    InviteCandidateSheet(
+        testID: "t1",
+        account: Account(label: "Work", token: "live-token"),
+        onInvited: {}
+    )
+}
