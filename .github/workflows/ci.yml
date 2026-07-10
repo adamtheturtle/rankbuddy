@@ -136,6 +136,37 @@ jobs:
           ./swiftformat_linux --version
           ./swiftformat_linux . --lint --reporter github-actions-log
 
+  swift-package-tests:
+    name: Standalone Swift package tests
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run discovered package tests
+        run: |
+          set -euo pipefail
+          mapfile -t packages < <(find . \
+            -name Package.swift \
+            -not -path './.git/*' \
+            -not -path './DerivedData*/*' \
+            -print)
+          if [ ${#packages[@]} -eq 0 ]; then
+            echo "No standalone Swift packages to test."
+            exit 0
+          fi
+          for manifest in "${packages[@]}"; do
+            package_dir="$(dirname "$manifest")"
+            echo "::group::swift test ${package_dir}"
+            swift test --package-path "$package_dir"
+            echo "::endgroup::"
+          done
+
   full-tests:
     name: Full tests
     # The full macOS test lane is expensive (10x-billed minutes), so it stays
@@ -143,7 +174,7 @@ jobs:
     # cheap gates above. `needs` makes it wait for the style gate so a nightly run
     # fails fast on style before paying for the compile.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    needs: swift-lint
+    needs: [swift-lint, swift-package-tests]
     # macos-26 is the supported runtime/toolchain image for this app target. Add a
     # separate minimum-runtime row when GitHub hosts an older supported image that
     # can run this Xcode/project combination, without sharing DerivedData.
@@ -191,7 +222,7 @@ jobs:
     # Release catches optimization-only compiler and type-check-budget failures
     # without also paying for a second test run.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    needs: swift-lint
+    needs: [swift-lint, swift-package-tests]
     runs-on: macos-26
     timeout-minutes: 25
     steps:
@@ -230,7 +261,7 @@ jobs:
     # TSan is intentionally manual-only; it is useful before releases and
     # concurrency-heavy changes, but too expensive for every nightly run.
     if: github.event_name == 'workflow_dispatch'
-    needs: swift-lint
+    needs: [swift-lint, swift-package-tests]
     runs-on: macos-26
     timeout-minutes: 35
     steps:
