@@ -30,6 +30,18 @@ struct RowTransferTests {
         #expect(RowTransfer.tabularText(rows) == "One\tActive\nTwo\tArchived")
     }
 
+    @Test func `multi row plain text keeps rows readable`() {
+        let rows = [
+            RowTransfer(title: "Ada Lovelace", subtitle: "ada@example.com"),
+            RowTransfer(title: "Grace Hopper", url: URL(string: "https://example.com/grace"))
+        ]
+
+        #expect(
+            RowTransfer.plainText(rows) ==
+                "Ada Lovelace\nada@example.com\n\nGrace Hopper\nhttps://example.com/grace"
+        )
+    }
+
     @Test func `tabular fields strip tabs and newlines`() {
         let row = RowTransfer(title: "Name", fields: [("Name", "Ada\tLovelace\nEngineer")])
 
@@ -45,5 +57,34 @@ struct RowTransferTests {
         #expect(item.string(forType: .URL) == "https://example.com/i1")
         let data = try #require(item.data(forType: NSPasteboard.PasteboardType(UTType.rankBuddyFavorite.identifier)))
         #expect(FavoritePasteboard.decode(from: data) == favorite)
+    }
+
+    @Test func `empty multi row selection has no pasteboard item`() {
+        #expect(RowTransfer.pasteboardItem(for: []) == nil)
+    }
+
+    @Test func `multi row pasteboard item carries text TSV and first URL`() throws {
+        let rows = [
+            RowTransfer(
+                title: "Ada Lovelace",
+                subtitle: "ada@example.com",
+                url: URL(string: "https://example.com/ada"),
+                fields: [("Name", "Ada Lovelace"), ("Email", "ada@example.com")]
+            ),
+            RowTransfer(
+                title: "Grace Hopper",
+                url: URL(string: "https://example.com/grace"),
+                fields: [("Name", "Grace\tHopper"), ("Email", "grace@example.com")]
+            )
+        ]
+
+        let item = try #require(RowTransfer.pasteboardItem(for: rows))
+
+        #expect(item.string(forType: .string) == RowTransfer.plainText(rows))
+        #expect(
+            item.string(forType: NSPasteboard.PasteboardType(UTType.tabSeparatedText.identifier)) ==
+                "Ada Lovelace\tada@example.com\nGrace Hopper\tgrace@example.com"
+        )
+        #expect(item.string(forType: .URL) == "https://example.com/ada")
     }
 }
