@@ -71,6 +71,7 @@ extension RankBuddyToolProvider {
             }
             return result.isEmpty ? nil : result
         }
+
         if let text = stringArgument(arguments, key) {
             let result = text.split(separator: ",")
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }

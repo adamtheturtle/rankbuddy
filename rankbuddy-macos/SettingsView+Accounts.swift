@@ -71,7 +71,7 @@ struct AccountsSettingsView: View {
         )
     }
 
-    /// PadBuddy's segmented +/− control at the sidebar foot, plus a one-click demo account.
+    /// PadBuddy's segmented +/− control at the sidebar foot.
     private var addRemoveControl: some View {
         HStack(spacing: 0) {
             Button {
@@ -97,13 +97,6 @@ struct AccountsSettingsView: View {
             .disabled(selectedAccount == nil)
 
             Spacer()
-
-            // A one-click demo account backed by the in-process fixtures (#10), offered only
-            // until one exists, so the app can be explored without a real token.
-            if !store.accounts.contains(where: \.isMock) {
-                Button("Add Demo") { addDemo() }
-                    .help("Add a demo account with sample data")
-            }
         }
         .buttonStyle(.borderless)
         .padding(.horizontal, 8)
@@ -173,12 +166,6 @@ struct AccountsSettingsView: View {
     }
 
     // MARK: Actions
-
-    private func addDemo() {
-        store.add(.demo)
-        addingNew = false
-        selectedID = Account.demo.id
-    }
 
     /// Removes the selected account and moves the selection to a safe neighbour.
     private func removeSelected() {

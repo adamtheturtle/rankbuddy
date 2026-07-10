@@ -96,6 +96,5 @@ struct MergedRow: View {
             }
             .layoutPriority(1)
         }
-        .accessibilityElement(children: .combine)
     }
 }

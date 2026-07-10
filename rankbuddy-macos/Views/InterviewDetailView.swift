@@ -100,8 +100,10 @@ struct InterviewDetailView: View {
             title: interview.title ?? "Interview \(interview.id)",
             webURL: URL(string: interview.url)
         )
-        // Print and Markdown export are off the bar by default but one Customize Toolbar away.
+        // Share and Open (the interview on HackerRank) lead the bar like PadBuddy; Print and
+        // Markdown export are off the bar by default but one Customize Toolbar away.
         .toolbar(id: "interviewDetail") {
+            DetailLinkToolbarContent(url: URL(string: interview.url), noun: "interview")
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Interview: \(interview.title ?? interview.id)") {
                     InterviewReport(interview: interview)

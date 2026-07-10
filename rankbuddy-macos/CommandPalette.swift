@@ -152,6 +152,10 @@ enum RankBuddyPalette {
 /// App menu commands: jump to a section (⌘1/⌘2/⌘3) and open the command palette (⌘K).
 struct AppCommands: Commands {
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
+    /// The shared detail-pane visibility (#53), toggled by the View ▸ Hide Detail Pane command
+    /// (⌃⌘D) — the primary control for the pane, mirroring PadBuddy. The toolbar button that also
+    /// flips it is hidden from the default toolbar.
+    @AppStorage(ListLayout.detailPaneHiddenKey) private var detailPaneHidden = false
     @Environment(\.openWindow) private var openWindow
     let palette: PaletteModel
     let openLink: OpenLinkModel
@@ -190,11 +194,25 @@ struct AppCommands: Commands {
                 .keyboardShortcut("p", modifiers: .command)
         }
 
+        // View ▸ Hide/Show Detail Pane (⌃⌘D): the primary control for the persistent detail pane
+        // (#53), mirroring PadBuddy. The matching toolbar button is hidden from the default toolbar.
+        CommandGroup(after: .sidebar) {
+            Button(detailPaneHidden ? "Show Detail Pane" : "Hide Detail Pane") {
+                detailPaneHidden.toggle()
+            }
+            .keyboardShortcut("d", modifiers: [.command, .control])
+        }
+
         CommandMenu("Go") {
             ForEach(Array(SidebarSection.allCases.enumerated()), id: \.element) { index, section in
                 Button(section.title) { selection = section }
                     .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
             }
+
+            Divider()
+
+            CommandActionButton(action: commandContext.refresh, fallbackTitle: "Reload")
+                .keyboardShortcut("r", modifiers: .command)
 
             Divider()
 

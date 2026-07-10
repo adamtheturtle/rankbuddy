@@ -44,18 +44,9 @@ struct MenuBarContent: View {
 
         accountSection
 
+        activeSection
+
         createSection
-
-        Divider()
-
-        ForEach(SidebarSection.allCases) { section in
-            Button {
-                selection = section
-                showMainWindow()
-            } label: {
-                Label(section.title, systemImage: section.systemImage)
-            }
-        }
 
         recentSection
 
@@ -72,9 +63,14 @@ struct MenuBarContent: View {
 
         Divider()
 
-        // Help and About mirror PadBuddy's menu-bar footer (#88), so the common entry points
-        // are reachable without first opening the main window.
-        Link("Get a Token", destination: Self.tokenURL)
+        // A nested Help menu mirrors PadBuddy's menu-bar footer (#88): the docs, token, and
+        // feedback entry points are reachable without first opening the main window.
+        Menu("Help") {
+            Link("HackerRank API Documentation", destination: RankBuddyLinks.apiDocs)
+            Link("Get a Token", destination: RankBuddyLinks.tokenURL)
+            Divider()
+            Link("Send Feedback…", destination: RankBuddyLinks.feedbackMailto)
+        }
 
         Button("About RankBuddy") { AboutPanel.show() }
 
@@ -151,7 +147,16 @@ struct MenuBarContent: View {
                 } label: {
                     Label("New Pad…", systemImage: "bolt")
                 }
+                .keyboardShortcut("n")
                 .disabled(writableAccount == nil)
+
+                // New Pad opens the created pad in the user's browser, which may be signed into a
+                // different HackerRank account, so warn first — mirroring PadBuddy's note (#602).
+                if writableAccount != nil {
+                    Text("Opens in your browser's signed-in account")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
                 Button {
                     if let account = writableAccount { createSheet = .scheduledInterview(account) }
@@ -175,6 +180,23 @@ struct MenuBarContent: View {
         }
     }
 
+    /// Interviews/tests that are live or upcoming right now, pinned near the top of the menu so
+    /// an in-progress session is the first thing you see — mirroring PadBuddy's "Active Interviews"
+    /// block (#593). Drawn from the same on-disk cache as the rest of the menu, so it adds no
+    /// network work (#23). Suppressed when the Recent section is already filtered to active items
+    /// (the `activeOnly` toggle), so the two don't render an identical list twice.
+    @ViewBuilder private var activeSection: some View {
+        if !activeOnly, let account = store.currentAccount, recentCount > 0 {
+            let active = RecentActivityStore.shared.recentAll(account: account.id).filter(\.isActiveOrUpcoming)
+            if !active.isEmpty {
+                Divider()
+                Section("Active & Upcoming") {
+                    itemRows(active, account: account) { _ in "dot.radiowaves.left.and.right" }
+                }
+            }
+        }
+    }
+
     /// Recent items the current account has listed, read from the on-disk cache the main
     /// window populates — no second network stack (#23). Hidden when there's nothing cached.
     @ViewBuilder private var recentSection: some View {
@@ -184,20 +206,35 @@ struct MenuBarContent: View {
             if !recents.isEmpty {
                 Divider()
                 Section(activeOnly ? "Active & Upcoming" : "Recent") {
-                    ForEach(recents.prefix(recentCount)) { item in
-                        Button {
-                            RankBuddyDeepLink.open(
-                                collection: item.collection,
-                                accountID: account.id.uuidString,
-                                itemID: item.id
-                            )
-                            showMainWindow()
-                        } label: {
-                            Label(item.title, systemImage: item.collection.systemImage)
-                        }
-                    }
+                    itemRows(recents, account: account) { $0.collection.systemImage }
                 }
             }
+        }
+    }
+
+    /// Renders a list of cached recent items, capped at `recentCount` with a "…N more" overflow
+    /// line (mirroring PadBuddy). Each row deep-links to the item in-app and brings the window
+    /// forward. `icon` picks the SF Symbol per item so the active and recent sections can differ.
+    @ViewBuilder private func itemRows(
+        _ items: [RecentItem],
+        account: Account,
+        icon: @escaping (RecentItem) -> String
+    ) -> some View {
+        ForEach(items.prefix(recentCount)) { item in
+            Button {
+                RankBuddyDeepLink.open(
+                    collection: item.collection,
+                    accountID: account.id.uuidString,
+                    itemID: item.id
+                )
+                showMainWindow()
+            } label: {
+                Label(item.title, systemImage: icon(item))
+            }
+        }
+        if items.count > recentCount {
+            Text("…\(items.count - recentCount) more")
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -231,6 +268,43 @@ struct MenuBarContent: View {
     private func showMainWindow() {
         openWindow(id: WindowID.main)
         NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+}
+
+/// Help-menu destinations for the menu bar, mirroring PadBuddy's `CoderPadLinks` (#88). This is
+/// an unofficial client, so feedback goes to the developer rather than HackerRank.
+enum RankBuddyLinks {
+    /// Where a HackerRank for Work personal access token is generated (mirrors `GetTokenLink`).
+    static let tokenURL = URL(string: "https://www.hackerrank.com/work/settings/token") ?? Account.defaultBaseURL
+
+    /// HackerRank for Work's REST API documentation.
+    static let apiDocs = URL(string: "https://www.hackerrank.com/work/apidocs") ?? Account.defaultBaseURL
+
+    static let feedbackEmail = "hello@adamdangoor.com"
+
+    /// A pre-filled feedback email addressed to the developer, with the app and macOS versions
+    /// appended so each report carries the context needed to act on it. Falls back to a bare
+    /// mailto if the query somehow fails to encode.
+    static var feedbackMailto: URL {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
+        let body = """
+
+
+        ---
+        App version: \(version) (\(build))
+        macOS: \(osVersion)
+        """
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = feedbackEmail
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "RankBuddy for Mac feedback"),
+            URLQueryItem(name: "body", value: body)
+        ]
+        return components.url ?? URL(string: "mailto:\(feedbackEmail)") ?? apiDocs
     }
 }
 

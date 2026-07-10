@@ -22,12 +22,16 @@ final class AppCommandContext {
     var exportSelectedCSV: Action?
     var exportMarkdown: Action?
     var print: Action?
+    /// Reloads the visible list (⌘R). Mirrors PadBuddy, whose Reload lives on the Go menu so the
+    /// toolbar's Refresh button can be hidden from the default toolbar (#101).
+    var refresh: Action?
 
     func clearListActions() {
         primaryNew = nil
         secondaryNew = nil
         exportCSV = nil
         exportSelectedCSV = nil
+        refresh = nil
     }
 
     func clearDetailActions() {

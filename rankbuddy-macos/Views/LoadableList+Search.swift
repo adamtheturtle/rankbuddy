@@ -85,6 +85,14 @@ extension LoadableList {
         }
     }
 
+    private var noResultsMessage: String {
+        if !trimmedQuery.isEmpty {
+            return "No \(title.lowercased()) match \"\(trimmedQuery)\"."
+        }
+
+        return "No \(title.lowercased()) match the current filters."
+    }
+
     /// Pages in more rows while a client-side filter is active so the match isn't limited to the
     /// first page (#86). Driven by `.task(id: clientFilterToken)`, so SwiftUI cancels and restarts
     /// it as the filter changes — which also debounces typing via the initial sleep.
@@ -114,41 +122,5 @@ extension LoadableList {
             // never spin.
             if items.count == countBeforeLoad { break }
         }
-    }
-
-    /// Interprets the smart-filter request on-device and applies the grounded filters (#91). The
-    /// facet options come from the loaded rows, so the interpreter only proposes values the list
-    /// actually offers; a successful interpretation replaces the query, date range, and facet
-    /// selection so the request fully describes the new filter. A request that grounds to nothing
-    /// leaves the filters untouched and surfaces the "no match" explanation in the sheet.
-    func applySmartFilter() async {
-        let descriptors = facets.map { facet in
-            SearchInterpreter.FacetDescriptor(
-                id: facet.id,
-                label: facet.label,
-                options: ListQuery.facetOptions(facet, in: items)
-            )
-        }
-
-        isInterpreting = true
-        smartFilterFailed = false
-        let interpretation = await SearchInterpreter.interpret(
-            smartFilterText,
-            facets: descriptors,
-            dateRangeSupported: filterDate != nil,
-            dateRangeOptions: NamedDateRange.options
-        )
-        isInterpreting = false
-
-        guard let interpretation else {
-            smartFilterFailed = true
-            return
-        }
-
-        query = interpretation.query
-        dateRange = interpretation.dateRange
-        selectedFacets = interpretation.facets
-        smartFilterText = ""
-        showSmartFilter = false
     }
 }

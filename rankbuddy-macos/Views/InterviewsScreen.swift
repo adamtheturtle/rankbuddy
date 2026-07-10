@@ -64,6 +64,7 @@ struct InterviewsScreen: View {
                         openInWindow: { openWindow(value: DetailWindowValue.interview(interview)) }
                     )
                 },
+                openInWindow: { openWindow(value: DetailWindowValue.interview($0)) },
                 onFirstPage: { interviews in
                     RecentActivityStore.shared.record(
                         interviews.map {
@@ -233,7 +234,6 @@ struct InterviewRow: View {
             Spacer(minLength: 12)
             interview.statusBadge
         }
-        .accessibilityElement(children: .combine)
     }
 }
 

@@ -110,10 +110,19 @@ struct RankBuddyApp: App {
                 .preferredColorScheme(appearance.colorScheme)
         }
 
+        // The MCP tool-call activity log in its own window (mirroring PadBuddy), opened from
+        // Settings ▸ MCP. A single unique window, like the others.
+        Window("MCP Activity", id: WindowID.mcpActivity) {
+            MCPActivityView()
+                .preferredColorScheme(appearance.colorScheme)
+        }
+        .defaultSize(width: 480, height: 460)
+
         Settings {
             SettingsView()
                 .environment(accountStore)
                 .environment(health)
+                .preferredColorScheme(appearance.colorScheme)
         }
 
         MenuBarExtra("RankBuddy", systemImage: "checklist", isInserted: menuBarInserted) {
@@ -147,4 +156,6 @@ enum WindowID {
     static let detail = "detail"
     /// The account activity (audit log) window (#115).
     static let activity = "activity"
+    /// The MCP tool-call activity log window, opened from Settings ▸ MCP.
+    static let mcpActivity = "mcp-activity"
 }

@@ -28,7 +28,7 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     var token: String
     /// An optional base-URL override for regional HackerRank endpoints.
     var baseURLOverride: String?
-    /// The email of the user this token belongs to (#72), entered in the editor. Identifies
+    /// The email of the user this token belongs to (#72), cached from token validation. Identifies
     /// "who am I" for this account, enabling owned-by-me / assigned-to-me filtering. Optional
     /// and decoded with `decodeIfPresent`, so accounts saved before this field stay valid.
     var userEmail: String?
@@ -54,6 +54,26 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     /// it survives a Keychain round-trip for free and needs no extra persisted field.
     var isMock: Bool {
         token == Self.demoToken || token == Self.badKeyDemoToken
+    }
+
+    /// Whether this is the intentionally rejected demo token.
+    var isBadKeyDemo: Bool {
+        token == Self.badKeyDemoToken
+    }
+
+    /// A sandbox demo the user can summon by typing a magic word into the account
+    /// editor's token field: `demo` adds mock data, `baddemo` adds the rejected-token demo.
+    enum DemoMagicKey {
+        case mockData
+        case badKey
+
+        init?(typedToken: String) {
+            switch typedToken.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "demo": self = .mockData
+            case "baddemo": self = .badKey
+            default: return nil
+            }
+        }
     }
 
     /// A demo account backed by the bundled mock server (#10), selectable like a real

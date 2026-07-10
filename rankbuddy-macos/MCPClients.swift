@@ -67,18 +67,28 @@ enum MCPClient: String, CaseIterable, Identifiable {
         buddyClient.configSnippet(command: command, serverName: serverName)
     }
 
-    /// Where this client keeps its config (or how to apply it), shown as a hint. The path may
-    /// not exist yet.
-    var configLocationHint: String {
+    /// The config file the one-click installer updates, also shown in the manual fallback.
+    var configPath: String {
         switch self {
-        case .claudeDesktop:
-            "Paste into ~/Library/Application Support/Claude/claude_desktop_config.json, then restart Claude Desktop."
-        case .claudeCode:
-            "Run the command in your terminal, or add it to a project .mcp.json."
-        case .codex:
-            "Paste into ~/.codex/config.toml, then restart Codex."
-        case .cursor:
-            "Paste into ~/.cursor/mcp.json (global) or .cursor/mcp.json in a project, then reload Cursor."
+        case .claudeDesktop: "~/Library/Application Support/Claude/claude_desktop_config.json"
+        case .claudeCode: "~/.claude.json"
+        case .codex: "~/.codex/config.toml"
+        case .cursor: "~/.cursor/mcp.json"
+        }
+    }
+
+    /// Where this client keeps its config, shown as a setup hint. The path may not exist yet.
+    var configLocationHint: String {
+        "Adds or updates the `rankbuddy` server in \(configPath)."
+    }
+
+    /// How the client picks up a newly installed server entry.
+    var restartHint: String {
+        switch self {
+        case .claudeDesktop: "Quit Claude Desktop with Command-Q and reopen it, then ask it about your HackerRank data."
+        case .claudeCode: "Start a fresh Claude Code session or run /mcp, then ask it about your HackerRank data."
+        case .codex: "Restart Codex, then ask it about your HackerRank data."
+        case .cursor: "Reload Cursor or toggle the server in MCP settings, then ask it about your HackerRank data."
         }
     }
 
@@ -86,9 +96,20 @@ enum MCPClient: String, CaseIterable, Identifiable {
     var troubleshootingHint: String {
         switch self {
         case .claudeDesktop: "If it doesn't appear, check ~/Library/Logs/Claude/mcp*.log."
-        case .claudeCode: "Run `claude mcp list` to confirm it registered."
+        case .claudeCode: "Confirm it connected with `claude mcp list` or `claude mcp get rankbuddy`."
         case .codex: "If it doesn't appear, check ~/.codex/log/ after restarting."
         case .cursor: "MCP output appears in Cursor's Output panel (MCP Logs)."
+        }
+    }
+
+    /// The snippet to paste into the config file by hand. Claude Code's install path is its
+    /// JSON config file, so the manual fallback shows JSON rather than the CLI command.
+    func manualConfigText(command: String, serverName: String = "rankbuddy") -> String {
+        switch self {
+        case .claudeCode:
+            MCPKit.MCPClient.claudeDesktop.configSnippet(command: command, serverName: serverName)
+        default:
+            configText(command: command, serverName: serverName)
         }
     }
 }

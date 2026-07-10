@@ -39,7 +39,7 @@ nonisolated enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .tests: "checklist"
-        case .questions: "questionmark.square"
+        case .questions: "questionmark.bubble"
         case .interviews: "person.crop.rectangle.stack"
         case .people: "person.2"
         case .teams: "person.3"

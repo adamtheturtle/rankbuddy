@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import Flow
 import SwiftUI
 
 /// Per-account icon + tint (#64): view-layer helpers that turn an account's stored `iconSymbol`
@@ -81,18 +82,7 @@ struct AccountAppearancePicker: View {
 
     var body: some View {
         Section {
-            HStack {
-                Image(systemName: selectedIcon)
-                    .font(.title2)
-                    .foregroundStyle(tint)
-                    .frame(width: 28)
-                    .accessibilityHidden(true)
-                Picker("Icon", selection: $selectedIcon) {
-                    ForEach(AccountAppearance.icons, id: \.self) { symbol in
-                        Label(symbol, systemImage: symbol).labelStyle(.iconOnly).tag(symbol)
-                    }
-                }
-            }
+            AccountIconPicker(selectedIcon: $selectedIcon, tint: tint)
 
             HStack(spacing: 10) {
                 ForEach(AccountAppearance.tints) { option in
@@ -120,6 +110,38 @@ struct AccountAppearancePicker: View {
             Text("Appearance")
         } footer: {
             Text("An icon and tint to tell this account apart in the switcher and sidebar.")
+        }
+    }
+}
+
+struct AccountIconPicker: View {
+    @Binding var selectedIcon: String
+    let tint: Color
+
+    var body: some View {
+        HFlow(spacing: 6) {
+            ForEach(AccountAppearance.icons, id: \.self) { symbol in
+                Button {
+                    selectedIcon = symbol
+                } label: {
+                    Image(systemName: symbol)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(selectedIcon == symbol ? .white : tint)
+                        .frame(width: 28, height: 28)
+                        .background {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(selectedIcon == symbol ? tint : Color.clear)
+                        }
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(selectedIcon == symbol ? tint : Color.secondary.opacity(0.25))
+                        }
+                }
+                .buttonStyle(.plain)
+                .help(symbol)
+                .accessibilityLabel(symbol)
+                .accessibilityAddTraits(selectedIcon == symbol ? [.isButton, .isSelected] : .isButton)
+            }
         }
     }
 }

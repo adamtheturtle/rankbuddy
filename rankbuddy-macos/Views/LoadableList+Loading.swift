@@ -17,8 +17,19 @@ extension LoadableList {
         didRestore = false
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
-        detailItem = nil
-        selection = []
+
+        let isServerFilterReload = serverDateFiltering && dateRange != nil
+        let isLoadedPhase: Bool
+        if case .loaded = phase {
+            isLoadedPhase = true
+        } else {
+            isLoadedPhase = false
+        }
+        let preservesVisibleState = isServerFilterReload && isLoadedPhase && !items.isEmpty
+        if !preservesVisibleState {
+            detailItem = nil
+            selection = []
+        }
         pagesLoaded = 1
 
         if let key = cacheKey, let cached = ListPageCache.cached([Item].self, for: key), !cached.items.isEmpty {
@@ -30,15 +41,31 @@ extension LoadableList {
             isBackgroundRefreshing = true
             onFirstPage(cached.items)
             await restoreIfNeeded(items)
+        } else if preservesVisibleState {
+            // Keep the current rows/detail in place until the server returns the filtered page, so
+            // changing an interviews date chip doesn't flash through an empty intermediate state.
+            nextCursor = nil
+            totalCount = nil
+            isBackgroundRefreshing = true
         } else {
-            phase = .loading
             items = []
             nextCursor = nil
             totalCount = nil
+            if isServerFilterReload {
+                // Keep the loaded list shell in place while the server resolves the filter, so
+                // restoring a filtered interviews list doesn't flash through the full-screen loader.
+                phase = .loaded
+                isFilterLoading = true
+            } else {
+                phase = .loading
+            }
         }
 
-        // Always clear the refresh hint once the fresh load settles, whichever way it goes.
-        defer { isBackgroundRefreshing = false }
+        // Always clear refresh/filter hints once the fresh load settles, whichever way it goes.
+        defer {
+            isBackgroundRefreshing = false
+            if isServerFilterReload { isFilterLoading = false }
+        }
 
         do {
             let page = try await loadCurrentPage(nil)
@@ -48,7 +75,11 @@ extension LoadableList {
             phase = .loaded
             onFirstPage(page.items)
             if let key = cacheKey { ListPageCache.store(items: page.items, cursor: page.next, for: key) }
-            await restoreIfNeeded(items)
+            if preservesVisibleState {
+                reconcilePreservedSelection(in: items)
+            } else {
+                await restoreIfNeeded(items)
+            }
         } catch {
             // Keep showing cached rows on a refresh failure; only surface the error when there
             // was nothing to show.
@@ -87,6 +118,21 @@ extension LoadableList {
 
     func message(for error: Error) -> String {
         (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+
+    /// Reconciles a preserved selection after a background server-filter reload. If the selected
+    /// item is still present, refresh the detail with the new row instance; if not, clear once the
+    /// replacement data is ready so the pane doesn't blank during the request.
+    private func reconcilePreservedSelection(in loadedItems: [Item]) {
+        guard let selectedID = detailItem?.id ?? selection.first else { return }
+
+        if let selectedItem = loadedItems.first(where: { $0.id == selectedID }) {
+            selection = [selectedItem.id]
+            detailItem = selectedItem
+        } else {
+            selection = []
+            detailItem = nil
+        }
     }
 
     /// Once per load: re-opens the last-viewed item's detail and scrolls to it, or — when no

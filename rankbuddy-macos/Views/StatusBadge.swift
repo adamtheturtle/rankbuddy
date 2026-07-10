@@ -13,12 +13,21 @@ struct StatusBadge: View {
     let tint: Color
 
     var body: some View {
-        Label(text, systemImage: systemImage)
-            .font(.caption2.weight(.semibold))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(tint.opacity(0.15), in: Capsule())
-            .foregroundStyle(tint)
+        HStack(spacing: 5) {
+            Image(systemName: systemImage)
+                .font(.caption2.weight(.semibold))
+                .frame(width: 11, height: 11)
+
+            Text(text)
+                .font(.caption2.weight(.semibold))
+        }
+        .lineLimit(1)
+        .padding(.leading, 7)
+        .padding(.trailing, 8)
+        .padding(.vertical, 3)
+        .background(tint.opacity(0.15), in: Capsule())
+        .foregroundStyle(tint)
+        .accessibilityElement(children: .combine)
     }
 }
 

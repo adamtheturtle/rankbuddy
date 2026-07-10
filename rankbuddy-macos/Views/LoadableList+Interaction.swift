@@ -34,6 +34,13 @@ extension LoadableList {
         }
     }
 
+    /// A change token over the current favourites, used as the FastList `reloadID` so the star
+    /// column rebuilds (and turns yellow) the instant an item is pinned or unpinned. Sorted so the
+    /// token is order-independent — only membership changes trigger a reload, not reordering.
+    var favoritesReloadID: String {
+        favorites.favorites.map(\.id).sorted().joined(separator: "|")
+    }
+
     /// A floating "Loading more…" pill shown over the bottom of the list while the next page
     /// is being fetched (#85), so reaching the end reads as "more coming" rather than "the end".
     var loadMoreIndicator: some View {
@@ -66,8 +73,21 @@ extension LoadableList {
         if case .loading = phase { true } else { false }
     }
 
-    /// Opens an item's detail in the persistent pane (double-click / Return). Single-click
-    /// selection drives the same path via `syncDetail`; this also covers the keyboard case.
+    /// Double-click / Return on a row: opens the item in its own window when the screen supports
+    /// one (#49), matching PadBuddy — single-click already drives the persistent pane, so the
+    /// second click escalates to a standalone window. Lists without a `DetailWindowValue` mapping
+    /// (People/Teams, merged) fall back to showing the item in the pane.
+    func activate(_ item: Item) {
+        if let openInWindow {
+            selection = [item.id]
+            openInWindow(item)
+        } else {
+            open(item)
+        }
+    }
+
+    /// Opens an item's detail in the persistent pane. Single-click selection drives the same path
+    /// via `syncDetail`; used by `activate` as the fallback for lists with no standalone window.
     func open(_ item: Item) {
         selection = [item.id]
         detailItem = item
@@ -105,6 +125,13 @@ extension LoadableList {
     func registerListCommands() {
         commandContext.primaryNew = primaryMenuAction
         commandContext.secondaryNew = secondaryMenuAction
+        // Reload drives ⌘R from the Go menu, so the toolbar's Refresh button can be hidden from
+        // the default toolbar (available via Customize) exactly like PadBuddy's Reload (#101).
+        commandContext.refresh = AppCommandContext.Action(
+            title: "Reload \(title)",
+            isEnabled: { !isLoading },
+            perform: { Task { await reload() } }
+        )
         guard let csvExport else {
             commandContext.exportCSV = nil
             commandContext.exportSelectedCSV = nil

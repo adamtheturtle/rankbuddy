@@ -43,6 +43,7 @@ struct QuestionsScreen: View {
                         openInWindow: { openWindow(value: DetailWindowValue.question(question)) }
                     )
                 },
+                openInWindow: { openWindow(value: DetailWindowValue.question($0)) },
                 onFirstPage: { questions in
                     RecentActivityStore.shared.record(
                         questions.map {
@@ -153,6 +154,10 @@ struct QuestionDetailView: View {
     @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: QuestionDetail?
     @State private var answerRevealed = false
+    /// Drives the "New Pad from Question" toolbar button: true while the pad is being created,
+    /// and the error surfaced if the create fails.
+    @State private var isCreatingPad = false
+    @State private var createPadError: String?
 
     var body: some View {
         Form {
@@ -220,8 +225,27 @@ struct QuestionDetailView: View {
         .onAppear { registerDetailCommands() }
         .onDisappear { commandContext.clearDetailActions() }
         .advertisesItemActivity(collection: .questions, itemID: question.id, title: question.name)
-        // Print and Markdown export are off the bar by default but one Customize Toolbar away.
+        // "New Pad from Question" leads the bar like PadBuddy; Share and Open follow; Print and
+        // Markdown export are off the bar by default but one Customize Toolbar away.
         .toolbar(id: "questionDetail") {
+            ToolbarItem(id: "newPad") {
+                Button {
+                    Task { await createPad() }
+                } label: {
+                    Label("New Pad from Question", systemImage: "doc.badge.plus")
+                }
+                // The pinned API can't attach the question to the pad yet, so the created Pad is
+                // titled after the question for the interviewer to drive; honest about that here.
+                .help("Create a collaborative Pad interview for this question and open it")
+                // Needs a single owning account; the merged view can't say which, so it's disabled.
+                .disabled(store.currentAccount == nil || store.isMergedView || isCreatingPad)
+            }
+            DetailLinkToolbarContent(
+                url: store.currentAccount.flatMap {
+                    RankBuddyUserActivity.webURL(base: $0.baseURL, collection: .questions, itemID: question.id)
+                },
+                noun: "question"
+            )
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Question: \(question.name)") {
                     QuestionReport(question: question)
@@ -232,6 +256,35 @@ struct QuestionDetailView: View {
                 MarkdownExportButton(suggestedName: question.name) { MarkdownExport.question(question) }
             }
             .defaultCustomization(.hidden)
+        }
+        .alert("Couldn’t create Pad", isPresented: createPadErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(createPadError ?? "")
+        }
+    }
+
+    private var createPadErrorPresented: Binding<Bool> {
+        Binding(get: { createPadError != nil }, set: { if !$0 { createPadError = nil } })
+    }
+
+    /// Creates a collaborative Pad interview for this question and opens it, mirroring
+    /// PadBuddy's "New Pad from Question". The pinned `HackerRankKit` write model can't attach the
+    /// question to the pad, so the Pad is titled after the question rather than seeded with it;
+    /// true seeding awaits a package/API change. Best-effort — a failure surfaces an alert.
+    private func createPad() async {
+        guard let account = store.currentAccount else { return }
+
+        isCreatingPad = true
+        defer { isCreatingPad = false }
+        do {
+            let created = try await HackerRankClient(account: account).createPad(title: question.name)
+            // Demo accounts return a fixture echo; only open a real pad in the browser (#10).
+            if !account.isMock, let raw = created.url, let url = URL(string: raw) {
+                BrowserSettings.open(url)
+            }
+        } catch {
+            createPadError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 

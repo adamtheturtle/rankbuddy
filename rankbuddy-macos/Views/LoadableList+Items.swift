@@ -93,8 +93,32 @@ extension LoadableList {
             nextCursor = page.next
             totalCount = page.totalCount
             phase = .loaded
+            await autoLoadServerSearchResults()
         } catch {
             if items.isEmpty { phase = .failed(message(for: error)) }
+        }
+    }
+
+    /// Server-side search can return paged matches. Pull in a bounded number of extra pages so a
+    /// narrow first page doesn't make the search surface look like it only supports one result.
+    func autoLoadServerSearchResults() async {
+        guard isServerSearching, nextCursor != nil else { return }
+
+        isFilterLoading = true
+        defer { isFilterLoading = false }
+        var pagesLoadedThisSearch = 0
+        while !Task.isCancelled,
+              ListSearchPaging.shouldKeepLoading(
+                  isFiltering: isServerSearching,
+                  visibleMatches: visibleItems.count,
+                  hasMorePages: nextCursor != nil,
+                  pagesLoadedThisFilter: pagesLoadedThisSearch,
+                  pageCap: searchPageCap
+              ) {
+            let countBeforeLoad = items.count
+            await loadMore()
+            pagesLoadedThisSearch += 1
+            if items.count == countBeforeLoad { break }
         }
     }
 

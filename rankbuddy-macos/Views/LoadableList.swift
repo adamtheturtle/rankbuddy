@@ -81,6 +81,11 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// Builds the native row context menu for an item (copy / open-in-browser / favourite).
     /// Returns an empty array for no menu.
     var contextMenu: (Item) -> [MenuItem] = { _ in [] }
+    /// Opens an item in its own window (#49), matching PadBuddy's double-click / Return: the
+    /// screen maps the row to a `DetailWindowValue` and calls `openWindow(value:)`. `nil` (the
+    /// default) leaves double-click / Return driving the in-app detail pane instead — used by the
+    /// People/Teams and merged lists, which have no standalone detail window.
+    var openInWindow: ((Item) -> Void)?
     /// Called with the first page's items each time it loads, so callers can cache recent
     /// activity (#23). Not called for subsequent (load-more) pages.
     var onFirstPage: ([Item]) -> Void = { _ in }
@@ -132,6 +137,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @AppStorage(GeneralSettings.refreshSecondsKey) var autoRefreshSeconds = GeneralSettings
         .defaultRefreshSeconds
 
+    /// Whether the persistent detail pane is hidden (#53), shared across every list and with the
+    /// View ▸ Hide Detail Pane command (⌃⌘D). Internal so the toolbar extension's toggle reads it.
+    @AppStorage(ListLayout.detailPaneHiddenKey) var detailPaneHidden = false
+    /// Snap the pane swap instead of sliding it when Reduce Motion is on. Internal so the toolbar
+    /// extension's toggle reads it.
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+
     @State var phase: Phase = .loading
     /// `items`/`nextCursor`/`isLoadingMore`/`pagesLoaded` are internal so the auto-refresh
     /// extension (a separate file, for file_length) can reload in place (#69).
@@ -171,14 +183,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// section reads as "refreshing" in the subtitle rather than silently or with a full spinner.
     /// Set by the loading extension; only ever true when rows are already on screen.
     @State var isBackgroundRefreshing = false
-    /// On-device smart-search sheet state (#91): the entry, its presentation, the interpreting
-    /// spinner, and whether the last attempt grounded to nothing. Internal (not private) so the
-    /// `applySmartFilter` method in `LoadableList+Search.swift` can drive them, per the repo's
-    /// split-file rule.
-    @State var showSmartFilter = false
-    @State var smartFilterText = ""
-    @State var isInterpreting = false
-    @State var smartFilterFailed = false
     /// The list's saved searches, shown as recall chips in the filter bar (#25). Loaded on appear
     /// and when the account-scoped key changes; mutated as the user saves or deletes one. Internal
     /// so the `LoadableList+FilterBar` extension can drive them, per the repo's split-file rule.
@@ -196,9 +200,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 // size to their content and the enclosing stack centres the short list (#111).
                 .frame(minWidth: 300, idealWidth: 380, maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(nsColor: .textBackgroundColor))
-            detailColumn
-                .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
-                .background(.regularMaterial)
+            // The detail pane is dismissable (#53): hiding it drops to a single-column list,
+            // mirroring PadBuddy. Driven by the shared toggle (⌃⌘D / the toolbar button).
+            if !detailPaneHidden {
+                detailColumn
+                    .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.regularMaterial)
+            }
         }
     }
 
@@ -213,18 +221,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 // A customizable toolbar (#101): only the primary actions show by default; the rest
                 // are available via "Customize Toolbar…". Built in `LoadableList+Toolbar`.
                 .toolbar(id: "list") { customToolbar }
-                .sheet(isPresented: $showSmartFilter) {
-                    SmartFilterSheet(
-                        text: $smartFilterText,
-                        isInterpreting: isInterpreting,
-                        failed: smartFilterFailed,
-                        placeholder: "e.g. \(title.lowercased()) from last week",
-                        failedMessage: "Couldn't match that to any filter. Try naming a status, language, or a time like \"last 7 days\".", // swiftlint:disable:this line_length
-                        hintMessage: "Name a status, language, or a time like \"last 7 days\".",
-                        onSubmit: { Task { await applySmartFilter() } },
-                        onCancel: { showSmartFilter = false }
-                    )
-                }
                 // Re-runs when the account-scoped key changes, clearing any stale restored
                 // pane before loading the new account's data (#19).
                 .task(id: restorationKey) { await reload() }
@@ -316,30 +312,37 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
         }
     }
 
-    private var emptyState: some View {
-        CompactStateView(
-            title: hasActiveFilters ? "No Results" : emptyMessage,
-            systemImage: hasActiveFilters ? "line.3.horizontal.decrease.circle" : "tray",
-            message: hasActiveFilters
-                ? "Clear filters or try a broader search."
-                : "There is nothing to show for this account yet.",
-            actionTitle: hasActiveFilters ? "Clear Filters" : nil,
-            actionSystemImage: hasActiveFilters ? "xmark.circle" : nil,
-            action: hasActiveFilters ? clearAllFilters : nil
-        )
+    @ViewBuilder private var emptyState: some View {
+        if hasActiveFilters {
+            CompactStateView(
+                title: "No Results",
+                systemImage: "line.3.horizontal.decrease.circle",
+                message: "Clear filters or try a broader search.",
+                actionTitle: "Clear Filters",
+                actionSystemImage: "xmark.circle",
+                action: clearAllFilters
+            )
+        } else {
+            CompactStateView(
+                title: emptyMessage,
+                systemImage: "tray",
+                message: "There is nothing to show for this account yet."
+            )
+        }
     }
 
     @ViewBuilder private var loadedList: some View {
         let visible = visibleItems
         VStack(spacing: 0) {
-            // PadBuddy-style filter bar (#55/#25/#19/#91): a saved-search recall row above the
-            // facet chips, the inline date chip, and the Smart Filter / Save / Clear actions. Each
-            // row renders nothing when it has nothing to show, so plain lists are unchanged.
+            // PadBuddy-style filter bar (#55/#25/#19): a saved-search recall row above the
+            // facet chips, the inline date chip, and the Save / Clear actions. Each row renders
+            // nothing when it has nothing to show, so plain lists are unchanged.
             savedSearchesBar
             filterBar
 
             if visible.isEmpty {
                 filterEmptyState
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 FastList(visible, selection: $selection) { item in
                     HStack(spacing: 8) {
@@ -358,18 +361,24 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                     // Pad and pin each row to the shared fixed height so content breathes and
                     // centres consistently, matching PadBuddy's rows (they read as squished when
                     // sized tightly to content).
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 5)
+                    .padding(.leading, 2)
                     .padding(.trailing, 12)
                     .fixedFastListRowHeight()
                 }
-                .onDoubleClick { open($0) }
-                .onReturnKey { open($0) }
+                .onDoubleClick { activate($0) }
+                .onReturnKey { activate($0) }
                 .rowContextMenu { contextMenu($0) }
                 // Drag a row onto the sidebar's Favourites section to pin it (#89/#41). The same
                 // drag now carries public text/URL fallbacks when the screen supplies them (#124).
                 // The session hooks reveal the sidebar's drop zone only while a favourite is in flight.
                 .onRowDrag { dragPasteboardItem(for: $0) }
                 .onDragSession(began: FavoriteDragLifecycle.onBegan, ended: FavoriteDragLifecycle.onEnded)
+                // FastList hosts each row in a recycled NSHostingView, so toggling a favourite
+                // doesn't re-render the star on its own — the star only turns yellow once the
+                // cell is rebuilt. Keying the list on the current favourites forces that rebuild
+                // the moment the set changes, matching PadBuddy's `.reloadID` (#41).
+                .reloadID(favoritesReloadID)
                 .onTopRowChange { persistScrollAnchor($0) }
                 // Load-more keys off the *bottom* of the viewport (FastList #1, shipped in 0.3.0),
                 // so it fires on any window size, never stranding a list on its first page (#85).

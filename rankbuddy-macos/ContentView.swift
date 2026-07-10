@@ -23,6 +23,7 @@ struct ContentView: View {
     @Environment(FavoritesStore.self) private var favorites
     @Environment(AccountHealthMonitor.self) private var health
     @Environment(\.undoManager) private var undoManager
+    @Environment(\.openSettings) private var openSettings
     /// Reveals the Favourites drop zone only while a favourite-able row is being dragged (#89).
     @State private var dragMonitor = FavoriteDragMonitor.shared
     /// Whether a drag is currently hovering the Favourites drop zone (drives its highlight).
@@ -33,37 +34,42 @@ struct ContentView: View {
         @Bindable var openLink = openLink
 
         NavigationSplitView {
-            List(selection: sectionSelection) {
-                Section {
-                    ForEach(SidebarSection.allCases) { section in
-                        Label(section.title, systemImage: section.systemImage)
-                            .tag(section)
-                    }
-                }
-
-                let favourites = accountFavorites
-                // The section also appears (empty) while a favourite-able row is being dragged,
-                // so there's always somewhere to drop it — the empty-state drop zone of #89.
-                if !favourites.isEmpty || dragMonitor.isDragging {
-                    Section("Favourites") {
-                        ForEach(favourites) { ref in
-                            favoriteRow(ref)
-                        }
-                        .onMove(perform: moveFavorites)
-
-                        // Revealed only mid-drag (#89): a clear target that also covers the
-                        // empty-favourites case, where there's no row to drop onto.
-                        if dragMonitor.isDragging {
-                            favoriteDropZone
+            VStack(spacing: 0) {
+                List(selection: sectionSelection) {
+                    Section {
+                        ForEach(SidebarSection.allCases) { section in
+                            Label(section.title, systemImage: section.systemImage)
+                                .tag(section)
                         }
                     }
+
+                    let favourites = accountFavorites
+                    // The section also appears (empty) while a favourite-able row is being dragged,
+                    // so there's always somewhere to drop it — the empty-state drop zone of #89.
+                    if !favourites.isEmpty || dragMonitor.isDragging {
+                        Section("Favourites") {
+                            ForEach(favourites) { ref in
+                                favoriteRow(ref)
+                            }
+                            .onMove(perform: moveFavorites)
+
+                            // Revealed only mid-drag (#89): a clear target that also covers the
+                            // empty-favourites case, where there's no row to drop onto.
+                            if dragMonitor.isDragging {
+                                favoriteDropZone
+                            }
+                        }
+                    }
                 }
+                .listStyle(.sidebar)
+
+                Divider()
+                AccountSwitcher()
+                    .padding(10)
+                    .background(.thinMaterial)
             }
             .navigationTitle("RankBuddy")
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
-            .safeAreaInset(edge: .bottom) {
-                AccountSwitcher()
-            }
         } detail: {
             VStack(spacing: 0) {
                 if health.isUnauthorized(store.currentAccountID) {
@@ -107,7 +113,7 @@ struct ContentView: View {
                     store: store,
                     favorites: favorites,
                     selection: $selection,
-                    openSettings: { NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) }
+                    openSettings: { openSettings() }
                 )
             }
         }

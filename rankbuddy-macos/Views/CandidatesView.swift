@@ -122,7 +122,14 @@ struct CandidateRow: View {
             Spacer(minLength: 12)
             candidate.integrityBadge
         }
-        .accessibilityElement(children: .combine)
+    }
+
+    private var subtitle: String {
+        if let score = candidate.score {
+            return "\(candidate.email) - Score: \(score.formatted())"
+        }
+
+        return candidate.email
     }
 }
 

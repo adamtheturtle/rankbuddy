@@ -29,6 +29,40 @@ struct TagList: View {
     }
 }
 
+/// The detail pane's Share + Open-in-browser actions, mirroring PadBuddy's pad-detail toolbar.
+/// Uses PadBuddy's exact icons (`square.and.arrow.up`, `doc.text.image`) and short "Open" title so
+/// the two apps' detail toolbars match, and routes Open through the browser preference (#63). Both
+/// stay on the default toolbar. A `nil` URL (e.g. the merged view, where the owning account is
+/// ambiguous) omits both items, exactly like PadBuddy's `if let url = pad.webURL`.
+struct DetailLinkToolbarContent: CustomizableToolbarContent {
+    let url: URL?
+    /// The noun used in the help / accessibility text (e.g. "test", "interview", "question").
+    var noun: String
+
+    var body: some CustomizableToolbarContent {
+        if let url {
+            ToolbarItem(id: "share", placement: .primaryAction) {
+                ShareLink(item: url) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+                .help("Share \(noun)")
+                .accessibilityLabel("Share \(noun)")
+            }
+            ToolbarItem(id: "open", placement: .primaryAction) {
+                Button {
+                    BrowserSettings.open(url)
+                } label: {
+                    // Short title ("Open", not "Open Test") so it doesn't truncate when the
+                    // detail column is narrow; the accessibility label stays descriptive.
+                    Label("Open", systemImage: "doc.text.image")
+                }
+                .help("Open the \(noun) in your browser")
+                .accessibilityLabel("Open \(noun)")
+            }
+        }
+    }
+}
+
 /// Builds a row's native context menu (`FastList`'s `MenuItem`s, since the hosted SwiftUI
 /// row content is hit-transparent and a SwiftUI `.contextMenu` on it would never fire).
 ///
@@ -181,6 +215,116 @@ struct RowDateLabel: View {
             }
         }
         .frame(width: Self.columnWidth, alignment: .trailing)
+    }
+}
+
+/// A shared row composition for the main lists. Keeping titles, secondary metadata, and trailing
+/// badges in the same grid makes dense lists much easier to scan while preserving the existing
+/// FastList selection and keyboard behavior.
+struct PrimaryListRow<Trailing: View>: View {
+    let title: String
+    var subtitle: String?
+    var tertiary: String?
+    @ViewBuilder var trailing: () -> Trailing
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .textSelection(.enabled)
+
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+
+                if let tertiary, !tertiary.isEmpty {
+                    Text(tertiary)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            trailing()
+                .font(.caption)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+extension PrimaryListRow where Trailing == EmptyView {
+    init(title: String, subtitle: String? = nil, tertiary: String? = nil) {
+        self.title = title
+        self.subtitle = subtitle
+        self.tertiary = tertiary
+        self.trailing = { EmptyView() }
+    }
+}
+
+/// Compact, native-feeling list/detail states. They sit inside the current pane instead of taking
+/// over the window, which keeps the three-column hierarchy stable during loading and errors.
+struct ListStateView<Actions: View>: View {
+    let title: String
+    let systemImage: String
+    var message: String?
+    @ViewBuilder var actions: () -> Actions
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 28, weight: .regular))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+
+            VStack(spacing: 3) {
+                Text(title)
+                    .font(.headline)
+                if let message, !message.isEmpty {
+                    Text(message)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            actions()
+                .controlSize(.small)
+        }
+        .padding(24)
+        .frame(maxWidth: 360)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .contain)
+    }
+}
+
+extension ListStateView where Actions == EmptyView {
+    init(_ title: String, systemImage: String, message: String? = nil) {
+        self.title = title
+        self.systemImage = systemImage
+        self.message = message
+        self.actions = { EmptyView() }
+    }
+}
+
+extension View {
+    /// Applies the stable macOS detail-pane form treatment. Grouped forms keep inspector sections
+    /// readable in narrow panes and preserve the native row chrome for labels, links, and controls.
+    func nativeInspectorDetail() -> some View {
+        formStyle(.grouped)
     }
 }
 

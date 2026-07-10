@@ -6,8 +6,7 @@
 import HackerRankKit
 import SwiftUI
 
-/// A sheet that creates a team (`POST /teams`, #59) — a write flow. States plainly when it
-/// touches a real organisation, and refreshes the list on success.
+/// A sheet that creates a team (`POST /teams`, #59) — a write flow. Refreshes the list on success.
 struct CreateTeamSheet: View {
     let account: Account
     var onCreated: () -> Void
@@ -26,12 +25,6 @@ struct CreateTeamSheet: View {
             Form {
                 Section {
                     TextField("Team name", text: $name)
-                } footer: {
-                    Text(account.isMock
-                        ? "Demo account: no real team is created."
-                        : "This creates a real team in your HackerRank for Work organisation.")
-                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
-                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {

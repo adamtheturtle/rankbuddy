@@ -62,6 +62,7 @@ struct TestsScreen: View {
                         openInWindow: { openWindow(value: DetailWindowValue.test(test)) }
                     )
                 },
+                openInWindow: { openWindow(value: DetailWindowValue.test($0)) },
                 onFirstPage: { tests in
                     RecentActivityStore.shared.record(
                         tests.map {
@@ -185,7 +186,6 @@ struct TestRow: View {
                 }
             }
         }
-        .accessibilityElement(children: .combine)
     }
 }
 

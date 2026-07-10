@@ -15,6 +15,26 @@ extension AccountStore {
     /// Service, #46) can resolve "the current account" without a store reference.
     static let currentIDDefaultsKey = "rankbuddy.currentAccountID"
 
+    /// Adds the mock-data demo account if needed, selects it, and returns its id.
+    func addDemoIfMissing() -> UUID? {
+        if !accounts.contains(where: { $0.isMock && !$0.isBadKeyDemo }) {
+            add(.demo)
+        }
+        guard let demo = accounts.first(where: { $0.isMock && !$0.isBadKeyDemo }) else { return nil }
+        currentAccountID = demo.id
+        return demo.id
+    }
+
+    /// Adds the rejected-token demo account if needed, selects it, and returns its id.
+    func addBadKeyDemoIfMissing() -> UUID? {
+        if !accounts.contains(where: \.isBadKeyDemo) {
+            add(.badKeyDemo)
+        }
+        guard let demo = accounts.first(where: \.isBadKeyDemo) else { return nil }
+        currentAccountID = demo.id
+        return demo.id
+    }
+
     /// Builds the RankBuddy account store.
     ///
     /// The Keychain service string is a permanent compatibility contract: it must never

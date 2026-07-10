@@ -7,13 +7,13 @@ import BuddyAppKit
 import BuddyDesignSystem
 import SwiftUI
 
-/// The filter bar shown above a `LoadableList`, modelled on PadBuddy's (#55/#25/#19/#91). Two
+/// The filter bar shown above a `LoadableList`, modelled on PadBuddy's (#55/#25/#19). Two
 /// wrapping rows sit between the list's title and its rows:
 ///
 ///  - `savedSearchesBar` — a row of rounded-rect recall tokens, one per saved search, applied on
 ///    tap and removed via their × (#25).
 ///  - `filterBar` — the per-field facet chips, the inline date-range chip, and the verb-style
-///    `Smart Filter…` / `Save…` / `Clear` actions, all reflowing together as the pane narrows.
+///    `Save…` / `Clear` actions, all reflowing together as the pane narrows.
 ///
 /// Both read the list's own filter state directly (rather than taking a dozen bindings), the same
 /// way PadBuddy's `PadsView+FilterBar` extension is wired.
@@ -29,12 +29,6 @@ extension LoadableList {
     /// (e.g. a merged collection) doesn't render an empty padded bar.
     var showsFilterBar: Bool {
         !facets.isEmpty || filterDate != nil || hasActiveFilters
-    }
-
-    /// The on-device smart filter only has somewhere to map a request when the list offers facets
-    /// or a date filter, so the link is hidden otherwise (it would dead-end).
-    private var offersSmartFilter: Bool {
-        SearchInterpreter.isAvailable && (!facets.isEmpty || filterDate != nil)
     }
 
     // MARK: - Saved searches row
@@ -75,22 +69,6 @@ extension LoadableList {
                         formatter: { $0.capitalized }
                     )
                     .help("Filter \(title) by date")
-                }
-
-                // On-device natural-language filtering: a verb-style link, shown only when the
-                // model is available and there are filters for it to map onto (#91).
-                if offersSmartFilter {
-                    Button {
-                        smartFilterFailed = false
-                        showSmartFilter = true
-                    } label: {
-                        Label("Smart Filter…", systemImage: "sparkle.magnifyingglass")
-                            .labelStyle(.titleAndIcon)
-                    }
-                    .linkButtonStyle()
-                    .controlSize(.small)
-                    .keyboardShortcut("f", modifiers: [.command, .shift])
-                    .help("Filter \(title) with a plain-language request, interpreted on your device")
                 }
 
                 // Save the live filter set as a recall token. A link, so it reads as a verb rather
