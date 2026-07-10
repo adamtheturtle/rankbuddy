@@ -272,10 +272,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             if let detailItem {
                 detail(detailItem)
             } else {
-                ContentUnavailableView(
-                    "No Selection",
+                CompactStateView(
+                    title: "No Selection",
                     systemImage: "square.righthalf.filled",
-                    description: Text("Select an item to see its details.")
+                    message: "Select a row in \(title) to inspect its details."
                 )
             }
         }
@@ -290,24 +290,41 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @ViewBuilder private var content: some View {
         switch phase {
         case .loading:
-            ProgressView("Loading…")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            CompactStateView(
+                title: "Loading \(title)",
+                systemImage: "arrow.triangle.2.circlepath",
+                message: "Fetching the latest rows for the current account.",
+                isLoading: true
+            )
 
         case .loaded where items.isEmpty:
-            ContentUnavailableView(emptyMessage, systemImage: "tray")
+            emptyState
 
         case .loaded:
             loadedList
 
         case let .failed(message):
-            ContentUnavailableView {
-                Label("Couldn’t load", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Try Again") { Task { await reload() } }
-            }
+            CompactStateView(
+                title: "Couldn’t Load \(title)",
+                systemImage: "exclamationmark.triangle",
+                message: message,
+                actionTitle: "Try Again",
+                actionSystemImage: "arrow.clockwise"
+            ) { Task { await reload() } }
         }
+    }
+
+    private var emptyState: some View {
+        CompactStateView(
+            title: hasActiveFilters ? "No Results" : emptyMessage,
+            systemImage: hasActiveFilters ? "line.3.horizontal.decrease.circle" : "tray",
+            message: hasActiveFilters
+                ? "Clear filters or try a broader search."
+                : "There is nothing to show for this account yet.",
+            actionTitle: hasActiveFilters ? "Clear Filters" : nil,
+            actionSystemImage: hasActiveFilters ? "xmark.circle" : nil,
+            action: hasActiveFilters ? clearAllFilters : nil
+        )
     }
 
     @ViewBuilder private var loadedList: some View {

@@ -67,9 +67,21 @@ extension LoadableList {
     /// results"; the real "No results" shows only once the scan has settled.
     @ViewBuilder var filterEmptyState: some View {
         if isFilterLoading {
-            ProgressView("Searching…").frame(maxWidth: .infinity, maxHeight: .infinity)
+            CompactStateView(
+                title: "Searching \(title)",
+                systemImage: "magnifyingglass",
+                message: "Scanning more loaded rows before showing results.",
+                isLoading: true
+            )
         } else {
-            ContentUnavailableView.search(text: query).frame(maxWidth: .infinity, maxHeight: .infinity)
+            CompactStateView(
+                title: "No Results",
+                systemImage: "line.3.horizontal.decrease.circle",
+                message: "Clear filters or try a broader search.",
+                actionTitle: "Clear Filters",
+                actionSystemImage: "xmark.circle",
+                action: clearAllFilters
+            )
         }
     }
 

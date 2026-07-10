@@ -257,7 +257,7 @@ extension LoadableList {
     }
 
     /// Clears every narrowing filter at once — the bar's Clear action (#55).
-    private func clearAllFilters() {
+    func clearAllFilters() {
         query = ""
         dateRange = nil
         selectedFacets = [:]

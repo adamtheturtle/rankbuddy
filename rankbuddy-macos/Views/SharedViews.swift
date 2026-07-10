@@ -205,6 +205,52 @@ struct NoAccountView: View {
     }
 }
 
+/// Compact native list/detail state used for loading, empty, no-results, no-selection, and
+/// failure surfaces without oversized marketing-style placeholders.
+struct CompactStateView: View {
+    let title: String
+    let systemImage: String
+    let message: String
+    var isLoading = false
+    var actionTitle: String?
+    var actionSystemImage: String?
+    var action: (() -> Void)?
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.title2)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            VStack(spacing: 4) {
+                Text(title).font(.headline)
+                Text(message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if isLoading {
+                ProgressView().controlSize(.small)
+            }
+            if let actionTitle, let action {
+                Button(action: action) {
+                    if let actionSystemImage {
+                        Label(actionTitle, systemImage: actionSystemImage)
+                    } else {
+                        Text(actionTitle)
+                    }
+                }
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: 360)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 /// A link to where a HackerRank for Work personal access token is generated, so a new user
 /// can find their token before connecting an account.
 struct GetTokenLink: View {
