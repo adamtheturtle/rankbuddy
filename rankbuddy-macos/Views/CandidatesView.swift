@@ -327,6 +327,7 @@ struct CandidateDetailView: View {
 
     private func loadDetail() async {
         guard let testID, let account else { return }
+
         detail = try? await HackerRankClient(account: account).candidate(
             testID: testID,
             candidateID: candidate.id

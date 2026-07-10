@@ -231,7 +231,7 @@ struct TestDetailView: View {
         async let loadedInviters = try? client.testInviters(testID: test.id)
 
         detail = await loadedDetail
-        inviters = (await loadedInviters)?.items ?? []
+        inviters = await (loadedInviters)?.items ?? []
     }
 
     private func delete() async {
