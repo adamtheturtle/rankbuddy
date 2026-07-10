@@ -21,6 +21,7 @@ extension AccountStore {
             add(.demo)
         }
         guard let demo = accounts.first(where: { $0.isMock && !$0.isBadKeyDemo }) else { return nil }
+
         currentAccountID = demo.id
         return demo.id
     }
@@ -31,6 +32,7 @@ extension AccountStore {
             add(.badKeyDemo)
         }
         guard let demo = accounts.first(where: \.isBadKeyDemo) else { return nil }
+
         currentAccountID = demo.id
         return demo.id
     }

@@ -46,7 +46,7 @@ extension SettingsView {
     /// The Dock-badge / background-update controls, shown on the General tab (mirroring PadBuddy,
     /// which keeps its Dock badge + notification options in General). Extracted to a property so it
     /// stays off `generalTab`'s body-length budget, like `mcpConfigSections`.
-    @ViewBuilder var interviewUpdatesSection: some View {
+    var interviewUpdatesSection: some View {
         Section {
             Toggle("Show upcoming interviews on the Dock icon", isOn: $backgroundUpdates)
                 .onChange(of: backgroundUpdates) { _, enabled in

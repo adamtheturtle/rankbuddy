@@ -192,16 +192,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @State var newSearchName = ""
 
     var body: some View {
-        // Three-pane (#53): the list and a persistent detail pane sit side by side inside the
-        // window's detail column, so selecting a row shows its detail without a push/pop.
         HSplitView {
             listColumn
-                // maxHeight so each pane fills the window's full height: without it the panes
-                // size to their content and the enclosing stack centres the short list (#111).
                 .frame(minWidth: 300, idealWidth: 380, maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(nsColor: .textBackgroundColor))
-            // The detail pane is dismissable (#53): hiding it drops to a single-column list,
-            // mirroring PadBuddy. Driven by the shared toggle (⌃⌘D / the toolbar button).
             if !detailPaneHidden {
                 detailColumn
                     .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
@@ -262,9 +256,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
         }
     }
 
-    /// The persistent detail pane (#53): the selected item's detail, or a placeholder when
-    /// nothing is selected. Its own `NavigationStack` so detail-level drill-down (a test's
-    /// Candidates list) still pushes with a back button.
     private var detailColumn: some View {
         NavigationStack {
             if let detailItem {

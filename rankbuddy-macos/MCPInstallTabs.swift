@@ -46,7 +46,8 @@ struct MCPInstallTabs: View {
     @ViewBuilder
     private var manualInstructions: some View {
         let snippet = client.manualConfigText(command: command)
-        Text("Add the `rankbuddy` server to this file. Create it with the text below if it doesn't exist, otherwise add just the `rankbuddy` block to what's already there:")
+        Text("Add the `rankbuddy` server to this file. Create it with the text below if it doesn't exist, " +
+            "otherwise add just the `rankbuddy` block to what's already there:")
             .font(.callout)
             .foregroundStyle(.secondary)
 

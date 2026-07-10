@@ -17,6 +17,7 @@ struct StatusBadge: View {
             Image(systemName: systemImage)
                 .font(.caption2.weight(.semibold))
                 .frame(width: 11, height: 11)
+                .accessibilityHidden(true)
 
             Text(text)
                 .font(.caption2.weight(.semibold))

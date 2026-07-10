@@ -55,7 +55,7 @@ struct MCPClientInstallTests {
         #expect(rankbuddy["command"] as? String == "old")
     }
 
-    @Test func `Codex install replaces only rankbuddy table`() throws {
+    @Test func `codex install replaces only rankbuddy table`() throws {
         let url = try temporaryFile(named: "config.toml")
         try """
         [mcp_servers.other]

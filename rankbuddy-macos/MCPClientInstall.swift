@@ -74,6 +74,7 @@ enum MCPClientInstall {
                 isTOML: false,
                 message: "Select Claude Desktop's Claude folder so RankBuddy can add itself."
             )
+
         case .claudeCode:
             return ConfigSpec(
                 preferred: home,
@@ -82,6 +83,7 @@ enum MCPClientInstall {
                 isTOML: false,
                 message: "Select your Home folder so RankBuddy can add itself to ~/.claude.json."
             )
+
         case .codex:
             return ConfigSpec(
                 preferred: home.appendingPathComponent(".codex", isDirectory: true),
@@ -90,6 +92,7 @@ enum MCPClientInstall {
                 isTOML: true,
                 message: "Select the .codex folder so RankBuddy can add itself to config.toml."
             )
+
         case .cursor:
             return ConfigSpec(
                 preferred: home.appendingPathComponent(".cursor", isDirectory: true),
@@ -150,6 +153,7 @@ enum MCPClientInstall {
         let block = codexServerBlock(command: command)
         if text.contains("[mcp_servers.\(serverName)]") {
             guard shouldReplace(client) else { return }
+
             let updated = replacingCodexServer(in: text, with: block)
             try updated.write(to: url, atomically: true, encoding: .utf8)
             didUpdate("Updated \(client.displayName)", client.restartHint)
@@ -220,7 +224,8 @@ enum MCPClientInstall {
         let alert = NSAlert()
         alert.alertStyle = .informational
         alert.messageText = "Update \(client.displayName)?"
-        alert.informativeText = "\(client.displayName) already has a rankbuddy server. Update it to launch this copy of RankBuddy?"
+        alert.informativeText = "\(client.displayName) already has a rankbuddy server. " +
+            "Update it to launch this copy of RankBuddy?"
         alert.addButton(withTitle: "Update")
         alert.addButton(withTitle: "Cancel")
         return alert.runModal() == .alertFirstButtonReturn

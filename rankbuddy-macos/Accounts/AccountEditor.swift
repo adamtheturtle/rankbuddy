@@ -8,7 +8,8 @@ import BuddyDesignSystem
 import HackerRankKit
 import SwiftUI
 
-/// A flat, Mail-style editor for adding or editing a HackerRank account.
+// A flat, Mail-style editor for adding or editing a HackerRank account.
+// swiftlint:disable:next type_body_length
 struct AccountEditor: View {
     @Environment(AccountStore.self) private var store
     @Environment(AccountHealthMonitor.self) private var health
@@ -142,7 +143,9 @@ struct AccountEditor: View {
                             .buttonStyle(.plain)
                             .help(option.name)
                             .accessibilityLabel(option.name)
-                            .accessibilityAddTraits(selectedTintHex == option.hex ? [.isButton, .isSelected] : .isButton)
+                            .accessibilityAddTraits(
+                                selectedTintHex == option.hex ? [.isButton, .isSelected] : .isButton
+                            )
                         }
                     }
                 }
@@ -287,6 +290,7 @@ struct AccountEditor: View {
 
     private func credentialsChanged() {
         guard !credentialsUnchanged else { return }
+
         validation = .idle
         scopeWarning = nil
     }
@@ -306,12 +310,11 @@ struct AccountEditor: View {
 
     private func validate() async {
         if let demo = Account.DemoMagicKey(typedToken: token) {
-            let demoID: Account.ID?
-            switch demo {
+            let demoID: Account.ID? = switch demo {
             case .mockData:
-                demoID = store.addDemoIfMissing()
+                store.addDemoIfMissing()
             case .badKey:
-                demoID = store.addBadKeyDemoIfMissing()
+                store.addBadKeyDemoIfMissing()
             }
             if let onFinish {
                 onFinish(demoID)
@@ -378,7 +381,8 @@ struct AccountEditor: View {
         if await teamsOK == false { missing.append("Teams") }
         guard !missing.isEmpty else { return nil }
 
-        return "This token works, but isn't authorized for: \(missing.joined(separator: ", ")). Those sections may be empty."
+        return "This token works, but isn't authorized for: \(missing.joined(separator: ", ")). " +
+            "Those sections may be empty."
     }
 
     private func endpointAuthorized(_ probe: () async throws -> Void) async -> Bool {
@@ -392,6 +396,7 @@ struct AccountEditor: View {
 
     private func isUnauthorized(_ error: any Error) -> Bool {
         guard case let HackerRankError.http(status, _) = error else { return false }
+
         return status == 401 || status == 403
     }
 
@@ -439,4 +444,4 @@ struct AccountEditor: View {
             .environment(AccountStore.rankBuddy(isTesting: true))
             .environment(AccountHealthMonitor())
     }
-}
+} // swiftlint:disable:this file_length

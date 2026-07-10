@@ -7,23 +7,19 @@ import HackerRankKit
 import SwiftUI
 
 extension LoadableList {
-    /// Resets and loads the first page (initial load, refresh, or account switch).
-    ///
-    /// When a cached first page exists for this section it is shown instantly and the fresh load
-    /// refreshes it in the background, so re-entering a section never flashes a full-screen
-    /// spinner (#102). Only the unfiltered first page is cached, so a restored server-side date
-    /// range still loads fresh.
+    // Resets and loads the first page. Cached rows show instantly while the fresh load refreshes
+    // them in the background, so returning to a section does not flash a full-screen spinner.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func reload() async {
         didRestore = false
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
 
         let isServerFilterReload = serverDateFiltering && dateRange != nil
-        let isLoadedPhase: Bool
-        if case .loaded = phase {
-            isLoadedPhase = true
+        let isLoadedPhase = if case .loaded = phase {
+            true
         } else {
-            isLoadedPhase = false
+            false
         }
         let preservesVisibleState = isServerFilterReload && isLoadedPhase && !items.isEmpty
         if !preservesVisibleState {
