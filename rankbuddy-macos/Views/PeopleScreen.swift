@@ -176,7 +176,7 @@ struct PersonRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(user.displayName).font(.callout.weight(.medium))
+            Text(user.displayName).listRowTitleStyle()
             HStack(spacing: 8) {
                 if let role = user.role {
                     Text(role.capitalized)
@@ -185,13 +185,12 @@ struct PersonRow: View {
                     Text(status.capitalized)
                 }
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .listRowMetadataStyle()
         }
         // Fill the row width so the content is left-aligned rather than hugging its text and
         // being centred in the column (#111) — the people/teams rows have no trailing badge to
         // stretch them the way the tests/interviews rows do.
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .listRowTextColumn()
         .accessibilityElement(children: .combine)
     }
 }

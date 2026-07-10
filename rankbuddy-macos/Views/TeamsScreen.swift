@@ -91,16 +91,15 @@ struct TeamRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(team.name).font(.callout.weight(.medium))
+            Text(team.name).listRowTitleStyle()
             if let summary = team.memberSummary {
                 Text(summary)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .listRowMetadataStyle()
             }
         }
         // Fill the row width so the content is left-aligned rather than centred in the column
         // (#111) — teams rows carry no trailing badge to stretch them like the other lists.
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .listRowTextColumn()
         .accessibilityElement(children: .combine)
     }
 }

@@ -227,8 +227,10 @@ struct InterviewRow: View {
 
     var body: some View {
         HStack {
-            Text(displayTitle).font(.callout.weight(.medium))
-            Spacer()
+            Text(displayTitle)
+                .listRowTitleStyle()
+                .listRowTextColumn()
+            Spacer(minLength: 12)
             interview.statusBadge
         }
         .accessibilityElement(children: .combine)

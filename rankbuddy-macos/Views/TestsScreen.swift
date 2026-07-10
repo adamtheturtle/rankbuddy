@@ -168,16 +168,16 @@ struct TestRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(test.name).font(.callout.weight(.medium))
+                Text(test.name).listRowTitleStyle()
                 HStack(spacing: 8) {
                     if let state = test.state {
                         Text(state.capitalized)
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .listRowMetadataStyle()
             }
-            Spacer()
+            .listRowTextColumn()
+            Spacer(minLength: 12)
             HStack(spacing: 6) {
                 test.windowBadge(now: Date())
                 if test.enableProctoring == true {

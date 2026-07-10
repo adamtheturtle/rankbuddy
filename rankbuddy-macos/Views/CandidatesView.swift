@@ -103,15 +103,14 @@ struct CandidateRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(candidate.fullName ?? candidate.email).font(.callout.weight(.medium))
+                Text(candidate.fullName ?? candidate.email).listRowTitleStyle()
                 HStack(spacing: 8) {
                     Text(candidate.email)
                     if let score = candidate.score {
                         Text("Score: \(score.formatted())")
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .listRowMetadataStyle()
                 if let status = candidate.listStatusLabel {
                     Text(status)
                         .font(.caption2)
@@ -119,7 +118,8 @@ struct CandidateRow: View {
                         .lineLimit(1)
                 }
             }
-            Spacer()
+            .listRowTextColumn()
+            Spacer(minLength: 12)
             candidate.integrityBadge
         }
         .accessibilityElement(children: .combine)

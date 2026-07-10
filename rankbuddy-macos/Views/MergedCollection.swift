@@ -74,14 +74,14 @@ struct MergedRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.callout.weight(.medium))
+                Text(title).listRowTitleStyle()
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .listRowMetadataStyle()
                 }
             }
-            Spacer()
+            .listRowTextColumn()
+            Spacer(minLength: 12)
             HStack(spacing: 4) {
                 AvatarCircle(
                     label: account.label,
@@ -94,6 +94,7 @@ struct MergedRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
+            .layoutPriority(1)
         }
         .accessibilityElement(children: .combine)
     }

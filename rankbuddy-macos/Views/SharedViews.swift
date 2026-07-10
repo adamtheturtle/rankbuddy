@@ -93,6 +93,24 @@ extension View {
             self
         #endif
     }
+
+    func listRowTextColumn() -> some View {
+        frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
+    }
+
+    func listRowTitleStyle() -> some View {
+        font(.callout.weight(.medium))
+            .lineLimit(1)
+            .truncationMode(.tail)
+    }
+
+    func listRowMetadataStyle() -> some View {
+        font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .truncationMode(.tail)
+    }
 }
 
 /// A relative timestamp ("2 months ago") parsed from an ISO string, with the absolute date

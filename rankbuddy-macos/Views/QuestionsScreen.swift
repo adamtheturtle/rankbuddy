@@ -127,17 +127,17 @@ struct QuestionRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(question.name).font(.callout.weight(.medium))
+                Text(question.name).listRowTitleStyle()
                 HStack(spacing: 8) {
                     Text(question.type.capitalized)
                     if let languages = DisplayFormat.languages(question.languages) {
                         Text(languages)
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .listRowMetadataStyle()
             }
-            Spacer()
+            .listRowTextColumn()
+            Spacer(minLength: 12)
         }
         .accessibilityElement(children: .combine)
     }
