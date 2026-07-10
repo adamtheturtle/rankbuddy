@@ -247,6 +247,40 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("name"))
     }
 
+    @Test func `invite_candidate accepts richer invite options`() async {
+        let result = await writeProvider().callTool(
+            "invite_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "email": .string("new@example.com"),
+                "additional_time": .int(15),
+                "tags": .array([.string("onsite"), .string("backend")]),
+                "email_subject": .string("Backend screen"),
+                "email_message": .string("Please complete this screen."),
+                "evaluator_email": .string("reviewer@example.com"),
+                "ats_candidate_id": .string("cand-123"),
+                "ats_requisition_id": .string("req-456")
+            ]
+        )
+        let body = text(result)
+        #expect(result.isError != true)
+        #expect(body.contains("invited_candidate"))
+        #expect(body.contains("new@example.com"))
+    }
+
+    @Test func `invite_candidate rejects negative additional time`() async {
+        let result = await writeProvider().callTool(
+            "invite_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "email": .string("new@example.com"),
+                "additional_time": .int(-1)
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("additional_time"))
+    }
+
     @Test func `schedule_interview rejects a non-ISO-8601 start time`() async {
         let result = await writeProvider().callTool(
             "schedule_interview", arguments: ["title": .string("Pairing"), "from": .string("next tuesday")]

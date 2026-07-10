@@ -109,6 +109,15 @@ struct InviteCandidateSheet: View {
     @State private var email = ""
     @State private var fullName = ""
     @State private var sendEmail = true
+    @State private var additionalTime = ""
+    @State private var validFrom = ""
+    @State private var validUntil = ""
+    @State private var emailSubject = ""
+    @State private var emailMessage = ""
+    @State private var evaluatorEmail = ""
+    @State private var tags = ""
+    @State private var atsCandidateID = ""
+    @State private var atsRequisitionID = ""
     @State private var isSending = false
     @State private var errorMessage: String?
 
@@ -118,6 +127,22 @@ struct InviteCandidateSheet: View {
 
     private var isEmailValid: Bool {
         EmailValidation.isLikelyValid(email)
+    }
+
+    private var evaluatorEmailValid: Bool {
+        trimmed(evaluatorEmail).map(EmailValidation.isLikelyValid) ?? true
+    }
+
+    private var additionalTimeMinutes: Int? {
+        trimmed(additionalTime).flatMap(Int.init)
+    }
+
+    private var additionalTimeValid: Bool {
+        trimmed(additionalTime) == nil || additionalTimeMinutes.map { $0 >= 0 } == true
+    }
+
+    private var canInvite: Bool {
+        isEmailValid && evaluatorEmailValid && additionalTimeValid
     }
 
     var body: some View {
@@ -133,6 +158,31 @@ struct InviteCandidateSheet: View {
                     Text(consequenceText)
                         .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
                         .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Section {
+                    TextField("Additional time (minutes)", text: $additionalTime)
+                    TextField("Valid from (ISO-8601, optional)", text: $validFrom)
+                    TextField("Valid until (ISO-8601, optional)", text: $validUntil)
+                    TextField("Tags (comma-separated)", text: $tags)
+                    TextField("Evaluator email", text: $evaluatorEmail)
+                        .textContentType(.emailAddress)
+                        .disableAutocorrection(true)
+                    TextField("ATS candidate ID", text: $atsCandidateID)
+                    TextField("ATS requisition ID", text: $atsRequisitionID)
+                    TextField("Email subject", text: $emailSubject)
+                    TextField("Email message", text: $emailMessage, axis: .vertical)
+                        .lineLimit(2 ... 4)
+                } header: {
+                    Text("Invite options")
+                } footer: {
+                    if !additionalTimeValid {
+                        Text("Additional time must be a non-negative whole number of minutes.")
+                            .foregroundStyle(.red)
+                    } else if !evaluatorEmailValid {
+                        Text("Evaluator email must look like an email address.")
+                            .foregroundStyle(.red)
+                    }
                 }
 
                 if let errorMessage {
@@ -155,12 +205,12 @@ struct InviteCandidateSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Invite") { Task { await invite() } }
-                            .disabled(!isEmailValid)
+                            .disabled(!canInvite)
                     }
                 }
             }
         }
-        .frame(width: 440, height: 300)
+        .frame(width: 500, height: 560)
     }
 
     /// The footer text spelling out what the invite will do, so a live action is never a
@@ -174,6 +224,18 @@ struct InviteCandidateSheet: View {
             : "This invites a real candidate to this test on HackerRank (no email is sent)."
     }
 
+    private func trimmed(_ value: String) -> String? {
+        let result = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return result.isEmpty ? nil : result
+    }
+
+    private func parsedTags(_ value: String) -> [String]? {
+        let result = value.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return result.isEmpty ? nil : result
+    }
+
     private func invite() async {
         isSending = true
         errorMessage = nil
@@ -183,7 +245,18 @@ struct InviteCandidateSheet: View {
                 testID: testID,
                 email: trimmedEmail,
                 fullName: fullName,
-                sendEmail: sendEmail
+                sendEmail: sendEmail,
+                options: CandidateInviteOptions(
+                    validFrom: trimmed(validFrom),
+                    validUntil: trimmed(validUntil),
+                    emailSubject: trimmed(emailSubject),
+                    emailMessage: trimmed(emailMessage),
+                    evaluatorEmail: trimmed(evaluatorEmail),
+                    tags: parsedTags(tags),
+                    additionalTime: additionalTimeMinutes,
+                    atsCandidateID: trimmed(atsCandidateID),
+                    atsRequisitionID: trimmed(atsRequisitionID)
+                )
             )
             onInvited()
             dismiss()

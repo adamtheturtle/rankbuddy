@@ -68,6 +68,32 @@ extension RankBuddyToolProvider {
         return nil
     }
 
+    private func intArgument(_ arguments: [String: Value]?, _ key: String) -> Int? {
+        if case let .int(value)? = arguments?[key] { return value }
+        return nil
+    }
+
+    private func stringArrayArgument(_ arguments: [String: Value]?, _ key: String) -> [String]? {
+        if case let .array(values)? = arguments?[key] {
+            let result = values.compactMap { value -> String? in
+                guard case let .string(text) = value else { return nil }
+
+                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                return trimmed.isEmpty ? nil : trimmed
+            }
+            return result.isEmpty ? nil : result
+        }
+
+        if let text = stringArgument(arguments, key) {
+            let result = text.split(separator: ",")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            return result.isEmpty ? nil : result
+        }
+
+        return nil
+    }
+
     // MARK: - Tests
 
     @MainActor
@@ -124,12 +150,34 @@ extension RankBuddyToolProvider {
         guard let email = stringArgument(arguments, "email") else { return missingArgument("email") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
+        let additionalTime = intArgument(arguments, "additional_time")
+        if let additionalTime, additionalTime < 0 {
+            return errorResult("`additional_time` must be a non-negative whole number of minutes.")
+        }
+
         do {
             let invited = try await HackerRankClient(account: resolved).inviteCandidate(
                 testID: testID,
                 email: email,
                 fullName: stringArgument(arguments, "full_name"),
-                sendEmail: boolArgument(arguments, "send_email") ?? true
+                sendEmail: boolArgument(arguments, "send_email") ?? true,
+                options: CandidateInviteOptions(
+                    validFrom: stringArgument(arguments, "valid_from"),
+                    validUntil: stringArgument(arguments, "valid_until"),
+                    emailSubject: stringArgument(arguments, "email_subject"),
+                    emailMessage: stringArgument(arguments, "email_message"),
+                    templateID: stringArgument(arguments, "template_id"),
+                    evaluatorEmail: stringArgument(arguments, "evaluator_email"),
+                    finishURL: stringArgument(arguments, "finish_url"),
+                    resultURL: stringArgument(arguments, "result_url"),
+                    notifyResultUpdate: boolArgument(arguments, "notify_result_update"),
+                    tags: stringArrayArgument(arguments, "tags"),
+                    force: boolArgument(arguments, "force"),
+                    allowReattempt: boolArgument(arguments, "allow_reattempt"),
+                    additionalTime: additionalTime,
+                    atsCandidateID: stringArgument(arguments, "ats_candidate_id"),
+                    atsRequisitionID: stringArgument(arguments, "ats_requisition_id")
+                )
             )
             return jsonResult([
                 "account": resolved.label, "test_id": testID,
@@ -272,6 +320,12 @@ extension RankBuddyToolProvider {
         func string(_ description: String) -> [String: Any] {
             ["type": "string", "description": description]
         }
+        func integer(_ description: String) -> [String: Any] {
+            ["type": "integer", "description": description]
+        }
+        func boolean(_ description: String) -> [String: Any] {
+            ["type": "boolean", "description": description]
+        }
         func write(
             _ name: String,
             _ description: String,
@@ -300,7 +354,23 @@ extension RankBuddyToolProvider {
                   properties: [
                       "test_id": string("The test's id."), "email": string("The candidate's email."),
                       "full_name": string("The candidate's name (optional)."),
-                      "send_email": ["type": "boolean", "description": "Email the invite (default true)."],
+                      "send_email": boolean("Email the invite (default true)."),
+                      "additional_time": integer("Extra time accommodation in minutes."),
+                      "valid_from": string("ISO-8601 timestamp before which the invite is inactive."),
+                      "valid_until": string("ISO-8601 timestamp after which the invite expires."),
+                      "email_subject": string("Custom invitation email subject."),
+                      "email_message": string("Custom invitation email message."),
+                      "template_id": string("Invitation email template id."),
+                      "evaluator_email": string("Evaluator email assigned to the invite."),
+                      "finish_url": string("URL to send the candidate to after finishing."),
+                      "result_url": string("Result/report callback or redirect URL."),
+                      "notify_result_update": boolean("Notify downstream systems when results update."),
+                      "tags": ["type": "array", "items": ["type": "string"],
+                               "description": "Candidate tags; a comma-separated string is also accepted."],
+                      "force": boolean("Force creation when supported."),
+                      "allow_reattempt": boolean("Allow the candidate to reattempt."),
+                      "ats_candidate_id": string("External ATS candidate id."),
+                      "ats_requisition_id": string("External ATS requisition/job id."),
                       "account": account
                   ],
                   required: ["test_id", "email"]),
