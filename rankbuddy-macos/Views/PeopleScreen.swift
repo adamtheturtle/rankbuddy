@@ -220,7 +220,7 @@ struct PersonDetailView: View {
                 }
             }
         }
-        .inspectorFormStyle()
+        .formStyle(.grouped)
         .navigationTitle(user.displayName)
     }
 }

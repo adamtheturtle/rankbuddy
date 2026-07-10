@@ -53,12 +53,6 @@ struct InspectorHeader: View {
     }
 }
 
-extension View {
-    func inspectorFormStyle() -> some View {
-        formStyle(.columns)
-    }
-}
-
 extension Test {
     /// Status chips for the inspector header (#54): lifecycle state, scheduling window, and the
     /// notable on/off flags, in rough order of importance. Empty when none apply.

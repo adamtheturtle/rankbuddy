@@ -219,7 +219,7 @@ struct QuestionDetailView: View {
                 }
             }
         }
-        .inspectorFormStyle()
+        .formStyle(.grouped)
         .navigationTitle(question.name)
         .task(id: question.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }

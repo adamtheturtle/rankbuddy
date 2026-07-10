@@ -202,7 +202,7 @@ struct CandidateDetailView: View {
 
             CandidateSummaryView(candidate: candidate)
         }
-        .inspectorFormStyle()
+        .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
         .task(id: self.candidate.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }

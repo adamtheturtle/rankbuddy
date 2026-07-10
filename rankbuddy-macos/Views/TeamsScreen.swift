@@ -231,7 +231,7 @@ struct TeamDetailView: View {
                 }
             }
         }
-        .inspectorFormStyle()
+        .formStyle(.grouped)
         .navigationTitle(team.name)
     }
 }
