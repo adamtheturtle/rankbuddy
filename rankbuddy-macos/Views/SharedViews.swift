@@ -313,8 +313,12 @@ struct OptionalRow: View {
 
     var body: some View {
         if let value, !value.isEmpty {
-            LabeledContent(label, value: value)
-                .textSelection(.enabled)
+            LabeledContent(label) {
+                Text(value)
+                    .textSelection(.enabled)
+                    .multilineTextAlignment(.trailing)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

@@ -120,7 +120,7 @@ struct TestDetailView: View {
                 }
             }
         }
-        .formStyle(.grouped)
+        .inspectorFormStyle()
         .navigationTitle(test.name)
         .task(id: test.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }

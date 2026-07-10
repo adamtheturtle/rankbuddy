@@ -89,7 +89,7 @@ struct InterviewDetailView: View {
                 }
             }
         }
-        .formStyle(.grouped)
+        .inspectorFormStyle()
         .navigationTitle(interview.title ?? "Interview")
         .task(id: interview.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
