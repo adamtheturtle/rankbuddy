@@ -9,32 +9,22 @@ import HackerRankKit
 import MCP
 import MCPKit
 
-/// The MCP write tools (#73): create/update/delete over the HackerRank for Work data, mirroring
-/// the app's own write flows (#12, #57–#60). Advertised and runnable only when the separate
-/// "Allow the MCP server to make changes" opt-in is on; `RankBuddyToolProvider` gates both the
-/// catalogue and dispatch on `allowWrites`. Every tool dispatches through the same
-/// `HackerRankClient` the UI uses, so the demo account exercises them against the mock.
 extension RankBuddyToolProvider {
-    /// The names of the write tools, used to gate dispatch behind the opt-in.
     static let writeToolNames: Set<String> = [
         "create_test", "update_test", "delete_test", "invite_candidate", "create_user",
         "create_team", "add_team_member", "remove_team_member", "create_pad", "schedule_interview"
     ]
 
-    /// Whether `name` is a write tool (so `callTool` can gate it on `allowWrites`).
     static func isWriteTool(_ name: String) -> Bool {
         writeToolNames.contains(name)
     }
 
-    /// Dispatches a write tool. The caller (`callTool`) has already confirmed `allowWrites`. Split
-    /// into two halves so neither dispatch switch trips the cyclomatic-complexity limit.
     func callWriteTool(_ name: String, arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         if let result = await callTestWriteTool(name, arguments, account: account) { return result }
         if let result = await callTeamInterviewWriteTool(name, arguments, account: account) { return result }
         return errorResult("Unknown tool: \(name)")
     }
 
-    /// The tests/candidates/users write tools, or `nil` if `name` isn't one of them.
     private func callTestWriteTool(
         _ name: String, _ arguments: [String: Value]?, account: String?
     ) async -> CallTool.Result? {
@@ -48,7 +38,6 @@ extension RankBuddyToolProvider {
         }
     }
 
-    /// The teams/interviews write tools, or `nil` if `name` isn't one of them.
     private func callTeamInterviewWriteTool(
         _ name: String, _ arguments: [String: Value]?, account: String?
     ) async -> CallTool.Result? {
@@ -62,7 +51,6 @@ extension RankBuddyToolProvider {
         }
     }
 
-    /// A `Bool` argument, or `nil` when absent or not a boolean.
     private func boolArgument(_ arguments: [String: Value]?, _ key: String) -> Bool? {
         if case let .bool(value)? = arguments?[key] { return value }
         return nil
@@ -83,14 +71,12 @@ extension RankBuddyToolProvider {
             }
             return result.isEmpty ? nil : result
         }
-
         if let text = stringArgument(arguments, key) {
             let result = text.split(separator: ",")
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
             return result.isEmpty ? nil : result
         }
-
         return nil
     }
 
@@ -311,8 +297,6 @@ extension RankBuddyToolProvider {
 // MARK: - Catalogue
 
 extension RankBuddyToolProvider {
-    /// The write tool descriptors, advertised only when `allowWrites` is on (#73). Each is flagged
-    /// `readOnlyHint: false`; deletions/removals also carry `destructiveHint: true`.
     static var writeDescriptors: [[String: Any]] {
         let account: [String: Any] = [
             "type": "string", "description": "Account label or id; defaults to the current account."
