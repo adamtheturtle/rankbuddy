@@ -10,15 +10,40 @@ import FastList
 import HackerRankKit
 import SwiftUI
 
+/// What a sort field measures, naming the two directions in the Sort menu's Order section
+/// the way PadBuddy does ("Newest First" for dates, "A to Z" for text, …).
+enum SortFieldKind {
+    case date
+    case text
+    case amount
+
+    /// The two direction labels, the option's comparator order first.
+    var directionLabels: (forward: String, reversed: String) {
+        switch self {
+        case .date: ("Newest First", "Oldest First")
+        case .text: ("A to Z", "Z to A")
+        case .amount: ("Highest First", "Lowest First")
+        }
+    }
+}
+
 /// A named way to order a list's items, shown in the list's sort menu.
 struct SortOption<Item>: Identifiable {
     let id = UUID()
     let label: String
-    /// A `sorted(by:)` predicate: returns true when `lhs` should come before `rhs`.
+    /// The field's icon in the Sort menu, matching PadBuddy's field pickers.
+    let systemImage: String
+    /// Names the two directions the field can be ordered in.
+    let kind: SortFieldKind
+    /// A `sorted(by:)` predicate for the field's default direction (`kind`'s first label —
+    /// newest/A-to-Z/highest first): returns true when `lhs` should come before `rhs`.
     let areInIncreasingOrder: (Item, Item) -> Bool
 
-    init(_ label: String, by areInIncreasingOrder: @escaping (Item, Item) -> Bool) {
+    init(_ label: String, systemImage: String, kind: SortFieldKind,
+         by areInIncreasingOrder: @escaping (Item, Item) -> Bool) {
         self.label = label
+        self.systemImage = systemImage
+        self.kind = kind
         self.areInIncreasingOrder = areInIncreasingOrder
     }
 }
@@ -164,6 +189,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// date constraint.
     @State var dateRange: String?
     @State var sortSelection: SortOption<Item>.ID?
+    /// Whether the chosen sort runs opposite its default direction (Oldest First, Z to A, …).
+    /// Kept separate from the field selection — like PadBuddy, switching fields keeps the
+    /// direction rather than resetting it.
+    @State var sortReversed = false
     /// The item shown in the persistent detail pane (#53), or `nil` for the placeholder.
     /// Internal so the loading/auto-refresh extensions can drive and reconcile it.
     @State var detailItem: Item?
@@ -235,6 +264,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 // shows only its own saved searches (#25).
                 .onChange(of: restorationKey) { loadSavedSearches() }
                 .onChange(of: sortSelection) { persistSort() }
+                .onChange(of: sortReversed) { persistSort() }
                 .onChange(of: dateRange) {
                     ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
                     // Server-side date filtering re-queries from page 1; client-side just

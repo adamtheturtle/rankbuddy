@@ -36,9 +36,13 @@ struct InterviewsScreen: View {
                 },
                 searchableText: { "\($0.title ?? "") \($0.status)" },
                 sortOptions: [
-                    SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
-                    SortOption("Status") { $0.status.localizedStandardCompare($1.status) == .orderedAscending },
-                    SortOption("Title") {
+                    SortOption("Date Created", systemImage: "calendar", kind: .date) {
+                        ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                    },
+                    SortOption("Status", systemImage: "circle.fill", kind: .text) {
+                        $0.status.localizedStandardCompare($1.status) == .orderedAscending
+                    },
+                    SortOption("Title", systemImage: "textformat", kind: .text) {
                         ($0.title ?? "").localizedStandardCompare($1.title ?? "") == .orderedAscending
                     }
                 ],
@@ -171,19 +175,24 @@ struct InterviewsScreen: View {
             loadPage: loadMergedInterviews,
             searchableText: { "\($0.item.title ?? "") \($0.item.status) \($0.account.label)" },
             sortOptions: [
-                SortOption("Newest") { ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "") },
-                SortOption("Account", by: AccountScoped.byAccountLabel),
-                SortOption("Status") {
+                SortOption("Date Created", systemImage: "calendar", kind: .date) {
+                    ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "")
+                },
+                SortOption("Account", systemImage: "person.crop.circle", kind: .text,
+                           by: AccountScoped.byAccountLabel),
+                SortOption("Status", systemImage: "circle.fill", kind: .text) {
                     $0.item.status.localizedStandardCompare($1.item.status) == .orderedAscending
                 }
             ],
-            contextMenu: {
+            contextMenu: { scoped in
                 rowMenuItems(
                     copyLabel: "Copy Title",
-                    copyText: $0.item.title ?? "Interview \($0.item.id)",
-                    link: $0.item.url
+                    copyText: scoped.item.title ?? "Interview \(scoped.item.id)",
+                    link: scoped.item.url,
+                    openInWindow: { openWindow(value: DetailWindowValue.interview(scoped.item)) }
                 )
             },
+            openInWindow: { openWindow(value: DetailWindowValue.interview($0.item)) },
             rowTransfer: mergedInterviewTransfer,
             rowDate: { DisplayFormat.parseDate($0.item.createdAt) },
             row: {

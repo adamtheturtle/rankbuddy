@@ -37,10 +37,24 @@ extension LoadableList {
         if !sortOptions.isEmpty {
             ToolbarItem(id: "sort", placement: .automatic) {
                 Menu {
+                    // Two inline radio sections — sort field, then direction — mirroring
+                    // PadBuddy's Sort menu. Without `.inline`, the pickers would render as
+                    // nested "Sort By ▸" / "Order ▸" submenus inside the Sort button.
                     Picker("Sort By", selection: $sortSelection) {
                         ForEach(sortOptions) { option in
-                            Text(option.label).tag(Optional(option.id))
+                            Label(option.label, systemImage: option.systemImage)
+                                .tag(Optional(option.id))
                         }
+                    }
+                    .pickerStyle(.inline)
+
+                    if let option = sortOptions.first(where: { $0.id == sortSelection }) {
+                        let labels = option.kind.directionLabels
+                        Picker("Order", selection: $sortReversed) {
+                            Label(labels.forward, systemImage: "arrow.down").tag(false)
+                            Label(labels.reversed, systemImage: "arrow.up").tag(true)
+                        }
+                        .pickerStyle(.inline)
                     }
                 } label: {
                     Label("Sort", systemImage: "arrow.up.arrow.down")

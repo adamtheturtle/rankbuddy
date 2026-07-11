@@ -12,6 +12,7 @@ import SwiftUI
 /// "New Team" write action (#59).
 struct TeamsScreen: View {
     @Environment(AccountStore.self) private var store
+    @Environment(\.openWindow) private var openWindow
     @State private var createPresented = false
     @State private var reloadToken = 0
 
@@ -23,15 +24,26 @@ struct TeamsScreen: View {
                 loadPage: { try await HackerRankClient(account: account).teamsPage(after: $0) },
                 searchableText: { "\($0.name) \($0.departments?.joined(separator: " ") ?? "")" },
                 sortOptions: [
-                    SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
-                    SortOption("Size") { ($0.developerCount ?? 0) > ($1.developerCount ?? 0) }
+                    SortOption("Name", systemImage: "textformat", kind: .text) {
+                        $0.name.localizedStandardCompare($1.name) == .orderedAscending
+                    },
+                    SortOption("Size", systemImage: "person.3", kind: .amount) {
+                        ($0.developerCount ?? 0) > ($1.developerCount ?? 0)
+                    }
                 ],
                 facets: [
                     ListFacet("department", "Department", systemImage: "building.2") { $0.departments ?? [] },
                     ListFacet("location", "Location", systemImage: "mappin.and.ellipse") { $0.locations ?? [] }
                 ],
                 restorationKey: "selection.teams.\(account.id)",
-                contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.name) },
+                contextMenu: { team in
+                    rowMenuItems(
+                        copyLabel: "Copy Name",
+                        copyText: team.name,
+                        openInWindow: { openWindow(value: DetailWindowValue.team(team, accountID: account.id)) }
+                    )
+                },
+                openInWindow: { openWindow(value: DetailWindowValue.team($0, accountID: account.id)) },
                 accessoryToolbar: { AnyView(createButton) },
                 primaryMenuAction: AppCommandContext.Action(title: "New Team…") { createPresented = true },
                 reloadToken: reloadToken,
@@ -110,6 +122,7 @@ struct TeamMembersList: View {
     let teamID: String
     let account: Account
 
+    @Environment(\.openWindow) private var openWindow
     @State private var addPresented = false
     @State private var memberPendingRemoval: User?
     @State private var removalError: String?
@@ -124,10 +137,15 @@ struct TeamMembersList: View {
             },
             searchableText: { "\($0.displayName) \($0.email) \($0.role ?? "")" },
             sortOptions: [
-                SortOption("Name") { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending },
-                SortOption("Role") { ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending }
+                SortOption("Name", systemImage: "textformat", kind: .text) {
+                    $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
+                },
+                SortOption("Role", systemImage: "person.text.rectangle", kind: .text) {
+                    ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending
+                }
             ],
             contextMenu: { memberMenuItems(for: $0) },
+            openInWindow: { openWindow(value: DetailWindowValue.user($0)) },
             accessoryToolbar: { AnyView(addButton) },
             reloadToken: reloadToken,
             rowTransfer: { user in
@@ -176,7 +194,11 @@ struct TeamMembersList: View {
     }
 
     private func memberMenuItems(for member: User) -> [MenuItem] {
-        var items = rowMenuItems(copyLabel: "Copy Email", copyText: member.email)
+        var items = rowMenuItems(
+            copyLabel: "Copy Email",
+            copyText: member.email,
+            openInWindow: { openWindow(value: DetailWindowValue.user(member)) }
+        )
         items.append(.separator)
         items.append(.button(title: "Remove from Team…") { memberPendingRemoval = member })
         return items

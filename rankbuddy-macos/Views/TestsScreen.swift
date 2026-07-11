@@ -28,9 +28,15 @@ struct TestsScreen: View {
                 loadPage: { try await HackerRankClient(account: account).testsPage(after: $0) },
                 searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "") \($0.metadataSearchText)" },
                 sortOptions: [
-                    SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
-                    SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") },
-                    SortOption("Start Time") { ($0.startTime ?? "") > ($1.startTime ?? "") }
+                    SortOption("Name", systemImage: "textformat", kind: .text) {
+                        $0.name.localizedStandardCompare($1.name) == .orderedAscending
+                    },
+                    SortOption("Date Created", systemImage: "calendar", kind: .date) {
+                        ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                    },
+                    SortOption("Start Time", systemImage: "clock", kind: .date) {
+                        ($0.startTime ?? "") > ($1.startTime ?? "")
+                    }
                 ],
                 facets: [
                     ListFacet("library", "Library", systemImage: "books.vertical") { $0.libraryFilterValues },
@@ -59,10 +65,10 @@ struct TestsScreen: View {
                             title: test.name,
                             undoManager: undoManager
                         ),
-                        openInWindow: { openWindow(value: DetailWindowValue.test(test)) }
+                        openInWindow: { openWindow(value: DetailWindowValue.test(test, accountID: account.id)) }
                     )
                 },
-                openInWindow: { openWindow(value: DetailWindowValue.test($0)) },
+                openInWindow: { openWindow(value: DetailWindowValue.test($0, accountID: account.id)) },
                 onFirstPage: { tests in
                     RecentActivityStore.shared.record(
                         tests.map {
@@ -132,9 +138,14 @@ struct TestsScreen: View {
             loadPage: loadMergedTests,
             searchableText: { "\($0.item.name) \($0.account.label) \($0.item.metadataSearchText)" },
             sortOptions: [
-                SortOption("Name") { $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending },
-                SortOption("Account", by: AccountScoped.byAccountLabel),
-                SortOption("Newest") { ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "") }
+                SortOption("Name", systemImage: "textformat", kind: .text) {
+                    $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending
+                },
+                SortOption("Account", systemImage: "person.crop.circle", kind: .text,
+                           by: AccountScoped.byAccountLabel),
+                SortOption("Date Created", systemImage: "calendar", kind: .date) {
+                    ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "")
+                }
             ],
             facets: [
                 ListFacet("account", "Account", systemImage: "person.crop.circle", value: { $0.account.label }),
@@ -144,7 +155,16 @@ struct TestsScreen: View {
                 ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.item.typeFilterValues },
                 ListFacet("state", "State", systemImage: "circle.fill", value: { $0.item.state?.capitalized })
             ],
-            contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
+            contextMenu: { scoped in
+                rowMenuItems(
+                    copyLabel: "Copy Name",
+                    copyText: scoped.item.name,
+                    openInWindow: {
+                        openWindow(value: DetailWindowValue.test(scoped.item, accountID: scoped.account.id))
+                    }
+                )
+            },
+            openInWindow: { openWindow(value: DetailWindowValue.test($0.item, accountID: $0.account.id)) },
             rowTransfer: { scoped in
                 RowTransfer(title: scoped.item.name, subtitle: scoped.account.label, fields: [
                     ("Name", scoped.item.name),

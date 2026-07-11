@@ -11,6 +11,7 @@ import SwiftUI
 /// a "Create User" write action (#58).
 struct PeopleScreen: View {
     @Environment(AccountStore.self) private var store
+    @Environment(\.openWindow) private var openWindow
     @State private var createPresented = false
     @State private var reloadToken = 0
 
@@ -30,8 +31,12 @@ struct PeopleScreen: View {
                 },
                 searchableText: { "\($0.displayName) \($0.email) \($0.role ?? "")" },
                 sortOptions: [
-                    SortOption("Name") { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending },
-                    SortOption("Role") { ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending }
+                    SortOption("Name", systemImage: "textformat", kind: .text) {
+                        $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
+                    },
+                    SortOption("Role", systemImage: "person.text.rectangle", kind: .text) {
+                        ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending
+                    }
                 ],
                 facets: [
                     ListFacet("role", "Role", systemImage: "person.fill", value: { $0.role?.capitalized }),
@@ -41,7 +46,14 @@ struct PeopleScreen: View {
                 // filter is active than the default, so the facet scans most of the org (#86).
                 searchPageCap: 40,
                 restorationKey: "selection.users.\(account.id)",
-                contextMenu: { rowMenuItems(copyLabel: "Copy Email", copyText: $0.email) },
+                contextMenu: { user in
+                    rowMenuItems(
+                        copyLabel: "Copy Email",
+                        copyText: user.email,
+                        openInWindow: { openWindow(value: DetailWindowValue.user(user)) }
+                    )
+                },
+                openInWindow: { openWindow(value: DetailWindowValue.user($0)) },
                 accessoryToolbar: { AnyView(createButton) },
                 primaryMenuAction: AppCommandContext.Action(title: "Create User…") { createPresented = true },
                 reloadToken: reloadToken,
@@ -89,6 +101,9 @@ struct CreateUserSheet: View {
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var role = "recruiter"
+    @State private var teams: [Team] = []
+    @State private var selectedTeamID: String?
+    @State private var teamsError: String?
     @State private var isSending = false
     @State private var errorMessage: String?
 
@@ -98,6 +113,29 @@ struct CreateUserSheet: View {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var trimmedFirstName: String {
+        firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var trimmedLastName: String {
+        lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isEmailValid: Bool {
+        EmailValidation.isLikelyValid(email)
+    }
+
+    // The API requires email, firstname, role, and at least one team on POST /users (it
+    // rejects the request with HTTP 400 "Parameter … is required" otherwise); the last
+    // name is genuinely optional.
+    private var canCreate: Bool {
+        isEmailValid && !trimmedFirstName.isEmpty && selectedTeamID != nil
+    }
+
+    private var shouldShowEmailValidation: Bool {
+        !trimmedEmail.isEmpty && !isEmailValid
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -105,17 +143,38 @@ struct CreateUserSheet: View {
                     TextField("Email", text: $email)
                         .textContentType(.emailAddress)
                         .disableAutocorrection(true)
-                    TextField("First name (optional)", text: $firstName)
+                    if shouldShowEmailValidation {
+                        Label("Enter a valid email address, for example name@example.com.", systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                    TextField("First name", text: $firstName)
                     TextField("Last name (optional)", text: $lastName)
                     Picker("Role", selection: $role) {
                         ForEach(Self.roles, id: \.self) { Text($0.capitalized).tag($0) }
                     }
+                    Picker("Team", selection: $selectedTeamID) {
+                        Text(teams.isEmpty ? "Loading teams…" : "Choose a team").tag(String?.none)
+                        ForEach(teams) { team in
+                            Text(team.name).tag(Optional(team.id))
+                        }
+                    }
+                    if let teamsError {
+                        Label(teamsError, systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 } footer: {
-                    Text(account.isMock
-                        ? "Demo account: no real user is created."
-                        : "This creates a real user in your HackerRank for Work organisation.")
-                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Create is enabled after you enter a valid email address, a first name, and a team.")
+                            .foregroundStyle(.secondary)
+                        Text(account.isMock
+                            ? "Demo account: no real user is created."
+                            : "This creates a real user in your HackerRank for Work organisation.")
+                            .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {
@@ -138,21 +197,54 @@ struct CreateUserSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Create") { Task { await create() } }
-                            .disabled(!EmailValidation.isLikelyValid(email))
+                            .disabled(!canCreate)
+                            .help(canCreate
+                                ? "Create user"
+                                : "Enter a valid email address, a first name, and a team to create a user")
                     }
                 }
             }
         }
-        .frame(width: 440, height: 320)
+        // Grow the sheet when the error section appears so the form doesn't have to scroll to
+        // show it (server messages can wrap to a few lines).
+        .frame(width: 440, height: errorMessage == nil ? 360 : 460)
+        .task { await loadTeams() }
+    }
+
+    /// Loads the organisation's teams for the required team picker, following the cursor
+    /// so orgs with more than one page are fully listed (bounded to stay snappy).
+    private func loadTeams() async {
+        teamsError = nil
+        do {
+            let client = HackerRankClient(account: account)
+            var loaded: [Team] = []
+            var cursor: String?
+            repeat {
+                let page = try await client.teamsPage(after: cursor)
+                loaded.append(contentsOf: page.items)
+                cursor = page.next
+            } while cursor != nil && loaded.count < 1000
+            teams = loaded
+            if teams.isEmpty {
+                teamsError = "No teams found. HackerRank requires a team to create a user."
+            }
+        } catch {
+            teamsError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 
     private func create() async {
         isSending = true
         errorMessage = nil
         defer { isSending = false }
+        guard let selectedTeamID else { return }
         do {
             try await HackerRankClient(account: account).createUser(
-                email: trimmedEmail, firstName: firstName, lastName: lastName, role: role
+                email: trimmedEmail,
+                firstName: trimmedFirstName,
+                lastName: trimmedLastName,
+                role: role,
+                teamIDs: [selectedTeamID]
             )
             onCreated()
             dismiss()
@@ -163,8 +255,9 @@ struct CreateUserSheet: View {
 }
 
 extension User {
-    /// The user's full name, or their email when no name is set.
-    var displayName: String {
+    /// The user's full name, or their email when no name is set. `nonisolated` so the
+    /// nonisolated `DetailWindowValue.windowTitle` can use it — it's pure computation.
+    nonisolated var displayName: String {
         let full = [firstName, lastName].compactMap(\.self).joined(separator: " ")
         return full.isEmpty ? email : full
     }

@@ -22,8 +22,12 @@ extension LoadableList {
             date: serverDateFiltering ? nil : filterDate, dateRange: dateRange
         )
         .filter { ListQuery.matchesFacets($0, facets: facets, selected: selectedFacets) }
-        let option = sortOptions.first { $0.id == sortSelection }
-        return option.map { base.sorted(by: $0.areInIncreasingOrder) } ?? base
+        guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return base }
+
+        // Reversing swaps the comparator's arguments rather than negating it, so equal
+        // elements still compare false and `sorted(by:)` keeps a valid strict weak ordering.
+        let forward = option.areInIncreasingOrder
+        return base.sorted(by: sortReversed ? { forward($1, $0) } : forward)
     }
 
     /// The selected, currently-visible items — the bulk CSV export's input (#44).
@@ -128,13 +132,19 @@ extension LoadableList {
         "sort.\(title)"
     }
 
-    /// Restores the saved sort order by label, falling back to the first option.
+    /// Where the chosen direction (default vs. reversed) is remembered, beside the field.
+    private var sortReversedDefaultsKey: String {
+        "sort.\(title).reversed"
+    }
+
+    /// Restores the saved sort field by label (falling back to the first option) and direction.
     func restoreSort() {
         guard !sortOptions.isEmpty else { return }
 
         let savedLabel = UserDefaults.standard.string(forKey: sortDefaultsKey)
         let saved = sortOptions.first { $0.label == savedLabel }
         sortSelection = (saved ?? sortOptions.first)?.id
+        sortReversed = UserDefaults.standard.bool(forKey: sortReversedDefaultsKey)
     }
 
     /// Persists the current sort order by its stable label (the option ids are per-launch).
@@ -142,5 +152,6 @@ extension LoadableList {
         guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return }
 
         UserDefaults.standard.set(option.label, forKey: sortDefaultsKey)
+        UserDefaults.standard.set(sortReversed, forKey: sortReversedDefaultsKey)
     }
 }

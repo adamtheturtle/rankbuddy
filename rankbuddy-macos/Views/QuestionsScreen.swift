@@ -24,9 +24,15 @@ struct QuestionsScreen: View {
                 loadPage: { try await HackerRankClient(account: account).questionsPage(after: $0) },
                 searchableText: { "\($0.name) \($0.type) \($0.tags?.joined(separator: " ") ?? "")" },
                 sortOptions: [
-                    SortOption("Name") { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
-                    SortOption("Type") { $0.type.localizedStandardCompare($1.type) == .orderedAscending },
-                    SortOption("Newest") { ($0.createdAt ?? "") > ($1.createdAt ?? "") }
+                    SortOption("Name", systemImage: "textformat", kind: .text) {
+                        $0.name.localizedStandardCompare($1.name) == .orderedAscending
+                    },
+                    SortOption("Type", systemImage: "tag", kind: .text) {
+                        $0.type.localizedStandardCompare($1.type) == .orderedAscending
+                    },
+                    SortOption("Date Created", systemImage: "calendar", kind: .date) {
+                        ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                    }
                 ],
                 restorationKey: "selection.questions.\(account.id)",
                 contextMenu: { question in
@@ -99,11 +105,23 @@ struct QuestionsScreen: View {
             loadPage: loadMergedQuestions,
             searchableText: { "\($0.item.name) \($0.item.type) \($0.account.label)" },
             sortOptions: [
-                SortOption("Name") { $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending },
-                SortOption("Account", by: AccountScoped.byAccountLabel),
-                SortOption("Type") { $0.item.type.localizedStandardCompare($1.item.type) == .orderedAscending }
+                SortOption("Name", systemImage: "textformat", kind: .text) {
+                    $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending
+                },
+                SortOption("Account", systemImage: "person.crop.circle", kind: .text,
+                           by: AccountScoped.byAccountLabel),
+                SortOption("Type", systemImage: "tag", kind: .text) {
+                    $0.item.type.localizedStandardCompare($1.item.type) == .orderedAscending
+                }
             ],
-            contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.name) },
+            contextMenu: { scoped in
+                rowMenuItems(
+                    copyLabel: "Copy Name",
+                    copyText: scoped.item.name,
+                    openInWindow: { openWindow(value: DetailWindowValue.question(scoped.item)) }
+                )
+            },
+            openInWindow: { openWindow(value: DetailWindowValue.question($0.item)) },
             rowTransfer: { scoped in
                 RowTransfer(title: scoped.item.name, subtitle: scoped.account.label, fields: [
                     ("Name", scoped.item.name),
