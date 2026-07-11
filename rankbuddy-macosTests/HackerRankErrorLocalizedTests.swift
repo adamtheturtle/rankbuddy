@@ -38,6 +38,31 @@ struct HackerRankErrorLocalizedTests {
         #expect(description(.http(500, "boom")) == "HackerRank returned an unexpected error (HTTP 500).")
     }
 
+    @Test func `an errors array surfaces the server explanation`() {
+        #expect(description(.http(400, #"{"errors": ["Email has already been taken"]}"#))
+            == "HackerRank rejected the request (HTTP 400): Email has already been taken.")
+    }
+
+    @Test func `a message field surfaces the server explanation`() {
+        #expect(description(.http(422, #"{"message": "Role is not valid."}"#))
+            == "HackerRank rejected the request (HTTP 422): Role is not valid.")
+    }
+
+    @Test func `errors objects with message fields are surfaced`() {
+        #expect(description(.http(400, #"{"errors": [{"message": "Email is invalid"}]}"#))
+            == "HackerRank rejected the request (HTTP 400): Email is invalid.")
+    }
+
+    @Test func `field-keyed errors name the field`() {
+        #expect(description(.http(400, #"{"errors": {"email": ["has already been taken"]}}"#))
+            == "HackerRank rejected the request (HTTP 400): Email has already been taken.")
+    }
+
+    @Test func `a non-JSON body still falls back to the raw HTTP code`() {
+        #expect(description(.http(400, "<html>Bad Request</html>"))
+            == "HackerRank returned an unexpected error (HTTP 400).")
+    }
+
     @Test func `a decode failure reports an unreadable response`() {
         #expect(description(.decode("bad json")) == "The response from HackerRank could not be read.")
     }

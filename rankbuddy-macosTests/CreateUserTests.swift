@@ -30,6 +30,26 @@ struct CreateUserTests {
         #expect(created.id == "u-created")
     }
 
+    @Test func `creating a user with a team decodes the created record`() async throws {
+        let created = try await makeClient().createUser(
+            email: "new@example.com", firstName: "New", lastName: nil, role: "recruiter", teamIDs: ["tm1"]
+        )
+        #expect(created?.id == "u-created")
+    }
+
+    @Test func `creating with a team against the bad-key account surfaces the 401`() async {
+        do {
+            _ = try await HackerRankClient(account: .badKeyDemo).createUser(
+                email: "new@example.com", firstName: "New", lastName: nil, role: "recruiter", teamIDs: ["tm1"]
+            )
+            Issue.record("expected an unauthorized error")
+        } catch let error as HackerRankError {
+            #expect(error.isUnauthorized)
+        } catch {
+            Issue.record("expected HackerRankError, got \(error)")
+        }
+    }
+
     @Test func `creating against the bad-key account surfaces the server's 401`() async {
         do {
             _ = try await HackerRankClient(account: .badKeyDemo).createUser(email: "new@example.com")

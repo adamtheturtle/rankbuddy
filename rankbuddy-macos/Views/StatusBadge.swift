@@ -23,6 +23,10 @@ struct StatusBadge: View {
                 .font(.caption2.weight(.semibold))
         }
         .lineLimit(1)
+        // Never give up width to a neighbouring text column (rows give their title
+        // `.layoutPriority(1)`): a compressed badge drops its text and renders as an
+        // empty icon-only capsule. The title truncates instead.
+        .fixedSize()
         .padding(.leading, 7)
         .padding(.trailing, 8)
         .padding(.vertical, 3)

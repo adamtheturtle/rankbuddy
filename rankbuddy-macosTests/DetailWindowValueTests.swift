@@ -17,13 +17,14 @@ struct DetailWindowValueTests {
     }
 
     @Test func `it round-trips through Codable`() throws {
-        let value = try DetailWindowValue.test(test(name: "Backend Screen"))
+        let value = try DetailWindowValue.test(test(name: "Backend Screen"), accountID: nil)
         let data = try JSONEncoder().encode(value)
         let restored = try JSONDecoder().decode(DetailWindowValue.self, from: data)
         #expect(restored == value)
     }
 
     @Test func `the window title comes from the item`() throws {
-        #expect(try DetailWindowValue.test(test(name: "Backend Screen")).windowTitle == "Backend Screen")
+        #expect(try DetailWindowValue.test(test(name: "Backend Screen"), accountID: nil).windowTitle
+            == "Backend Screen")
     }
 }

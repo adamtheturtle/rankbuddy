@@ -188,7 +188,10 @@ struct AccountEditor: View {
     }
 
     @ViewBuilder private var validateButton: some View {
-        if canSave {
+        // Style off "do the credentials still need validating" rather than `canSave`,
+        // which flips false *while* validating and made the button flash prominent
+        // mid-validation on an already-saveable account.
+        if isValidated || credentialsUnchanged {
             Button("Validate") { Task { await validate() } }
                 .buttonStyle(.bordered)
                 .disabled(validateDisabled)
@@ -217,8 +220,15 @@ struct AccountEditor: View {
     }
 
     private var validationBanner: some View {
-        ValidationStatusBanner(validation, validating: "Validating token...")
-            .frame(minHeight: 20, alignment: .leading)
+        // ValidationStatusBanner resolves to EmptyView when idle (and after a
+        // success), and SwiftUI drops layout modifiers around an empty view — so a
+        // bare `.frame(minHeight:)` reserved nothing and the action row jumped down
+        // when validation started and back up when it finished. Anchor the banner
+        // over an always-present clear placeholder to genuinely hold the space.
+        ZStack(alignment: .leading) {
+            Color.clear.frame(height: 20)
+            ValidationStatusBanner(validation, validating: "Validating token...")
+        }
     }
 
     @ViewBuilder private var scopeWarningBanner: some View {
@@ -308,7 +318,35 @@ struct AccountEditor: View {
         }
     }
 
-    private func validate() async {
+    private func cancel() {
+        if let onFinish {
+            onFinish(nil)
+        } else {
+            dismiss()
+        }
+    }
+
+    private func save() {
+        let account = draft
+        if existing == nil {
+            store.add(account)
+        } else {
+            store.update(account)
+        }
+        health.clearUnauthorized(account.id)
+        if let onFinish {
+            onFinish(account.id)
+        } else {
+            dismiss()
+        }
+    }
+}
+
+// MARK: - Credential validation
+// Same-file extension so the struct body stays within the lint length budget; `private`
+// state remains accessible from here.
+private extension AccountEditor {
+    func validate() async {
         if let demo = Account.DemoMagicKey(typedToken: token) {
             let demoID: Account.ID? = switch demo {
             case .mockData:
@@ -350,11 +388,11 @@ struct AccountEditor: View {
         }
     }
 
-    private func currentUser(client: HackerRankClient) async throws -> User {
+    func currentUser(client: HackerRankClient) async throws -> User {
         try await client.currentUser()
     }
 
-    private func duplicateAccountMessage() -> String? {
+    func duplicateAccountMessage() -> String? {
         let candidate = draft
         let clashes = store.accounts.contains { account in
             account.id != candidate.id
@@ -366,7 +404,7 @@ struct AccountEditor: View {
         return "This token is already added as another account. Each account must use a unique token."
     }
 
-    private func missingScopesWarning(client: HackerRankClient) async -> String? {
+    func missingScopesWarning(client: HackerRankClient) async -> String? {
         async let testsOK = endpointAuthorized { _ = try await client.testsPage() }
         async let questionsOK = endpointAuthorized { _ = try await client.questionsPage() }
         async let interviewsOK = endpointAuthorized { _ = try await client.interviewsPage() }
@@ -385,7 +423,7 @@ struct AccountEditor: View {
             "Those sections may be empty."
     }
 
-    private func endpointAuthorized(_ probe: () async throws -> Void) async -> Bool {
+    func endpointAuthorized(_ probe: () async throws -> Void) async -> Bool {
         do {
             try await probe()
             return true
@@ -394,13 +432,13 @@ struct AccountEditor: View {
         }
     }
 
-    private func isUnauthorized(_ error: any Error) -> Bool {
+    func isUnauthorized(_ error: any Error) -> Bool {
         guard case let HackerRankError.http(status, _) = error else { return false }
 
         return status == 401 || status == 403
     }
 
-    private func friendlyValidationMessage(for error: any Error) -> String {
+    func friendlyValidationMessage(for error: any Error) -> String {
         if isUnauthorized(error) {
             return "HackerRank rejected this token. Check that it is a valid HackerRank for Work personal access token."
         }
@@ -412,29 +450,6 @@ struct AccountEditor: View {
             return "Couldn't reach HackerRank. Check your internet connection and try again."
         }
         return "Couldn't validate this token. Try again."
-    }
-
-    private func cancel() {
-        if let onFinish {
-            onFinish(nil)
-        } else {
-            dismiss()
-        }
-    }
-
-    private func save() {
-        let account = draft
-        if existing == nil {
-            store.add(account)
-        } else {
-            store.update(account)
-        }
-        health.clearUnauthorized(account.id)
-        if let onFinish {
-            onFinish(account.id)
-        } else {
-            dismiss()
-        }
     }
 }
 

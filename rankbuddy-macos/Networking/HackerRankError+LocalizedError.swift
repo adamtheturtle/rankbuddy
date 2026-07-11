@@ -16,7 +16,7 @@ extension HackerRankError: @retroactive LocalizedError {
         case .missingAPIKey:
             "No HackerRank token is configured for this account."
 
-        case let .http(status, _):
+        case let .http(status, body):
             switch status {
             case 401, 403:
                 "The token was rejected. Check that it is a valid HackerRank for Work personal access token."
@@ -25,7 +25,11 @@ extension HackerRankError: @retroactive LocalizedError {
             case 404:
                 "The requested HackerRank resource was not found."
             default:
-                "HackerRank returned an unexpected error (HTTP \(status))."
+                if let detail = Self.serverMessage(inBody: body) {
+                    "HackerRank rejected the request (HTTP \(status)): \(detail)"
+                } else {
+                    "HackerRank returned an unexpected error (HTTP \(status))."
+                }
             }
 
         case .decode:
@@ -33,6 +37,46 @@ extension HackerRankError: @retroactive LocalizedError {
 
         case let .network(error):
             "Could not reach HackerRank: \(error.localizedDescription)"
+        }
+    }
+
+    /// Pulls the human-readable explanation out of a HackerRank error body, so a 400 can say
+    /// what was actually wrong (for example "Email has already been taken") instead of only the
+    /// status code. HackerRank error bodies are JSON in a few shapes: a top-level "message" or
+    /// "error" string, an "errors" array of strings or of objects with a "message", or a
+    /// Rails-style "errors" map of field name to problems.
+    private static func serverMessage(inBody body: String) -> String? {
+        guard let data = body.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+
+        var messages: [String] = []
+        for key in ["message", "error"] {
+            if let text = object[key] as? String { messages.append(text) }
+        }
+        messages.append(contentsOf: errorFieldMessages(object["errors"]))
+
+        let joined = messages
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        guard !joined.isEmpty else { return nil }
+        return joined.hasSuffix(".") ? joined : joined + "."
+    }
+
+    private static func errorFieldMessages(_ errors: Any?) -> [String] {
+        switch errors {
+        case let strings as [String]:
+            strings
+        case let objects as [[String: Any]]:
+            objects.compactMap { $0["message"] as? String }
+        case let fields as [String: Any]:
+            fields.sorted { $0.key < $1.key }.flatMap { field, value -> [String] in
+                let problems = (value as? [String]) ?? (value as? String).map { [$0] } ?? []
+                return problems.map { "\(field.capitalized) \($0)" }
+            }
+        default:
+            []
         }
     }
 }

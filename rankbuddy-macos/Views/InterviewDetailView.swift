@@ -17,9 +17,13 @@ struct InterviewDetailView: View {
     @State private var detail: InterviewDetail?
     @State private var transcript: InterviewTranscript?
 
+    private var displayTitle: String {
+        interview.title ?? "Interview \(interview.id)"
+    }
+
     var body: some View {
         Form {
-            InspectorHeader(title: interview.title ?? "Interview", badges: interview.inspectorBadges)
+            InspectorHeader(title: displayTitle, badges: interview.inspectorBadges)
 
             Section("Properties") {
                 OptionalRow("Status", interview.status.capitalized)
@@ -71,13 +75,17 @@ struct InterviewDetailView: View {
 
             if let notes = interview.notes, !notes.isEmpty {
                 Section("Notes") {
-                    Text(notes).textSelection(.enabled)
+                    Text(notes)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
             if let feedback = interview.feedback, !feedback.isEmpty {
                 Section("Feedback") {
-                    Text(feedback).textSelection(.enabled)
+                    Text(feedback)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -90,14 +98,14 @@ struct InterviewDetailView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(interview.title ?? "Interview")
+        .navigationTitle(displayTitle)
         .task(id: interview.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
         .onDisappear { commandContext.clearDetailActions() }
         .advertisesItemActivity(
             collection: .interviews,
             itemID: interview.id,
-            title: interview.title ?? "Interview \(interview.id)",
+            title: displayTitle,
             webURL: URL(string: interview.url)
         )
         // Share and Open (the interview on HackerRank) lead the bar like PadBuddy; Print and
@@ -105,13 +113,13 @@ struct InterviewDetailView: View {
         .toolbar(id: "interviewDetail") {
             DetailLinkToolbarContent(url: URL(string: interview.url), noun: "interview")
             ToolbarItem(id: "print") {
-                PrintReportButton(jobTitle: "Interview: \(interview.title ?? interview.id)") {
+                PrintReportButton(jobTitle: "Interview: \(displayTitle)") {
                     InterviewReport(interview: interview)
                 }
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                MarkdownExportButton(suggestedName: interview.title ?? "interview-\(interview.id)") {
+                MarkdownExportButton(suggestedName: displayTitle) {
                     MarkdownExport.interview(interview)
                 }
             }
@@ -120,12 +128,11 @@ struct InterviewDetailView: View {
     }
 
     private func registerDetailCommands() {
-        let title = interview.title ?? "Interview \(interview.id)"
         commandContext.print = AppCommandContext.Action(title: "Print Interview…") {
-            printReport(InterviewReport(interview: interview), jobTitle: "Interview: \(title)")
+            printReport(InterviewReport(interview: interview), jobTitle: "Interview: \(displayTitle)")
         }
         commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Interview as Markdown…") {
-            MarkdownExport.save(MarkdownExport.interview(interview), suggestedName: title)
+            MarkdownExport.save(MarkdownExport.interview(interview), suggestedName: displayTitle)
         }
     }
 

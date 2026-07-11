@@ -180,18 +180,25 @@ extension RankBuddyToolProvider {
     @MainActor
     private func createUserTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let email = stringArgument(arguments, "email") else { return missingArgument("email") }
+        // POST /users requires email, firstname, role, and a team (the server rejects the
+        // request with HTTP 400 otherwise), so fail fast with a clear message instead of
+        // relaying the 400. The last name is genuinely optional.
+        guard let firstName = stringArgument(arguments, "first_name") else { return missingArgument("first_name") }
+        guard let role = stringArgument(arguments, "role") else { return missingArgument("role") }
+        guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let created = try await HackerRankClient(account: resolved).createUser(
                 email: email,
-                firstName: stringArgument(arguments, "first_name"),
+                firstName: firstName,
                 lastName: stringArgument(arguments, "last_name"),
-                role: stringArgument(arguments, "role")
+                role: role,
+                teamIDs: [teamID]
             )
             return jsonResult([
                 "account": resolved.label,
-                "created_user": ["id": created.id ?? "", "email": created.email ?? email]
+                "created_user": ["id": created?.id ?? "", "email": created?.email ?? email]
             ])
         } catch {
             return errorResult("Couldn't create user: \(error.localizedDescription)")
@@ -361,11 +368,13 @@ extension RankBuddyToolProvider {
                   required: ["test_id", "email"]),
             write("create_user", "Create an organisation user.",
                   properties: [
-                      "email": string("The user's email."), "first_name": string("First name (optional)."),
-                      "last_name": string("Last name (optional)."), "role": string("Role (optional)."),
+                      "email": string("The user's email."), "first_name": string("The user's first name."),
+                      "last_name": string("Last name (optional)."),
+                      "role": string("Role: recruiter, developer, or interviewer."),
+                      "team_id": string("Id of the team the user will belong to (see list_teams)."),
                       "account": account
                   ],
-                  required: ["email"]),
+                  required: ["email", "first_name", "role", "team_id"]),
             write("create_team", "Create a team.",
                   properties: ["name": string("The team's name."), "account": account], required: ["name"]),
             write("add_team_member", "Add a member to a team by email.",
