@@ -58,6 +58,11 @@ struct HackerRankErrorLocalizedTests {
             == "HackerRank rejected the request (HTTP 400): Email has already been taken.")
     }
 
+    @Test func `a status of zero never shows the user "HTTP 0"`() {
+        #expect(description(.http(0, "Invalid next-page URL: bad link"))
+            == "A HackerRank request could not be completed. Please try again.")
+    }
+
     @Test func `a non-JSON body still falls back to the raw HTTP code`() {
         #expect(description(.http(400, "<html>Bad Request</html>"))
             == "HackerRank returned an unexpected error (HTTP 400).")

@@ -198,7 +198,7 @@ extension RankBuddyToolProvider {
             )
             return jsonResult([
                 "account": resolved.label,
-                "created_user": ["id": created?.id ?? "", "email": created?.email ?? email]
+                "created_user": ["id": created.id ?? "", "email": created.email ?? email]
             ])
         } catch {
             return errorResult("Couldn't create user: \(error.localizedDescription)")

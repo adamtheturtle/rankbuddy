@@ -24,6 +24,11 @@ extension HackerRankError: @retroactive LocalizedError {
                 "HackerRank is rate-limiting requests. Please try again shortly."
             case 404:
                 "The requested HackerRank resource was not found."
+            case 0:
+                // Status 0 is the client's own "no request was made" marker (an unusable
+                // URL or a pagination safety stop), not a server response; "HTTP 0"
+                // would be nonsense to a user.
+                "A HackerRank request could not be completed. Please try again."
             default:
                 if let detail = Self.serverMessage(inBody: body) {
                     "HackerRank rejected the request (HTTP \(status)): \(detail)"

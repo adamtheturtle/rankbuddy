@@ -169,10 +169,10 @@ struct CreateUserSheet: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Create is enabled after you enter a valid email address, a first name, and a team.")
                             .foregroundStyle(.secondary)
-                        Text(account.isMock
-                            ? "Demo account: no real user is created."
-                            : "This creates a real user in your HackerRank for Work organisation.")
-                            .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                        if account.isMock {
+                            Text("Demo account: no real user is created.")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .fixedSize(horizontal: false, vertical: true)
                 }
@@ -215,10 +215,10 @@ struct CreateUserSheet: View {
     /// so orgs with more than one page are fully listed (bounded to stay snappy).
     private func loadTeams() async {
         teamsError = nil
+        let client = HackerRankClient(account: account)
+        var loaded: [Team] = []
+        var cursor: String?
         do {
-            let client = HackerRankClient(account: account)
-            var loaded: [Team] = []
-            var cursor: String?
             repeat {
                 let page = try await client.teamsPage(after: cursor)
                 loaded.append(contentsOf: page.items)
@@ -229,7 +229,13 @@ struct CreateUserSheet: View {
                 teamsError = "No teams found. HackerRank requires a team to create a user."
             }
         } catch {
-            teamsError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            // A failed follow-up page keeps the teams already loaded — the picker is still
+            // usable; only surface the error when there is nothing to choose from.
+            if loaded.isEmpty {
+                teamsError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            } else {
+                teams = loaded
+            }
         }
     }
 
