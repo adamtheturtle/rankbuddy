@@ -74,7 +74,7 @@ struct TeamsScreen: View {
         Button {
             createPresented = true
         } label: {
-            Label("New Team…", systemImage: "person.3")
+            Label("New Team…", systemImage: "person.2.badge.plus")
         }
         .help("Create a team")
     }
