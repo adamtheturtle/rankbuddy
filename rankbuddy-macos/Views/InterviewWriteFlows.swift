@@ -25,10 +25,8 @@ struct NewPadSheet: View {
                     TextField("Title (optional)", text: $title)
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(account.isMock
-                            ? "Demo account: no real Pad is created."
-                            : "This creates a real, ready-to-share Pad in your HackerRank organisation.")
-                            .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                        Text("This creates a real, ready-to-share Pad in your HackerRank organisation.")
+                            .foregroundStyle(.orange)
 
                         if !account.isMock {
                             Text("Opens in your browser, which may be signed in to a different HackerRank account.")
@@ -120,10 +118,8 @@ struct ScheduleInterviewSheet: View {
                     TextField("Notes (optional)", text: $notes, axis: .vertical)
                         .lineLimit(2 ... 4)
                 } footer: {
-                    Text(account.isMock
-                        ? "Demo account: no real interview is scheduled."
-                        : "This schedules a real interview in your HackerRank organisation.")
-                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                    Text("This schedules a real interview in your HackerRank organisation.")
+                        .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 

@@ -166,15 +166,9 @@ struct CreateUserSheet: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 } footer: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Create is enabled after you enter a valid email address, a first name, and a team.")
-                            .foregroundStyle(.secondary)
-                        if account.isMock {
-                            Text("Demo account: no real user is created.")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .fixedSize(horizontal: false, vertical: true)
+                    Text("Create is enabled after you enter a valid email address, a first name, and a team.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {

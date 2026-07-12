@@ -99,10 +99,8 @@ struct AddTeamMemberSheet: View {
                         ForEach(Self.roles, id: \.self) { Text($0.capitalized).tag($0) }
                     }
                 } footer: {
-                    Text(account.isMock
-                        ? "Demo account: no real member is added."
-                        : "This adds a real member to the team on HackerRank.")
-                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                    Text("This adds a real member to the team on HackerRank.")
+                        .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 

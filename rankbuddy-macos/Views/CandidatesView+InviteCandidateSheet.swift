@@ -66,7 +66,7 @@ struct InviteCandidateSheet: View {
                     Toggle("Send invitation email", isOn: $sendEmail)
                 } footer: {
                     Text(consequenceText)
-                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                        .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -126,10 +126,7 @@ struct InviteCandidateSheet: View {
     /// The footer text spelling out what the invite will do, so a live action is never a
     /// surprise.
     private var consequenceText: String {
-        if account.isMock {
-            return "Demo account: no real invitation is sent."
-        }
-        return sendEmail
+        sendEmail
             ? "This invites a real candidate to this test on HackerRank and emails them the invitation."
             : "This invites a real candidate to this test on HackerRank (no email is sent)."
     }

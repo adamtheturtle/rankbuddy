@@ -53,7 +53,7 @@ struct TestEditorSheet: View {
                     TextField("Test name", text: $name)
                 } footer: {
                     Text(consequenceText)
-                        .foregroundStyle(account.isMock ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                        .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -86,12 +86,7 @@ struct TestEditorSheet: View {
     }
 
     private var consequenceText: String {
-        if account.isMock {
-            return isEditing
-                ? "Demo account: no real test is changed."
-                : "Demo account: no real test is created."
-        }
-        return isEditing
+        isEditing
             ? "This renames a real test in your HackerRank organisation."
             : "This creates a real test in your HackerRank organisation."
     }

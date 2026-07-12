@@ -166,9 +166,7 @@ struct TestDetailView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text(account.isMock
-                ? "Demo account: no real test is deleted."
-                : "This permanently deletes the test on HackerRank. This can’t be undone.")
+            Text("This permanently deletes the test on HackerRank. This can’t be undone.")
         }
         .alert("Couldn’t delete test", isPresented: deleteErrorPresented) {
             Button("OK", role: .cancel) {}
