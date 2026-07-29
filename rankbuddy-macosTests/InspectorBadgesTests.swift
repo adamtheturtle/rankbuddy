@@ -35,6 +35,26 @@ struct InspectorBadgesTests {
         #expect(user.inspectorBadges.map(\.text) == ["Recruiter", "Active", "Company admin"])
     }
 
+    @Test func `inactive users and archived questions do not receive active status icons`() throws {
+        let userJSON = #"{"id":"u2","email":"inactive@example.com","status":"deactivated"}"#
+        let questionJSON = #"{"id":"q1","name":"Old question","type":"coding","status":"archived"}"#
+        let user = try JSONDecoder().decode(User.self, from: Data(userJSON.utf8))
+        let question = try JSONDecoder().decode(Question.self, from: Data(questionJSON.utf8))
+
+        #expect(user.inspectorBadges.last?.systemImage == "xmark.circle.fill")
+        #expect(question.inspectorBadges.last?.systemImage == "archivebox.fill")
+    }
+
+    @Test func `unknown question and user statuses use neutral status icons`() throws {
+        let userJSON = #"{"id":"u3","email":"unknown@example.com","status":"mystery"}"#
+        let questionJSON = #"{"id":"q2","name":"Mystery","type":"coding","status":"mystery"}"#
+        let user = try JSONDecoder().decode(User.self, from: Data(userJSON.utf8))
+        let question = try JSONDecoder().decode(Question.self, from: Data(questionJSON.utf8))
+
+        #expect(user.inspectorBadges.last?.systemImage == "circle.fill")
+        #expect(question.inspectorBadges.last?.systemImage == "circle.fill")
+    }
+
     @Test func `an interview's single chip capitalises its status`() throws {
         let json = #"{"id":"i1","status":"completed","url":"https://example.com/i1"}"#
         let interview = try JSONDecoder().decode(Interview.self, from: Data(json.utf8))

@@ -83,7 +83,14 @@ extension Question {
             badges.append(StatusBadge(text: type.capitalized, systemImage: "doc.text", tint: .accentColor))
         }
         if let status, !status.isEmpty {
-            badges.append(StatusBadge(text: status.capitalized, systemImage: "circle.fill", tint: .green))
+            let style: (image: String, tint: Color) = switch status.lowercased() {
+            case "active", "approved", "published": ("checkmark.circle.fill", .green)
+            case "draft", "pending", "review", "in review": ("clock.fill", .orange)
+            case "archived": ("archivebox.fill", .secondary)
+            case "rejected": ("xmark.circle.fill", .red)
+            default: ("circle.fill", .secondary)
+            }
+            badges.append(StatusBadge(text: status.capitalized, systemImage: style.image, tint: style.tint))
         }
         return badges
     }
@@ -110,7 +117,14 @@ extension User {
             badges.append(StatusBadge(text: role.capitalized, systemImage: "person.fill", tint: .accentColor))
         }
         if let status, !status.isEmpty {
-            badges.append(StatusBadge(text: status.capitalized, systemImage: "circle.fill", tint: .green))
+            let style: (image: String, tint: Color) = switch status.lowercased() {
+            case "active", "enabled": ("checkmark.circle.fill", .green)
+            case "invited", "pending": ("clock.fill", .orange)
+            case "inactive", "deactivated", "disabled", "locked", "suspended":
+                ("xmark.circle.fill", .red)
+            default: ("circle.fill", .secondary)
+            }
+            badges.append(StatusBadge(text: status.capitalized, systemImage: style.image, tint: style.tint))
         }
         if companyAdmin == true {
             badges.append(StatusBadge(text: "Company admin", systemImage: "checkmark.seal.fill", tint: .blue))
