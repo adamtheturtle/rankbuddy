@@ -345,6 +345,19 @@ struct RankBuddyToolProviderTests {
         #expect(result.isError == true)
         #expect(text(result).contains("ISO-8601"))
     }
+
+    @Test func `schedule_interview rejects a malformed candidate email`() async {
+        let result = await writeProvider().callTool(
+            "schedule_interview",
+            arguments: [
+                "title": .string("Pairing"),
+                "from": .string("2030-07-01T14:00:00Z"),
+                "candidate_email": .string("not-an-email")
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("candidate_email"))
+    }
 }
 
 // swiftlint:enable type_body_length

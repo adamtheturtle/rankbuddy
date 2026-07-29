@@ -655,13 +655,19 @@ extension RankBuddyToolProvider {
         guard let from = ISO8601DateFormatter().date(from: fromText) else {
             return errorResult("`from` must be an ISO-8601 timestamp, e.g. 2026-07-01T14:00:00Z.")
         }
+
+        let candidateEmail = stringArgument(arguments, "candidate_email")?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard candidateEmail.map({ $0.isEmpty || EmailValidation.isLikelyValid($0) }) ?? true else {
+            return errorResult("`candidate_email` must be a valid email address.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let created = try await HackerRankClient(account: resolved).scheduleInterview(
                 title: title,
                 from: from,
-                candidateEmail: stringArgument(arguments, "candidate_email"),
+                candidateEmail: candidateEmail.flatMap { $0.isEmpty ? nil : $0 },
                 notes: stringArgument(arguments, "notes")
             )
             return jsonResult([
@@ -993,7 +999,7 @@ extension RankBuddyToolProvider {
                   properties: [
                       "title": string("The interview's title."),
                       "from": string("Start time, ISO-8601 (e.g. 2026-07-01T14:00:00Z)."),
-                      "candidate_email": string("The candidate's email (optional)."),
+                      "candidate_email": string("The candidate's email (optional).", format: "email"),
                       "notes": string("Notes (optional)."), "account": account
                   ],
                   required: ["title", "from"]),
