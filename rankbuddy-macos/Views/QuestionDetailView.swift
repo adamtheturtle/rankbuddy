@@ -177,7 +177,7 @@ struct QuestionDetailView: View {
             }
             .defaultCustomization(.hidden)
         }
-        .confirmationDialog("Delete “\(question.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
+        .confirmationDialog("Delete “\(displayed.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
             Button("Delete Question", role: .destructive) {
                 Task { await deleteQuestion() }
             }
