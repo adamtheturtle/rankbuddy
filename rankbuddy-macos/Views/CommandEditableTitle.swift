@@ -26,8 +26,10 @@ struct CommandEditableTitle: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isEditing = false
     @State private var draft = ""
+    @State private var originalTitle = ""
     @State private var isHovering = false
     @State private var isSaving = false
+    @State private var conflictMessage: String?
     @FocusState private var fieldFocused: Bool
 
     private var editingAllowed: Bool {
@@ -57,6 +59,11 @@ struct CommandEditableTitle: View {
         .font(font)
         .frame(maxWidth: .infinity, alignment: .leading)
         .onChange(of: editRequest) { _, _ in beginEditing() }
+        .alert("Title Changed", isPresented: conflictPresented) {
+            Button("OK") { conflictMessage = nil }
+        } message: {
+            Text(conflictMessage ?? "")
+        }
     }
 
     private var plainTitle: some View {
@@ -115,9 +122,18 @@ struct CommandEditableTitle: View {
     private func beginEditing() {
         guard editingAllowed, !isSaving else { return }
 
+        originalTitle = title
         draft = title
+        conflictMessage = nil
         isEditing = true
         fieldFocused = true
+    }
+
+    private var conflictPresented: Binding<Bool> {
+        Binding(
+            get: { conflictMessage != nil },
+            set: { if !$0 { conflictMessage = nil } }
+        )
     }
 
     /// Escape follows the Mac convention: restore the current title and leave edit mode without
@@ -132,8 +148,18 @@ struct CommandEditableTitle: View {
 
     private func commit() async {
         guard isEditing, !isSaving else { return }
-        guard let value = InlineEdit.commitValue(original: title, edited: draft) else {
+        guard let value = InlineEdit.commitValue(original: originalTitle, edited: draft) else {
             isEditing = false
+            return
+        }
+        guard !Self.hasConflict(original: originalTitle, current: title) else {
+            draft = title
+            isEditing = false
+            fieldFocused = false
+            conflictMessage = """
+            This title changed while you were editing. Your draft wasn’t saved. Review the current \
+            title and try again.
+            """
             return
         }
 
@@ -141,5 +167,9 @@ struct CommandEditableTitle: View {
         _ = await onCommit(value)
         isSaving = false
         isEditing = false
+    }
+
+    nonisolated static func hasConflict(original: String, current: String) -> Bool {
+        original != current
     }
 }

@@ -24,4 +24,9 @@ struct InlineEditTests {
         #expect(InlineEdit.commitValue(original: "Name", edited: "") == nil)
         #expect(InlineEdit.commitValue(original: "Name", edited: "   ") == nil)
     }
+
+    @Test func `inline rename detects a refreshed underlying title`() {
+        #expect(!CommandEditableTitle.hasConflict(original: "Original", current: "Original"))
+        #expect(CommandEditableTitle.hasConflict(original: "Original", current: "Renamed elsewhere"))
+    }
 }
