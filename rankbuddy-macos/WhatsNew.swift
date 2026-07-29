@@ -68,25 +68,31 @@ struct WhatsNewView: View {
             Text("What's New in RankBuddy")
                 .font(.title2).bold()
 
-            VStack(alignment: .leading, spacing: 16) {
-                ForEach(WhatsNew.highlights) { highlight in
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: highlight.systemImage)
-                            .font(.title3)
-                            .foregroundStyle(.tint)
-                            .frame(width: 28)
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(highlight.title).font(.headline)
-                            Text(highlight.detail)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    ForEach(WhatsNew.highlights) { highlight in
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: highlight.systemImage)
+                                .font(.title3)
+                                .foregroundStyle(.tint)
+                                .frame(width: 28)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(highlight.title).font(.headline)
+                                Text(highlight.detail)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
             }
+            .scrollBounceBehavior(.basedOnSize)
 
+            Divider()
             Button("Continue") {
                 onDismiss()
                 dismiss()
@@ -95,6 +101,7 @@ struct WhatsNewView: View {
         }
         .padding(28)
         .frame(width: 440)
+        .frame(minHeight: 320, idealHeight: 520, maxHeight: 600)
     }
 }
 
