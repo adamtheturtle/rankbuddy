@@ -3,6 +3,7 @@
 //  rankbuddy-macosTests
 //
 
+import AppKit
 import Foundation
 @testable import rankbuddy_macos
 import Testing
@@ -47,5 +48,14 @@ struct HTMLTextTests {
 
     @Test func `an empty string renders empty`() {
         #expect(plainText("").isEmpty)
+    }
+
+    @Test func `explicit foreground and background colors are removed`() {
+        let rendered = AttributedString.fromHTML(
+            #"<span style="color: white; background-color: black">Adaptive</span>"#
+        )
+        let attributed = NSAttributedString(rendered)
+        #expect(attributed.attribute(.foregroundColor, at: 0, effectiveRange: nil) == nil)
+        #expect(attributed.attribute(.backgroundColor, at: 0, effectiveRange: nil) == nil)
     }
 }

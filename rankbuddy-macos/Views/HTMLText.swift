@@ -284,6 +284,7 @@ extension AttributedString {
             result.addAttribute(.font, value: font, range: range)
         }
         result.removeAttribute(.foregroundColor, range: full)
+        result.removeAttribute(.backgroundColor, range: full)
         return result
     }
 }
