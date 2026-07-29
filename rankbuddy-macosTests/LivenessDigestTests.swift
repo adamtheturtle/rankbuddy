@@ -54,6 +54,16 @@ struct LivenessDigestTests {
         #expect(LivenessDigest.notificationBody(newCount: 3) == "3 new interviews")
     }
 
+    @Test func `notification routing preserves the source account and interview`() throws {
+        let accountID = try #require(UUID(uuidString: "11111111-2222-3333-4444-555555555555"))
+        let userInfo = LivenessNotifier.notificationUserInfo(accountID: accountID, interviewID: "interview-7")
+        let target = try #require(RankBuddyUserActivity.target(userInfo: userInfo))
+
+        #expect(target.collection == .interviews)
+        #expect(target.accountID == accountID.uuidString)
+        #expect(target.itemID == "interview-7")
+    }
+
     @Test func `the refresh cadence clamps unset and unknown values to the default`() {
         // Unset (0) and out-of-range values fall back to the default; supported options pass.
         #expect(LivenessSettings.intervalMinutes(raw: 0) == LivenessSettings.defaultIntervalMinutes)

@@ -170,7 +170,9 @@ final class LivenessMonitor {
         if let previous = loadSeen(accountID),
            UserDefaults.standard.bool(forKey: LivenessSettings.notifyKey) {
             let new = LivenessDigest.newInterviews(previousIDs: previous, current: interviews)
-            if !new.isEmpty { LivenessNotifier.shared.notify(newCount: new.count) }
+            if !new.isEmpty {
+                LivenessNotifier.shared.notify(interviews: new, accountID: accountID)
+            }
         }
 
         saveSeen(currentIDs, accountID: accountID)
@@ -223,13 +225,13 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
     }
 
     /// Post a "new interviews" alert, unless the app is frontmost (you'd already see them).
-    func notify(newCount: Int) {
-        guard newCount > 0, !NSApp.isActive else { return }
+    func notify(interviews: [Interview], accountID: UUID) {
+        guard let target = interviews.first, !NSApp.isActive else { return }
 
-        Task { await post(newCount: newCount) }
+        Task { await post(newCount: interviews.count, accountID: accountID, interviewID: target.id) }
     }
 
-    private func post(newCount: Int) async {
+    private func post(newCount: Int, accountID: UUID, interviewID: String) async {
         let settings = await center.notificationSettings()
         switch settings.authorizationStatus {
         case .notDetermined:
@@ -246,6 +248,7 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
         content.title = "New interviews"
         content.body = LivenessDigest.notificationBody(newCount: newCount)
         content.sound = .default
+        content.userInfo = Self.notificationUserInfo(accountID: accountID, interviewID: interviewID)
 
         let request = UNNotificationRequest(identifier: Self.notificationID, content: content, trigger: nil)
         try? await center.add(request)
@@ -255,13 +258,36 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
     /// bring the app forward.
     nonisolated func userNotificationCenter(
         _: UNUserNotificationCenter,
-        didReceive _: UNNotificationResponse,
+        didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: () -> Void
     ) {
+        let target = RankBuddyUserActivity.target(userInfo: response.notification.request.content.userInfo)
         Task { @MainActor in
-            UserDefaults.standard.set(SidebarSection.interviews.rawValue, forKey: "selectedSection")
+            if let target {
+                let store = SharedAccountStore.resolve()
+                if let accountID = UUID(uuidString: target.accountID),
+                   store.accounts.contains(where: { $0.id == accountID }) {
+                    store.showAllAccounts = false
+                    store.currentAccountID = accountID
+                }
+                RankBuddyDeepLink.open(
+                    collection: target.collection,
+                    accountID: target.accountID,
+                    itemID: target.itemID
+                )
+            } else {
+                UserDefaults.standard.set(SidebarSection.interviews.rawValue, forKey: "selectedSection")
+            }
             AppActivator.bringToFront()
         }
         completionHandler()
+    }
+
+    nonisolated static func notificationUserInfo(accountID: UUID, interviewID: String) -> [AnyHashable: Any] {
+        [
+            RankBuddyUserActivity.Key.collection: FavoriteCollection.interviews.rawValue,
+            RankBuddyUserActivity.Key.accountID: accountID.uuidString,
+            RankBuddyUserActivity.Key.itemID: interviewID
+        ]
     }
 }
