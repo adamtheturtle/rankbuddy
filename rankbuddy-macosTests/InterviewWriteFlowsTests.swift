@@ -30,6 +30,17 @@ struct InterviewWriteFlowsTests {
         #expect(created.id == "i-created")
     }
 
+    @Test func `a real Pad response requires a valid web URL before completion`() throws {
+        #expect(try padDestinationURL(rawURL: "https://example.com/pads/1", isMock: false) != nil)
+        #expect(throws: MissingPadURL.self) {
+            try padDestinationURL(rawURL: nil, isMock: false)
+        }
+        #expect(throws: MissingPadURL.self) {
+            try padDestinationURL(rawURL: "file:///tmp/pad", isMock: false)
+        }
+        #expect(try padDestinationURL(rawURL: nil, isMock: true) == nil)
+    }
+
     @Test func `scheduling an interview decodes the created record`() async throws {
         let created = try await makeClient().scheduleInterview(
             title: "  Backend Screen  ",

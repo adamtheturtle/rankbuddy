@@ -6,6 +6,21 @@
 import HackerRankKit
 import SwiftUI
 
+struct MissingPadURL: LocalizedError {
+    var errorDescription: String? {
+        "HackerRank created the Pad but did not return a valid web URL. Try again or find it in Interviews."
+    }
+}
+
+nonisolated func padDestinationURL(rawURL: String?, isMock: Bool) throws -> URL? {
+    if isMock { return nil }
+    guard let rawURL, let url = URL.remoteWebURL(from: rawURL) else {
+        throw MissingPadURL()
+    }
+
+    return url
+}
+
 /// A sheet that creates an instant collaborative Pad interview (`POST /interviews`,
 /// #60) — a write flow. Refreshes the list on success.
 struct NewPadSheet: View {
@@ -63,9 +78,10 @@ struct NewPadSheet: View {
         defer { isSending = false }
         do {
             let created = try await HackerRankClient(account: account).createPad(title: title)
+            let destination = try padDestinationURL(rawURL: created.url, isMock: account.isMock)
             onCreated()
-            if !account.isMock, let rawURL = created.url, let url = URL.remoteWebURL(from: rawURL) {
-                BrowserSettings.open(url)
+            if let destination {
+                BrowserSettings.open(destination)
             }
             dismiss()
         } catch {
