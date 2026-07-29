@@ -559,6 +559,19 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("email"))
     }
 
+    @Test func `create_ats_codescreen_invite rejects blank target ids`() async {
+        for key in ["test_id", "requisition_id", "candidate_id"] {
+            var arguments: [String: Value] = [
+                "test_id": .string("test-1"), "requisition_id": .string("req-1"),
+                "candidate_id": .string("candidate-1"), "email": .string("ada@example.com")
+            ]
+            arguments[key] = .string(" \n")
+            let result = await writeProvider().callTool("create_ats_codescreen_invite", arguments: arguments)
+            #expect(result.isError == true)
+            #expect(text(result).contains(key))
+        }
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

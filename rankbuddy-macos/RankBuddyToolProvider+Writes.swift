@@ -861,18 +861,28 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
+    // swiftlint:disable:next cyclomatic_complexity
     private func createATSCodeScreenInviteTool(
         _ arguments: [String: Value]?,
         account: String?
     ) async -> CallTool.Result {
-        guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
-        guard let requisitionID = stringArgument(arguments, "requisition_id") else {
+        guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+        guard let rawRequisitionID = stringArgument(arguments, "requisition_id") else {
             return missingArgument("requisition_id")
         }
-        guard let candidateID = stringArgument(arguments, "candidate_id") else {
+        guard let rawCandidateID = stringArgument(arguments, "candidate_id") else {
             return missingArgument("candidate_id")
         }
         guard let rawEmail = stringArgument(arguments, "email") else { return missingArgument("email") }
+        guard let testID = Self.normalizedOptionalString(rawTestID) else {
+            return errorResult("`test_id` must not be empty.")
+        }
+        guard let requisitionID = Self.normalizedOptionalString(rawRequisitionID) else {
+            return errorResult("`requisition_id` must not be empty.")
+        }
+        guard let candidateID = Self.normalizedOptionalString(rawCandidateID) else {
+            return errorResult("`candidate_id` must not be empty.")
+        }
 
         let email = rawEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         guard EmailValidation.isLikelyValid(email) else {
