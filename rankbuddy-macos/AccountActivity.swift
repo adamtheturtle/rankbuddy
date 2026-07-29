@@ -14,6 +14,7 @@ import SwiftUI
 struct AccountActivityView: View {
     @Environment(AccountStore.self) private var store
 
+    @State private var selectedAccountID: Account.ID?
     @State private var entries: [AuditLogEntry] = []
     @State private var nextCursor: String?
     @State private var phase: Phase = .loading
@@ -35,26 +36,30 @@ struct AccountActivityView: View {
 
     var body: some View {
         Group {
-            if let account = store.currentAccount {
-                stateView(account: account)
-                    .task(id: account.id) { await reload(account: account) }
-                    .toolbar {
-                        ToolbarItem {
-                            Button {
-                                Task { await reload(account: account) }
-                            } label: {
-                                Label("Refresh", systemImage: "arrow.clockwise")
-                            }
-                            .help("Refresh Account Activity")
-                            .disabled(phase == .loading)
-                        }
-                    }
-                    .focusedSceneValue(
-                        \.accountActivityRefresh,
-                        AccountActivityRefreshAction(isEnabled: phase != .loading) {
+            if let account = activityAccount {
+                VStack(spacing: 0) {
+                    accountPicker(selectedAccount: account)
+                    Divider()
+                    stateView(account: account)
+                }
+                .task(id: account.id) { await reload(account: account) }
+                .toolbar {
+                    ToolbarItem {
+                        Button {
                             Task { await reload(account: account) }
+                        } label: {
+                            Label("Refresh", systemImage: "arrow.clockwise")
                         }
-                    )
+                        .help("Refresh Account Activity")
+                        .disabled(phase == .loading)
+                    }
+                }
+                .focusedSceneValue(
+                    \.accountActivityRefresh,
+                    AccountActivityRefreshAction(isEnabled: phase != .loading) {
+                        Task { await reload(account: account) }
+                    }
+                )
             } else {
                 ContentUnavailableView(
                     "No Account",
@@ -63,6 +68,39 @@ struct AccountActivityView: View {
                 )
             }
         }
+    }
+
+    private var activityAccount: Account? {
+        if let selectedAccountID,
+           let selected = store.accounts.first(where: { $0.id == selectedAccountID }) {
+            return selected
+        }
+        return store.currentAccount ?? store.accounts.first
+    }
+
+    private func accountPicker(selectedAccount: Account) -> some View {
+        HStack {
+            Label("Showing activity for", systemImage: selectedAccount.displayIcon)
+                .foregroundStyle(.secondary)
+            Picker(
+                "Account",
+                selection: Binding(
+                    get: { selectedAccount.id },
+                    set: { selectedAccountID = $0 }
+                )
+            ) {
+                ForEach(store.accounts) { account in
+                    Text(account.label).tag(account.id)
+                }
+            }
+            .labelsHidden()
+            .fixedSize()
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(.bar)
+        .accessibilityElement(children: .contain)
     }
 
     @ViewBuilder
@@ -128,7 +166,7 @@ struct AccountActivityView: View {
             let page = try await HackerRankClient(account: account).auditLogPage()
             guard Self.isCurrentRequest(
                 accountID: account.id,
-                currentAccountID: store.currentAccount?.id,
+                currentAccountID: activityAccount?.id,
                 generation: generation,
                 currentGeneration: reloadGeneration
             ) else { return }
@@ -139,7 +177,7 @@ struct AccountActivityView: View {
         } catch {
             guard Self.isCurrentRequest(
                 accountID: account.id,
-                currentAccountID: store.currentAccount?.id,
+                currentAccountID: activityAccount?.id,
                 generation: generation,
                 currentGeneration: reloadGeneration
             ) else { return }
@@ -163,7 +201,7 @@ struct AccountActivityView: View {
             let page = try await HackerRankClient(account: account).auditLogPage(after: cursor)
             guard Self.isCurrentPagination(
                 request,
-                currentAccountID: store.currentAccount?.id,
+                currentAccountID: activityAccount?.id,
                 currentGeneration: reloadGeneration,
                 currentCursor: nextCursor
             ) else { return }
@@ -173,7 +211,7 @@ struct AccountActivityView: View {
         } catch {
             guard Self.isCurrentPagination(
                 request,
-                currentAccountID: store.currentAccount?.id,
+                currentAccountID: activityAccount?.id,
                 currentGeneration: reloadGeneration,
                 currentCursor: nextCursor
             ) else { return }
