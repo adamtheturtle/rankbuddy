@@ -313,6 +313,9 @@ struct TestDetailView: View {
     private func rename(to newName: String) async -> Bool {
         do {
             try await HackerRankClient(account: account).updateTest(testID: displayedTest.id, name: newName)
+            var renamed = TestDetailMetadata()
+            renamed.name = newName
+            detailTest = renamed.applying(to: displayedTest)
             onChanged()
             return true
         } catch {
