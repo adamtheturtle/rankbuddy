@@ -81,6 +81,18 @@ enum RankBuddyUserActivity {
         return ItemRef(collection: collection, accountID: accountID, itemID: itemID)
     }
 
+    /// Restricts browser fallback to HackerRank's web origin. Merely being an http(s) URL is not
+    /// enough: a malformed or foreign activity must not invoke local/custom handlers or navigate
+    /// to an attacker-controlled host while claiming to be RankBuddy Handoff.
+    nonisolated static func isTrustedFallbackURL(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased(),
+              scheme == "https" || scheme == "http",
+              let host = url.host()?.lowercased()
+        else { return false }
+
+        return host == "hackerrank.com" || host.hasSuffix(".hackerrank.com")
+    }
+
     /// Continues an activity: deep-links to the item in-app when the `userInfo` resolves,
     /// otherwise opens its `webpageURL` through the browser preference (#63). Returns whether
     /// it handled the activity.
@@ -93,7 +105,7 @@ enum RankBuddyUserActivity {
             AppActivator.bringToFront()
             return true
         }
-        if let url = activity.webpageURL {
+        if let url = activity.webpageURL, isTrustedFallbackURL(url) {
             BrowserSettings.open(url)
             return true
         }

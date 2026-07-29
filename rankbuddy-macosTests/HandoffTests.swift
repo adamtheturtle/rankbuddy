@@ -69,4 +69,20 @@ struct HandoffTests {
             RankBuddyUserActivity.Key.itemID: "t1"
         ]) == nil)
     }
+
+    @Test func `browser fallback accepts only HTTP HackerRank origins`() {
+        let trustedHTTPS = URL(string: "https://www.hackerrank.com/x/tests/t1") ?? base
+        let trustedHTTP = URL(string: "http://eu.hackerrank.com/x/tests/t1") ?? base
+        let localFile = URL(string: "file:///tmp/item") ?? base
+        let customScheme = URL(string: "rankbuddy://tests/t1") ?? base
+        let deceptiveHost = URL(string: "https://hackerrank.com.evil.example/x") ?? base
+        let foreignHost = URL(string: "https://example.com/x/tests/t1") ?? base
+
+        #expect(RankBuddyUserActivity.isTrustedFallbackURL(trustedHTTPS))
+        #expect(RankBuddyUserActivity.isTrustedFallbackURL(trustedHTTP))
+        #expect(!RankBuddyUserActivity.isTrustedFallbackURL(localFile))
+        #expect(!RankBuddyUserActivity.isTrustedFallbackURL(customScheme))
+        #expect(!RankBuddyUserActivity.isTrustedFallbackURL(deceptiveHost))
+        #expect(!RankBuddyUserActivity.isTrustedFallbackURL(foreignHost))
+    }
 }
