@@ -58,6 +58,16 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
         return validated
     }
 
+    /// Clears a persisted range that the current app version no longer offers, preventing an
+    /// invalid Picker selection from presenting as an active filter that constrains no rows.
+    func retainingDateRanges(_ validRanges: Set<String>) -> Self {
+        var validated = self
+        if let dateRange, !validRanges.contains(dateRange) {
+            validated.dateRange = nil
+        }
+        return validated
+    }
+
     /// Whether this captures any constraint at all — an empty query, no range, and no facets
     /// would save nothing useful, so the UI refuses to create one.
     var isEmpty: Bool {

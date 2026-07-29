@@ -111,4 +111,18 @@ struct SavedSearchStoreTests {
         #expect(validated.id == search.id)
         #expect(validated.name == search.name)
     }
+
+    @Test func `validation clears a date range the current app no longer offers`() {
+        let search = SavedSearch(name: "Legacy", query: "swift", dateRange: "previous quarter")
+
+        let validated = search.retainingDateRanges(["today", "last 7 days"])
+
+        #expect(validated.dateRange == nil)
+        #expect(validated.query == "swift")
+        #expect(
+            SavedSearch(name: "Current", query: "", dateRange: "today")
+                .retainingDateRanges(["today"])
+                .dateRange == "today"
+        )
+    }
 }

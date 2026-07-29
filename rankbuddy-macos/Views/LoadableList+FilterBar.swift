@@ -181,7 +181,10 @@ extension LoadableList {
 
         let loaded = SavedSearchStore.load(restorationKey: restorationKey)
         let validFacetIDs = Set(facets.map(\.id))
-        let validated = loaded.map { $0.retainingFacetIDs(validFacetIDs) }
+        let validDateRanges = Set(NamedDateRange.options)
+        let validated = loaded.map {
+            $0.retainingFacetIDs(validFacetIDs).retainingDateRanges(validDateRanges)
+        }
         savedSearches = validated
         if validated != loaded {
             SavedSearchStore.save(validated, restorationKey: restorationKey)
@@ -191,8 +194,11 @@ extension LoadableList {
     /// Applies a saved search's full filter set to the live list (#25).
     private func apply(_ search: SavedSearch) {
         query = search.query
-        dateRange = search.dateRange
-        selectedFacets = search.retainingFacetIDs(Set(facets.map(\.id))).facetSelection
+        let validated = search
+            .retainingFacetIDs(Set(facets.map(\.id)))
+            .retainingDateRanges(Set(NamedDateRange.options))
+        dateRange = validated.dateRange
+        selectedFacets = validated.facetSelection
     }
 
     /// Captures the live filters as a named search and persists it (#25). No-ops for unpersisted
