@@ -18,6 +18,7 @@ struct AccountActivityView: View {
     @State private var nextCursor: String?
     @State private var phase: Phase = .loading
     @State private var isLoadingMore = false
+    @State private var loadMoreError: String?
 
     private enum Phase: Equatable {
         case loading
@@ -93,20 +94,27 @@ struct AccountActivityView: View {
     }
 
     private func loadMoreRow(account: Account) -> some View {
-        HStack {
-            Spacer()
+        VStack(spacing: 6) {
             if isLoadingMore {
                 ProgressView().controlSize(.small)
             } else {
                 Button("Load More") { Task { await loadMore(account: account) } }
                     .buttonStyle(.borderless)
             }
-            Spacer()
+            if let loadMoreError {
+                Label(loadMoreError, systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .accessibilityLabel("Couldn’t load more activity: \(loadMoreError)")
+            }
         }
+        .frame(maxWidth: .infinity)
     }
 
     private func reload(account: Account) async {
         phase = .loading
+        loadMoreError = nil
         do {
             let page = try await HackerRankClient(account: account).auditLogPage()
             entries = Self.mergedEntries([], with: page.items)
@@ -121,10 +129,14 @@ struct AccountActivityView: View {
         guard let cursor = nextCursor, !isLoadingMore else { return }
 
         isLoadingMore = true
+        loadMoreError = nil
         defer { isLoadingMore = false }
-        if let page = try? await HackerRankClient(account: account).auditLogPage(after: cursor) {
+        do {
+            let page = try await HackerRankClient(account: account).auditLogPage(after: cursor)
             entries = Self.mergedEntries(entries, with: page.items)
             nextCursor = page.next
+        } catch {
+            loadMoreError = error.localizedDescription
         }
     }
 
