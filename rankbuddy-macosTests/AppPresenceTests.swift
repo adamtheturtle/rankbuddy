@@ -44,6 +44,39 @@ struct AppPresenceTests {
         #expect(AppPresence.menuBarOnly.settingMenuBarInserted(true) == .menuBarOnly)
     }
 
+    @Test func `dock visibility reports rejection and does not activate`() {
+        var requestedPolicy: NSApplication.ActivationPolicy?
+        var didActivate = false
+
+        let applied = AppPresence.dockOnly.applyDockVisibility(
+            currentPolicy: { .accessory },
+            setPolicy: {
+                requestedPolicy = $0
+                return false
+            },
+            activate: { didActivate = true }
+        )
+
+        #expect(!applied)
+        #expect(requestedPolicy == .regular)
+        #expect(!didActivate)
+    }
+
+    @Test func `successful dock restoration activates only after policy acceptance`() {
+        var didActivate = false
+        let applied = AppPresence.both.applyDockVisibility(
+            currentPolicy: { .accessory },
+            setPolicy: { $0 == .regular },
+            activate: { didActivate = true }
+        )
+
+        #expect(applied)
+        #expect(didActivate)
+        #expect(AppPresence.dockOnly.matchingActualPolicy(.regular) == .dockOnly)
+        #expect(AppPresence.both.matchingActualPolicy(.regular) == .both)
+        #expect(AppPresence.dockOnly.matchingActualPolicy(.accessory) == .menuBarOnly)
+    }
+
     @Test func `current defaults to both for an unset or unknown value`() throws {
         let defaults = try #require(UserDefaults(suiteName: "app-presence-test"))
         defaults.removePersistentDomain(forName: "app-presence-test")

@@ -59,15 +59,29 @@ enum AppPresence: String, CaseIterable, Identifiable {
         Self(rawValue: defaults.string(forKey: defaultsKey) ?? "") ?? .both
     }
 
-    /// Applies this presence's Dock visibility. When returning to the Dock, re-activates the
-    /// app so the main window comes forward rather than staying hidden behind other apps.
-    @MainActor
-    func applyDockVisibility() {
-        guard NSApp.activationPolicy() != activationPolicy else { return }
+    /// A preference matching the activation policy that actually remains after a failed change,
+    /// retaining the requested Menu Bar surface whenever the Dock is still available.
+    func matchingActualPolicy(_ policy: NSApplication.ActivationPolicy) -> Self {
+        policy == .regular
+            ? (showsMenuBarIcon ? .both : .dockOnly)
+            : .menuBarOnly
+    }
 
-        NSApp.setActivationPolicy(activationPolicy)
+    /// Applies this presence's Dock visibility. When returning to the Dock, re-activates the
+    /// app so the main window comes forward rather than staying hidden behind other apps. Returns
+    /// false when macOS rejects the activation-policy transition.
+    @MainActor
+    func applyDockVisibility(
+        currentPolicy: () -> NSApplication.ActivationPolicy = { NSApp.activationPolicy() },
+        setPolicy: (NSApplication.ActivationPolicy) -> Bool = { NSApp.setActivationPolicy($0) },
+        activate: () -> Void = { AppActivator.bringToFront() }
+    ) -> Bool {
+        guard currentPolicy() != activationPolicy else { return true }
+        guard setPolicy(activationPolicy) else { return false }
+
         if showsDockIcon {
-            AppActivator.bringToFront()
+            activate()
         }
+        return true
     }
 }

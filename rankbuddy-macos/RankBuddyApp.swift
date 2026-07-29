@@ -31,6 +31,8 @@ struct RankBuddyApp: App {
     /// Where the app shows itself — Dock, Menu Bar, or both (#66). Drives the activation policy
     /// and whether the Menu Bar extra is inserted.
     @AppStorage(AppPresence.defaultsKey) private var presence: AppPresence = .both
+    /// Explains a rejected activation-policy transition after restoring the prior safe presence.
+    @State private var presenceError: String?
     /// Re-checks the current account's token so a mid-session revocation surfaces a banner (#40).
     @State private var health = AccountHealthMonitor()
 
@@ -77,9 +79,14 @@ struct RankBuddyApp: App {
                     LivenessNotifier.shared.register()
                     LivenessMonitor.shared.start(store: accountStore)
                     health.start(store: accountStore)
-                    presence.applyDockVisibility()
+                    applyPresence(presence)
                 }
-                .onChange(of: presence) { _, new in new.applyDockVisibility() }
+                .onChange(of: presence) { old, new in applyPresence(new, rollback: old) }
+                .alert("Couldn’t Change App Visibility", isPresented: presenceErrorPresented) {
+                    Button("OK") { presenceError = nil }
+                } message: {
+                    Text(presenceError ?? "")
+                }
                 .preferredColorScheme(appearance.colorScheme)
         }
         .commands {
@@ -143,6 +150,26 @@ struct RankBuddyApp: App {
             get: { presence.showsMenuBarIcon },
             set: { presence = presence.settingMenuBarInserted($0) }
         )
+    }
+
+    private var presenceErrorPresented: Binding<Bool> {
+        Binding(
+            get: { presenceError != nil },
+            set: { if !$0 { presenceError = nil } }
+        )
+    }
+
+    /// Applies a preference only when AppKit accepts it. A rejection restores the previous
+    /// preference (or derives one from the actual startup policy) and keeps at least one surface.
+    private func applyPresence(_ requested: AppPresence, rollback: AppPresence? = nil) {
+        guard !requested.applyDockVisibility() else { return }
+
+        let restored = rollback ?? requested.matchingActualPolicy(NSApp.activationPolicy())
+        presence = restored
+        presenceError = """
+        macOS couldn’t switch RankBuddy to “\(requested.label)”. The setting was restored to \
+        “\(restored.label)”. Try again after closing any system dialogs or restarting RankBuddy.
+        """
     }
 
     /// Routes every SwiftUI `Link` / `openURL` through the browser preferences (#63), so web
