@@ -112,7 +112,10 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func createTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let name = stringArgument(arguments, "name") else { return missingArgument("name") }
+        guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
+
+        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return errorResult("`name` must not be empty.") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -738,8 +741,10 @@ extension RankBuddyToolProvider {
         let account: [String: Any] = [
             "type": "string", "description": "Account label or id; defaults to the current account."
         ]
-        func string(_ description: String) -> [String: Any] {
-            ["type": "string", "description": description]
+        func string(_ description: String, minLength: Int? = nil) -> [String: Any] {
+            var schema: [String: Any] = ["type": "string", "description": description]
+            if let minLength { schema["minLength"] = minLength }
+            return schema
         }
         func integer(_ description: String) -> [String: Any] {
             ["type": "integer", "description": description]
@@ -763,7 +768,8 @@ extension RankBuddyToolProvider {
         }
         return [
             write("create_test", "Create a HackerRank test.",
-                  properties: ["name": string("The test's name."), "account": account], required: ["name"]),
+                  properties: ["name": string("The test's name.", minLength: 1), "account": account],
+                  required: ["name"]),
             write("update_test", "Rename a test.",
                   properties: ["test_id": string("The test's id."), "name": string("The new name."),
                                "account": account],
