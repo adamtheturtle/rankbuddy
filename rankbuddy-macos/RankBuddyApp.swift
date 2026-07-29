@@ -136,11 +136,13 @@ struct RankBuddyApp: App {
         }
     }
 
-    /// Whether the Menu Bar extra is inserted, derived from the chosen presence (#66). The
-    /// setter is a no-op: presence is changed through the Settings picker, not by dragging the
-    /// extra out of the menu bar.
+    /// Whether the Menu Bar extra is inserted, derived from and writing back to the same persisted
+    /// presence preference. This keeps system/user removal in sync with Settings.
     private var menuBarInserted: Binding<Bool> {
-        Binding(get: { presence.showsMenuBarIcon }, set: { _ in })
+        Binding(
+            get: { presence.showsMenuBarIcon },
+            set: { presence = presence.settingMenuBarInserted($0) }
+        )
     }
 
     /// Routes every SwiftUI `Link` / `openURL` through the browser preferences (#63), so web

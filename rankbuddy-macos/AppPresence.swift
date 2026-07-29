@@ -45,6 +45,15 @@ enum AppPresence: String, CaseIterable, Identifiable {
         showsDockIcon ? .regular : .accessory
     }
 
+    /// Reconciles a system-driven Menu Bar extra insertion change with the persisted preference.
+    /// Removing the only visible surface enables the Dock, so the app can never become unreachable.
+    func settingMenuBarInserted(_ isInserted: Bool) -> Self {
+        if isInserted {
+            return showsDockIcon ? .both : .menuBarOnly
+        }
+        return .dockOnly
+    }
+
     /// Reads the stored presence, defaulting to `.both` for an unset or unrecognised value.
     static func current(defaults: UserDefaults = .standard) -> Self {
         Self(rawValue: defaults.string(forKey: defaultsKey) ?? "") ?? .both

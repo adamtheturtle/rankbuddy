@@ -37,6 +37,13 @@ struct AppPresenceTests {
         }
     }
 
+    @Test func `menu extra insertion writes back without hiding every surface`() {
+        #expect(AppPresence.dockOnly.settingMenuBarInserted(true) == .both)
+        #expect(AppPresence.both.settingMenuBarInserted(false) == .dockOnly)
+        #expect(AppPresence.menuBarOnly.settingMenuBarInserted(false) == .dockOnly)
+        #expect(AppPresence.menuBarOnly.settingMenuBarInserted(true) == .menuBarOnly)
+    }
+
     @Test func `current defaults to both for an unset or unknown value`() throws {
         let defaults = try #require(UserDefaults(suiteName: "app-presence-test"))
         defaults.removePersistentDomain(forName: "app-presence-test")
