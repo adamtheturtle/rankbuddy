@@ -168,7 +168,7 @@ struct QuestionRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(question.name).listRowTitleStyle()
+                Text(question.name).listRowTitleStyle(fullText: question.name)
                 HStack(spacing: 8) {
                     Text(DisplayFormat.enumLabel(question.type))
                     if let languages = DisplayFormat.languages(question.languages) {

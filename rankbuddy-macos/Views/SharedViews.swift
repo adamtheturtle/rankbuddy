@@ -134,10 +134,10 @@ extension View {
             .layoutPriority(1)
     }
 
-    func listRowTitleStyle() -> some View {
+    func listRowTitleStyle(fullText: String) -> some View {
         font(.callout.weight(.medium))
             .lineLimit(1)
-            .truncationMode(.tail)
+            .truncationMode(.tail).help(fullText).accessibilityLabel(fullText)
     }
 
     func listRowMetadataStyle() -> some View {

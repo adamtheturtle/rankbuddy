@@ -206,7 +206,7 @@ struct TestRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(test.name).listRowTitleStyle()
+                Text(test.name).listRowTitleStyle(fullText: test.name)
                 HStack(spacing: 8) {
                     if let state = test.state {
                         Text(DisplayFormat.enumLabel(state))

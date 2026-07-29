@@ -109,7 +109,7 @@ struct TeamRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(team.name).listRowTitleStyle()
+            Text(team.name).listRowTitleStyle(fullText: team.name)
             if let summary = team.memberSummary {
                 Text(summary)
                     .listRowMetadataStyle()

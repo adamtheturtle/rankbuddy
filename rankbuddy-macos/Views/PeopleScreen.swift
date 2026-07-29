@@ -321,7 +321,7 @@ struct PersonRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(user.displayName).listRowTitleStyle()
+            Text(user.displayName).listRowTitleStyle(fullText: user.displayName)
             HStack(spacing: 8) {
                 if let role = user.role {
                     Text(DisplayFormat.enumLabel(role))

@@ -243,7 +243,7 @@ struct InterviewRow: View {
     var body: some View {
         HStack {
             Text(displayTitle)
-                .listRowTitleStyle()
+                .listRowTitleStyle(fullText: displayTitle)
                 .listRowTextColumn()
             Spacer(minLength: 12)
             interview.statusBadge

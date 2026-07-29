@@ -74,7 +74,7 @@ struct MergedRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).listRowTitleStyle()
+                Text(title).listRowTitleStyle(fullText: title)
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .listRowMetadataStyle()

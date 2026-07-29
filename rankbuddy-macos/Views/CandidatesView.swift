@@ -177,7 +177,8 @@ struct CandidateRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(candidate.fullName ?? candidate.email).listRowTitleStyle()
+                let title = candidate.fullName ?? candidate.email
+                Text(title).listRowTitleStyle(fullText: title)
                 HStack(spacing: 8) {
                     Text(candidate.email)
                     if let score = candidate.score {
