@@ -846,11 +846,17 @@ extension RankBuddyToolProvider {
                 candidateID: candidateID,
                 options: ATSCodePairOptions(sendEmail: boolArgument(arguments, "send_email"))
             )
+            let createdID = Self.validatedCreatedID(result.id)
+            let createdURL = result.url.flatMap(URL.remoteWebURL(from:))?.absoluteString
+            guard createdID != nil || createdURL != nil else {
+                return errorResult("HackerRank created the CodePair invite but returned no usable ID or URL.")
+            }
+
             return jsonResult([
                 "account": resolved.label,
                 "ats_invite": [
-                    "id": result.id ?? "",
-                    "url": result.url ?? "",
+                    "id": createdID ?? "",
+                    "url": createdURL ?? "",
                     "status": result.status ?? "",
                     "email": result.email ?? ""
                 ]
