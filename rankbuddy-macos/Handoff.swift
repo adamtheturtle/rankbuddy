@@ -27,6 +27,9 @@ enum RankBuddyUserActivity {
         static let itemID = "itemID"
     }
 
+    /// Generous upper bound for API item identifiers carried in system activities.
+    nonisolated static let maxItemIDLength = 256
+
     /// The account-scoped identity of a viewable item — everything the deep-link open path
     /// needs, and exactly what travels in the activity's `userInfo`.
     nonisolated struct ItemRef: Hashable {
@@ -74,11 +77,15 @@ enum RankBuddyUserActivity {
         guard let userInfo,
               let raw = userInfo[Key.collection] as? String,
               let collection = FavoriteCollection(rawValue: raw),
-              let accountID = userInfo[Key.accountID] as? String, !accountID.isEmpty,
-              let itemID = userInfo[Key.itemID] as? String, !itemID.isEmpty
+              let rawAccountID = userInfo[Key.accountID] as? String,
+              let accountID = UUID(uuidString: rawAccountID),
+              let itemID = userInfo[Key.itemID] as? String,
+              !itemID.isEmpty,
+              itemID.utf8.count <= maxItemIDLength,
+              itemID.unicodeScalars.allSatisfy({ !CharacterSet.controlCharacters.contains($0) })
         else { return nil }
 
-        return ItemRef(collection: collection, accountID: accountID, itemID: itemID)
+        return ItemRef(collection: collection, accountID: accountID.uuidString, itemID: itemID)
     }
 
     /// Restricts browser fallback to HackerRank's web origin. Merely being an http(s) URL is not

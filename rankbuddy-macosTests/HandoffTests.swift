@@ -9,6 +9,7 @@ import Testing
 
 struct HandoffTests {
     private let base = URL(string: "https://www.hackerrank.com") ?? URL(fileURLWithPath: "/")
+    private let accountID = "00000000-0000-0000-0000-0000000000AA"
 
     @Test func `web url uses the x-collection-id shape`() {
         let url = RankBuddyUserActivity.webURL(base: base, collection: .interviews, itemID: "i1")
@@ -44,15 +45,39 @@ struct HandoffTests {
         let activity = NSUserActivity(activityType: RankBuddyUserActivity.activityType)
         RankBuddyUserActivity.configure(
             activity,
-            ref: .init(collection: .questions, accountID: "acc", itemID: "q7"),
+            ref: .init(collection: .questions, accountID: accountID, itemID: "q7"),
             title: "Two Sum",
             webURL: nil
         )
 
         let target = RankBuddyUserActivity.target(userInfo: activity.userInfo)
         #expect(target?.collection == .questions)
-        #expect(target?.accountID == "acc")
+        #expect(target?.accountID == accountID)
         #expect(target?.itemID == "q7")
+    }
+
+    @Test func `target requires a bounded UUID account and control-free item id`() {
+        func info(accountID: String, itemID: String) -> [AnyHashable: Any] {
+            [
+                RankBuddyUserActivity.Key.collection: "tests",
+                RankBuddyUserActivity.Key.accountID: accountID,
+                RankBuddyUserActivity.Key.itemID: itemID
+            ]
+        }
+
+        let oversizedAccountID = String(repeating: "a", count: 10000)
+        #expect(RankBuddyUserActivity.target(userInfo: info(accountID: accountID, itemID: "t1")) != nil)
+        #expect(RankBuddyUserActivity.target(userInfo: info(accountID: "not-a-uuid", itemID: "t1")) == nil)
+        #expect(RankBuddyUserActivity.target(userInfo: info(accountID: oversizedAccountID, itemID: "t1")) == nil)
+        #expect(RankBuddyUserActivity.target(userInfo: info(accountID: accountID, itemID: "t1\npoison")) == nil)
+        #expect(
+            RankBuddyUserActivity.target(
+                userInfo: info(
+                    accountID: accountID,
+                    itemID: String(repeating: "x", count: RankBuddyUserActivity.maxItemIDLength + 1)
+                )
+            ) == nil
+        )
     }
 
     @Test func `target rejects a missing, foreign, or empty activity`() {
