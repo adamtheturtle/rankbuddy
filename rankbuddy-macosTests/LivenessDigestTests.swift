@@ -54,9 +54,18 @@ struct LivenessDigestTests {
             interview(id: "c", status: "completed")
         ]
         let new = LivenessDigest.newInterviews(previousIDs: ["a"], current: current)
-        #expect(new.map(\.id) == ["b", "c"])
+        #expect(new.map(\.id) == ["b"])
         // Nothing new when every id was already seen.
         #expect(LivenessDigest.newInterviews(previousIDs: ["a", "b", "c"], current: current).isEmpty)
+    }
+
+    @Test func `notifications include actionable statuses and reject terminal ones`() {
+        for status in ["scheduled", " Upcoming ", "LIVE", "in_progress", "in-progress", "ongoing"] {
+            #expect(LivenessDigest.isNotificationEligible(status: status))
+        }
+        for status in ["completed", "cancelled", "archived", "expired", ""] {
+            #expect(!LivenessDigest.isNotificationEligible(status: status))
+        }
     }
 
     @Test func `the notification body singularises one interview`() {

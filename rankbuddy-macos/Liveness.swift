@@ -106,9 +106,25 @@ enum LivenessDigest {
     }
 
     /// The interviews in `current` that weren't seen on the previous sweep, so a notification
-    /// reports only what's genuinely new.
+    /// reports only what's genuinely new and still actionable. Terminal or unknown records remain
+    /// part of the saved baseline but never trigger an alert.
     static func newInterviews(previousIDs: Set<String>, current: [Interview]) -> [Interview] {
-        current.filter { !previousIDs.contains($0.id) }
+        current.filter {
+            !previousIDs.contains($0.id) && isNotificationEligible(status: $0.status)
+        }
+    }
+
+    /// Statuses for interviews a recruiter can still act on. Backend spelling variants normalize
+    /// underscores/hyphens and whitespace before comparison.
+    static func isNotificationEligible(status: String) -> Bool {
+        let normalized = status
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+        return ["scheduled", "upcoming", "live", "in progress", "ongoing"].contains(normalized)
     }
 
     /// The one-line body for a "new interviews" notification.
