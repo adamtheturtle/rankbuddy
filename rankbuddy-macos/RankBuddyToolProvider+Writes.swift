@@ -138,6 +138,11 @@ extension RankBuddyToolProvider {
         return normalized.isEmpty ? nil : normalized
     }
 
+    nonisolated static func normalizedOptionalString(_ value: String?) -> String? {
+        let normalized = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return normalized.isEmpty ? nil : normalized
+    }
+
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -664,7 +669,7 @@ extension RankBuddyToolProvider {
 
         do {
             let created = try await HackerRankClient(account: resolved)
-                .createPad(title: stringArgument(arguments, "title"))
+                .createPad(title: Self.normalizedOptionalString(stringArgument(arguments, "title")))
             let createdID = Self.validatedCreatedID(created.id)
             let createdURL = created.url.flatMap(URL.remoteWebURL(from:))?.absoluteString
             guard createdID != nil || createdURL != nil else {

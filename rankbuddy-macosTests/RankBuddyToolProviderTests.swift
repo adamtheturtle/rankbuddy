@@ -258,6 +258,9 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.validatedCreatedID(nil) == nil)
         #expect(RankBuddyToolProvider.validatedCreatedID(" \n") == nil)
         #expect(RankBuddyToolProvider.validatedCreatedID(" test-1 ") == "test-1")
+        #expect(RankBuddyToolProvider.normalizedOptionalString(nil) == nil)
+        #expect(RankBuddyToolProvider.normalizedOptionalString(" \n") == nil)
+        #expect(RankBuddyToolProvider.normalizedOptionalString(" Pairing ") == "Pairing")
     }
 
     @Test func `remote created-resource URLs must use a web scheme`() {
