@@ -14,7 +14,8 @@ struct TagList: View {
     let tags: [String]?
 
     var body: some View {
-        if let tags, !tags.isEmpty {
+        let tags = uniqueTags(tags)
+        if !tags.isEmpty {
             HFlow(spacing: 6) {
                 ForEach(tags, id: \.self) { tag in
                     Text(tag)

@@ -6,6 +6,11 @@
 import BuddyAppKit
 import Foundation
 
+nonisolated func uniqueTags(_ tags: [String]?) -> [String] {
+    var seen: Set<String> = []
+    return (tags ?? []).filter { seen.insert($0).inserted }
+}
+
 /// Display helpers for the read-only views.
 enum DisplayFormat {
     private static let isoWithFractional: ISO8601DateFormatter = {

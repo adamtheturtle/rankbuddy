@@ -12,6 +12,11 @@ import Testing
 /// the `TestCandidate.integrityBadge` derivation that drives the plagiarism/integrity pill.
 @MainActor
 struct FormattingTests {
+    @Test func `tag chips deduplicate values while preserving API order`() {
+        #expect(uniqueTags(["swift", "api", "swift", "macOS"]) == ["swift", "api", "macOS"])
+        #expect(uniqueTags(nil).isEmpty)
+    }
+
     // MARK: - DisplayFormat.languages
 
     @Test func `language codes normalise to friendly names`() {
