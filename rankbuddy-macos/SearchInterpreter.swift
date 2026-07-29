@@ -244,7 +244,7 @@ enum SearchInterpreter {
               let option = facetOptions.first(where: { $0.lowercased() == trimmed })
         else { return nil }
 
-        let optionWords = tokens(option).filter { $0.count >= 2 }
+        let optionWords = tokens(option)
         guard !optionWords.isEmpty else { return nil }
 
         return tokens(query).isDisjoint(with: optionWords) ? nil : option

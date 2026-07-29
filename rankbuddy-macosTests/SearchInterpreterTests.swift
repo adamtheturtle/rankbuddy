@@ -71,6 +71,11 @@ struct SearchInterpreterTests {
         )
     }
 
+    @Test func `groundFacetValue supports exact one-character option mentions`() {
+        #expect(SearchInterpreter.groundFacetValue("C", facetOptions: ["C", "R"], query: "C questions") == "C")
+        #expect(SearchInterpreter.groundFacetValue("R", facetOptions: ["C", "R"], query: "C questions") == nil)
+    }
+
     @Test func `groundDateRange keeps a range only when the query mentions time`() {
         #expect(SearchInterpreter.groundDateRange("last 7 days", query: "questions from last week") == "last 7 days")
         #expect(SearchInterpreter.groundDateRange("last 7 days", query: "python questions") == nil)
