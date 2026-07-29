@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import Foundation
 import Sparkle
 import SwiftUI
 
@@ -27,7 +28,14 @@ enum RankBuddyUpdates {
     static func feedConfigured(_ infoValue: Any?) -> Bool {
         guard let string = infoValue as? String else { return false }
 
-        return !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let components = URLComponents(string: trimmed),
+              components.scheme?.lowercased() == "https",
+              let host = components.host,
+              !host.isEmpty
+        else { return false }
+
+        return components.url != nil
     }
 }
 

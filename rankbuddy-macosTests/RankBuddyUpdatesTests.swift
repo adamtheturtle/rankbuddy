@@ -21,4 +21,13 @@ struct RankBuddyUpdatesTests {
         #expect(!RankBuddyUpdates.feedConfigured("\n\r\n"))
         #expect(!RankBuddyUpdates.feedConfigured(42))
     }
+
+    @Test func `only a valid HTTPS feed with a host enables updates`() {
+        #expect(RankBuddyUpdates.feedConfigured("  HTTPS://updates.example.com/appcast.xml\n"))
+        #expect(!RankBuddyUpdates.feedConfigured("http://example.com/appcast.xml"))
+        #expect(!RankBuddyUpdates.feedConfigured("file:///tmp/appcast.xml"))
+        #expect(!RankBuddyUpdates.feedConfigured("/relative/appcast.xml"))
+        #expect(!RankBuddyUpdates.feedConfigured("https:///appcast.xml"))
+        #expect(!RankBuddyUpdates.feedConfigured("not a url"))
+    }
 }
