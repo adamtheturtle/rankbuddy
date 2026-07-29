@@ -352,7 +352,7 @@ extension RankBuddyToolProvider {
             let created = try await HackerRankClient(account: resolved).createUser(
                 email: email,
                 firstName: firstName,
-                lastName: stringArgument(arguments, "last_name"),
+                lastName: Self.normalizedOptionalString(stringArgument(arguments, "last_name")),
                 role: role,
                 teamIDs: [teamID]
             )
