@@ -665,9 +665,15 @@ extension RankBuddyToolProvider {
         do {
             let created = try await HackerRankClient(account: resolved)
                 .createPad(title: stringArgument(arguments, "title"))
+            let createdID = Self.validatedCreatedID(created.id)
+            let createdURL = created.url.flatMap(URL.remoteWebURL(from:))?.absoluteString
+            guard createdID != nil || createdURL != nil else {
+                return errorResult("HackerRank created the Pad but returned no usable ID or URL.")
+            }
+
             return jsonResult([
                 "account": resolved.label,
-                "created_interview": ["id": created.id ?? "", "url": created.url ?? ""]
+                "created_interview": ["id": createdID ?? "", "url": createdURL ?? ""]
             ])
         } catch {
             return errorResult("Couldn't create Pad: \(error.localizedDescription)")

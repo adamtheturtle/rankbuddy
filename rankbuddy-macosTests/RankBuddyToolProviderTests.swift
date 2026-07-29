@@ -260,6 +260,11 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.validatedCreatedID(" test-1 ") == "test-1")
     }
 
+    @Test func `remote created-resource URLs must use a web scheme`() {
+        #expect(URL.remoteWebURL(from: "https://example.com/interviews/1") != nil)
+        #expect(URL.remoteWebURL(from: "file:///tmp/interview") == nil)
+    }
+
     @Test func `delete_test rejects a whitespace-only target`() async {
         let result = await writeProvider().callTool("delete_test", arguments: ["test_id": .string(" \n\t ")])
         #expect(result.isError == true)
