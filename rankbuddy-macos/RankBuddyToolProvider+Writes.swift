@@ -120,13 +120,22 @@ extension RankBuddyToolProvider {
 
         do {
             let created = try await HackerRankClient(account: resolved).createTest(name: name)
+            guard let createdID = Self.validatedCreatedID(created.id) else {
+                return errorResult("HackerRank created the test but returned no test ID.")
+            }
+
             return jsonResult([
                 "account": resolved.label,
-                "created_test": ["id": created.id ?? "", "name": created.name ?? name]
+                "created_test": ["id": createdID, "name": created.name ?? name]
             ])
         } catch {
             return errorResult("Couldn't create test: \(error.localizedDescription)")
         }
+    }
+
+    nonisolated static func validatedCreatedID(_ id: String?) -> String? {
+        let normalized = id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return normalized.isEmpty ? nil : normalized
     }
 
     @MainActor

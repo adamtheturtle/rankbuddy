@@ -254,6 +254,12 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("name"))
     }
 
+    @Test func `created resource IDs must be non-empty`() {
+        #expect(RankBuddyToolProvider.validatedCreatedID(nil) == nil)
+        #expect(RankBuddyToolProvider.validatedCreatedID(" \n") == nil)
+        #expect(RankBuddyToolProvider.validatedCreatedID(" test-1 ") == "test-1")
+    }
+
     @Test func `delete_test rejects a whitespace-only target`() async {
         let result = await writeProvider().callTool("delete_test", arguments: ["test_id": .string(" \n\t ")])
         #expect(result.isError == true)
