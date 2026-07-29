@@ -705,9 +705,15 @@ extension RankBuddyToolProvider {
                 candidateEmail: candidateEmail.flatMap { $0.isEmpty ? nil : $0 },
                 notes: stringArgument(arguments, "notes")
             )
+            let createdID = Self.validatedCreatedID(created.id)
+            let createdURL = created.url.flatMap(URL.remoteWebURL(from:))?.absoluteString
+            guard createdID != nil || createdURL != nil else {
+                return errorResult("HackerRank scheduled the interview but returned no usable ID or URL.")
+            }
+
             return jsonResult([
                 "account": resolved.label,
-                "scheduled_interview": ["id": created.id ?? "", "url": created.url ?? ""]
+                "scheduled_interview": ["id": createdID ?? "", "url": createdURL ?? ""]
             ])
         } catch {
             return errorResult("Couldn't schedule interview: \(error.localizedDescription)")
