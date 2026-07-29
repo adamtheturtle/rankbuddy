@@ -775,8 +775,11 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func scheduleInterviewTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let title = stringArgument(arguments, "title") else { return missingArgument("title") }
+        guard let rawTitle = stringArgument(arguments, "title") else { return missingArgument("title") }
         guard let fromText = stringArgument(arguments, "from") else { return missingArgument("from") }
+        guard let title = Self.normalizedOptionalString(rawTitle) else {
+            return errorResult("`title` must not be empty.")
+        }
         guard let from = ISO8601DateFormatter().date(from: fromText) else {
             return errorResult("`from` must be an ISO-8601 timestamp, e.g. 2026-07-01T14:00:00Z.")
         }
