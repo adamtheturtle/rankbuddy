@@ -500,7 +500,10 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func createTeamTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let name = stringArgument(arguments, "name") else { return missingArgument("name") }
+        guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
+
+        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return errorResult("`name` must not be empty.") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -914,7 +917,8 @@ extension RankBuddyToolProvider {
                   properties: ["question_id": string("The question's id."), "account": account],
                   required: ["question_id"], destructive: true),
             write("create_team", "Create a team.",
-                  properties: ["name": string("The team's name."), "account": account], required: ["name"]),
+                  properties: ["name": string("The team's name.", minLength: 1), "account": account],
+                  required: ["name"]),
             write("update_team", "Update a team.",
                   properties: [
                       "team_id": string("The team's id."),
