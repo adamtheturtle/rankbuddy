@@ -275,6 +275,20 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("email"))
     }
 
+    @Test func `create_user rejects an invalid email`() async {
+        let result = await writeProvider().callTool(
+            "create_user",
+            arguments: [
+                "email": .string("not-an-email"),
+                "first_name": .string("Rhea"),
+                "role": .string("recruiter"),
+                "team_id": .string("team-1")
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("email"))
+    }
+
     @Test func `add_team_member rejects an unsupported role`() async {
         let result = await writeProvider().callTool(
             "add_team_member",

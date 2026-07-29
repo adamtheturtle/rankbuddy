@@ -307,7 +307,12 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func createUserTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let email = stringArgument(arguments, "email") else { return missingArgument("email") }
+        guard let rawEmail = stringArgument(arguments, "email") else { return missingArgument("email") }
+
+        let email = rawEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard EmailValidation.isLikelyValid(email) else {
+            return errorResult("`email` must be a valid email address.")
+        }
 
         // POST /users requires email, firstname, role, and a team (the server rejects the
         // request with HTTP 400 otherwise), so fail fast with a clear message instead of
@@ -873,7 +878,8 @@ extension RankBuddyToolProvider {
                   required: ["test_id", "candidate_id"], destructive: true),
             write("create_user", "Create an organisation user.",
                   properties: [
-                      "email": string("The user's email."), "first_name": string("The user's first name."),
+                      "email": string("The user's email.", minLength: 1, format: "email"),
+                      "first_name": string("The user's first name."),
                       "last_name": string("Last name (optional)."),
                       "role": string("Role: recruiter, developer, or interviewer."),
                       "team_id": string("Id of the team the user will belong to (see list_teams)."),
