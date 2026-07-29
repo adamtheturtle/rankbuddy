@@ -74,4 +74,11 @@ struct InterviewDetailTests {
         let detail = try JSONDecoder().decode(InterviewTranscript.self, from: Data("{}".utf8))
         #expect(detail.messages.isEmpty)
     }
+
+    @Test func `scheduled interview end must follow its start`() {
+        let start = Date(timeIntervalSinceReferenceDate: 1000)
+        #expect(InterviewDetailView.isValidSchedule(start: start, end: start.addingTimeInterval(1)))
+        #expect(!InterviewDetailView.isValidSchedule(start: start, end: start))
+        #expect(!InterviewDetailView.isValidSchedule(start: start, end: start.addingTimeInterval(-1)))
+    }
 }

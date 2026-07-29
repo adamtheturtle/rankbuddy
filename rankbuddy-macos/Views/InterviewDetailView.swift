@@ -60,10 +60,24 @@ struct InterviewDetailView: View {
             Section("Properties") {
                 OptionalRow("Status", DisplayFormat.enumLabel(interview.status))
                 scheduledRow(label: "Scheduled start", raw: detail?.scheduledFrom) { newDate in
-                    await update(InterviewUpdateBody(from: Self.iso8601.string(from: newDate)))
+                    guard let end = DisplayFormat.parseDate(detail?.scheduledTo),
+                          Self.isValidSchedule(start: newDate, end: end)
+                    else {
+                        editError = "Scheduled start must be before scheduled end."
+                        return false
+                    }
+
+                    return await update(InterviewUpdateBody(from: Self.iso8601.string(from: newDate)))
                 }
                 scheduledRow(label: "Scheduled end", raw: detail?.scheduledTo) { newDate in
-                    await update(InterviewUpdateBody(endsAt: Self.iso8601.string(from: newDate)))
+                    guard let start = DisplayFormat.parseDate(detail?.scheduledFrom),
+                          Self.isValidSchedule(start: start, end: newDate)
+                    else {
+                        editError = "Scheduled end must be after scheduled start."
+                        return false
+                    }
+
+                    return await update(InterviewUpdateBody(endsAt: Self.iso8601.string(from: newDate)))
                 }
                 OptionalRow("Created", DisplayFormat.date(interview.createdAt))
                 OptionalRow("Updated", DisplayFormat.date(interview.updatedAt))
@@ -195,6 +209,10 @@ struct InterviewDetailView: View {
     }
 
     private static let iso8601 = ISO8601DateFormatter()
+
+    nonisolated static func isValidSchedule(start: Date, end: Date) -> Bool {
+        start < end
+    }
 
     private var deleteErrorPresented: Binding<Bool> {
         Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
