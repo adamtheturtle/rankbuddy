@@ -96,4 +96,19 @@ struct SavedSearchStoreTests {
         #expect(!search.matches(query: "rust", dateRange: "today", facets: ["status": ["Open"]]))
         #expect(!search.matches(query: "go", dateRange: nil, facets: ["status": ["Open"]]))
     }
+
+    @Test func `validation removes facet IDs the current list no longer declares`() {
+        let search = SavedSearch(
+            name: "Legacy",
+            query: "",
+            dateRange: nil,
+            facets: ["status": ["Open"], "removed_team": ["Platform"]]
+        )
+
+        let validated = search.retainingFacetIDs(["status", "language"])
+
+        #expect(validated.facetSelection == ["status": ["Open"]])
+        #expect(validated.id == search.id)
+        #expect(validated.name == search.name)
+    }
 }

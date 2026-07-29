@@ -50,6 +50,14 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
         facets.mapValues(Set.init).filter { !$0.value.isEmpty }
     }
 
+    /// Removes facet constraints the current list no longer declares. Saved searches outlive app
+    /// versions, so renamed or removed facet IDs must not become invisible active state.
+    func retainingFacetIDs(_ validIDs: Set<String>) -> Self {
+        var validated = self
+        validated.facets = facets.filter { validIDs.contains($0.key) && !$0.value.isEmpty }
+        return validated
+    }
+
     /// Whether this captures any constraint at all — an empty query, no range, and no facets
     /// would save nothing useful, so the UI refuses to create one.
     var isEmpty: Bool {
