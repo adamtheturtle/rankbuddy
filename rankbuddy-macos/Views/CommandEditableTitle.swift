@@ -113,7 +113,7 @@ struct CommandEditableTitle: View {
     }
 
     private func beginEditing() {
-        guard editingAllowed else { return }
+        guard editingAllowed, !isSaving else { return }
 
         draft = title
         isEditing = true
