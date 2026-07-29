@@ -259,6 +259,17 @@ extension RankBuddyToolProvider {
         guard let candidateID = stringArgument(arguments, "candidate_id") else {
             return missingArgument("candidate_id")
         }
+
+        let rawFinishURL = Self.normalizedOptionalString(stringArgument(arguments, "test_finish_url"))
+        let rawResultURL = Self.normalizedOptionalString(stringArgument(arguments, "test_result_url"))
+        let finishURL = rawFinishURL.flatMap { URL.remoteWebURL(from: $0)?.absoluteString }
+        let resultURL = rawResultURL.flatMap { URL.remoteWebURL(from: $0)?.absoluteString }
+        guard rawFinishURL == nil || finishURL != nil else {
+            return errorResult("`test_finish_url` must be a valid HTTP or HTTPS URL.")
+        }
+        guard rawResultURL == nil || resultURL != nil else {
+            return errorResult("`test_result_url` must be a valid HTTP or HTTPS URL.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -271,8 +282,8 @@ extension RankBuddyToolProvider {
                     inviteValidFrom: stringArgument(arguments, "invite_valid_from"),
                     inviteValidTo: stringArgument(arguments, "invite_valid_to"),
                     evaluatorEmail: stringArgument(arguments, "evaluator_email"),
-                    testFinishURL: stringArgument(arguments, "test_finish_url"),
-                    testResultURL: stringArgument(arguments, "test_result_url"),
+                    testFinishURL: finishURL,
+                    testResultURL: resultURL,
                     acceptResultUpdates: boolArgument(arguments, "accept_result_updates"),
                     tags: stringArrayArgument(arguments, "tags")
                 )

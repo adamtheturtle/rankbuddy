@@ -448,6 +448,27 @@ struct RankBuddyToolProviderTests {
         #expect(text(blankCandidate).contains("candidate_id"))
     }
 
+    @Test func `update_candidate rejects malformed callback URLs`() async {
+        let badFinish = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "test_finish_url": .string("file:///tmp/done")
+            ]
+        )
+        let badResult = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "test_result_url": .string("not a URL")
+            ]
+        )
+        #expect(badFinish.isError == true)
+        #expect(text(badFinish).contains("test_finish_url"))
+        #expect(badResult.isError == true)
+        #expect(text(badResult).contains("test_result_url"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
