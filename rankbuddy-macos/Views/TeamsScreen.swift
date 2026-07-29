@@ -299,7 +299,7 @@ struct TeamDetailView: View {
             }
             .defaultCustomization(.hidden)
         }
-        .confirmationDialog("Delete “\(team.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
+        .confirmationDialog("Delete “\(displayed.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
             Button("Delete Team", role: .destructive) {
                 Task { await deleteTeam() }
             }
