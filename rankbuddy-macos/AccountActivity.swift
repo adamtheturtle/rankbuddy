@@ -19,6 +19,7 @@ struct AccountActivityView: View {
     @State private var phase: Phase = .loading
     @State private var isLoadingMore = false
     @State private var loadMoreError: String?
+    @State private var reloadGeneration = 0
 
     private enum Phase: Equatable {
         case loading
@@ -113,14 +114,30 @@ struct AccountActivityView: View {
     }
 
     private func reload(account: Account) async {
+        reloadGeneration += 1
+        let generation = reloadGeneration
         phase = .loading
         loadMoreError = nil
         do {
             let page = try await HackerRankClient(account: account).auditLogPage()
+            guard Self.isCurrentRequest(
+                accountID: account.id,
+                currentAccountID: store.currentAccount?.id,
+                generation: generation,
+                currentGeneration: reloadGeneration
+            ) else { return }
+
             entries = Self.mergedEntries([], with: page.items)
             nextCursor = page.next
             phase = .loaded
         } catch {
+            guard Self.isCurrentRequest(
+                accountID: account.id,
+                currentAccountID: store.currentAccount?.id,
+                generation: generation,
+                currentGeneration: reloadGeneration
+            ) else { return }
+
             phase = .failed(error.localizedDescription)
         }
     }
@@ -157,6 +174,17 @@ struct AccountActivityView: View {
             }
         }
         return merged
+    }
+
+    /// A request may publish only while both its account and reload generation are still active.
+    /// Task cancellation is cooperative, so this validation remains necessary after every await.
+    static func isCurrentRequest(
+        accountID: Account.ID,
+        currentAccountID: Account.ID?,
+        generation: Int,
+        currentGeneration: Int
+    ) -> Bool {
+        accountID == currentAccountID && generation == currentGeneration
     }
 }
 

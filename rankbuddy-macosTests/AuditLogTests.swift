@@ -81,6 +81,36 @@ struct AuditLogTests {
         #expect(merged.first?.modifiedFields == ["cutoff_score"])
     }
 
+    @Test func `only the current account reload generation may publish`() {
+        let firstAccount = UUID()
+        let secondAccount = UUID()
+
+        #expect(
+            AccountActivityView.isCurrentRequest(
+                accountID: secondAccount,
+                currentAccountID: secondAccount,
+                generation: 2,
+                currentGeneration: 2
+            )
+        )
+        #expect(
+            !AccountActivityView.isCurrentRequest(
+                accountID: firstAccount,
+                currentAccountID: secondAccount,
+                generation: 1,
+                currentGeneration: 2
+            )
+        )
+        #expect(
+            !AccountActivityView.isCurrentRequest(
+                accountID: secondAccount,
+                currentAccountID: secondAccount,
+                generation: 1,
+                currentGeneration: 2
+            )
+        )
+    }
+
     // MARK: - Display helpers
 
     @Test func `headline summarises the action, type, and id`() throws {
