@@ -565,11 +565,19 @@ extension RankBuddyToolProvider {
         guard EmailValidation.isLikelyValid(email) else {
             return errorResult("`email` must be a valid email address.")
         }
+
+        let allowedRoles = ["recruiter", "interviewer", "developer"]
+        let role = stringArgument(arguments, "role")?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard role.map(allowedRoles.contains) ?? true else {
+            return errorResult("`role` must be recruiter, interviewer, or developer.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let result = try await HackerRankClient(account: resolved).addTeamMember(
-                teamID: teamID, email: email, role: stringArgument(arguments, "role")
+                teamID: teamID, email: email, role: role
             )
             return jsonResult([
                 "account": resolved.label, "team_id": teamID,
@@ -752,10 +760,16 @@ extension RankBuddyToolProvider {
         let account: [String: Any] = [
             "type": "string", "description": "Account label or id; defaults to the current account."
         ]
-        func string(_ description: String, minLength: Int? = nil, format: String? = nil) -> [String: Any] {
+        func string(
+            _ description: String,
+            minLength: Int? = nil,
+            format: String? = nil,
+            allowedValues: [String]? = nil
+        ) -> [String: Any] {
             var schema: [String: Any] = ["type": "string", "description": description]
             if let minLength { schema["minLength"] = minLength }
             if let format { schema["format"] = format }
+            if let allowedValues { schema["enum"] = allowedValues }
             return schema
         }
         func integer(_ description: String) -> [String: Any] {
@@ -946,7 +960,11 @@ extension RankBuddyToolProvider {
                   properties: [
                       "team_id": string("The team's id."),
                       "email": string("The member's email.", minLength: 1, format: "email"),
-                      "role": string("The member's role (optional)."), "account": account
+                      "role": string(
+                          "The member's role (optional).",
+                          allowedValues: ["recruiter", "interviewer", "developer"]
+                      ),
+                      "account": account
                   ],
                   required: ["team_id", "email"]),
             write("add_team_member_by_user_id", "Add an existing user to a team by user id.",

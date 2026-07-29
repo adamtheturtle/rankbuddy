@@ -10,6 +10,7 @@ import MCPKit
 @testable import rankbuddy_macos
 import Testing
 
+// swiftlint:disable type_body_length
 /// Coverage for the RankBuddy MCP tool catalogue (#9). Uses a seeded **demo** account so the
 /// tools dispatch through the in-process mock — no live credentials, deterministic results.
 @MainActor
@@ -274,6 +275,19 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("email"))
     }
 
+    @Test func `add_team_member rejects an unsupported role`() async {
+        let result = await writeProvider().callTool(
+            "add_team_member",
+            arguments: [
+                "team_id": .string("team-1"),
+                "email": .string("member@example.com"),
+                "role": .string("owner")
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("role"))
+    }
+
     @Test func `invite_candidate accepts richer invite options`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
@@ -316,3 +330,5 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("ISO-8601"))
     }
 }
+
+// swiftlint:enable type_body_length
