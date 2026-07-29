@@ -117,6 +117,64 @@ enum LivenessDigest {
     }
 }
 
+/// Concurrent, independently timed account probes for the liveness sweep. The scheduler admits a
+/// bounded number at once and yields each healthy result immediately rather than waiting for the
+/// slowest tenant.
+enum LivenessProbe {
+    static let concurrencyLimit = 4
+    static let timeout: Duration = .seconds(15)
+
+    nonisolated struct Result {
+        let accountID: UUID
+        let interviews: [Interview]
+    }
+
+    nonisolated static func interviews(account: Account, timeout: Duration) async -> [Interview]? {
+        await withTaskGroup(of: [Interview]?.self) { group in
+            group.addTask {
+                try? await HackerRankClient(account: account).interviewsPage().items
+            }
+            group.addTask {
+                try? await Task.sleep(for: timeout)
+                return nil
+            }
+
+            let first = await group.next()
+            group.cancelAll()
+            return first.flatMap(\.self)
+        }
+    }
+
+    /// Runs at most `limit` operations concurrently and publishes successful results in completion
+    /// order, continuously admitting queued work as slots become available.
+    nonisolated static func forEachResult<Input: Sendable, Output: Sendable>(
+        _ inputs: [Input],
+        limit: Int,
+        operation: @escaping @Sendable (Input) async -> Output?,
+        onResult: @escaping @MainActor (Output) -> Void
+    ) async {
+        guard limit > 0 else { return }
+
+        await withTaskGroup(of: Output?.self) { group in
+            var iterator = inputs.makeIterator()
+            for _ in 0 ..< min(limit, inputs.count) {
+                guard let input = iterator.next() else { break }
+
+                group.addTask { await operation(input) }
+            }
+
+            while let output = await group.next() {
+                if let output {
+                    await onResult(output)
+                }
+                if let input = iterator.next() {
+                    group.addTask { await operation(input) }
+                }
+            }
+        }
+    }
+}
+
 /// Keeps the Dock badge's scheduled-interview count fresh on a timer, independent of any
 /// window. Normal use already refetches when a list loads; this closes the gap where the app
 /// is left running with no window open while interviews change server-side.
@@ -165,14 +223,28 @@ final class LivenessMonitor {
             return
         }
 
-        for account in accounts {
-            guard let interviews = try? await HackerRankClient(account: account).interviewsPage().items
-            else { continue }
+        await LivenessProbe.forEachResult(
+            accounts,
+            limit: LivenessProbe.concurrencyLimit,
+            operation: { account -> LivenessProbe.Result? in
+                guard let interviews = await LivenessProbe.interviews(
+                    account: account,
+                    timeout: LivenessProbe.timeout
+                ) else { return nil }
 
-            scheduledByAccount[account.id] = LivenessDigest.scheduledCount(interviews)
-            notifyIfNeeded(interviews, accountID: account.id)
-        }
+                return LivenessProbe.Result(accountID: account.id, interviews: interviews)
+            },
+            onResult: { [weak self] (result: LivenessProbe.Result) in
+                guard let self else { return }
 
+                scheduledByAccount[result.accountID] = LivenessDigest.scheduledCount(result.interviews)
+                notifyIfNeeded(result.interviews, accountID: result.accountID)
+                updateBadge(accounts: accounts)
+            }
+        )
+    }
+
+    private func updateBadge(accounts: [Account]) {
         guard let scheduled = LivenessDigest.scheduledTotal(
             accountIDs: accounts.map(\.id),
             lastKnown: scheduledByAccount

@@ -97,4 +97,37 @@ struct LivenessDigestTests {
         #expect(all.count == 2)
         #expect(all.allSatisfy { !$0.isMock })
     }
+
+    @Test func `probe scheduler bounds concurrency and yields every healthy result`() async {
+        actor Tracker {
+            var active = 0
+            var maximum = 0
+
+            func begin() {
+                active += 1
+                maximum = max(maximum, active)
+            }
+
+            func end() {
+                active -= 1
+            }
+        }
+
+        let tracker = Tracker()
+        var received: [Int] = []
+        await LivenessProbe.forEachResult(
+            Array(0 ..< 8),
+            limit: 2,
+            operation: { value in
+                await tracker.begin()
+                try? await Task.sleep(for: .milliseconds(5))
+                await tracker.end()
+                return value
+            },
+            onResult: { received.append($0) }
+        )
+
+        #expect(await tracker.maximum == 2)
+        #expect(Set(received) == Set(0 ..< 8))
+    }
 }
