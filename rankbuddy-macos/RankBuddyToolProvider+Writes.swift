@@ -164,7 +164,10 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func deleteTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+        guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+
+        let testID = rawTestID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !testID.isEmpty else { return errorResult("`test_id` must not be empty.") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -778,7 +781,7 @@ extension RankBuddyToolProvider {
                   properties: ["test_id": string("The test's id."), "account": account],
                   required: ["test_id"]),
             write("delete_test", "Permanently delete a test.",
-                  properties: ["test_id": string("The test's id."), "account": account],
+                  properties: ["test_id": string("The test's id.", minLength: 1), "account": account],
                   required: ["test_id"], destructive: true),
             write("invite_candidate", "Invite a candidate to a test by email.",
                   properties: [

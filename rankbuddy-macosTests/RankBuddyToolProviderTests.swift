@@ -253,6 +253,12 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("name"))
     }
 
+    @Test func `delete_test rejects a whitespace-only target`() async {
+        let result = await writeProvider().callTool("delete_test", arguments: ["test_id": .string(" \n\t ")])
+        #expect(result.isError == true)
+        #expect(text(result).contains("test_id"))
+    }
+
     @Test func `invite_candidate accepts richer invite options`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
