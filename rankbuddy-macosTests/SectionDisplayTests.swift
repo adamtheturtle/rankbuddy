@@ -64,6 +64,10 @@ struct SectionDisplayTests {
         {"id":"t1","name":"Backend","recruiter_count":3,"developer_count":12,"interviewer_count":8}
         """#)
         #expect(team.memberSummary == "3 recruiters · 12 developers · 8 interviewers")
+        #expect(team.transferFields.map(\.0) == [
+            "Name", "Members", "Recruiters", "Developers", "Interviewers"
+        ])
+        #expect(team.transferFields.last?.1 == "8")
     }
 
     @Test func `member summary omits an absent count`() throws {

@@ -48,12 +48,7 @@ struct TeamsScreen: View {
                 primaryMenuAction: AppCommandContext.Action(title: "New Team…") { createPresented = true },
                 reloadToken: reloadToken,
                 rowTransfer: { team in
-                    RowTransfer(title: team.name, subtitle: team.memberSummary, fields: [
-                        ("Name", team.name),
-                        ("Members", team.memberSummary ?? ""),
-                        ("Recruiters", team.recruiterCount.map(String.init) ?? ""),
-                        ("Developers", team.developerCount.map(String.init) ?? "")
-                    ])
+                    RowTransfer(title: team.name, subtitle: team.memberSummary, fields: team.transferFields)
                 },
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { TeamRow(team: $0) },
@@ -81,6 +76,17 @@ struct TeamsScreen: View {
 }
 
 extension Team {
+    /// The explicit columns used by copy, drag, and tabular exports.
+    var transferFields: [(String, String)] {
+        [
+            ("Name", name),
+            ("Members", memberSummary ?? ""),
+            ("Recruiters", recruiterCount.map(String.init) ?? ""),
+            ("Developers", developerCount.map(String.init) ?? ""),
+            ("Interviewers", interviewerCount.map(String.init) ?? "")
+        ]
+    }
+
     /// A short "N recruiters · M developers" summary, omitting absent counts.
     var memberSummary: String? {
         var parts: [String] = []
