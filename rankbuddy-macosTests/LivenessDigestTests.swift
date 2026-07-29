@@ -37,6 +37,16 @@ struct LivenessDigestTests {
         #expect(LivenessDigest.badgeLabel(scheduledCount: 12) == "12")
     }
 
+    @Test func `a badge total requires a last-known count for every scoped account`() throws {
+        let first = try #require(UUID(uuidString: "11111111-1111-1111-1111-111111111111"))
+        let second = try #require(UUID(uuidString: "22222222-2222-2222-2222-222222222222"))
+
+        #expect(LivenessDigest.scheduledTotal(accountIDs: [first, second], lastKnown: [first: 3]) == nil)
+        #expect(
+            LivenessDigest.scheduledTotal(accountIDs: [first, second], lastKnown: [first: 3, second: 2]) == 5
+        )
+    }
+
     @Test func `new interviews are those not in the previous set`() throws {
         let current = try [
             interview(id: "a", status: "scheduled"),

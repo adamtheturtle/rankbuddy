@@ -97,6 +97,14 @@ enum LivenessDigest {
         count > 0 ? String(count) : nil
     }
 
+    /// Sums a scope only when every account has a known count. A failed first refresh must not
+    /// replace an existing Dock badge with a misleading partial total.
+    static func scheduledTotal(accountIDs: [UUID], lastKnown: [UUID: Int]) -> Int? {
+        guard accountIDs.allSatisfy({ lastKnown[$0] != nil }) else { return nil }
+
+        return accountIDs.reduce(0) { $0 + (lastKnown[$1] ?? 0) }
+    }
+
     /// The interviews in `current` that weren't seen on the previous sweep, so a notification
     /// reports only what's genuinely new.
     static func newInterviews(previousIDs: Set<String>, current: [Interview]) -> [Interview] {
@@ -116,6 +124,7 @@ enum LivenessDigest {
 final class LivenessMonitor {
     static let shared = LivenessMonitor()
     private var loop: Task<Void, Never>?
+    private var scheduledByAccount: [UUID: Int] = [:]
     private init() {}
 
     /// Starts the sweep loop (idempotent). Runs one sweep immediately, then re-reads the
@@ -145,21 +154,31 @@ final class LivenessMonitor {
     /// the badge. New-interview notifications stay per-account.
     func sweep(store: AccountStore) async {
         guard UserDefaults.standard.bool(forKey: LivenessSettings.backgroundUpdatesKey) else {
+            scheduledByAccount.removeAll()
             DockBadge.set(count: 0)
             return
         }
 
         let accounts = LivenessSettings.dockBadgeScope().badgeableAccounts(in: store)
-        var scheduled = 0
+        guard !accounts.isEmpty else {
+            DockBadge.set(count: 0)
+            return
+        }
+
         for account in accounts {
             guard let interviews = try? await HackerRankClient(account: account).interviewsPage().items
             else { continue }
 
-            scheduled += LivenessDigest.scheduledCount(interviews)
+            scheduledByAccount[account.id] = LivenessDigest.scheduledCount(interviews)
             notifyIfNeeded(interviews, accountID: account.id)
         }
 
-        DockBadge.set(count: accounts.isEmpty ? 0 : scheduled)
+        guard let scheduled = LivenessDigest.scheduledTotal(
+            accountIDs: accounts.map(\.id),
+            lastKnown: scheduledByAccount
+        ) else { return }
+
+        DockBadge.set(count: scheduled)
     }
 
     /// Compares this sweep's interviews against the account's last-seen set, posting a
