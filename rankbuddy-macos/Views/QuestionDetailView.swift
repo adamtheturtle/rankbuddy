@@ -241,7 +241,7 @@ extension QuestionDetailView {
     private var editableRows: some View {
         EditableTextRow(label: "Max score", value: displayed.maxScore.map { $0.formatted() } ?? "") { newValue in
             guard newValue.isEmpty || QuestionEditValidation.maxScore(from: newValue) != nil else {
-                editError = "Max score must be a finite number."
+                editError = "Max score must be a finite number of zero or greater."
                 return false
             }
 

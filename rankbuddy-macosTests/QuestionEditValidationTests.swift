@@ -12,5 +12,7 @@ struct QuestionEditValidationTests {
         #expect(QuestionEditValidation.maxScore(from: "nan") == nil)
         #expect(QuestionEditValidation.maxScore(from: "inf") == nil)
         #expect(QuestionEditValidation.maxScore(from: "-inf") == nil)
+        #expect(QuestionEditValidation.maxScore(from: "-0.1") == nil)
+        #expect(QuestionEditValidation.maxScore(from: "0") == 0)
     }
 }
