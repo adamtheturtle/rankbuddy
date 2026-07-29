@@ -75,6 +75,25 @@ struct ListQueryFacetTests {
         #expect(ListQuery.facetOptions(stateFacet, in: variants) == ["Active", "Closed"])
     }
 
+    @Test func `facet matching uses the same case-insensitive semantics as its options`() {
+        let lowercase = Row(state: "active", langs: ["PYTHON"])
+
+        #expect(
+            ListQuery.matchesFacets(
+                lowercase,
+                facets: [stateFacet, langFacet],
+                selected: ["state": ["Active"], "lang": ["Python"]]
+            )
+        )
+        #expect(
+            !ListQuery.matchesFacets(
+                lowercase,
+                facets: [stateFacet],
+                selected: ["state": ["Closed"]]
+            )
+        )
+    }
+
     @Test func `a selection round-trips through persistence and empty sets are dropped`() throws {
         let defaults = try #require(UserDefaults(suiteName: "facet-tests-\(#function)"))
         defer { defaults.removePersistentDomain(forName: "facet-tests-\(#function)") }

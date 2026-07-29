@@ -43,7 +43,9 @@ enum ListQuery {
         for facet in facets {
             guard let chosen = selected[facet.id], !chosen.isEmpty else { continue }
 
-            if Set(facet.values(item)).isDisjoint(with: chosen) { return false }
+            let normalizedChosen = Set(chosen.map(normalizedFacetValue))
+            let normalizedValues = Set(facet.values(item).map(normalizedFacetValue))
+            if normalizedValues.isDisjoint(with: normalizedChosen) { return false }
         }
         return true
     }
