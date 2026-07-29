@@ -79,6 +79,17 @@ enum DisplayFormat {
         return values.formatted(.list(type: .and))
     }
 
+    /// Distinguishes an explicit false value from a field the API did not return.
+    static func boolean(
+        _ value: Bool?,
+        trueLabel: String = "Yes",
+        falseLabel: String = "No"
+    ) -> String {
+        guard let value else { return "Unavailable" }
+
+        return value ? trueLabel : falseLabel
+    }
+
     nonisolated static let hackerRankLanguageOptions: [(code: String, name: String)] = [
         ("bash", "Bash"),
         ("c", "C"),

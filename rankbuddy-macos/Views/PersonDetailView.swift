@@ -73,10 +73,10 @@ struct PersonDetailView: View {
                 OptionalRow("Status", displayed.status?.capitalized)
                 OptionalRow("Country", displayed.country)
                 OptionalRow("Last active", DisplayFormat.date(displayed.lastActivityTime))
-                OptionalRow("Activated", displayed.activated.map { $0 ? "Yes" : "No" })
+                OptionalRow("Activated", DisplayFormat.boolean(displayed.activated))
                 if account == nil {
-                    OptionalRow("Company admin", displayed.companyAdmin == true ? "Yes" : nil)
-                    OptionalRow("Team admin", displayed.teamAdmin == true ? "Yes" : nil)
+                    OptionalRow("Company admin", DisplayFormat.boolean(displayed.companyAdmin))
+                    OptionalRow("Team admin", DisplayFormat.boolean(displayed.teamAdmin))
                 }
             }
 

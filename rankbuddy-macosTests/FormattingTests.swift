@@ -77,6 +77,16 @@ struct FormattingTests {
         #expect(formatted?.contains("and") == true)
     }
 
+    // MARK: - DisplayFormat.boolean
+
+    @Test func `boolean distinguishes false from unavailable`() {
+        #expect(DisplayFormat.boolean(true) == "Yes")
+        #expect(DisplayFormat.boolean(false) == "No")
+        #expect(DisplayFormat.boolean(nil) == "Unavailable")
+        #expect(DisplayFormat.boolean(true, trueLabel: "Enabled", falseLabel: "Disabled") == "Enabled")
+        #expect(DisplayFormat.boolean(false, trueLabel: "Enabled", falseLabel: "Disabled") == "Disabled")
+    }
+
     // MARK: - DisplayFormat.duration
 
     @Test func `duration formats the elapsed time between two timestamps`() {

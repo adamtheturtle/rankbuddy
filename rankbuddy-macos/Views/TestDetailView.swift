@@ -59,11 +59,14 @@ struct TestDetailView: View {
                 OptionalRow("Skills", DisplayFormat.list(displayedTest.skillFilterValues))
                 OptionalRow("Type", DisplayFormat.list(displayedTest.typeFilterValues))
                 OptionalRow("Languages", DisplayFormat.languages(displayedTest.languages))
-                OptionalRow("Proctoring", displayedTest.enableProctoring == true ? "Enabled" : nil)
-                OptionalRow("Shuffle questions", displayedTest.shuffleQuestions == true ? "Yes" : nil)
-                OptionalRow("Starred", displayedTest.starred == true ? "Yes" : nil)
-                OptionalRow("Locked", displayedTest.locked == true ? "Yes" : nil)
-                OptionalRow("Draft", displayedTest.draft == true ? "Yes" : nil)
+                OptionalRow(
+                    "Proctoring",
+                    DisplayFormat.boolean(displayedTest.enableProctoring, trueLabel: "Enabled", falseLabel: "Disabled")
+                )
+                OptionalRow("Shuffle questions", DisplayFormat.boolean(displayedTest.shuffleQuestions))
+                OptionalRow("Starred", DisplayFormat.boolean(displayedTest.starred))
+                OptionalRow("Locked", DisplayFormat.boolean(displayedTest.locked))
+                OptionalRow("Draft", DisplayFormat.boolean(displayedTest.draft))
                 OptionalRow("MCQ correct score", detail?.mcqCorrectScore.map { $0.formatted() })
                 OptionalRow("MCQ incorrect score", detail?.mcqIncorrectScore.map { $0.formatted() })
             }
