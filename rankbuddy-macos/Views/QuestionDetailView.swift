@@ -263,14 +263,14 @@ extension QuestionDetailView {
             value: displayed.skills?.joined(separator: ", ") ?? "",
             prompt: "Comma-separated"
         ) { newValue in
-            await save(QuestionWriteOptions(skills: Self.splitList(newValue)))
+            await save(QuestionWriteOptions(skills: splitList(newValue)))
         }
         EditableTextRow(
             label: "Tags",
             value: displayed.tags?.joined(separator: ", ") ?? "",
             prompt: "Comma-separated"
         ) { newValue in
-            await save(QuestionWriteOptions(tags: Self.splitList(newValue)))
+            await save(QuestionWriteOptions(tags: splitList(newValue)))
         }
     }
 
@@ -300,14 +300,6 @@ extension QuestionDetailView {
                 Label("Delete All Testcases…", systemImage: "trash")
             }
         }
-    }
-
-    /// "a, b, c" → ["a", "b", "c"]; nil when the field is cleared entirely.
-    private static func splitList(_ text: String) -> [String]? {
-        let parts = text.split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        return parts.isEmpty ? nil : parts
     }
 
     /// Applies one field's update (optionally a rename), keeps an optimistic local copy —

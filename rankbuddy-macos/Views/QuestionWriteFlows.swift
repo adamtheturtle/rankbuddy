@@ -223,9 +223,14 @@ nonisolated struct TestcaseBody: Encodable {
 
 /// "a, b, c" → ["a", "b", "c"]; nil when the field is blank.
 func splitList(_ text: String) -> [String]? {
+    var seen: Set<String> = []
     let parts = text.split(separator: ",")
         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         .filter { !$0.isEmpty }
+        .filter {
+            let key = $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            return seen.insert(key).inserted
+        }
     return parts.isEmpty ? nil : parts
 }
 

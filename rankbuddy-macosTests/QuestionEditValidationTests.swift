@@ -23,4 +23,9 @@ struct QuestionEditValidationTests {
         #expect(!QuestionEditValidation.isValidRecommendedDuration(-1))
         #expect(!QuestionEditValidation.isValidRecommendedDuration(1441))
     }
+
+    @Test func `comma-separated values deduplicate without losing first spelling`() {
+        #expect(splitList("swift, Swift, SWIFT, résumé, resume") == ["swift", "résumé"])
+        #expect(splitList(" , ") == nil)
+    }
 }
