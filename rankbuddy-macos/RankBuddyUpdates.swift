@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import Combine
 import Foundation
 import Sparkle
 import SwiftUI
@@ -23,6 +24,13 @@ enum RankBuddyUpdates {
         else { return nil }
 
         return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    }()
+
+    /// Observable command state, retained for the app lifetime so KVO tracks Sparkle readiness.
+    static let checkModel: UpdateCheckModel? = {
+        guard let controller else { return nil }
+
+        return UpdateCheckModel(controller: controller)
     }()
 
     /// Whether an appcast feed value is present and usable. Factored out so it's testable
@@ -51,15 +59,43 @@ enum RankBuddyUpdates {
     }
 }
 
+/// Bridges Sparkle's KVO readiness property into SwiftUI observation. `canCheckForUpdates`
+/// becomes false while a check is active or before the updater is ready.
+@Observable
+@MainActor
+final class UpdateCheckModel {
+    private let controller: SPUStandardUpdaterController
+    private var readinessObservation: AnyCancellable?
+    private(set) var canCheckForUpdates: Bool
+
+    init(controller: SPUStandardUpdaterController) {
+        self.controller = controller
+        canCheckForUpdates = controller.updater.canCheckForUpdates
+        readinessObservation = controller.updater
+            .publisher(for: \.canCheckForUpdates)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] canCheck in
+                self?.canCheckForUpdates = canCheck
+            }
+    }
+
+    func checkForUpdates() {
+        guard canCheckForUpdates else { return }
+
+        controller.updater.checkForUpdates()
+    }
+}
+
 /// Adds a standard "Check for Updates…" item to the app menu, but only when Sparkle is
 /// configured (#11). With no feed configured the group is empty, so nothing is shown.
 struct UpdateCommands: Commands {
     var body: some Commands {
         CommandGroup(after: .appInfo) {
-            if let controller = RankBuddyUpdates.controller {
+            if let model = RankBuddyUpdates.checkModel {
                 Button("Check for Updates…") {
-                    controller.updater.checkForUpdates()
+                    model.checkForUpdates()
                 }
+                .disabled(!model.canCheckForUpdates)
             }
         }
     }
