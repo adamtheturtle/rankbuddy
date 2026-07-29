@@ -469,6 +469,18 @@ struct RankBuddyToolProviderTests {
         #expect(text(badResult).contains("test_result_url"))
     }
 
+    @Test func `update_candidate rejects a malformed evaluator email`() async {
+        let result = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "evaluator_email": .string("not-an-email")
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("evaluator_email"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
