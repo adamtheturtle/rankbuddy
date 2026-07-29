@@ -698,9 +698,13 @@ extension RankBuddyToolProvider {
             let result = try await HackerRankClient(account: resolved).addTeamMember(
                 teamID: teamID, email: email, role: role
             )
+            guard let memberID = Self.validatedCreatedID(result.id) else {
+                return errorResult("HackerRank added the team member but returned no user ID.")
+            }
+
             return jsonResult([
                 "account": resolved.label, "team_id": teamID,
-                "added_member": ["id": result.id ?? "", "email": result.email ?? email]
+                "added_member": ["id": memberID, "email": result.email ?? email]
             ])
         } catch {
             return errorResult("Couldn't add team member: \(error.localizedDescription)")
