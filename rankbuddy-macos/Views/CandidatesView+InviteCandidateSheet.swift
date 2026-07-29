@@ -6,6 +6,16 @@
 import HackerRankKit
 import SwiftUI
 
+/// Product/API guardrails shared by the invite sheet and non-UI write surfaces.
+enum CandidateInviteValidation {
+    /// One day is a generous accommodation ceiling while preventing accidental pasted magnitudes.
+    static let additionalTimeRange = 0 ... 1440
+
+    static func isValid(additionalTime: Int?) -> Bool {
+        additionalTime.map(additionalTimeRange.contains) ?? true
+    }
+}
+
 /// A sheet that invites a candidate to a test (#12) — the app's first write flow. Refreshes
 /// the list on success.
 struct InviteCandidateSheet: View {
@@ -50,7 +60,8 @@ struct InviteCandidateSheet: View {
     }
 
     private var additionalTimeValid: Bool {
-        trimmed(additionalTime) == nil || additionalTimeMinutes.map { $0 >= 0 } == true
+        trimmed(additionalTime) == nil
+            || additionalTimeMinutes.map(CandidateInviteValidation.additionalTimeRange.contains) == true
     }
 
     private var canInvite: Bool {
@@ -93,7 +104,7 @@ struct InviteCandidateSheet: View {
                     Text("Invite options")
                 } footer: {
                     if !additionalTimeValid {
-                        Text("Additional time must be a non-negative whole number of minutes.")
+                        Text("Additional time must be a whole number from 0 to 1,440 minutes.")
                             .foregroundStyle(.red)
                     } else if !evaluatorEmailValid {
                         Text("Evaluator email must look like an email address.")
@@ -166,6 +177,8 @@ struct InviteCandidateSheet: View {
     }
 
     private func invite() async {
+        guard canInvite else { return }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }

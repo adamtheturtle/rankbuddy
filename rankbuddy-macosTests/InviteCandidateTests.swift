@@ -44,4 +44,13 @@ struct InviteCandidateTests {
             Issue.record("expected HackerRankError, got \(error)")
         }
     }
+
+    @Test func `additional time is bounded to one day`() {
+        #expect(CandidateInviteValidation.isValid(additionalTime: nil))
+        #expect(CandidateInviteValidation.isValid(additionalTime: 0))
+        #expect(CandidateInviteValidation.isValid(additionalTime: 1440))
+        #expect(!CandidateInviteValidation.isValid(additionalTime: -1))
+        #expect(!CandidateInviteValidation.isValid(additionalTime: 1441))
+        #expect(!CandidateInviteValidation.isValid(additionalTime: Int.max))
+    }
 }

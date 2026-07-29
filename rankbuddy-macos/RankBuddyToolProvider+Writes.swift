@@ -196,8 +196,8 @@ extension RankBuddyToolProvider {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         let additionalTime = intArgument(arguments, "additional_time")
-        if let additionalTime, additionalTime < 0 {
-            return errorResult("`additional_time` must be a non-negative whole number of minutes.")
+        guard CandidateInviteValidation.isValid(additionalTime: additionalTime) else {
+            return errorResult("`additional_time` must be a whole number from 0 to 1,440 minutes.")
         }
 
         do {
@@ -863,7 +863,7 @@ extension RankBuddyToolProvider {
                       "test_id": string("The test's id."), "email": string("The candidate's email."),
                       "full_name": string("The candidate's name (optional)."),
                       "send_email": boolean("Email the invite (default true)."),
-                      "additional_time": integer("Extra time accommodation in minutes."),
+                      "additional_time": integer("Extra time accommodation in minutes (0–1,440)."),
                       "valid_from": string("ISO-8601 timestamp before which the invite is inactive."),
                       "valid_until": string("ISO-8601 timestamp after which the invite expires."),
                       "email_subject": string("Custom invitation email subject."),

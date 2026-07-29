@@ -403,6 +403,19 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("additional_time"))
     }
 
+    @Test func `invite_candidate rejects additional time beyond the product limit`() async {
+        let result = await writeProvider().callTool(
+            "invite_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "email": .string("new@example.com"),
+                "additional_time": .int(1441)
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("1,440"))
+    }
+
     @Test func `schedule_interview rejects a non-ISO-8601 start time`() async {
         let result = await writeProvider().callTool(
             "schedule_interview", arguments: ["title": .string("Pairing"), "from": .string("next tuesday")]
