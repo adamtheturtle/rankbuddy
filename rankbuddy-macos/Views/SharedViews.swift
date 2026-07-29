@@ -106,24 +106,19 @@ func rowMenuItems(
     return items
 }
 
-/// Fixed metrics for `FastList` rows, matching PadBuddy so RankBuddy's lists share the same
+/// Minimum metrics for `FastList` rows, matching PadBuddy so RankBuddy's lists share the same
 /// comfortable row height instead of sizing tightly to a row's content (which read as squished).
 enum FastListRowMetrics {
-    /// Fixed hosted-row height for the AppKit `FastList` backend. Giving `NSTableView` one
-    /// stable intrinsic height (rather than per-row automatic height discovery as it recycles
-    /// SwiftUI hosting cells during fast scrolls) both smooths scrolling and gives every row the
-    /// same breathing room PadBuddy's rows have.
+    /// Baseline hosted-row height for the AppKit `FastList` backend.
     static let macHeight: CGFloat = 64
 }
 
 extension View {
-    /// Frames a `FastList` row's hosted content to the shared fixed height on macOS, so rows
-    /// centre their content at a consistent, comfortable height (matching PadBuddy). A no-op on
-    /// other platforms, where the row sizes to its content.
+    /// Gives a `FastList` row a comfortable baseline while allowing scaled content to expand it.
     @ViewBuilder
     func fixedFastListRowHeight() -> some View {
         #if os(macOS)
-            frame(height: FastListRowMetrics.macHeight)
+            frame(minHeight: FastListRowMetrics.macHeight)
         #else
             self
         #endif

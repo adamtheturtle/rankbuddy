@@ -382,9 +382,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                     // NSHostingView doesn't inherit the SwiftUI environment (#31).
                     .environment(accountStore)
                     .environment(favorites)
-                    // Pad and pin each row to the shared fixed height so content breathes and
-                    // centres consistently, matching PadBuddy's rows (they read as squished when
-                    // sized tightly to content).
+                    // Keep a comfortable baseline while allowing accessibility text to make the
+                    // hosted row taller instead of clipping its content.
                     .padding(.vertical, 5)
                     .padding(.leading, 2)
                     .padding(.trailing, 12)
