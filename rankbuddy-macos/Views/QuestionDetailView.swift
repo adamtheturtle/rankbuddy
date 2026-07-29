@@ -248,7 +248,12 @@ extension QuestionDetailView {
             return await save(QuestionWriteOptions(maxScore: QuestionEditValidation.maxScore(from: newValue)))
         }
         EditableNumberRow(label: "Recommended duration (minutes)", value: displayed.recommendedDuration) { newValue in
-            await save(QuestionWriteOptions(recommendedDuration: newValue))
+            guard QuestionEditValidation.isValidRecommendedDuration(newValue) else {
+                editError = "Recommended duration must be between 0 and 1,440 minutes."
+                return false
+            }
+
+            return await save(QuestionWriteOptions(recommendedDuration: newValue))
         }
         EditableLanguagesRow(value: displayed.languages) { newValue in
             await save(QuestionWriteOptions(languages: newValue))

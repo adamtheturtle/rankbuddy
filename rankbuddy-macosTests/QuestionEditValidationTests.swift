@@ -15,4 +15,12 @@ struct QuestionEditValidationTests {
         #expect(QuestionEditValidation.maxScore(from: "-0.1") == nil)
         #expect(QuestionEditValidation.maxScore(from: "0") == 0)
     }
+
+    @Test func `recommended duration is bounded to one day`() {
+        #expect(QuestionEditValidation.isValidRecommendedDuration(nil))
+        #expect(QuestionEditValidation.isValidRecommendedDuration(0))
+        #expect(QuestionEditValidation.isValidRecommendedDuration(1440))
+        #expect(!QuestionEditValidation.isValidRecommendedDuration(-1))
+        #expect(!QuestionEditValidation.isValidRecommendedDuration(1441))
+    }
 }
