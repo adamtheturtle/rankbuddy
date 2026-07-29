@@ -605,6 +605,18 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("interview_id"))
     }
 
+    @Test func `add_team_member_by_user_id rejects blank target ids`() async {
+        for key in ["team_id", "user_id"] {
+            var arguments: [String: Value] = [
+                "team_id": .string("team-1"), "user_id": .string("user-1")
+            ]
+            arguments[key] = .string(" \n")
+            let result = await writeProvider().callTool("add_team_member_by_user_id", arguments: arguments)
+            #expect(result.isError == true)
+            #expect(text(result).contains(key))
+        }
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

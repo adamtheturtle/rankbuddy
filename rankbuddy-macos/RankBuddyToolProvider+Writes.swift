@@ -709,8 +709,14 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func addTeamMemberByUserIDTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
-        guard let userID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
+        guard let rawTeamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
+        guard let rawUserID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
+        guard let teamID = Self.normalizedOptionalString(rawTeamID) else {
+            return errorResult("`team_id` must not be empty.")
+        }
+        guard let userID = Self.normalizedOptionalString(rawUserID) else {
+            return errorResult("`user_id` must not be empty.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
