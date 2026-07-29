@@ -151,8 +151,16 @@ extension RankBuddyToolProvider {
         }
     }
 
-    nonisolated static func isValidISO8601(_ value: String?) -> Bool {
-        value.map { ISO8601DateFormatter().date(from: $0) != nil } ?? true
+    nonisolated static func candidateWindowError(from: String?, until: String?) -> String? {
+        let formatter = ISO8601DateFormatter()
+        let fromDate = from.flatMap(formatter.date(from:))
+        let toDate = until.flatMap(formatter.date(from:))
+        if from != nil, fromDate == nil { return "`invite_valid_from` must be ISO-8601." }
+        if until != nil, toDate == nil { return "`invite_valid_to` must be ISO-8601." }
+        if let fromDate, let toDate, toDate < fromDate {
+            return "`invite_valid_to` must not be before `invite_valid_from`."
+        }
+        return nil
     }
 
     @MainActor
@@ -271,8 +279,7 @@ extension RankBuddyToolProvider {
         let evaluatorEmail = Self.normalizedOptionalString(stringArgument(arguments, "evaluator_email"))
         let validFrom = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_from"))
         let validTo = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_to"))
-        guard Self.isValidISO8601(validFrom) else { return errorResult("`invite_valid_from` must be ISO-8601.") }
-        guard Self.isValidISO8601(validTo) else { return errorResult("`invite_valid_to` must be ISO-8601.") }
+        if let error = Self.candidateWindowError(from: validFrom, until: validTo) { return errorResult(error) }
         guard rawFinishURL == nil || finishURL != nil else {
             return errorResult("`test_finish_url` must be a valid HTTP or HTTPS URL.")
         }

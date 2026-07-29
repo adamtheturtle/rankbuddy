@@ -502,6 +502,19 @@ struct RankBuddyToolProviderTests {
         #expect(text(badTo).contains("invite_valid_to"))
     }
 
+    @Test func `update_candidate rejects an inverted invite window`() async {
+        let result = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "invite_valid_from": .string("2030-07-02T14:00:00Z"),
+                "invite_valid_to": .string("2030-07-01T14:00:00Z")
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("before"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
