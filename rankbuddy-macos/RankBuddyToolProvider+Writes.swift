@@ -872,7 +872,12 @@ extension RankBuddyToolProvider {
         guard let candidateID = stringArgument(arguments, "candidate_id") else {
             return missingArgument("candidate_id")
         }
-        guard let email = stringArgument(arguments, "email") else { return missingArgument("email") }
+        guard let rawEmail = stringArgument(arguments, "email") else { return missingArgument("email") }
+
+        let email = rawEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard EmailValidation.isLikelyValid(email) else {
+            return errorResult("`email` must be a valid email address.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -1167,7 +1172,7 @@ extension RankBuddyToolProvider {
                       "test_id": string("The test's id."),
                       "requisition_id": string("The ATS requisition id."),
                       "candidate_id": string("The ATS candidate id."),
-                      "email": string("The candidate's email."),
+                      "email": string("The candidate's email.", format: "email"),
                       "send_email": boolean("Email the invite."),
                       "account": account
                   ],
