@@ -237,9 +237,13 @@ extension RankBuddyToolProvider {
                     atsRequisitionID: stringArgument(arguments, "ats_requisition_id")
                 )
             )
+            guard let invitedID = Self.validatedCreatedID(invited.id) else {
+                return errorResult("HackerRank invited the candidate but returned no candidate ID.")
+            }
+
             return jsonResult([
                 "account": resolved.label, "test_id": testID,
-                "invited_candidate": ["id": invited.id ?? "", "email": invited.email ?? email]
+                "invited_candidate": ["id": invitedID, "email": invited.email ?? email]
             ])
         } catch {
             return errorResult("Couldn't invite candidate: \(error.localizedDescription)")
