@@ -33,6 +33,20 @@ struct SectionDisplayTests {
         #expect(user.displayName == "r@x.com")
     }
 
+    @Test func `display name trims parts and falls back when they contain only whitespace`() throws {
+        let named = try decode(
+            User.self,
+            #"{"id":"u1","email":"r@x.com","firstname":" Rhea ","lastname":"\nRecruiter\t"}"#
+        )
+        let unnamed = try decode(
+            User.self,
+            #"{"id":"u2","email":"blank@x.com","firstname":" ","lastname":"\n\t"}"#
+        )
+
+        #expect(named.displayName == "Rhea Recruiter")
+        #expect(unnamed.displayName == "blank@x.com")
+    }
+
     // MARK: - Team.memberSummary
 
     @Test func `member summary lists both counts`() throws {

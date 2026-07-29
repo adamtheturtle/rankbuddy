@@ -302,7 +302,10 @@ extension User {
     /// The user's full name, or their email when no name is set. `nonisolated` so the
     /// nonisolated `DetailWindowValue.windowTitle` can use it — it's pure computation.
     nonisolated var displayName: String {
-        let full = [firstName, lastName].compactMap(\.self).joined(separator: " ")
+        let full = [firstName, lastName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
         return full.isEmpty ? email : full
     }
 }
