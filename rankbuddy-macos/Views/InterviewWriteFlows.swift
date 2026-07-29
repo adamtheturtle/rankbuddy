@@ -64,7 +64,7 @@ struct NewPadSheet: View {
         do {
             let created = try await HackerRankClient(account: account).createPad(title: title)
             onCreated()
-            if !account.isMock, let rawURL = created.url, let url = URL(string: rawURL) {
+            if !account.isMock, let rawURL = created.url, let url = URL.remoteWebURL(from: rawURL) {
                 BrowserSettings.open(url)
             }
             dismiss()

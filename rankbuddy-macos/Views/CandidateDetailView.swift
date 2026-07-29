@@ -67,13 +67,13 @@ struct CandidateDetailView: View {
                     }
                 }
 
-                if let report = candidate.reportURL, let url = URL(string: report) {
+                if let report = candidate.reportURL, let url = URL.remoteWebURL(from: report) {
                     Link(destination: url) {
                         Label("Open report", systemImage: "doc.text")
                     }
                 }
 
-                if let pdf = candidate.pdfURL, let url = URL(string: pdf) {
+                if let pdf = candidate.pdfURL, let url = URL.remoteWebURL(from: pdf) {
                     Link(destination: url) {
                         Label("Download PDF report", systemImage: "arrow.down.doc")
                     }
@@ -188,7 +188,7 @@ struct CandidateDetailView: View {
             let report = try await HackerRankClient(account: account)
                 .candidateReportPDF(testID: testID, candidateID: candidate.id)
             let link = report.pdfURL ?? report.url ?? displayedCandidate.pdfURL
-            if let link, let url = URL(string: link) {
+            if let link, let url = URL.remoteWebURL(from: link) {
                 BrowserSettings.open(url)
             } else {
                 editError = "HackerRank returned no PDF link for this candidate."

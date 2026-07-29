@@ -70,19 +70,19 @@ struct InterviewDetailView: View {
                 OptionalRow("Ended", DisplayFormat.date(interview.endedAt))
                 OptionalRow("Thumbs up", interview.thumbsUp.map(String.init))
 
-                if let report = interview.reportURL, let url = URL(string: report) {
+                if let report = interview.reportURL, let url = URL.remoteWebURL(from: report) {
                     Link(destination: url) {
                         Label("Open report", systemImage: "doc.text")
                     }
                 }
 
-                if let result = detail?.resultURL, let url = URL(string: result) {
+                if let result = detail?.resultURL, let url = URL.remoteWebURL(from: result) {
                     Link(destination: url) {
                         Label("Open result", systemImage: "checkmark.seal")
                     }
                 }
 
-                if let resume = detail?.resumeURL, let url = URL(string: resume) {
+                if let resume = detail?.resumeURL, let url = URL.remoteWebURL(from: resume) {
                     Link(destination: url) {
                         Label("Open résumé", systemImage: "doc.richtext")
                     }
@@ -145,12 +145,12 @@ struct InterviewDetailView: View {
             collection: .interviews,
             itemID: interview.id,
             title: displayTitle,
-            webURL: URL(string: interview.url)
+            webURL: URL.remoteWebURL(from: interview.url)
         )
         // Share and Open (the interview on HackerRank) lead the bar like PadBuddy; Print and
         // Markdown export are off the bar by default but one Customize Toolbar away.
         .toolbar(id: "interviewDetail") {
-            DetailLinkToolbarContent(url: URL(string: interview.url), noun: "interview")
+            DetailLinkToolbarContent(url: URL.remoteWebURL(from: interview.url), noun: "interview")
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Interview: \(displayTitle)") {
                     InterviewReport(interview: interview)

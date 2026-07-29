@@ -222,12 +222,12 @@ struct TestDetailView: View {
     /// Candidate login links and the (sensitive) shared access password, gated behind a reveal.
     private func accessSection(detail: TestDetail) -> some View {
         Section("Access") {
-            if let short = detail.shortLoginURL, let url = URL(string: short) {
+            if let short = detail.shortLoginURL, let url = URL.remoteWebURL(from: short) {
                 Link(destination: url) {
                     Label("Short login link", systemImage: "link")
                 }
             }
-            if let publicURL = detail.publicLoginURL, let url = URL(string: publicURL) {
+            if let publicURL = detail.publicLoginURL, let url = URL.remoteWebURL(from: publicURL) {
                 Link(destination: url) {
                     Label("Public login link", systemImage: "globe")
                 }

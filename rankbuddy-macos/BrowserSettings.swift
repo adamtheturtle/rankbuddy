@@ -5,6 +5,21 @@
 
 import AppKit
 
+extension URL {
+    /// Parses a remote record link while preventing API data from invoking local/custom handlers.
+    nonisolated static func remoteWebURL(from value: String) -> URL? {
+        guard let url = URL(string: value),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "https" || scheme == "http",
+              url.host != nil
+        else {
+            return nil
+        }
+
+        return url
+    }
+}
+
 /// Link-opening preferences (#63): which browser RankBuddy's external (HackerRank web) links
 /// open in, and whether they open in the background. Mirrors PadBuddy's Browser settings.
 ///

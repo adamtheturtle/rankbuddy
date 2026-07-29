@@ -11,6 +11,15 @@ import Testing
 /// are exercised — `open(_:)` is a side effect (it would launch a browser) and isn't called.
 @MainActor
 struct BrowserSettingsTests {
+    @Test func `remote web URLs reject local and custom schemes`() {
+        #expect(URL.remoteWebURL(from: "https://example.com/report")?.absoluteString == "https://example.com/report")
+        #expect(URL.remoteWebURL(from: "HTTP://example.com/report") != nil)
+        #expect(URL.remoteWebURL(from: "file:///etc/passwd") == nil)
+        #expect(URL.remoteWebURL(from: "rankbuddy://tests/123") == nil)
+        #expect(URL.remoteWebURL(from: "javascript:alert(1)") == nil)
+        #expect(URL.remoteWebURL(from: "https:///missing-host") == nil)
+    }
+
     @Test func `at least one browser is installed and resolves a bundle id`() {
         let browsers = BrowserSettings.installedBrowsers()
         // Every macOS has Safari registered for http(s).

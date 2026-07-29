@@ -96,7 +96,7 @@ func rowMenuItems(
         items.append(.separator)
     }
 
-    if let link, let url = URL(string: link) {
+    if let link, let url = URL.remoteWebURL(from: link) {
         items.append(.button(title: openLabel) { BrowserSettings.open(url) })
         items.append(.button(title: "Copy Link") { Clipboard.copy(url.absoluteString) })
     }

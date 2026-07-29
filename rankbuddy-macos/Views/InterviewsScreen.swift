@@ -124,7 +124,7 @@ struct InterviewsScreen: View {
         return RowTransfer(
             title: title,
             subtitle: interview.status.capitalized,
-            url: URL(string: rawURL),
+            url: URL.remoteWebURL(from: rawURL),
             fields: [
                 ("Title", title),
                 ("Status", interview.status.capitalized),

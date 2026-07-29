@@ -84,7 +84,7 @@ struct CandidatesList: View {
                 RowTransfer(
                     title: candidate.fullName ?? candidate.email,
                     subtitle: candidate.email,
-                    url: candidate.reportURL.flatMap { URL(string: $0) },
+                    url: candidate.reportURL.flatMap(URL.remoteWebURL(from:)),
                     fields: [
                         ("Name", candidate.fullName ?? ""),
                         ("Email", candidate.email),

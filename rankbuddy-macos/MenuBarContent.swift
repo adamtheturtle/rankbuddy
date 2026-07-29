@@ -245,7 +245,7 @@ struct MenuBarContent: View {
     private func createPad(in account: Account) async {
         do {
             let created = try await HackerRankClient(account: account).createPad()
-            if !account.isMock, let rawURL = created.url, let url = URL(string: rawURL) {
+            if !account.isMock, let rawURL = created.url, let url = URL.remoteWebURL(from: rawURL) {
                 // Success: open the new pad in the browser. No need to steal focus with the
                 // main window — `BrowserSettings.open` brings the browser forward instead.
                 BrowserSettings.open(url)
