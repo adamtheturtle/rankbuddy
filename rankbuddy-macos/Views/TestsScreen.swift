@@ -43,7 +43,12 @@ struct TestsScreen: View {
                     ListFacet("role", "Role", systemImage: "person.text.rectangle") { $0.roleFilterValues },
                     ListFacet("skill", "Skill", systemImage: "target") { $0.skillFilterValues },
                     ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.typeFilterValues },
-                    ListFacet("state", "State", systemImage: "circle.fill", value: { $0.state?.capitalized }),
+                    ListFacet(
+                        "state",
+                        "State",
+                        systemImage: "circle.fill",
+                        value: { DisplayFormat.enumLabel($0.state) }
+                    ),
                     // Derived from the scheduling window (#55): lets a recruiter narrow to the
                     // tests candidates can still take (Open) vs. Upcoming/Closed.
                     ListFacet("window", "Window", systemImage: "clock", value: { $0.windowStatus(now: Date())?.label }),
@@ -76,7 +81,7 @@ struct TestsScreen: View {
                                 collection: .tests,
                                 id: $0.id,
                                 title: $0.name,
-                                subtitle: $0.state?.capitalized,
+                                subtitle: DisplayFormat.enumLabel($0.state),
                                 startTime: $0.startTime,
                                 endTime: $0.endTime
                             )
@@ -96,9 +101,9 @@ struct TestsScreen: View {
                     }
                 },
                 rowTransfer: { test in
-                    RowTransfer(title: test.name, subtitle: test.state?.capitalized, fields: [
+                    RowTransfer(title: test.name, subtitle: DisplayFormat.enumLabel(test.state), fields: [
                         ("Name", test.name),
-                        ("State", test.state?.capitalized ?? ""),
+                        ("State", DisplayFormat.enumLabel(test.state) ?? ""),
                         ("Unique ID", test.uniqueID ?? ""),
                         ("Starts", test.startTime ?? ""),
                         ("Ends", test.endTime ?? "")
@@ -160,7 +165,12 @@ struct TestsScreen: View {
                 ListFacet("role", "Role", systemImage: "person.text.rectangle") { $0.item.roleFilterValues },
                 ListFacet("skill", "Skill", systemImage: "target") { $0.item.skillFilterValues },
                 ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.item.typeFilterValues },
-                ListFacet("state", "State", systemImage: "circle.fill", value: { $0.item.state?.capitalized })
+                ListFacet(
+                    "state",
+                    "State",
+                    systemImage: "circle.fill",
+                    value: { DisplayFormat.enumLabel($0.item.state) }
+                )
             ],
             contextMenu: { scoped in
                 rowMenuItems(
@@ -176,13 +186,13 @@ struct TestsScreen: View {
                 RowTransfer(title: scoped.item.name, subtitle: scoped.account.label, fields: [
                     ("Name", scoped.item.name),
                     ("Account", scoped.account.label),
-                    ("State", scoped.item.state?.capitalized ?? ""),
+                    ("State", DisplayFormat.enumLabel(scoped.item.state) ?? ""),
                     ("Unique ID", scoped.item.uniqueID ?? "")
                 ])
             },
             rowDate: { DisplayFormat.parseDate($0.item.startTime) },
             row: {
-                MergedRow(title: $0.item.name, subtitle: $0.item.state?.capitalized, account: $0.account)
+                MergedRow(title: $0.item.name, subtitle: DisplayFormat.enumLabel($0.item.state), account: $0.account)
             },
             detail: { TestDetailView(test: $0.item, account: $0.account) }
         )
@@ -199,7 +209,7 @@ struct TestRow: View {
                 Text(test.name).listRowTitleStyle()
                 HStack(spacing: 8) {
                     if let state = test.state {
-                        Text(state.capitalized)
+                        Text(DisplayFormat.enumLabel(state))
                     }
                 }
                 .listRowMetadataStyle()

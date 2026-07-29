@@ -59,7 +59,11 @@ extension Test {
     func inspectorBadges(now: Date) -> [StatusBadge] {
         var badges: [StatusBadge] = []
         if let state, !state.isEmpty {
-            badges.append(StatusBadge(text: state.capitalized, systemImage: "circle.fill", tint: .accentColor))
+            badges.append(StatusBadge(
+                text: DisplayFormat.enumLabel(state),
+                systemImage: "circle.fill",
+                tint: .accentColor
+            ))
         }
         if let window = windowBadge(now: now) { badges.append(window) }
         if enableProctoring == true {
@@ -80,7 +84,7 @@ extension Question {
     var inspectorBadges: [StatusBadge] {
         var badges: [StatusBadge] = []
         if !type.isEmpty {
-            badges.append(StatusBadge(text: type.capitalized, systemImage: "doc.text", tint: .accentColor))
+            badges.append(StatusBadge(text: DisplayFormat.enumLabel(type), systemImage: "doc.text", tint: .accentColor))
         }
         if let status, !status.isEmpty {
             let style: (image: String, tint: Color) = switch status.lowercased() {
@@ -90,7 +94,11 @@ extension Question {
             case "rejected": ("xmark.circle.fill", .red)
             default: ("circle.fill", .secondary)
             }
-            badges.append(StatusBadge(text: status.capitalized, systemImage: style.image, tint: style.tint))
+            badges.append(StatusBadge(
+                text: DisplayFormat.enumLabel(status),
+                systemImage: style.image,
+                tint: style.tint
+            ))
         }
         return badges
     }
@@ -105,7 +113,7 @@ extension Interview {
         case "cancelled", "canceled": .red
         default: .secondary
         }
-        return [StatusBadge(text: status.capitalized, systemImage: "circle.fill", tint: tint)]
+        return [StatusBadge(text: DisplayFormat.enumLabel(status), systemImage: "circle.fill", tint: tint)]
     }
 }
 
@@ -114,7 +122,11 @@ extension User {
     var inspectorBadges: [StatusBadge] {
         var badges: [StatusBadge] = []
         if let role, !role.isEmpty {
-            badges.append(StatusBadge(text: role.capitalized, systemImage: "person.fill", tint: .accentColor))
+            badges.append(StatusBadge(
+                text: DisplayFormat.enumLabel(role),
+                systemImage: "person.fill",
+                tint: .accentColor
+            ))
         }
         if let status, !status.isEmpty {
             let style: (image: String, tint: Color) = switch status.lowercased() {
@@ -124,7 +136,11 @@ extension User {
                 ("xmark.circle.fill", .red)
             default: ("circle.fill", .secondary)
             }
-            badges.append(StatusBadge(text: status.capitalized, systemImage: style.image, tint: style.tint))
+            badges.append(StatusBadge(
+                text: DisplayFormat.enumLabel(status),
+                systemImage: style.image,
+                tint: style.tint
+            ))
         }
         if companyAdmin == true {
             badges.append(StatusBadge(text: "Company admin", systemImage: "checkmark.seal.fill", tint: .blue))

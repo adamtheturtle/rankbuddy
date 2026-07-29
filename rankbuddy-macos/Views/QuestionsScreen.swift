@@ -55,7 +55,12 @@ struct QuestionsScreen: View {
                 onFirstPage: { questions in
                     RecentActivityStore.shared.record(
                         questions.map {
-                            RecentItem(collection: .questions, id: $0.id, title: $0.name, subtitle: $0.type.capitalized)
+                            RecentItem(
+                                collection: .questions,
+                                id: $0.id,
+                                title: $0.name,
+                                subtitle: DisplayFormat.enumLabel($0.type)
+                            )
                         },
                         for: .questions,
                         account: account.id
@@ -75,11 +80,11 @@ struct QuestionsScreen: View {
                     }
                 },
                 rowTransfer: { question in
-                    RowTransfer(title: question.name, subtitle: question.type.capitalized, fields: [
+                    RowTransfer(title: question.name, subtitle: DisplayFormat.enumLabel(question.type), fields: [
                         ("Name", question.name),
-                        ("Type", question.type.capitalized),
+                        ("Type", DisplayFormat.enumLabel(question.type)),
                         ("Unique ID", question.uniqueID ?? ""),
-                        ("Status", question.status?.capitalized ?? "")
+                        ("Status", DisplayFormat.enumLabel(question.status) ?? "")
                     ])
                 },
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
@@ -143,13 +148,13 @@ struct QuestionsScreen: View {
                 RowTransfer(title: scoped.item.name, subtitle: scoped.account.label, fields: [
                     ("Name", scoped.item.name),
                     ("Account", scoped.account.label),
-                    ("Type", scoped.item.type.capitalized),
+                    ("Type", DisplayFormat.enumLabel(scoped.item.type)),
                     ("Unique ID", scoped.item.uniqueID ?? "")
                 ])
             },
             rowDate: { DisplayFormat.parseDate($0.item.createdAt) },
             row: {
-                MergedRow(title: $0.item.name, subtitle: $0.item.type.capitalized, account: $0.account)
+                MergedRow(title: $0.item.name, subtitle: DisplayFormat.enumLabel($0.item.type), account: $0.account)
             },
             detail: { QuestionDetailView(question: $0.item) }
         )
@@ -165,7 +170,7 @@ struct QuestionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(question.name).listRowTitleStyle()
                 HStack(spacing: 8) {
-                    Text(question.type.capitalized)
+                    Text(DisplayFormat.enumLabel(question.type))
                     if let languages = DisplayFormat.languages(question.languages) {
                         Text(languages)
                     }

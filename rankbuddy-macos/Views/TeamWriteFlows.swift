@@ -96,7 +96,7 @@ struct AddTeamMemberSheet: View {
                         .textContentType(.emailAddress)
                         .disableAutocorrection(true)
                     Picker("Role", selection: $role) {
-                        ForEach(Self.roles, id: \.self) { Text($0.capitalized).tag($0) }
+                        ForEach(Self.roles, id: \.self) { Text(DisplayFormat.enumLabel($0)).tag($0) }
                     }
                 }
 

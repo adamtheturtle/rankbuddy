@@ -146,7 +146,7 @@ struct TestReport: View {
         ReportDocument(title: test.name, subtitle: "HackerRank Test Report") {
             PrintSection(title: "Test") {
                 ReportFieldList(fields: reportFields([
-                    ("State", test.state?.capitalized),
+                    ("State", DisplayFormat.enumLabel(test.state)),
                     ("Unique ID", test.uniqueID),
                     ("Duration", test.duration.map { "\($0) min" }),
                     ("Cutoff score", test.cutoffScore.map(String.init)),
@@ -189,7 +189,7 @@ struct InterviewReport: View {
             PrintSection(title: "Interview") {
                 ReportFieldList(fields: reportFields([
                     ("Title", interview.title),
-                    ("Status", interview.status.capitalized),
+                    ("Status", DisplayFormat.enumLabel(interview.status)),
                     ("Created", DisplayFormat.date(interview.createdAt)),
                     ("Updated", DisplayFormat.date(interview.updatedAt)),
                     ("Ended", DisplayFormat.date(interview.endedAt)),
@@ -218,9 +218,9 @@ struct QuestionReport: View {
         ReportDocument(title: question.name, subtitle: "HackerRank Question Report") {
             PrintSection(title: "Question") {
                 ReportFieldList(fields: reportFields([
-                    ("Type", question.type.capitalized),
+                    ("Type", DisplayFormat.enumLabel(question.type)),
                     ("Unique ID", question.uniqueID),
-                    ("Status", question.status?.capitalized),
+                    ("Status", DisplayFormat.enumLabel(question.status)),
                     ("Max score", question.maxScore.map { $0.formatted() }),
                     ("Recommended duration", question.recommendedDuration.map { "\($0) minutes" }),
                     ("Created", DisplayFormat.date(question.createdAt)),

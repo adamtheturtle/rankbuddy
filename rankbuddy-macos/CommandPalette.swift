@@ -116,7 +116,7 @@ enum RankBuddyPalette {
             PaletteResult(
                 id: "test.\(test.id)",
                 title: test.name,
-                subtitle: test.state?.capitalized,
+                subtitle: DisplayFormat.enumLabel(test.state),
                 category: "Test",
                 systemImage: "checklist",
                 searchText: "\(test.name) \(test.tags?.joined(separator: " ") ?? "") test",

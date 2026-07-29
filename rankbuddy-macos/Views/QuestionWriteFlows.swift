@@ -36,7 +36,7 @@ struct NewQuestionSheet: View {
                 Section {
                     TextField("Name", text: $name)
                     Picker("Type", selection: $type) {
-                        ForEach(questionTypes, id: \.self) { Text($0.capitalized).tag($0) }
+                        ForEach(questionTypes, id: \.self) { Text(DisplayFormat.enumLabel($0)).tag($0) }
                     }
                     TextField("Recommended duration (minutes)", text: $duration)
                     TextField("Max score", text: $maxScore)

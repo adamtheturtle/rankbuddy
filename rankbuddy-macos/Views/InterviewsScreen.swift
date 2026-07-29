@@ -47,7 +47,12 @@ struct InterviewsScreen: View {
                     }
                 ],
                 facets: [
-                    ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.status.capitalized })
+                    ListFacet(
+                        "status",
+                        "Status",
+                        systemImage: "circle.fill",
+                        value: { DisplayFormat.enumLabel($0.status) }
+                    )
                 ],
                 restorationKey: "selection.interviews.\(account.id)",
                 filterDate: { DisplayFormat.parseDate($0.createdAt) },
@@ -76,7 +81,7 @@ struct InterviewsScreen: View {
                                 collection: .interviews,
                                 id: $0.id,
                                 title: $0.title ?? "Interview \($0.id)",
-                                subtitle: $0.status.capitalized
+                                subtitle: DisplayFormat.enumLabel($0.status)
                             )
                         },
                         for: .interviews,
@@ -123,11 +128,11 @@ struct InterviewsScreen: View {
         let rawURL = interview.url
         return RowTransfer(
             title: title,
-            subtitle: interview.status.capitalized,
+            subtitle: DisplayFormat.enumLabel(interview.status),
             url: URL.remoteWebURL(from: rawURL),
             fields: [
                 ("Title", title),
-                ("Status", interview.status.capitalized),
+                ("Status", DisplayFormat.enumLabel(interview.status)),
                 ("Created", interview.createdAt ?? ""),
                 ("URL", rawURL)
             ]
@@ -198,7 +203,7 @@ struct InterviewsScreen: View {
             row: {
                 MergedRow(
                     title: $0.item.title ?? "Interview \($0.item.id)",
-                    subtitle: $0.item.status.capitalized,
+                    subtitle: DisplayFormat.enumLabel($0.item.status),
                     account: $0.account
                 )
             },
@@ -222,7 +227,7 @@ extension Interview {
         case "cancelled", "canceled":
             StatusBadge(text: "Cancelled", systemImage: "xmark.circle", tint: .red)
         default:
-            StatusBadge(text: status.capitalized, systemImage: "circle", tint: .secondary)
+            StatusBadge(text: DisplayFormat.enumLabel(status), systemImage: "circle", tint: .secondary)
         }
     }
 }

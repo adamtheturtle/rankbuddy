@@ -46,8 +46,13 @@ struct PeopleScreen: View {
                     }
                 ],
                 facets: [
-                    ListFacet("role", "Role", systemImage: "person.fill", value: { $0.role?.capitalized }),
-                    ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.status?.capitalized })
+                    ListFacet("role", "Role", systemImage: "person.fill", value: { DisplayFormat.enumLabel($0.role) }),
+                    ListFacet(
+                        "status",
+                        "Status",
+                        systemImage: "circle.fill",
+                        value: { DisplayFormat.enumLabel($0.status) }
+                    )
                 ],
                 // People is bounded (a few thousand), so allow a deeper auto-load while a facet
                 // filter is active than the default, so the facet scans most of the org (#86).
@@ -71,8 +76,8 @@ struct PeopleScreen: View {
                     RowTransfer(title: user.displayName, subtitle: user.email, fields: [
                         ("Name", user.displayName),
                         ("Email", user.email),
-                        ("Role", user.role?.capitalized ?? ""),
-                        ("Status", user.status?.capitalized ?? "")
+                        ("Role", DisplayFormat.enumLabel(user.role) ?? ""),
+                        ("Status", DisplayFormat.enumLabel(user.status) ?? "")
                     ])
                 },
                 rowDate: { DisplayFormat.parseDate($0.lastActivityTime) },
@@ -198,7 +203,7 @@ struct CreateUserSheet: View {
                     TextField("First name", text: $firstName)
                     TextField("Last name (optional)", text: $lastName)
                     Picker("Role", selection: $role) {
-                        ForEach(Self.roles, id: \.self) { Text($0.capitalized).tag($0) }
+                        ForEach(Self.roles, id: \.self) { Text(DisplayFormat.enumLabel($0)).tag($0) }
                     }
                     Picker("Team", selection: $selectedTeamID) {
                         Text(teams.isEmpty ? "Loading teams…" : "Choose a team").tag(String?.none)
@@ -319,10 +324,10 @@ struct PersonRow: View {
             Text(user.displayName).listRowTitleStyle()
             HStack(spacing: 8) {
                 if let role = user.role {
-                    Text(role.capitalized)
+                    Text(DisplayFormat.enumLabel(role))
                 }
                 if let status = user.status {
-                    Text(status.capitalized)
+                    Text(DisplayFormat.enumLabel(status))
                 }
             }
             .listRowMetadataStyle()

@@ -87,6 +87,16 @@ struct FormattingTests {
         #expect(DisplayFormat.boolean(false, trueLabel: "Enabled", falseLabel: "Disabled") == "Disabled")
     }
 
+    // MARK: - DisplayFormat.enumLabel
+
+    @Test func `backend enum labels replace separators and normalize spacing`() {
+        let missing: String? = nil
+        #expect(DisplayFormat.enumLabel("in_progress") == "In Progress")
+        #expect(DisplayFormat.enumLabel("company-admin") == "Company Admin")
+        #expect(DisplayFormat.enumLabel("  report   ready ") == "Report Ready")
+        #expect(DisplayFormat.enumLabel(missing) == nil)
+    }
+
     // MARK: - DisplayFormat.duration
 
     @Test func `duration formats the elapsed time between two timestamps`() {

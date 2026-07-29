@@ -81,7 +81,7 @@ extension HackerRankError: @retroactive LocalizedError {
         case let fields as [String: Any]:
             fields.sorted { $0.key < $1.key }.flatMap { field, value -> [String] in
                 let problems = (value as? [String]) ?? (value as? String).map { [$0] } ?? []
-                return problems.map { "\(field.capitalized) \($0)" }
+                return problems.map { "\(DisplayFormat.enumLabel(field)) \($0)" }
             }
 
         default:

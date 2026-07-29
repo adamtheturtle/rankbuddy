@@ -104,7 +104,7 @@ enum MarkdownExport {
     static func test(_ test: Test) -> String {
         document(title: test.name, subtitle: "HackerRank Test Report", sections: [
             section("Test", [
-                ("State", test.state?.capitalized), ("Unique ID", test.uniqueID),
+                ("State", DisplayFormat.enumLabel(test.state)), ("Unique ID", test.uniqueID),
                 ("Duration", test.duration.map { "\($0) min" }),
                 ("Cutoff", test.cutoffScore.map(String.init)),
                 ("Starts", DisplayFormat.date(test.startTime)), ("Ends", DisplayFormat.date(test.endTime)),
@@ -118,8 +118,8 @@ enum MarkdownExport {
     static func question(_ question: Question) -> String {
         document(title: question.name, subtitle: "HackerRank Question Report", sections: [
             section("Question", [
-                ("Type", question.type.capitalized), ("Unique ID", question.uniqueID),
-                ("Status", question.status?.capitalized),
+                ("Type", DisplayFormat.enumLabel(question.type)), ("Unique ID", question.uniqueID),
+                ("Status", DisplayFormat.enumLabel(question.status)),
                 ("Max score", question.maxScore.map { $0.formatted() }),
                 ("Languages", DisplayFormat.languages(question.languages)),
                 ("Skills", DisplayFormat.list(question.skills))
@@ -134,7 +134,7 @@ enum MarkdownExport {
             subtitle: "HackerRank Interview Report",
             sections: [
                 section("Interview", [
-                    ("Status", interview.status.capitalized),
+                    ("Status", DisplayFormat.enumLabel(interview.status)),
                     ("Created", DisplayFormat.date(interview.createdAt)),
                     ("Ended", DisplayFormat.date(interview.endedAt)),
                     ("Thumbs up", interview.thumbsUp.map(String.init))

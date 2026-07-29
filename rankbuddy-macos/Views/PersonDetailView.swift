@@ -66,11 +66,11 @@ struct PersonDetailView: View {
             Section("Properties") {
                 OptionalRow("Email", displayed.email)
                 if account == nil {
-                    OptionalRow("Role", displayed.role?.capitalized)
+                    OptionalRow("Role", DisplayFormat.enumLabel(displayed.role))
                 } else {
                     editableRows
                 }
-                OptionalRow("Status", displayed.status?.capitalized)
+                OptionalRow("Status", DisplayFormat.enumLabel(displayed.status))
                 OptionalRow("Country", displayed.country)
                 OptionalRow("Last active", DisplayFormat.date(displayed.lastActivityTime))
                 OptionalRow("Activated", DisplayFormat.boolean(displayed.activated))
@@ -135,7 +135,7 @@ struct PersonDetailView: View {
         EditablePickerRow(
             label: "Role",
             value: displayed.role ?? "recruiter",
-            options: organisationUserRoles.map { ($0, $0.capitalized) }
+            options: organisationUserRoles.map { ($0, DisplayFormat.enumLabel($0)) }
         ) { newValue in
             await save(UserUpdateOptions(role: newValue))
         }

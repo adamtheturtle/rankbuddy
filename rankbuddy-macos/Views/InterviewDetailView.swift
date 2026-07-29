@@ -58,7 +58,7 @@ struct InterviewDetailView: View {
             InspectorHeader(title: displayTitle, badges: interview.inspectorBadges, onRename: renameAction)
 
             Section("Properties") {
-                OptionalRow("Status", interview.status.capitalized)
+                OptionalRow("Status", DisplayFormat.enumLabel(interview.status))
                 scheduledRow(label: "Scheduled start", raw: detail?.scheduledFrom) { newDate in
                     await update(InterviewUpdateBody(from: Self.iso8601.string(from: newDate)))
                 }

@@ -90,6 +90,22 @@ enum DisplayFormat {
         return value ? trueLabel : falseLabel
     }
 
+    /// Turns backend enum spellings such as `in_progress` and `company-admin` into localized,
+    /// separator-free labels suitable for visible text and VoiceOver.
+    nonisolated static func enumLabel(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .split(whereSeparator: \.isWhitespace)
+            .map { String($0).localizedCapitalized }
+            .joined(separator: " ")
+    }
+
+    nonisolated static func enumLabel(_ value: String?) -> String? {
+        value.map(enumLabel)
+    }
+
     nonisolated static let hackerRankLanguageOptions: [(code: String, name: String)] = [
         ("bash", "Bash"),
         ("c", "C"),

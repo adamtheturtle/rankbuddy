@@ -66,7 +66,7 @@ extension LoadableList {
                         icon: "calendar",
                         selected: $dateRange,
                         options: NamedDateRange.options,
-                        formatter: { $0.capitalized }
+                        formatter: { DisplayFormat.enumLabel($0) }
                     )
                     .help("Filter \(title) by date")
                 }

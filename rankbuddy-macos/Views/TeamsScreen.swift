@@ -159,8 +159,8 @@ struct TeamMembersList: View {
                 RowTransfer(title: user.displayName, subtitle: user.email, fields: [
                     ("Name", user.displayName),
                     ("Email", user.email),
-                    ("Role", user.role?.capitalized ?? ""),
-                    ("Status", user.status?.capitalized ?? "")
+                    ("Role", DisplayFormat.enumLabel(user.role) ?? ""),
+                    ("Status", DisplayFormat.enumLabel(user.status) ?? "")
                 ])
             },
             rowDate: { DisplayFormat.parseDate($0.lastActivityTime) },

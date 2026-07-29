@@ -48,7 +48,7 @@ struct TestDetailView: View {
             )
 
             Section("Properties") {
-                OptionalRow("State", displayedTest.state?.capitalized)
+                OptionalRow("State", DisplayFormat.enumLabel(displayedTest.state))
                 OptionalRow("Window", displayedTest.windowStatus(now: Date())?.label)
                 OptionalRow("Unique ID", displayedTest.uniqueID)
                 OptionalRow("Duration", displayedTest.duration.map { "\($0) min" })
