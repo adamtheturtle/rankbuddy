@@ -216,7 +216,12 @@ enum SearchInterpreter {
     /// Parses the model's `filters` block ("facetId=value" lines) into pairs, tolerating commas,
     /// semicolons, or newlines between entries and stray surrounding whitespace.
     static func parseFilters(_ raw: String) -> [(facetID: String, value: String)] {
-        raw
+        let normalized = raw.replacingOccurrences(
+            of: #",(?=\s*[A-Za-z0-9_.-]+\s*=)"#,
+            with: "\n",
+            options: .regularExpression
+        )
+        return normalized
             .split(whereSeparator: { $0 == "\n" || $0 == ";" })
             .compactMap { entry in
                 let parts = entry.split(separator: "=", maxSplits: 1)

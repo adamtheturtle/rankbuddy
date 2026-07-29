@@ -43,6 +43,12 @@ struct SearchInterpreterTests {
         #expect(asDict == ["language=python", "status=Active", "language=java"])
     }
 
+    @Test func `parseFilters splits comma-delimited pairs without breaking commas inside values`() {
+        let pairs = SearchInterpreter.parseFilters("status=Active, role=Developer, location=London, UK")
+        let asDict = pairs.map { "\($0.facetID)=\($0.value)" }
+        #expect(asDict == ["status=Active", "role=Developer", "location=London, UK"])
+    }
+
     @Test func `parseFilters ignores malformed entries`() {
         #expect(SearchInterpreter.parseFilters("nonsense\n=value\nid=").isEmpty)
     }
