@@ -163,6 +163,27 @@ extension RankBuddyToolProvider {
         return nil
     }
 
+    nonisolated static func hasCandidateUpdate(_ arguments: [String: Value]?) -> Bool {
+        let textKeys = [
+            "full_name", "invite_valid_from", "invite_valid_to", "evaluator_email",
+            "test_finish_url", "test_result_url"
+        ]
+        if textKeys.contains(where: { key in
+            guard case let .string(value)? = arguments?[key] else { return false }
+
+            return normalizedOptionalString(value) != nil
+        }) { return true }
+        if case .int? = arguments?["ats_state"] { return true }
+        if case .bool? = arguments?["accept_result_updates"] { return true }
+        if case let .array(values)? = arguments?["tags"] {
+            return values.contains { if case let .string(value) = $0 { return normalizedOptionalString(value) != nil }
+                return false
+            }
+        }
+        if case let .string(value)? = arguments?["tags"] { return !normalizedStringList([value]).isEmpty }
+        return false
+    }
+
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -266,10 +287,14 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
+    // swiftlint:disable:next function_body_length
     private func updateCandidateTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
         guard let candidateID = stringArgument(arguments, "candidate_id") else {
             return missingArgument("candidate_id")
+        }
+        guard Self.hasCandidateUpdate(arguments) else {
+            return errorResult("At least one candidate field must be provided.")
         }
 
         let rawFinishURL = Self.normalizedOptionalString(stringArgument(arguments, "test_finish_url"))

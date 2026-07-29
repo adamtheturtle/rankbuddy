@@ -515,6 +515,17 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("before"))
     }
 
+    @Test func `update_candidate requires at least one changed field`() async {
+        let result = await writeProvider().callTool(
+            "update_candidate",
+            arguments: ["test_id": .string("test-1"), "candidate_id": .string("candidate-1")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("At least one"))
+        #expect(!RankBuddyToolProvider.hasCandidateUpdate(["full_name": .string(" \n")]))
+        #expect(RankBuddyToolProvider.hasCandidateUpdate(["accept_result_updates": .bool(false)]))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
