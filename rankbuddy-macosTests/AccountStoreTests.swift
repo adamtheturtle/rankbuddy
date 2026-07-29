@@ -13,6 +13,12 @@ import Testing
 /// every Keychain/UserDefaults side effect, so they never touch the real login keychain.
 @MainActor
 struct AccountStoreTests {
+    @Test func `account descriptions conflict after trimming and case normalization`() {
+        #expect(Account.labelsConflict(" Work ", "work"))
+        #expect(!Account.labelsConflict("Work", "Personal"))
+        #expect(!Account.labelsConflict(" ", ""))
+    }
+
     // MARK: - Account model
 
     @Test func `baseURL falls back to the default when no override is set`() {

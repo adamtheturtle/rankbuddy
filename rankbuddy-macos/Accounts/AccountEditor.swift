@@ -115,9 +115,16 @@ struct AccountEditor: View {
 
             if isEditing || isValidated {
                 fieldRow("Description") {
-                    TextField("", text: $label, prompt: Text(defaultLabel))
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Description")
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("", text: $label, prompt: Text(defaultLabel))
+                            .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Description")
+                        if duplicateLabelMessage() != nil {
+                            Text("Use a unique description so this account is distinguishable in selectors.")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                    }
                 }
 
                 fieldRow("Icon", alignment: .center) {
@@ -281,7 +288,7 @@ struct AccountEditor: View {
     }
 
     private var canSave: Bool {
-        validation != .validating && (isValidated || credentialsUnchanged)
+        validation != .validating && duplicateLabelMessage() == nil && (isValidated || credentialsUnchanged)
     }
 
     private var defaultLabel: String {
@@ -394,7 +401,7 @@ private extension AccountEditor {
         currentValidationFingerprint == fingerprint
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func validate() async {
         if let demo = Account.DemoMagicKey(typedToken: token) {
             let demoID: Account.ID? = switch demo {
@@ -419,6 +426,10 @@ private extension AccountEditor {
             return
         }
         if let message = duplicateAccountMessage() {
+            validation = .invalid(message)
+            return
+        }
+        if let message = duplicateLabelMessage() {
             validation = .invalid(message)
             return
         }
@@ -467,6 +478,16 @@ private extension AccountEditor {
         guard clashes else { return nil }
 
         return "This token is already added as another account. Each account must use a unique token."
+    }
+
+    func duplicateLabelMessage() -> String? {
+        let candidateLabel = draft.label
+        let clashes = store.accounts.contains { account in
+            account.id != draft.id && Account.labelsConflict(account.label, candidateLabel)
+        }
+        guard clashes else { return nil }
+
+        return "Another account already uses this description. Choose a unique description."
     }
 
     func missingScopesWarning(client: HackerRankClient) async -> String? {

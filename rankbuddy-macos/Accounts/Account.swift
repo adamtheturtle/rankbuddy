@@ -42,6 +42,14 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         id
     }
 
+    /// User-facing descriptions are compared case-insensitively after trimming so account
+    /// selectors never contain choices that look identical.
+    static func labelsConflict(_ lhs: String, _ rhs: String) -> Bool {
+        let left = lhs.trimmingCharacters(in: .whitespacesAndNewlines)
+        let right = rhs.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !left.isEmpty && left.localizedCaseInsensitiveCompare(right) == .orderedSame
+    }
+
     /// The reserved token that marks the in-process demo account (mirrors PadBuddy's
     /// "demo" mock key). Not a valid HackerRank token, so a real account never collides.
     static let demoToken = "demo"
