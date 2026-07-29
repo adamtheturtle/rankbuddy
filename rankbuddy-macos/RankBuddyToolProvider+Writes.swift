@@ -815,8 +815,11 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func deleteInterviewTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let interviewID = stringArgument(arguments, "interview_id") else {
+        guard let rawInterviewID = stringArgument(arguments, "interview_id") else {
             return missingArgument("interview_id")
+        }
+        guard let interviewID = Self.normalizedOptionalString(rawInterviewID) else {
+            return errorResult("`interview_id` must not be empty.")
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
