@@ -261,6 +261,9 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.normalizedOptionalString(nil) == nil)
         #expect(RankBuddyToolProvider.normalizedOptionalString(" \n") == nil)
         #expect(RankBuddyToolProvider.normalizedOptionalString(" Pairing ") == "Pairing")
+        #expect(RankBuddyToolProvider.normalizedStringList(
+            [" swift ", "Swift", "", "résumé", "resume"]
+        ) == ["swift", "résumé"])
     }
 
     @Test func `remote created-resource URLs must use a web scheme`() {

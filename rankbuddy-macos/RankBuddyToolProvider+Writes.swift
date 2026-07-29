@@ -90,19 +90,17 @@ extension RankBuddyToolProvider {
 
     private func stringArrayArgument(_ arguments: [String: Value]?, _ key: String) -> [String]? {
         if case let .array(values)? = arguments?[key] {
-            let result = values.compactMap { value -> String? in
+            let strings = values.compactMap { value -> String? in
                 guard case let .string(text) = value else { return nil }
 
-                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? nil : trimmed
+                return text
             }
+            let result = Self.normalizedStringList(strings)
             return result.isEmpty ? nil : result
         }
 
         if let text = stringArgument(arguments, key) {
-            let result = text.split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                .filter { !$0.isEmpty }
+            let result = Self.normalizedStringList(text.split(separator: ",").map(String.init))
             return result.isEmpty ? nil : result
         }
         return nil
@@ -141,6 +139,16 @@ extension RankBuddyToolProvider {
     nonisolated static func normalizedOptionalString(_ value: String?) -> String? {
         let normalized = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return normalized.isEmpty ? nil : normalized
+    }
+
+    nonisolated static func normalizedStringList(_ values: [String]) -> [String] {
+        var seen: Set<String> = []
+        return values.compactMap { value in
+            guard let normalized = normalizedOptionalString(value) else { return nil }
+
+            let key = normalized.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            return seen.insert(key).inserted ? normalized : nil
+        }
     }
 
     @MainActor
