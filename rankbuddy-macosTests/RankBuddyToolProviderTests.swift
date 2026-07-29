@@ -572,6 +572,18 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `create_ats_codepair_invite rejects a blank title`() async {
+        let result = await writeProvider().callTool(
+            "create_ats_codepair_invite",
+            arguments: [
+                "title": .string(" \n"), "requisition_id": .string("req-1"),
+                "candidate_id": .string("candidate-1")
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("title"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

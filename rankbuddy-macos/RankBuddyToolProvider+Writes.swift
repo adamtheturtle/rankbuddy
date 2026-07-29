@@ -830,12 +830,15 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func createATSCodePairInviteTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let title = stringArgument(arguments, "title") else { return missingArgument("title") }
+        guard let rawTitle = stringArgument(arguments, "title") else { return missingArgument("title") }
         guard let requisitionID = stringArgument(arguments, "requisition_id") else {
             return missingArgument("requisition_id")
         }
         guard let candidateID = stringArgument(arguments, "candidate_id") else {
             return missingArgument("candidate_id")
+        }
+        guard let title = Self.normalizedOptionalString(rawTitle) else {
+            return errorResult("`title` must not be empty.")
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
