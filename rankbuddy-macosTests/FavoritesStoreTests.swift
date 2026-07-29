@@ -104,6 +104,17 @@ struct FavoritesStoreTests {
         #expect(ref("a", .questions, "q9").id == "a|questions|q9")
     }
 
+    @Test func `reload identity cannot collide around pipe characters`() {
+        let first = FavoritesReloadIdentity(ids: ["a", "b|c"])
+        let second = FavoritesReloadIdentity(ids: ["a|b", "c"])
+
+        #expect(first != second)
+        #expect(
+            FavoritesReloadIdentity(ids: ["second", "first"])
+                == FavoritesReloadIdentity(ids: ["first", "second"])
+        )
+    }
+
     @Test func `add pins an absent favourite`() {
         let store = FavoritesStore(defaults: makeDefaults(#function))
         store.add(ref())

@@ -6,6 +6,16 @@
 import AppKit
 import SwiftUI
 
+/// A structured, order-independent FastList reload identity. Keeping IDs as array elements avoids
+/// delimiter collisions such as `["a", "b|c"]` and `["a|b", "c"]`.
+nonisolated struct FavoritesReloadIdentity: Hashable {
+    let ids: [String]
+
+    init(ids: [String]) {
+        self.ids = ids.sorted()
+    }
+}
+
 /// Row accessories, copy/drag providers, the write-action command registration, and the
 /// selection/scroll persistence that back `LoadableList`. Split out of `LoadableList.swift`
 /// to keep that file within the repo's length limits, per the repo's split-file rule.
@@ -37,8 +47,8 @@ extension LoadableList {
     /// A change token over the current favourites, used as the FastList `reloadID` so the star
     /// column rebuilds (and turns yellow) the instant an item is pinned or unpinned. Sorted so the
     /// token is order-independent — only membership changes trigger a reload, not reordering.
-    var favoritesReloadID: String {
-        favorites.favorites.map(\.id).sorted().joined(separator: "|")
+    var favoritesReloadID: FavoritesReloadIdentity {
+        FavoritesReloadIdentity(ids: favorites.favorites.map(\.id))
     }
 
     /// A floating "Loading more…" pill shown over the bottom of the list while the next page
