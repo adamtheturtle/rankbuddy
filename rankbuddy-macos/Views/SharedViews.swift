@@ -193,14 +193,13 @@ struct FavoriteStarButton: View {
     }
 }
 
-/// A right-aligned relative date ("2 months ago") in a fixed-width trailing column for a list
-/// row, matching PadBuddy's rows. Reserves its column width even when the date is missing, so
+/// A right-aligned relative date ("2 months ago") in an adaptive trailing column for a list
+/// row. Reserves a minimum width even when the date is missing, so
 /// stars and titles stay vertically aligned across rows whether or not a row has a date.
 struct RowDateLabel: View {
     let date: Date?
 
-    /// The shared trailing-column width, so every list's date column lines up.
-    static let columnWidth: CGFloat = 78
+    static let minimumColumnWidth: CGFloat = 60, maximumColumnWidth: CGFloat = 160
 
     var body: some View {
         Group {
@@ -211,11 +210,12 @@ struct RowDateLabel: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .help(labels.tooltip)
+                    .accessibilityLabel(labels.tooltip)
             } else {
                 Color.clear
             }
         }
-        .frame(width: Self.columnWidth, alignment: .trailing)
+        .frame(minWidth: Self.minimumColumnWidth, maxWidth: Self.maximumColumnWidth, alignment: .trailing)
     }
 }
 

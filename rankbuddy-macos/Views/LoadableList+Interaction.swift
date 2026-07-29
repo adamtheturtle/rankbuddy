@@ -21,7 +21,7 @@ nonisolated struct FavoritesReloadIdentity: Hashable {
 /// to keep that file within the repo's length limits, per the repo's split-file rule.
 extension LoadableList {
     /// The interactive trailing column shared by every row: a clickable favourite star (for
-    /// lists that map rows to a `favoriteRef`) and a fixed-width relative-date column (for lists
+    /// lists that map rows to a `favoriteRef`) and an adaptive relative-date column (for lists
     /// that set `rowDate`), matching PadBuddy. Rendered outside the row's hit-transparent content
     /// so the star toggles on click while the rest of the row still selects.
     func rowAccessory(_ item: Item) -> some View {
