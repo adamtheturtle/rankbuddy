@@ -88,6 +88,20 @@ enum RankBuddyUserActivity {
         return ItemRef(collection: collection, accountID: accountID.uuidString, itemID: itemID)
     }
 
+    /// Resolves a syntactically valid target only when its account still exists on this device.
+    /// Activities can outlive account removal or arrive from another Mac with different accounts.
+    nonisolated static func configuredTarget(
+        userInfo: [AnyHashable: Any]?,
+        accounts: [Account]
+    ) -> ItemRef? {
+        guard let target = target(userInfo: userInfo),
+              let accountID = UUID(uuidString: target.accountID),
+              accounts.contains(where: { $0.id == accountID })
+        else { return nil }
+
+        return target
+    }
+
     /// Restricts browser fallback to HackerRank's web origin. Merely being an http(s) URL is not
     /// enough: a malformed or foreign activity must not invoke local/custom handlers or navigate
     /// to an attacker-controlled host while claiming to be RankBuddy Handoff.
@@ -104,8 +118,8 @@ enum RankBuddyUserActivity {
     /// otherwise opens its `webpageURL` through the browser preference (#63). Returns whether
     /// it handled the activity.
     @MainActor @discardableResult
-    static func restore(_ activity: NSUserActivity) -> Bool {
-        if let target = target(userInfo: activity.userInfo) {
+    static func restore(_ activity: NSUserActivity, store: AccountStore) -> Bool {
+        if let target = configuredTarget(userInfo: activity.userInfo, accounts: store.accounts) {
             RankBuddyDeepLink.open(
                 collection: target.collection, accountID: target.accountID, itemID: target.itemID
             )

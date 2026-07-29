@@ -80,6 +80,19 @@ struct HandoffTests {
         )
     }
 
+    @Test func `configured target rejects an account absent from this device`() {
+        let knownID = UUID(uuidString: accountID) ?? UUID()
+        let account = Account(label: "Known", token: "token", id: knownID)
+        let info: [AnyHashable: Any] = [
+            RankBuddyUserActivity.Key.collection: "tests",
+            RankBuddyUserActivity.Key.accountID: accountID,
+            RankBuddyUserActivity.Key.itemID: "t1"
+        ]
+
+        #expect(RankBuddyUserActivity.configuredTarget(userInfo: info, accounts: [account]) != nil)
+        #expect(RankBuddyUserActivity.configuredTarget(userInfo: info, accounts: []) == nil)
+    }
+
     @Test func `target rejects a missing, foreign, or empty activity`() {
         #expect(RankBuddyUserActivity.target(userInfo: nil) == nil)
         #expect(RankBuddyUserActivity.target(userInfo: ["unrelated": "value"]) == nil)

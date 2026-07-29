@@ -101,7 +101,7 @@ struct ContentView: View {
         // Continue a Handoff / Spotlight / Siri activity by routing to the item via the same
         // deep-link path favourites and the open intent use (#98).
         .onContinueUserActivity(RankBuddyUserActivity.activityType) { activity in
-            RankBuddyUserActivity.restore(activity)
+            RankBuddyUserActivity.restore(activity, store: store)
         }
         .sheet(isPresented: $showWhatsNew) {
             WhatsNewView { lastSeenRelease = WhatsNew.currentReleaseIdentifier }
