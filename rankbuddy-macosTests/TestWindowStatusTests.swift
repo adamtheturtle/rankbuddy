@@ -42,6 +42,11 @@ struct TestWindowStatusTests {
         #expect(status == .closed)
     }
 
+    @Test func `the exact end instant is closed`() throws {
+        let status = try test(start: start, end: end).windowStatus(now: date(end))
+        #expect(status == .closed)
+    }
+
     @Test func `a one-sided window we are inside is open`() throws {
         // Only a start, already begun: open (ongoing).
         #expect(try test(start: start).windowStatus(now: date("2026-05-15T00:00:00Z")) == .open)
