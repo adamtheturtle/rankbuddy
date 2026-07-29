@@ -30,6 +30,23 @@ struct AccountActivityView: View {
             if let account = store.currentAccount {
                 stateView(account: account)
                     .task(id: account.id) { await reload(account: account) }
+                    .toolbar {
+                        ToolbarItem {
+                            Button {
+                                Task { await reload(account: account) }
+                            } label: {
+                                Label("Refresh", systemImage: "arrow.clockwise")
+                            }
+                            .help("Refresh Account Activity")
+                            .disabled(phase == .loading)
+                        }
+                    }
+                    .focusedSceneValue(
+                        \.accountActivityRefresh,
+                        AccountActivityRefreshAction(isEnabled: phase != .loading) {
+                            Task { await reload(account: account) }
+                        }
+                    )
             } else {
                 ContentUnavailableView(
                     "No Account",
@@ -128,6 +145,38 @@ struct AccountActivityView: View {
             }
         }
         return merged
+    }
+}
+
+/// The activity window's scene-local refresh command. A focused value avoids routing Command-R
+/// through whichever list happened to register in the separate main window.
+struct AccountActivityRefreshAction {
+    let isEnabled: Bool
+    let perform: @MainActor () -> Void
+}
+
+private struct AccountActivityRefreshKey: FocusedValueKey {
+    typealias Value = AccountActivityRefreshAction
+}
+
+extension FocusedValues {
+    var accountActivityRefresh: AccountActivityRefreshAction? {
+        get { self[AccountActivityRefreshKey.self] }
+        set { self[AccountActivityRefreshKey.self] = newValue }
+    }
+}
+
+struct AccountActivityCommands: Commands {
+    @FocusedValue(\.accountActivityRefresh) private var refresh
+
+    var body: some Commands {
+        CommandMenu("Go") {
+            Button("Refresh Account Activity") {
+                refresh?.perform()
+            }
+            .keyboardShortcut("r", modifiers: .command)
+            .disabled(refresh?.isEnabled != true)
+        }
     }
 }
 
