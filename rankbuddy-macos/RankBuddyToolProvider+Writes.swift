@@ -317,14 +317,21 @@ extension RankBuddyToolProvider {
         // POST /users requires email, firstname, role, and a team (the server rejects the
         // request with HTTP 400 otherwise), so fail fast with a clear message instead of
         // relaying the 400. The last name is genuinely optional.
-        guard let firstName = stringArgument(arguments, "first_name") else { return missingArgument("first_name") }
+        guard let rawFirstName = stringArgument(arguments, "first_name") else {
+            return missingArgument("first_name")
+        }
         guard let rawRole = stringArgument(arguments, "role") else { return missingArgument("role") }
 
+        let firstName = rawFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
         let role = rawRole.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !firstName.isEmpty else { return errorResult("`first_name` must not be empty.") }
         guard ["recruiter", "developer", "interviewer"].contains(role) else {
             return errorResult("`role` must be recruiter, developer, or interviewer.")
         }
-        guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
+        guard let rawTeamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
+
+        let teamID = rawTeamID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teamID.isEmpty else { return errorResult("`team_id` must not be empty.") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -884,13 +891,16 @@ extension RankBuddyToolProvider {
             write("create_user", "Create an organisation user.",
                   properties: [
                       "email": string("The user's email.", minLength: 1, format: "email"),
-                      "first_name": string("The user's first name."),
+                      "first_name": string("The user's first name.", minLength: 1),
                       "last_name": string("Last name (optional)."),
                       "role": string(
                           "Role: recruiter, developer, or interviewer.",
                           allowedValues: ["recruiter", "developer", "interviewer"]
                       ),
-                      "team_id": string("Id of the team the user will belong to (see list_teams)."),
+                      "team_id": string(
+                          "Id of the team the user will belong to (see list_teams).",
+                          minLength: 1
+                      ),
                       "account": account
                   ],
                   required: ["email", "first_name", "role", "team_id"]),

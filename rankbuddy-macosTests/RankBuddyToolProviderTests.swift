@@ -10,7 +10,7 @@ import MCPKit
 @testable import rankbuddy_macos
 import Testing
 
-// swiftlint:disable type_body_length
+// swiftlint:disable file_length type_body_length
 /// Coverage for the RankBuddy MCP tool catalogue (#9). Uses a seeded **demo** account so the
 /// tools dispatch through the in-process mock — no live credentials, deterministic results.
 @MainActor
@@ -303,6 +303,32 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("role"))
     }
 
+    @Test func `create_user rejects blank first names and team IDs`() async {
+        let blankFirstName = await writeProvider().callTool(
+            "create_user",
+            arguments: [
+                "email": .string("rhea@example.com"),
+                "first_name": .string(" "),
+                "role": .string("recruiter"),
+                "team_id": .string("team-1")
+            ]
+        )
+        let blankTeam = await writeProvider().callTool(
+            "create_user",
+            arguments: [
+                "email": .string("rhea@example.com"),
+                "first_name": .string("Rhea"),
+                "role": .string("recruiter"),
+                "team_id": .string("\n")
+            ]
+        )
+
+        #expect(blankFirstName.isError == true)
+        #expect(text(blankFirstName).contains("first_name"))
+        #expect(blankTeam.isError == true)
+        #expect(text(blankTeam).contains("team_id"))
+    }
+
     @Test func `add_team_member rejects an unsupported role`() async {
         let result = await writeProvider().callTool(
             "add_team_member",
@@ -397,4 +423,4 @@ struct RankBuddyToolProviderTests {
     }
 }
 
-// swiftlint:enable type_body_length
+// swiftlint:enable file_length type_body_length
