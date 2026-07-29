@@ -39,16 +39,16 @@ struct PrintReportButton<Report: View>: View {
 
 /// One label/value line in a report.
 private struct ReportField: Identifiable {
+    let id: Int
     let label: String
     let value: String
-    var id: String {
-        label
-    }
 }
 
 /// Builds report fields from `(label, value?)` pairs, dropping any with no value.
 private func reportFields(_ pairs: [(String, String?)]) -> [ReportField] {
-    pairs.compactMap { label, value in value.map { ReportField(label: label, value: $0) } }
+    pairs.enumerated().compactMap { index, pair in
+        pair.1.map { ReportField(id: index, label: pair.0, value: $0) }
+    }
 }
 
 /// A column of label/value lines.
