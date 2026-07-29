@@ -64,6 +64,17 @@ struct ListQueryFacetTests {
         #expect(ListQuery.facetOptions(langFacet, in: rows) == ["Go", "Python", "Swift"])
     }
 
+    @Test func `facet options collapse case variants and retain the first display spelling`() {
+        let variants = [
+            Row(state: "Active", langs: []),
+            Row(state: "active", langs: []),
+            Row(state: " ACTIVE ", langs: []),
+            Row(state: "Closed", langs: [])
+        ]
+
+        #expect(ListQuery.facetOptions(stateFacet, in: variants) == ["Active", "Closed"])
+    }
+
     @Test func `a selection round-trips through persistence and empty sets are dropped`() throws {
         let defaults = try #require(UserDefaults(suiteName: "facet-tests-\(#function)"))
         defer { defaults.removePersistentDomain(forName: "facet-tests-\(#function)") }

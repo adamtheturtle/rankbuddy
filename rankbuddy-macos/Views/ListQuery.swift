@@ -54,11 +54,24 @@ enum ListQuery {
         var seen = Set<String>()
         var ordered: [String] = []
         for item in items {
-            for value in facet.values(item) where !value.isEmpty && seen.insert(value).inserted {
-                ordered.append(value)
+            for value in facet.values(item) {
+                let displayValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                let normalized = normalizedFacetValue(displayValue)
+                if !displayValue.isEmpty, seen.insert(normalized).inserted {
+                    ordered.append(displayValue)
+                }
             }
         }
         return ordered.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    /// Comparison key shared by facet option identity and filtering. Case folding matches the
+    /// localized, case-insensitive semantics used by list text search while retaining one backend
+    /// spelling for display.
+    static func normalizedFacetValue(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: .caseInsensitive, locale: .current)
     }
 
     /// The `UserDefaults` key the chosen date filter persists under (#19), or `nil` when the
