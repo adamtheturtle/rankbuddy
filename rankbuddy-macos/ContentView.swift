@@ -14,8 +14,8 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     /// The selected section, persisted across launches (#19).
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
-    /// The last app version whose "What's New" was shown (#47).
-    @AppStorage(WhatsNew.lastSeenKey) private var lastSeenVersion = ""
+    /// The last app version/build whose "What's New" was shown (#47).
+    @AppStorage(WhatsNew.lastSeenKey) private var lastSeenRelease = ""
     @State private var showWhatsNew = false
     @Environment(PaletteModel.self) private var palette
     @Environment(OpenLinkModel.self) private var openLink
@@ -93,7 +93,9 @@ struct ContentView: View {
         .onAppear {
             favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
             showWhatsNew = WhatsNew.shouldShow(
-                currentVersion: WhatsNew.currentVersion, lastSeenVersion: lastSeenVersion
+                currentVersion: WhatsNew.currentVersion,
+                currentBuild: WhatsNew.currentBuild,
+                lastSeenRelease: lastSeenRelease
             )
         }
         // Continue a Handoff / Spotlight / Siri activity by routing to the item via the same
@@ -102,7 +104,7 @@ struct ContentView: View {
             RankBuddyUserActivity.restore(activity)
         }
         .sheet(isPresented: $showWhatsNew) {
-            WhatsNewView { lastSeenVersion = WhatsNew.currentVersion }
+            WhatsNewView { lastSeenRelease = WhatsNew.currentReleaseIdentifier }
         }
         .sheet(isPresented: $openLink.isPresented) {
             OpenLinkSheet().environment(store)

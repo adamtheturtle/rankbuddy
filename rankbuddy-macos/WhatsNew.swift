@@ -49,10 +49,31 @@ enum WhatsNew {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
 
-    /// Whether to present the sheet: there's something to show and this version's notes haven't
-    /// been seen yet. An empty `lastSeenVersion` (fresh install / first run) counts as unseen.
-    static func shouldShow(currentVersion: String, lastSeenVersion: String) -> Bool {
-        !highlights.isEmpty && currentVersion != lastSeenVersion
+    /// The current app build number (`CFBundleVersion`), which may advance while the marketing
+    /// version stays fixed.
+    static var currentBuild: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+
+    /// A release-note revision identity. Build is included because corrected notes can ship in a
+    /// later build of the same marketing version.
+    static func releaseIdentifier(version: String, build: String) -> String {
+        "\(version)|\(build)"
+    }
+
+    static var currentReleaseIdentifier: String {
+        releaseIdentifier(version: currentVersion, build: currentBuild)
+    }
+
+    /// Whether to present the sheet: there's something to show and this version/build's notes
+    /// haven't been seen yet. An empty value (fresh install / first run) counts as unseen.
+    static func shouldShow(
+        currentVersion: String,
+        currentBuild: String,
+        lastSeenRelease: String
+    ) -> Bool {
+        !highlights.isEmpty
+            && releaseIdentifier(version: currentVersion, build: currentBuild) != lastSeenRelease
     }
 }
 

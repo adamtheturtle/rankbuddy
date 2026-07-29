@@ -10,12 +10,16 @@ import Testing
 @MainActor
 struct WhatsNewTests {
     @Test func `it shows for a never-seen or older version`() {
-        #expect(WhatsNew.shouldShow(currentVersion: "1.1", lastSeenVersion: ""))
-        #expect(WhatsNew.shouldShow(currentVersion: "1.1", lastSeenVersion: "1.0"))
+        #expect(WhatsNew.shouldShow(currentVersion: "1.1", currentBuild: "1", lastSeenRelease: ""))
+        #expect(WhatsNew.shouldShow(currentVersion: "1.1", currentBuild: "1", lastSeenRelease: "1.0|9"))
     }
 
-    @Test func `it does not show again once this version was seen`() {
-        #expect(!WhatsNew.shouldShow(currentVersion: "1.1", lastSeenVersion: "1.1"))
+    @Test func `it does not show again once this version and build were seen`() {
+        #expect(!WhatsNew.shouldShow(currentVersion: "1.1", currentBuild: "2", lastSeenRelease: "1.1|2"))
+    }
+
+    @Test func `a new build can show corrected notes within the same marketing version`() {
+        #expect(WhatsNew.shouldShow(currentVersion: "1.1", currentBuild: "3", lastSeenRelease: "1.1|2"))
     }
 
     @Test func `there is at least one highlight to show`() {
