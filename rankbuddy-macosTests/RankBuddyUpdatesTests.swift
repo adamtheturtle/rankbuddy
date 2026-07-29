@@ -18,6 +18,7 @@ struct RankBuddyUpdatesTests {
         #expect(!RankBuddyUpdates.feedConfigured(nil))
         #expect(!RankBuddyUpdates.feedConfigured(""))
         #expect(!RankBuddyUpdates.feedConfigured("   "))
+        #expect(!RankBuddyUpdates.feedConfigured("\n\r\n"))
         #expect(!RankBuddyUpdates.feedConfigured(42))
     }
 }

@@ -27,7 +27,7 @@ enum RankBuddyUpdates {
     static func feedConfigured(_ infoValue: Any?) -> Bool {
         guard let string = infoValue as? String else { return false }
 
-        return !string.trimmingCharacters(in: .whitespaces).isEmpty
+        return !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 
