@@ -288,6 +288,22 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("role"))
     }
 
+    @Test func `remove_team_member rejects blank target IDs`() async {
+        let blankTeam = await writeProvider().callTool(
+            "remove_team_member",
+            arguments: ["team_id": .string(" "), "user_id": .string("user-1")]
+        )
+        let blankUser = await writeProvider().callTool(
+            "remove_team_member",
+            arguments: ["team_id": .string("team-1"), "user_id": .string("\n")]
+        )
+
+        #expect(blankTeam.isError == true)
+        #expect(text(blankTeam).contains("team_id"))
+        #expect(blankUser.isError == true)
+        #expect(text(blankUser).contains("user_id"))
+    }
+
     @Test func `invite_candidate accepts richer invite options`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

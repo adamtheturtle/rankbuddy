@@ -611,8 +611,13 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func removeTeamMemberTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
-        guard let userID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
+        guard let rawTeamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
+        guard let rawUserID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
+
+        let teamID = rawTeamID.trimmingCharacters(in: .whitespacesAndNewlines)
+        let userID = rawUserID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teamID.isEmpty else { return errorResult("`team_id` must not be empty.") }
+        guard !userID.isEmpty else { return errorResult("`user_id` must not be empty.") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -976,8 +981,11 @@ extension RankBuddyToolProvider {
                   ],
                   required: ["team_id", "user_id"]),
             write("remove_team_member", "Remove a member from a team.",
-                  properties: ["team_id": string("The team's id."), "user_id": string("The member's user id."),
-                               "account": account],
+                  properties: [
+                      "team_id": string("The team's id.", minLength: 1),
+                      "user_id": string("The member's user id.", minLength: 1),
+                      "account": account
+                  ],
                   required: ["team_id", "user_id"], destructive: true),
             write("create_pad", "Create an instant collaborative Pad interview.",
                   properties: ["title": string("The pad's title (optional)."), "account": account], required: []),
