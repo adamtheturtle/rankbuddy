@@ -57,7 +57,7 @@ struct TeamsScreen: View {
                 },
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { TeamRow(team: $0) },
-                detail: { TeamDetailView(team: $0, account: account) }
+                detail: { TeamDetailView(team: $0, account: account) { reloadToken += 1 } }
             )
             .sheet(isPresented: $createPresented) {
                 CreateTeamSheet(account: account) { reloadToken += 1 }
@@ -116,7 +116,8 @@ struct TeamRow: View {
     }
 }
 
-/// The members of a team, pushed from `TeamDetailView`. Read-only list + detail (#56), with
+/// The members of a team, opened in its own window from `TeamDetailView`. Read-only list +
+/// detail (#56), with
 /// "Add Member" and per-row "Remove from Team" write actions (#59).
 struct TeamMembersList: View {
     let teamID: String
@@ -158,7 +159,7 @@ struct TeamMembersList: View {
             },
             rowDate: { DisplayFormat.parseDate($0.lastActivityTime) },
             row: { PersonRow(user: $0) },
-            detail: { PersonDetailView(user: $0) }
+            detail: { PersonDetailView(user: $0, account: account) { reloadToken += 1 } }
         )
         .sheet(isPresented: $addPresented) {
             AddTeamMemberSheet(teamID: teamID, account: account) { reloadToken += 1 }
@@ -220,39 +221,137 @@ struct TeamMembersList: View {
     }
 }
 
-/// Read-only detail for a single team.
+/// Detail for a single team. The title renames in place (#95's pattern) and the locations
+/// and departments save per field via `updateTeam` (#147); the rest stays read-only.
 struct TeamDetailView: View {
     let team: Team
     let account: Account
+    var onChanged: () -> Void = {}
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var deletePresented = false
+    @State private var deleteError: String?
+    @State private var current: Team?
+    @State private var editError: String?
+
+    /// The freshest copy of the team: server echoes from per-field saves overlay the
+    /// (possibly stale) row the list handed us.
+    private var displayed: Team {
+        current ?? team
+    }
 
     var body: some View {
         Form {
-            InspectorHeader(title: team.name, badges: team.inspectorBadges)
+            InspectorHeader(
+                title: displayed.name,
+                badges: displayed.inspectorBadges,
+                onRename: { newName in await save(TeamUpdateOptions(name: newName)) }
+            )
 
             Section("Properties") {
-                OptionalRow("Recruiters", team.recruiterCount.map { "\($0)" })
-                OptionalRow("Developers", team.developerCount.map { "\($0)" })
-                OptionalRow("Interviewers", team.interviewerCount.map { "\($0)" })
-                OptionalRow("Created", DisplayFormat.date(team.createdAt))
-                OptionalRow("Locations", DisplayFormat.list(team.locations))
-            }
-
-            Section("Participants") {
-                NavigationLink {
-                    TeamMembersList(teamID: team.id, account: account)
-                } label: {
-                    Label("Members", systemImage: "person.2")
+                OptionalRow("Recruiters", displayed.recruiterCount.map { "\($0)" })
+                OptionalRow("Developers", displayed.developerCount.map { "\($0)" })
+                OptionalRow("Interviewers", displayed.interviewerCount.map { "\($0)" })
+                OptionalRow("Created", DisplayFormat.date(displayed.createdAt))
+                EditableTextRow(
+                    label: "Locations",
+                    value: displayed.locations?.joined(separator: ", ") ?? "",
+                    prompt: "Comma-separated"
+                ) { newValue in
+                    await save(TeamUpdateOptions(locations: Self.splitList(newValue)))
                 }
             }
 
-            if let departments = team.departments, !departments.isEmpty {
-                Section("Departments") {
-                    TagList(tags: departments)
+            Section("Participants") {
+                WindowLinkRow(
+                    title: "Members",
+                    systemImage: "person.2",
+                    value: .teamMembers(teamID: team.id, teamName: displayed.name, accountID: account.id)
+                )
+            }
+
+            Section("Departments") {
+                EditableTextRow(
+                    label: "Departments",
+                    value: displayed.departments?.joined(separator: ", ") ?? "",
+                    prompt: "Comma-separated"
+                ) { newValue in
+                    await save(TeamUpdateOptions(departments: Self.splitList(newValue)))
                 }
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(team.name)
+        .navigationTitle(displayed.name)
+        .toolbar(id: "teamDetail") {
+            ToolbarItem(id: "delete") {
+                Button(role: .destructive) {
+                    deletePresented = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                .help("Delete this team")
+            }
+            .defaultCustomization(.hidden)
+        }
+        .confirmationDialog("Delete “\(team.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
+            Button("Delete Team", role: .destructive) {
+                Task { await deleteTeam() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This deletes the team on HackerRank. This can’t be undone.")
+        }
+        .alert("Couldn’t delete team", isPresented: deleteErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteError ?? "")
+        }
+        .alert("Couldn’t update team", isPresented: editErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(editError ?? "")
+        }
+    }
+
+    private var deleteErrorPresented: Binding<Bool> {
+        Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
+    }
+
+    private var editErrorPresented: Binding<Bool> {
+        Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
+    }
+
+    /// "a, b, c" → ["a", "b", "c"]; nil when the field is cleared entirely.
+    private static func splitList(_ text: String) -> [String]? {
+        let parts = text.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts
+    }
+
+    /// Applies one field's update, then re-reads the team so the detail reflects the
+    /// server's view (the write echo can be sparser than the full read).
+    private func save(_ options: TeamUpdateOptions) async -> Bool {
+        let client = HackerRankClient(account: account)
+        do {
+            let updated = try await client.updateTeam(id: team.id, options: options)
+            current = await (try? client.team(id: team.id)) ?? updated
+            onChanged()
+            return true
+        } catch {
+            editError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            return false
+        }
+    }
+
+    private func deleteTeam() async {
+        do {
+            try await HackerRankClient(account: account).deleteTeam(id: team.id)
+            onChanged()
+            dismiss()
+        } catch {
+            deleteError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 }
 

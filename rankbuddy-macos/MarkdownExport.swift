@@ -12,28 +12,46 @@ import UniformTypeIdentifiers
 /// Mirrors PadBuddy's "Export as Markdown". The document builders are pure and unit-testable;
 /// `save` writes through the system save panel (powerbox — no file entitlement).
 enum MarkdownExport {
+    enum Limits {
+        nonisolated static let inlineCharacters = 500
+        nonisolated static let proseCharacters = 100_000
+    }
+
     /// A `## Heading` over `- **Label:** value` lines; empty (dropped) when no field has a value.
     static func section(_ title: String, _ fields: [(String, String?)]) -> String {
-        let lines = fields.compactMap { label, value in value.map { "- **\(label):** \($0)" } }
-        return lines.isEmpty ? "" : "## \(title)\n" + lines.joined(separator: "\n")
+        let lines = fields.compactMap { label, value in
+            value.map { "- **\(inlineText(label)):** \(inlineText($0))" }
+        }
+        return lines.isEmpty ? "" : "## \(inlineText(title))\n" + lines.joined(separator: "\n")
     }
 
     /// A `## Heading` over a block of free text; empty when the text is missing.
     static func textSection(_ title: String, _ text: String?) -> String {
         guard let text, !text.isEmpty else { return "" }
 
-        return "## \(title)\n\(text)"
+        let bounded = boundedText(text, maximumCharacters: Limits.proseCharacters)
+        let suffix = bounded.omitted ? "\n\n_Content truncated for export._" : ""
+        return "## \(inlineText(title))\n\(bounded.text)\(suffix)"
     }
 
     /// Assembles a document: an `# Title`, an italic subtitle, then the non-empty sections.
     static func document(title: String, subtitle: String, sections: [String]) -> String {
-        (["# \(title)", "_\(subtitle)_"] + sections.filter { !$0.isEmpty }).joined(separator: "\n\n") + "\n"
+        (["# \(inlineText(title))", "_\(inlineText(subtitle))_"] + sections.filter { !$0.isEmpty })
+            .joined(separator: "\n\n") + "\n"
     }
 
     /// Strips HTML tags and decodes the few common entities, for embedding an HTML field (e.g.
-    /// a test's instructions) as plain Markdown text.
+    /// a test's instructions) as plain Markdown text. `<style>`/`<script>` elements are dropped
+    /// with their contents — HackerRank prefixes problem statements with a large CSS block, and
+    /// sometimes sends *only* that block, which should read as empty rather than as a wall of CSS.
     nonisolated static func plainText(fromHTML html: String) -> String {
-        html
+        let bounded = boundedText(html, maximumCharacters: Limits.proseCharacters)
+        let text = bounded.text
+            .replacingOccurrences(
+                of: "(?is)<(style|script)\\b[^>]*>.*?</\\1>",
+                with: "",
+                options: .regularExpression
+            )
             .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
             .replacingOccurrences(of: "&amp;", with: "&")
             .replacingOccurrences(of: "&lt;", with: "<")
@@ -42,6 +60,21 @@ enum MarkdownExport {
             .replacingOccurrences(of: "&quot;", with: "\"")
             .replacingOccurrences(of: "&nbsp;", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        return bounded.omitted ? text + "\n\nContent truncated for export." : text
+    }
+
+    nonisolated static func boundedText(_ text: String, maximumCharacters: Int) -> (text: String, omitted: Bool) {
+        let prefix = text.prefix(maximumCharacters)
+        return (String(prefix), prefix.endIndex != text.endIndex)
+    }
+
+    nonisolated static func inlineText(_ text: String) -> String {
+        let bounded = boundedText(text, maximumCharacters: Limits.inlineCharacters)
+        let normalized = bounded.text
+            .replacingOccurrences(of: "\r\n", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+        return normalized + (bounded.omitted ? "..." : "")
     }
 
     // MARK: - Per-collection documents

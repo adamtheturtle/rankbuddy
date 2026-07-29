@@ -28,6 +28,32 @@ struct MarkdownExportTests {
         #expect(text == "Solve two sum & return.")
     }
 
+    @Test func `inline field values are single-line and bounded`() {
+        let oversized = String(repeating: "x", count: MarkdownExport.Limits.inlineCharacters + 1)
+        let markdown = MarkdownExport.section("Candidate\nForged", [("Name", "Ada\n- forged"), ("Bio", oversized)])
+
+        #expect(markdown.hasPrefix("## Candidate Forged\n"))
+        #expect(markdown.contains("- **Name:** Ada - forged"))
+        #expect(markdown.contains(String(repeating: "x", count: MarkdownExport.Limits.inlineCharacters) + "..."))
+    }
+
+    @Test func `oversized prose and HTML are truncated before export`() {
+        let prose = String(repeating: "p", count: MarkdownExport.Limits.proseCharacters + 1)
+        let markdown = MarkdownExport.textSection("Notes", prose)
+        let html = MarkdownExport.plainText(fromHTML: "<p>\(prose)</p>")
+
+        #expect(markdown.contains("_Content truncated for export._"))
+        #expect(!markdown.contains(prose))
+        #expect(html.contains("Content truncated for export."))
+        #expect(!html.contains(prose))
+    }
+
+    @Test func `suggested export filenames are path-safe`() {
+        #expect(FileExport.sanitizedSuggestedName("Team/Question: Report.md") == "Team-Question- Report.md")
+        #expect(FileExport.sanitizedSuggestedName("...") == "Export")
+        #expect(FileExport.sanitizedSuggestedName("  \n  ") == "Export")
+    }
+
     @Test func `the candidate document has a title and the candidate section`() throws {
         let json = #"""
         {"id":"c1","email":"ada@example.com","full_name":"Ada Lovelace","score":92.0,

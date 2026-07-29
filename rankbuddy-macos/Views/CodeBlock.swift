@@ -90,18 +90,80 @@ struct CodeBlock: View {
 /// replacement for `HTMLText` for the rich text fields.
 struct HighlightedHTMLText: View {
     let html: String
+    var showsPlaceholder = true
+    @State private var segmentedHTML: String?
+    @State private var segments: [HTMLCodeBlocks.Segment]?
+
+    private var displayedSegments: [HTMLCodeBlocks.Segment]? {
+        if segmentedHTML == html, let segments {
+            return segments
+        }
+        return HTMLCodeBlockSegmentCache.segments(for: html)
+    }
 
     var body: some View {
-        let segments = HTMLCodeBlocks.segments(html)
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
-                switch segment {
-                case let .prose(prose):
-                    HTMLFragmentText(html: prose)
-                case let .code(hint, code):
-                    CodeBlock(code: code, languageHint: hint)
+        Group {
+            if let displayedSegments {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(Array(displayedSegments.enumerated()), id: \.offset) { _, segment in
+                        switch segment {
+                        case let .prose(prose):
+                            HTMLFragmentText(html: prose, showsPlaceholder: false)
+                        case let .code(hint, code):
+                            CodeBlock(code: code, languageHint: hint)
+                        }
+                    }
                 }
+            } else if showsPlaceholder, !html.isEmpty {
+                Text("Loading…")
+                    .foregroundStyle(.secondary)
+            } else {
+                // A real (zero-size) view, not EmptyView, so `.task` below always fires.
+                Color.clear.frame(width: 0, height: 0)
             }
+        }
+        .task(id: html) { await prepareSegments() }
+    }
+
+    @MainActor
+    private func prepareSegments() async {
+        if let cached = HTMLCodeBlockSegmentCache.segments(for: html) {
+            segmentedHTML = html
+            segments = cached
+            return
+        }
+
+        segmentedHTML = nil
+        segments = nil
+        await Task.yield()
+        guard !Task.isCancelled else { return }
+
+        let prepared = HTMLCodeBlocks.segments(html)
+        guard !Task.isCancelled else { return }
+
+        HTMLCodeBlockSegmentCache.store(prepared, for: html)
+        segmentedHTML = html
+        segments = prepared
+    }
+}
+
+@MainActor
+private enum HTMLCodeBlockSegmentCache {
+    private static let capacity = 80
+    private static var values: [String: [HTMLCodeBlocks.Segment]] = [:]
+    private static var keys: [String] = []
+
+    static func segments(for html: String) -> [HTMLCodeBlocks.Segment]? {
+        values[html]
+    }
+
+    static func store(_ segments: [HTMLCodeBlocks.Segment], for html: String) {
+        guard values[html] == nil else { return }
+
+        values[html] = segments
+        keys.append(html)
+        if keys.count > capacity {
+            values[keys.removeFirst()] = nil
         }
     }
 }

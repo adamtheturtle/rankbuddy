@@ -21,6 +21,8 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
     case interview(Interview)
     case user(User)
     case team(Team, accountID: UUID?)
+    case teamMembers(teamID: String, teamName: String, accountID: UUID?)
+    case testCandidates(testID: String, testName: String, accountID: UUID?)
 
     /// The standalone window's title.
     var windowTitle: String {
@@ -31,6 +33,16 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
         case let .interview(interview): interview.title ?? "Interview \(interview.id)"
         case let .user(user): user.displayName
         case let .team(team, _): team.name
+        case let .teamMembers(_, teamName, _): "\(teamName) Members"
+        case let .testCandidates(_, testName, _): "\(testName) Candidates"
+        }
+    }
+
+    /// Whether the value shows a full `LoadableList` rather than a detail form.
+    var isStandaloneList: Bool {
+        switch self {
+        case .teamMembers, .testCandidates: true
+        default: false
         }
     }
 }
@@ -41,9 +53,18 @@ struct DetailWindowContent: View {
     @Environment(AccountStore.self) private var store
 
     var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle(value?.windowTitle ?? "RankBuddy")
+        Group {
+            // A standalone list is a full `LoadableList`, which brings its own navigation
+            // containers (split panes, search, toolbar) — wrapping it in another stack nests
+            // them, which is what wedged the in-pane pushes these windows replaced.
+            if value?.isStandaloneList == true {
+                content
+            } else {
+                NavigationStack {
+                    content
+                        .navigationTitle(value?.windowTitle ?? "RankBuddy")
+                }
+            }
         }
         .frame(minWidth: 480, minHeight: 420)
     }
@@ -67,11 +88,25 @@ struct DetailWindowContent: View {
             InterviewDetailView(interview: interview)
 
         case let .user(user):
-            PersonDetailView(user: user)
+            PersonDetailView(user: user, account: resolvedAccount(nil))
 
         case let .team(team, accountID):
             if let account = resolvedAccount(accountID) {
                 TeamDetailView(team: team, account: account)
+            } else {
+                NoAccountView()
+            }
+
+        case let .teamMembers(teamID, _, accountID):
+            if let account = resolvedAccount(accountID) {
+                TeamMembersList(teamID: teamID, account: account)
+            } else {
+                NoAccountView()
+            }
+
+        case let .testCandidates(testID, _, accountID):
+            if let account = resolvedAccount(accountID) {
+                CandidatesList(testID: testID, account: account)
             } else {
                 NoAccountView()
             }

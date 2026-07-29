@@ -7,8 +7,7 @@ import HackerRankKit
 import SwiftUI
 
 /// A sheet that creates an instant collaborative Pad interview (`POST /interviews`,
-/// #60) — a write flow. States plainly when it touches a real organisation, and refreshes
-/// the list on success.
+/// #60) — a write flow. Refreshes the list on success.
 struct NewPadSheet: View {
     let account: Account
     var onCreated: () -> Void
@@ -24,16 +23,11 @@ struct NewPadSheet: View {
                 Section {
                     TextField("Title (optional)", text: $title)
                 } footer: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("This creates a real, ready-to-share Pad in your HackerRank organisation.")
-                            .foregroundStyle(.orange)
-
-                        if !account.isMock {
-                            Text("Opens in your browser, which may be signed in to a different HackerRank account.")
-                                .foregroundStyle(.secondary)
-                        }
+                    if !account.isMock {
+                        Text("Opens in your browser, which may be signed in to a different HackerRank account.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {
@@ -80,8 +74,7 @@ struct NewPadSheet: View {
     }
 }
 
-/// A sheet that schedules an interview (`POST /interviews`, #60). States plainly when it
-/// touches a real organisation, and refreshes the list on success.
+/// A sheet that schedules an interview (`POST /interviews`, #60). Refreshes the list on success.
 struct ScheduleInterviewSheet: View {
     let account: Account
     var onScheduled: () -> Void
@@ -117,10 +110,6 @@ struct ScheduleInterviewSheet: View {
                     DatePicker("Starts", selection: $date)
                     TextField("Notes (optional)", text: $notes, axis: .vertical)
                         .lineLimit(2 ... 4)
-                } footer: {
-                    Text("This schedules a real interview in your HackerRank organisation.")
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {

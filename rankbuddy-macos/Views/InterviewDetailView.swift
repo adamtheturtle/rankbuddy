@@ -7,38 +7,68 @@ import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 
-/// Read-only detail for a single interview. Beyond the list row's fields, it fetches the
-/// richer single-interview read and the conversation transcript on selection (#103); both load
+/// Detail for a single interview. Beyond the list row's fields, it fetches the richer
+/// single-interview read and the conversation transcript on selection (#103); both load
 /// lazily and degrade silently (e.g. in merged view, where the owning account is ambiguous).
+/// Outside the merged view the title renames in place, the notes edit inline, and the
+/// scheduled window is adjustable — each saving per field via `updateInterview` (#147).
 struct InterviewDetailView: View {
     let interview: Interview
+    var onChanged: () -> Void = {}
     @Environment(AccountStore.self) private var store
+    @Environment(\.dismiss) private var dismiss
     @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: InterviewDetail?
     @State private var transcript: InterviewTranscript?
+    @State private var deletePresented = false
+    @State private var deleteError: String?
+    @State private var editError: String?
+    /// Local overlays for saved edits: the write echo is sparse, so successful saves land
+    /// here rather than waiting for the (possibly cached) list row to refresh.
+    @State private var editedTitle: String?
+    @State private var editedNotes: String?
 
     private var displayTitle: String {
-        interview.title ?? "Interview \(interview.id)"
+        editedTitle ?? interview.title ?? "Interview \(interview.id)"
+    }
+
+    private var displayNotes: String {
+        editedNotes ?? interview.notes ?? ""
+    }
+
+    /// Editing needs a single owning account, so the merged view stays read-only.
+    private var canEdit: Bool {
+        !store.isMergedView && store.currentAccount != nil
+    }
+
+    /// The rename hook for the header; `nil` (a static title) when editing is unavailable.
+    private var renameAction: ((String) async -> Bool)? {
+        guard canEdit else { return nil }
+
+        return { newTitle in
+            guard await update(InterviewUpdateBody(title: newTitle)) else { return false }
+
+            editedTitle = newTitle
+            return true
+        }
     }
 
     var body: some View {
         Form {
-            InspectorHeader(title: displayTitle, badges: interview.inspectorBadges)
+            InspectorHeader(title: displayTitle, badges: interview.inspectorBadges, onRename: renameAction)
 
             Section("Properties") {
                 OptionalRow("Status", interview.status.capitalized)
-                OptionalRow("Scheduled start", DisplayFormat.date(detail?.scheduledFrom))
-                OptionalRow("Scheduled end", DisplayFormat.date(detail?.scheduledTo))
+                scheduledRow(label: "Scheduled start", raw: detail?.scheduledFrom) { newDate in
+                    await update(InterviewUpdateBody(from: Self.iso8601.string(from: newDate)))
+                }
+                scheduledRow(label: "Scheduled end", raw: detail?.scheduledTo) { newDate in
+                    await update(InterviewUpdateBody(endsAt: Self.iso8601.string(from: newDate)))
+                }
                 OptionalRow("Created", DisplayFormat.date(interview.createdAt))
                 OptionalRow("Updated", DisplayFormat.date(interview.updatedAt))
                 OptionalRow("Ended", DisplayFormat.date(interview.endedAt))
                 OptionalRow("Thumbs up", interview.thumbsUp.map(String.init))
-
-                if let url = URL(string: interview.url) {
-                    Link(destination: url) {
-                        Label("Open in browser", systemImage: "safari")
-                    }
-                }
 
                 if let report = interview.reportURL, let url = URL(string: report) {
                     Link(destination: url) {
@@ -73,9 +103,18 @@ struct InterviewDetailView: View {
                 }
             }
 
-            if let notes = interview.notes, !notes.isEmpty {
+            if canEdit {
                 Section("Notes") {
-                    Text(notes)
+                    InlineEditableText(text: displayNotes, placeholder: "Add notes") { newNotes in
+                        guard await update(InterviewUpdateBody(notes: newNotes)) else { return false }
+
+                        editedNotes = newNotes
+                        return true
+                    }
+                }
+            } else if !displayNotes.isEmpty {
+                Section("Notes") {
+                    Text(displayNotes)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -124,6 +163,75 @@ struct InterviewDetailView: View {
                 }
             }
             .defaultCustomization(.hidden)
+            ToolbarItem(id: "delete") {
+                Button(role: .destructive) {
+                    deletePresented = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                .help("Delete this interview")
+                .disabled(store.currentAccount == nil || store.isMergedView)
+            }
+            .defaultCustomization(.hidden)
+        }
+        .confirmationDialog("Delete “\(displayTitle)”?", isPresented: $deletePresented, titleVisibility: .visible) {
+            Button("Delete Interview", role: .destructive) {
+                Task { await deleteInterview() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This deletes the interview on HackerRank. This can’t be undone.")
+        }
+        .alert("Couldn’t delete interview", isPresented: deleteErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteError ?? "")
+        }
+        .alert("Couldn’t update interview", isPresented: editErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(editError ?? "")
+        }
+    }
+
+    private static let iso8601 = ISO8601DateFormatter()
+
+    private var deleteErrorPresented: Binding<Bool> {
+        Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
+    }
+
+    private var editErrorPresented: Binding<Bool> {
+        Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
+    }
+
+    /// The scheduled start/end row: a date picker when the field is present and editable,
+    /// the usual read-only row otherwise. Scheduling from scratch stays with the create flow.
+    @ViewBuilder
+    private func scheduledRow(
+        label: String,
+        raw: String?,
+        commit: @escaping (Date) async -> Bool
+    ) -> some View {
+        if canEdit, let date = DisplayFormat.parseDate(raw) {
+            EditableDateRow(label: label, value: date, commit: commit)
+        } else {
+            OptionalRow(label, DisplayFormat.date(raw))
+        }
+    }
+
+    /// Applies one field's update, then re-reads the detail so the scheduled window and any
+    /// other server-derived fields reflect the write.
+    private func update(_ body: InterviewUpdateBody) async -> Bool {
+        guard !store.isMergedView, let account = store.currentAccount else { return false }
+
+        do {
+            _ = try await HackerRankClient(account: account).updateInterview(id: interview.id, body: body)
+            detail = try? await HackerRankClient(account: account).interview(id: interview.id)
+            onChanged()
+            return true
+        } catch {
+            editError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            return false
         }
     }
 
@@ -149,6 +257,35 @@ struct InterviewDetailView: View {
         async let fetchedTranscript = try? client.interviewTranscript(id: interview.id)
         detail = await fetchedDetail
         transcript = await fetchedTranscript
+    }
+
+    private func deleteInterview() async {
+        guard !store.isMergedView, let account = store.currentAccount else { return }
+
+        do {
+            try await HackerRankClient(account: account).deleteInterview(id: interview.id)
+            onChanged()
+            dismiss()
+        } catch {
+            deleteError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+}
+
+/// The `PUT /interviews/{id}` body. Mirrors HackerRankKit's typed request (which lands in a
+/// future Kit release); Kit 0.4.0's `updateInterview` accepts any `Encodable` body, and the
+/// synthesized encoding omits `nil` fields so each save sends only the field it changes.
+nonisolated struct InterviewUpdateBody: Encodable {
+    var title: String?
+    var from: String?
+    var endsAt: String?
+    var notes: String?
+
+    enum CodingKeys: String, CodingKey {
+        case title
+        case from
+        case endsAt = "to"
+        case notes
     }
 }
 

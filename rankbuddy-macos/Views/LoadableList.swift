@@ -10,6 +10,9 @@ import FastList
 import HackerRankKit
 import SwiftUI
 
+// The generic list state machine is kept together to make its transitions auditable.
+// swiftlint:disable file_length
+
 /// What a sort field measures, naming the two directions in the Sort menu's Order section
 /// the way PadBuddy does ("Newest First" for dates, "A to Z" for text, …).
 enum SortFieldKind {

@@ -91,12 +91,55 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         return Self(label: "Demo (bad token)", token: badKeyDemoToken, id: id)
     }
 
-    /// The effective base URL: the override if it parses, otherwise the default.
-    var baseURL: URL {
-        if let baseURLOverride, let url = URL(string: baseURLOverride) {
-            return url
+    /// The parsed base URL override: a non-empty HTTP(S) URL with a host.
+    var parsedBaseURLOverride: URL? {
+        let trimmed = baseURLOverride?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !trimmed.isEmpty,
+              let url = URL(string: trimmed),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              let host = url.host,
+              !host.isEmpty else {
+            return nil
         }
-        return Self.defaultBaseURL
+
+        return url
+    }
+
+    /// Whether a non-empty override is malformed. Such a value must not fall back silently:
+    /// validation would send this token to the wrong HackerRank host.
+    var hasMalformedBaseURLOverride: Bool {
+        let trimmed = baseURLOverride?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return !trimmed.isEmpty && parsedBaseURLOverride == nil
+    }
+
+    /// The effective base URL: the parsed override if present, otherwise the default.
+    var baseURL: URL {
+        parsedBaseURLOverride ?? Self.defaultBaseURL
+    }
+
+    /// A canonical server identity for duplicate detection and cache invalidation.
+    var serverIdentity: String {
+        Self.serverIdentity(of: baseURL)
+    }
+
+    static func serverIdentity(of url: URL) -> String {
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return url.absoluteString
+        }
+
+        components.scheme = components.scheme?.lowercased()
+        components.host = components.host?.lowercased()
+        if let port = components.port,
+           (components.scheme == "https" && port == 443) || (components.scheme == "http" && port == 80) {
+            components.port = nil
+        }
+        while components.path.hasSuffix("/") {
+            components.path.removeLast()
+        }
+        components.query = nil
+        components.fragment = nil
+        return components.string ?? url.absoluteString
     }
 
     init(
@@ -120,6 +163,6 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     /// A changed token or base URL points at potentially different data, so the store
     /// fires `onRekeyed` to invalidate caches keyed by this account.
     func pointsAtDifferentBackend(than other: Self) -> Bool {
-        token != other.token || baseURLOverride != other.baseURLOverride
+        token != other.token || serverIdentity != other.serverIdentity
     }
 }

@@ -13,6 +13,8 @@ struct QuestionsScreen: View {
     @Environment(FavoritesStore.self) private var favorites
     @Environment(\.openWindow) private var openWindow
     @Environment(\.undoManager) private var undoManager
+    @State private var reloadToken = 0
+    @State private var createPresented = false
 
     var body: some View {
         if store.isMergedView {
@@ -59,6 +61,9 @@ struct QuestionsScreen: View {
                         account: account.id
                     )
                 },
+                accessoryToolbar: { AnyView(createButton) },
+                primaryMenuAction: AppCommandContext.Action(title: "New Question…") { createPresented = true },
+                reloadToken: reloadToken,
                 csvExport: { CSVExport.questions($0) },
                 csvFilename: "questions",
                 favoriteRef: { question in
@@ -79,14 +84,26 @@ struct QuestionsScreen: View {
                 },
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { QuestionRow(question: $0) },
-                detail: { QuestionDetailView(question: $0) }
+                detail: { QuestionDetailView(question: $0) { reloadToken += 1 } }
             )
+            .sheet(isPresented: $createPresented) {
+                NewQuestionSheet(account: account) { reloadToken += 1 }
+            }
         } else {
             NavigationStack {
                 NoAccountView()
                     .navigationTitle("Questions")
             }
         }
+    }
+
+    private var createButton: some View {
+        Button {
+            createPresented = true
+        } label: {
+            Label("New Question…", systemImage: "plus.rectangle.on.rectangle")
+        }
+        .help("Create a question")
     }
 
     /// Loads one merged page of questions across every configured account (#17).
@@ -159,176 +176,5 @@ struct QuestionRow: View {
             Spacer(minLength: 12)
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-/// Read-only detail for a single question. Beyond the list row's fields, it fetches the richer
-/// single-question read on selection (#105) and merges the MCQ options, the (sensitive) correct
-/// answer — gated behind an explicit reveal — and the author's internal notes. The fetch is
-/// best-effort and skipped in the merged view, where the owning account is ambiguous.
-struct QuestionDetailView: View {
-    let question: Question
-    @Environment(AccountStore.self) private var store
-    @Environment(AppCommandContext.self) private var commandContext
-    @State private var detail: QuestionDetail?
-    @State private var answerRevealed = false
-    /// Drives the "New Pad from Question" toolbar button: true while the pad is being created,
-    /// and the error surfaced if the create fails.
-    @State private var isCreatingPad = false
-    @State private var createPadError: String?
-
-    var body: some View {
-        Form {
-            InspectorHeader(title: question.name, badges: question.inspectorBadges)
-
-            Section("Properties") {
-                OptionalRow("Type", question.type.capitalized)
-                OptionalRow("Unique ID", question.uniqueID)
-                OptionalRow("Status", question.status?.capitalized)
-                OptionalRow("Max score", question.maxScore.map { $0.formatted() })
-                OptionalRow("Recommended duration", question.recommendedDuration.map { "\($0) min" })
-                OptionalRow("Created", DisplayFormat.date(question.createdAt))
-                OptionalRow("Languages", DisplayFormat.languages(question.languages))
-                OptionalRow("Skills", DisplayFormat.list(question.skills))
-            }
-
-            if let tags = question.tags, !tags.isEmpty {
-                Section("Tags") {
-                    TagList(tags: tags)
-                }
-            }
-
-            if let detail, !detail.options.isEmpty {
-                Section("Options") {
-                    ForEach(Array(detail.options.enumerated()), id: \.offset) { index, option in
-                        Label(option, systemImage: isCorrect(option) ? "checkmark.circle.fill" : "circle")
-                            .foregroundStyle(isCorrect(option) ? Color.green : Color.primary)
-                            .symbolRenderingMode(.hierarchical)
-                            .accessibilityLabel(isCorrect(option) ? "\(option), correct answer" : option)
-                            .id(index)
-                    }
-                }
-            }
-
-            if let answer = detail?.answer, !answer.isEmpty {
-                Section("Answer") {
-                    if answerRevealed {
-                        Text(answer).textSelection(.enabled)
-                    } else {
-                        Button {
-                            answerRevealed = true
-                        } label: {
-                            Label("Reveal answer", systemImage: "eye")
-                        }
-                        .help("Show the correct answer")
-                    }
-                }
-            }
-
-            if let statement = question.problemStatement, !statement.isEmpty {
-                Section("Problem statement") {
-                    HighlightedHTMLText(html: statement)
-                }
-            }
-
-            if let notes = detail?.internalNotes, !notes.isEmpty {
-                Section("Internal notes") {
-                    HTMLText(html: notes)
-                }
-            }
-        }
-        .formStyle(.grouped)
-        .navigationTitle(question.name)
-        .task(id: question.id) { await loadDetail() }
-        .onAppear { registerDetailCommands() }
-        .onDisappear { commandContext.clearDetailActions() }
-        .advertisesItemActivity(collection: .questions, itemID: question.id, title: question.name)
-        // "New Pad from Question" leads the bar like PadBuddy; Share and Open follow; Print and
-        // Markdown export are off the bar by default but one Customize Toolbar away.
-        .toolbar(id: "questionDetail") {
-            ToolbarItem(id: "newPad") {
-                Button {
-                    Task { await createPad() }
-                } label: {
-                    Label("New Pad from Question", systemImage: "doc.badge.plus")
-                }
-                // The pinned API can't attach the question to the pad yet, so the created Pad is
-                // titled after the question for the interviewer to drive; honest about that here.
-                .help("Create a collaborative Pad interview for this question and open it")
-                // Needs a single owning account; the merged view can't say which, so it's disabled.
-                .disabled(store.currentAccount == nil || store.isMergedView || isCreatingPad)
-            }
-            DetailLinkToolbarContent(
-                url: store.currentAccount.flatMap {
-                    RankBuddyUserActivity.webURL(base: $0.baseURL, collection: .questions, itemID: question.id)
-                },
-                noun: "question"
-            )
-            ToolbarItem(id: "print") {
-                PrintReportButton(jobTitle: "Question: \(question.name)") {
-                    QuestionReport(question: question)
-                }
-            }
-            .defaultCustomization(.hidden)
-            ToolbarItem(id: "exportMarkdown") {
-                MarkdownExportButton(suggestedName: question.name) { MarkdownExport.question(question) }
-            }
-            .defaultCustomization(.hidden)
-        }
-        .alert("Couldn’t create Pad", isPresented: createPadErrorPresented) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(createPadError ?? "")
-        }
-    }
-
-    private var createPadErrorPresented: Binding<Bool> {
-        Binding(get: { createPadError != nil }, set: { if !$0 { createPadError = nil } })
-    }
-
-    /// Creates a collaborative Pad interview for this question and opens it, mirroring
-    /// PadBuddy's "New Pad from Question". The pinned `HackerRankKit` write model can't attach the
-    /// question to the pad, so the Pad is titled after the question rather than seeded with it;
-    /// true seeding awaits a package/API change. Best-effort — a failure surfaces an alert.
-    private func createPad() async {
-        guard let account = store.currentAccount else { return }
-
-        isCreatingPad = true
-        defer { isCreatingPad = false }
-        do {
-            let created = try await HackerRankClient(account: account).createPad(title: question.name)
-            // Demo accounts return a fixture echo; only open a real pad in the browser (#10).
-            if !account.isMock, let raw = created.url, let url = URL(string: raw) {
-                BrowserSettings.open(url)
-            }
-        } catch {
-            createPadError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
-    }
-
-    /// Whether an option matches the (revealed) correct answer, so it can be ticked in the list.
-    /// Only highlights once the answer has been revealed, keeping the answer hidden by default.
-    private func isCorrect(_ option: String) -> Bool {
-        answerRevealed && detail?.answer == option
-    }
-
-    private func registerDetailCommands() {
-        commandContext.print = AppCommandContext.Action(title: "Print Question…") {
-            printReport(QuestionReport(question: question), jobTitle: "Question: \(question.name)")
-        }
-        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Question as Markdown…") {
-            MarkdownExport.save(MarkdownExport.question(question), suggestedName: question.name)
-        }
-    }
-
-    /// Fetches the richer question detail on selection (#105). Best-effort — a failure leaves the
-    /// base list-row detail intact — and skipped in the merged view, where the owning account is
-    /// ambiguous, so the wrong account is never queried. Re-hides the answer for each question.
-    private func loadDetail() async {
-        detail = nil
-        answerRevealed = false
-        guard !store.isMergedView, let account = store.currentAccount else { return }
-
-        detail = try? await HackerRankClient(account: account).question(id: question.id)
     }
 }

@@ -84,6 +84,79 @@ struct MCPClientInstallTests {
         #expect(text.contains("[tools]\nenabled = true"))
     }
 
+    @Test func `codex install escapes command paths`() throws {
+        let url = try temporaryFile(named: "config.toml")
+
+        try MCPClientInstall.upsertCodexServer(
+            into: url,
+            client: .codex,
+            command: #"/tmp/we"ird/rankbuddy-macos"#,
+            shouldReplace: { _ in true }
+        )
+
+        let text = try String(contentsOf: url, encoding: .utf8)
+        #expect(text.contains(#"command = "/tmp/we\"ird/rankbuddy-macos""#))
+    }
+
+    @Test func `codex declaration recognizes quoted and dotted forms`() {
+        #expect(MCPClientInstall.codexServerDeclaration(in: "[mcp_servers.\"rankbuddy\"]") == .table)
+        #expect(MCPClientInstall.codexServerDeclaration(
+            in: #"mcp_servers.rankbuddy = { command = "old" }"#
+        ) == .other)
+        #expect(MCPClientInstall.codexServerDeclaration(
+            in: #"[mcp_servers]"# + "\n" + #"rankbuddy = { command = "old" }"#
+        ) == .other)
+        #expect(MCPClientInstall.codexServerDeclaration(in: "[[mcp_servers.rankbuddy]]") == .other)
+    }
+
+    @Test func `codex install refuses unsafe existing declaration forms`() throws {
+        let url = try temporaryFile(named: "config.toml")
+        try #"mcp_servers.rankbuddy = { command = "old" }"#.write(to: url, atomically: true, encoding: .utf8)
+
+        #expect(throws: MCPClientInstall.CodexConfigError.self) {
+            try MCPClientInstall.upsertCodexServer(
+                into: url,
+                client: .codex,
+                command: "new",
+                shouldReplace: { _ in true }
+            )
+        }
+    }
+
+    @Test func `written configs verify the expected server shape`() throws {
+        let json = try temporaryFile(named: "mcp.json")
+        let toml = try temporaryFile(named: "config.toml")
+        let command = "/Applications/RankBuddy.app/Contents/MacOS/rankbuddy-macos"
+
+        try #"{"mcpServers":{"rankbuddy":{"command":"\#(command)","args":["--mcp"]}}}"#.write(
+            to: json,
+            atomically: true,
+            encoding: .utf8
+        )
+        try MCPClientInstall.codexServerBlock(command: command).write(to: toml, atomically: true, encoding: .utf8)
+
+        try MCPClientInstall.verifyJSONConfig(at: json, command: command)
+        try MCPClientInstall.verifyCodexConfig(at: toml, command: command)
+    }
+
+    @Test func `parent grant creates and resolves exact missing client folder`() throws {
+        let parent = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mcp-config-parent-\(UUID().uuidString)", isDirectory: true)
+        let preferred = parent.appendingPathComponent(".codex", isDirectory: true)
+        try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: parent) }
+
+        let resolved = try MCPClientInstall.configurationFolder(
+            granted: parent,
+            preferred: preferred,
+            fallback: parent
+        )
+
+        #expect(resolved == preferred)
+        #expect(FileManager.default.fileExists(atPath: preferred.path))
+        #expect(!FileManager.default.fileExists(atPath: parent.appendingPathComponent("config.toml").path))
+    }
+
     private func temporaryFile(named name: String) throws -> URL {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

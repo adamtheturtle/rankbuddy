@@ -102,7 +102,7 @@ struct InterviewsScreen: View {
                 rowTransfer: interviewTransfer,
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { InterviewRow(interview: $0) },
-                detail: { InterviewDetailView(interview: $0) }
+                detail: { InterviewDetailView(interview: $0) { reloadToken += 1 } }
             )
             .sheet(isPresented: $padPresented) {
                 NewPadSheet(account: account) { reloadToken += 1 }

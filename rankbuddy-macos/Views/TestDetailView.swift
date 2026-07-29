@@ -7,13 +7,14 @@ import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 
-/// Read-only detail for a single test, plus opt-in edit/delete affordances (#57). The
-/// destructive delete is confirmed (naming the test) and pops back to the list on success.
-///
-/// Beyond the list row's fields, it fetches the richer single-test read on selection (#105) and
-/// merges the candidate login links, the (sensitive) master password — gated behind an explicit
-/// reveal — and the MCQ scoring. The fetch is best-effort: a failure leaves the list-row detail
-/// intact.
+// Read-only detail for a single test, plus opt-in edit/delete affordances (#57). The
+// destructive delete is confirmed (naming the test) and pops back to the list on success.
+//
+// Beyond the list row's fields, it fetches the richer single-test read on selection (#105) and
+// merges the candidate login links, the (sensitive) master password — gated behind an explicit
+// reveal — and the MCQ scoring. The fetch is best-effort: a failure leaves the list-row detail
+// intact.
+// swiftlint:disable:next type_body_length
 struct TestDetailView: View {
     let test: Test
     let account: Account
@@ -24,53 +25,60 @@ struct TestDetailView: View {
     @Environment(AppCommandContext.self) private var commandContext
     /// Bumped by the Edit toolbar button to open the inline title rename (#95).
     @State private var titleEditRequest = 0
+    @State private var archivePresented = false
+    @State private var archiveError: String?
     @State private var deletePresented = false
     @State private var deleteError: String?
     @State private var detail: TestDetail?
+    @State private var detailTest: Test?
     @State private var inviters: [TestInviter] = []
     @State private var passwordRevealed = false
+
+    private var displayedTest: Test {
+        detailTest ?? test
+    }
 
     var body: some View {
         Form {
             InspectorHeader(
-                title: test.name,
-                badges: test.inspectorBadges(now: Date()),
+                title: displayedTest.name,
+                badges: displayedTest.inspectorBadges(now: Date()),
                 onRename: { newName in await rename(to: newName) },
                 editRequest: titleEditRequest
             )
 
             Section("Properties") {
-                OptionalRow("State", test.state?.capitalized)
-                OptionalRow("Window", test.windowStatus(now: Date())?.label)
-                OptionalRow("Unique ID", test.uniqueID)
-                OptionalRow("Duration", test.duration.map { "\($0) min" })
-                OptionalRow("Cutoff score", test.cutoffScore.map(String.init))
-                OptionalRow("Questions", test.questions.map { "\($0.count)" })
-                OptionalRow("Library", DisplayFormat.list(test.libraryFilterValues))
-                OptionalRow("Role", DisplayFormat.list(test.roleFilterValues))
-                OptionalRow("Skills", DisplayFormat.list(test.skillFilterValues))
-                OptionalRow("Type", DisplayFormat.list(test.typeFilterValues))
-                OptionalRow("Languages", DisplayFormat.languages(test.languages))
-                OptionalRow("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
-                OptionalRow("Shuffle questions", test.shuffleQuestions == true ? "Yes" : nil)
-                OptionalRow("Starred", test.starred == true ? "Yes" : nil)
-                OptionalRow("Locked", test.locked == true ? "Yes" : nil)
-                OptionalRow("Draft", test.draft == true ? "Yes" : nil)
+                OptionalRow("State", displayedTest.state?.capitalized)
+                OptionalRow("Window", displayedTest.windowStatus(now: Date())?.label)
+                OptionalRow("Unique ID", displayedTest.uniqueID)
+                OptionalRow("Duration", displayedTest.duration.map { "\($0) min" })
+                OptionalRow("Cutoff score", displayedTest.cutoffScore.map(String.init))
+                OptionalRow("Questions", displayedTest.questions.map { "\($0.count)" })
+                OptionalRow("Library", DisplayFormat.list(displayedTest.libraryFilterValues))
+                OptionalRow("Role", DisplayFormat.list(displayedTest.roleFilterValues))
+                OptionalRow("Skills", DisplayFormat.list(displayedTest.skillFilterValues))
+                OptionalRow("Type", DisplayFormat.list(displayedTest.typeFilterValues))
+                OptionalRow("Languages", DisplayFormat.languages(displayedTest.languages))
+                OptionalRow("Proctoring", displayedTest.enableProctoring == true ? "Enabled" : nil)
+                OptionalRow("Shuffle questions", displayedTest.shuffleQuestions == true ? "Yes" : nil)
+                OptionalRow("Starred", displayedTest.starred == true ? "Yes" : nil)
+                OptionalRow("Locked", displayedTest.locked == true ? "Yes" : nil)
+                OptionalRow("Draft", displayedTest.draft == true ? "Yes" : nil)
                 OptionalRow("MCQ correct score", detail?.mcqCorrectScore.map { $0.formatted() })
                 OptionalRow("MCQ incorrect score", detail?.mcqIncorrectScore.map { $0.formatted() })
             }
 
             Section("Schedule") {
-                OptionalRow("Starts", DisplayFormat.date(test.startTime))
-                OptionalRow("Ends", DisplayFormat.date(test.endTime))
-                OptionalRow("Created", DisplayFormat.date(test.createdAt))
+                OptionalRow("Starts", DisplayFormat.date(displayedTest.startTime))
+                OptionalRow("Ends", DisplayFormat.date(displayedTest.endTime))
+                OptionalRow("Created", DisplayFormat.date(displayedTest.createdAt))
             }
 
             if let detail, detail.hasAccess {
                 accessSection(detail: detail)
             }
 
-            if let sections = test.sections, !sections.isEmpty {
+            if let sections = displayedTest.sections, !sections.isEmpty {
                 Section("Sections") {
                     ForEach(sections) { section in
                         LabeledContent(section.displayName) {
@@ -82,18 +90,22 @@ struct TestDetailView: View {
                 }
             }
 
-            if let tags = test.tags, !tags.isEmpty {
+            if let tags = displayedTest.tags, !tags.isEmpty {
                 Section("Tags") {
                     TagList(tags: tags)
                 }
             }
 
             Section("Participants") {
-                NavigationLink {
-                    CandidatesList(testID: test.id, account: account)
-                } label: {
-                    Label("Candidates", systemImage: "person.2")
-                }
+                WindowLinkRow(
+                    title: "Candidates",
+                    systemImage: "person.2",
+                    value: .testCandidates(
+                        testID: displayedTest.id,
+                        testName: displayedTest.name,
+                        accountID: account.id
+                    )
+                )
 
                 if !inviters.isEmpty {
                     ForEach(inviters) { inviter in
@@ -114,23 +126,23 @@ struct TestDetailView: View {
                 }
             }
 
-            if let instructions = test.instructions, !instructions.isEmpty {
+            if let instructions = displayedTest.instructions, !instructions.isEmpty {
                 Section("Instructions") {
                     HighlightedHTMLText(html: instructions)
                 }
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(test.name)
-        .task(id: test.id) { await loadDetail() }
+        .navigationTitle(displayedTest.name)
+        .task(id: displayedTest.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
         .onDisappear { commandContext.clearDetailActions() }
-        .advertisesItemActivity(collection: .tests, itemID: test.id, title: test.name)
+        .advertisesItemActivity(collection: .tests, itemID: displayedTest.id, title: displayedTest.name)
         // Share and Open (the test on HackerRank) lead the bar like PadBuddy; Edit and Delete
         // follow; Print and Markdown export are off by default but one Customize Toolbar away.
         .toolbar(id: "testDetail") {
             DetailLinkToolbarContent(
-                url: RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: test.id),
+                url: RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: displayedTest.id),
                 noun: "test"
             )
             ToolbarItem(id: "edit") {
@@ -141,6 +153,15 @@ struct TestDetailView: View {
                 }
                 .help("Rename this test")
             }
+            ToolbarItem(id: "archive") {
+                Button {
+                    archivePresented = true
+                } label: {
+                    Label("Archive", systemImage: "archivebox")
+                }
+                .help("Archive this test")
+                .disabled(displayedTest.state?.localizedCaseInsensitiveCompare("archived") == .orderedSame)
+            }
             ToolbarItem(id: "delete") {
                 Button(role: .destructive) {
                     deletePresented = true
@@ -150,17 +171,40 @@ struct TestDetailView: View {
                 .help("Delete this test")
             }
             ToolbarItem(id: "print") {
-                PrintReportButton(jobTitle: "Test: \(test.name)") {
-                    TestReport(test: test)
+                PrintReportButton(jobTitle: "Test: \(displayedTest.name)") {
+                    TestReport(test: displayedTest)
                 }
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                MarkdownExportButton(suggestedName: test.name) { MarkdownExport.test(test) }
+                MarkdownExportButton(suggestedName: displayedTest.name) {
+                    MarkdownExport.test(displayedTest)
+                }
             }
             .defaultCustomization(.hidden)
         }
-        .confirmationDialog("Delete “\(test.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
+        .confirmationDialog(
+            "Archive “\(displayedTest.name)”?",
+            isPresented: $archivePresented,
+            titleVisibility: .visible
+        ) {
+            Button("Archive Test") {
+                Task { await archive() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This archives the test on HackerRank.")
+        }
+        .alert("Couldn’t archive test", isPresented: archiveErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(archiveError ?? "")
+        }
+        .confirmationDialog(
+            "Delete “\(displayedTest.name)”?",
+            isPresented: $deletePresented,
+            titleVisibility: .visible
+        ) {
             Button("Delete Test", role: .destructive) {
                 Task { await delete() }
             }
@@ -209,12 +253,16 @@ struct TestDetailView: View {
         Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
     }
 
+    private var archiveErrorPresented: Binding<Bool> {
+        Binding(get: { archiveError != nil }, set: { if !$0 { archiveError = nil } })
+    }
+
     private func registerDetailCommands() {
         commandContext.print = AppCommandContext.Action(title: "Print Test…") {
-            printReport(TestReport(test: test), jobTitle: "Test: \(test.name)")
+            printReport(TestReport(test: displayedTest), jobTitle: "Test: \(displayedTest.name)")
         }
         commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Test as Markdown…") {
-            MarkdownExport.save(MarkdownExport.test(test), suggestedName: test.name)
+            MarkdownExport.save(MarkdownExport.test(displayedTest), suggestedName: displayedTest.name)
         }
     }
 
@@ -222,23 +270,37 @@ struct TestDetailView: View {
     /// password for each test.
     private func loadDetail() async {
         detail = nil
+        detailTest = nil
         inviters = []
         passwordRevealed = false
         let client = HackerRankClient(account: account)
+        let metadataClient = HackerRankDetailMetadataClient(account: account)
         async let loadedDetail = try? client.test(id: test.id)
         async let loadedInviters = try? client.testInviters(testID: test.id)
+        async let loadedMetadata = try? metadataClient.test(id: test.id)
 
         detail = await loadedDetail
+        detailTest = await (loadedMetadata).flatMap(\.self)?.applying(to: test)
         inviters = await (loadedInviters)?.items ?? []
     }
 
     private func delete() async {
         do {
-            try await HackerRankClient(account: account).deleteTest(testID: test.id)
+            try await HackerRankClient(account: account).deleteTest(testID: displayedTest.id)
             onChanged()
             dismiss()
         } catch {
             deleteError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    private func archive() async {
+        do {
+            try await HackerRankClient(account: account).archiveTest(testID: displayedTest.id)
+            onChanged()
+            dismiss()
+        } catch {
+            archiveError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 
@@ -247,7 +309,7 @@ struct TestDetailView: View {
     /// list refreshes (which re-pushes the renamed detail).
     private func rename(to newName: String) async -> Bool {
         do {
-            try await HackerRankClient(account: account).updateTest(testID: test.id, name: newName)
+            try await HackerRankClient(account: account).updateTest(testID: displayedTest.id, name: newName)
             onChanged()
             return true
         } catch {

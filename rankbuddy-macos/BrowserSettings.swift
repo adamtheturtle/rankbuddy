@@ -8,8 +8,8 @@ import AppKit
 /// Link-opening preferences (#63): which browser RankBuddy's external (HackerRank web) links
 /// open in, and whether they open in the background. Mirrors PadBuddy's Browser settings.
 ///
-/// In-app browsing isn't offered — RankBuddy has no embedded web view — so every external link
-/// opens in a real browser; this just decides *which* one and whether it steals focus.
+/// In-app browsing isn't offered: RankBuddy has no embedded web view, so every external link
+/// opens in a real browser; this just decides which one and whether it steals focus.
 enum BrowserSettings {
     /// `@AppStorage` key: the chosen browser's bundle id, or empty/absent for the system default.
     static let defaultBrowserKey = "rb.defaultBrowserBundleID"
@@ -21,6 +21,8 @@ enum BrowserSettings {
     private static var sampleURL: URL {
         URL(string: "https://www.example.com") ?? URL(fileURLWithPath: "/")
     }
+
+    @MainActor private static var cachedInstalledBrowsers: [Browser]?
 
     /// An installed browser the user can pick as their default for RankBuddy links.
     struct Browser: Identifiable, Hashable {
@@ -34,37 +36,77 @@ enum BrowserSettings {
             guard let id = Bundle(url: appURL)?.bundleIdentifier else { return nil }
 
             bundleID = id
-            name = FileManager.default.displayName(atPath: appURL.path)
-                .replacingOccurrences(of: ".app", with: "")
+            name = Self.displayName(for: appURL)
+        }
+
+        private nonisolated static func displayName(for appURL: URL) -> String {
+            var name = FileManager.default.displayName(atPath: appURL.path)
+            if name.hasSuffix(".app") { name.removeLast(4) }
+            return name
         }
     }
 
+    /// Discards the cached browser scan, so Settings can pick up newly installed or removed apps.
+    @MainActor
+    static func invalidateInstalledBrowsers() {
+        cachedInstalledBrowsers = nil
+    }
+
     /// The browsers registered to open http(s) URLs, sorted by name.
+    @MainActor
     static func installedBrowsers() -> [Browser] {
-        NSWorkspace.shared.urlsForApplications(toOpen: sampleURL)
+        if let cachedInstalledBrowsers { return cachedInstalledBrowsers }
+
+        let browsers = NSWorkspace.shared.urlsForApplications(toOpen: sampleURL)
             .compactMap(Browser.init(appURL:))
             // De-dupe by bundle id (an app can appear once per registered scheme).
             .reduce(into: [Browser]()) { acc, browser in
                 if !acc.contains(where: { $0.bundleID == browser.bundleID }) { acc.append(browser) }
             }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        cachedInstalledBrowsers = browsers
+        return browsers
     }
 
     /// The display name of the current system default browser, or `nil` if none resolves.
     static func systemDefaultBrowserName() -> String? {
         guard let appURL = NSWorkspace.shared.urlForApplication(toOpen: sampleURL) else { return nil }
 
-        return FileManager.default.displayName(atPath: appURL.path).replacingOccurrences(of: ".app", with: "")
+        return Browser(appURL: appURL)?.name
+    }
+
+    /// Whether `url` is a web address this app should hand to a browser preference.
+    static func isOpenableWebURL(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              let host = url.host(), !host.isEmpty else { return false }
+
+        return true
+    }
+
+    /// The stored browser choice, but only when it still names an installed http(s)-capable app.
+    @MainActor
+    static func validatedBrowserBundleID(defaults: UserDefaults = .standard) -> String? {
+        let chosenID = defaults.string(forKey: defaultBrowserKey) ?? ""
+        guard !chosenID.isEmpty else { return nil }
+        guard installedBrowsers().contains(where: { $0.bundleID == chosenID }) else {
+            defaults.removeObject(forKey: defaultBrowserKey)
+            return nil
+        }
+
+        return chosenID
     }
 
     /// Opens `url` honouring the preferences: in the chosen browser (falling back to the system
     /// default), bringing it to the front unless background opening is on.
+    @MainActor
     static func open(_ url: URL, defaults: UserDefaults = .standard) {
+        guard isOpenableWebURL(url) else { return }
+
         let config = NSWorkspace.OpenConfiguration()
         config.activates = !defaults.bool(forKey: backgroundKey)
 
-        let chosenID = defaults.string(forKey: defaultBrowserKey) ?? ""
-        let appURL = (chosenID.isEmpty ? nil : NSWorkspace.shared.urlForApplication(withBundleIdentifier: chosenID))
+        let appURL = validatedBrowserBundleID(defaults: defaults)
+            .flatMap(NSWorkspace.shared.urlForApplication(withBundleIdentifier:))
             ?? NSWorkspace.shared.urlForApplication(toOpen: url)
 
         if let appURL {

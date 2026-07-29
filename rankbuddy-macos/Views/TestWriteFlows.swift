@@ -13,8 +13,7 @@ enum TestEditorMode {
 }
 
 /// A sheet that creates a test (`POST /tests`) or renames one (`PATCH /tests/{id}`) (#57) —
-/// a write flow. States plainly when it touches a real organisation, and refreshes the list
-/// on success.
+/// a write flow. Refreshes the list on success.
 struct TestEditorSheet: View {
     let account: Account
     let mode: TestEditorMode
@@ -51,10 +50,6 @@ struct TestEditorSheet: View {
             Form {
                 Section {
                     TextField("Test name", text: $name)
-                } footer: {
-                    Text(consequenceText)
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {
@@ -83,12 +78,6 @@ struct TestEditorSheet: View {
             }
         }
         .frame(width: 440, height: 220)
-    }
-
-    private var consequenceText: String {
-        isEditing
-            ? "This renames a real test in your HackerRank organisation."
-            : "This creates a real test in your HackerRank organisation."
     }
 
     private func save() async {

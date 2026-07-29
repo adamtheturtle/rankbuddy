@@ -26,4 +26,19 @@ struct BrowserSettingsTests {
     @Test func `the system default browser name resolves`() {
         #expect(BrowserSettings.systemDefaultBrowserName() != nil)
     }
+
+    @Test func `web URLs are openable`() throws {
+        #expect(try BrowserSettings.isOpenableWebURL(#require(URL(string: "https://www.hackerrank.com/work/tests"))))
+        #expect(try BrowserSettings.isOpenableWebURL(#require(URL(string: "http://localhost:8080/report"))))
+    }
+
+    @Test func `non-web URLs are refused`() throws {
+        #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "file:///etc/passwd"))))
+        #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "rankbuddy://tests/123"))))
+        #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "ftp://example.com/report"))))
+    }
+
+    @Test func `hostless web URLs are refused`() throws {
+        #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "https:///report"))))
+    }
 }

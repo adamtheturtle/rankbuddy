@@ -10,6 +10,10 @@
 import AppKit
 import Foundation
 
+// Installer variants share parsing and migration logic in this single namespace.
+// swiftlint:disable file_length
+
+// swiftlint:disable:next type_body_length
 enum MCPClientInstall {
     private static let serverName = "rankbuddy"
 
@@ -33,8 +37,13 @@ enum MCPClientInstall {
         let accessing = folder.startAccessingSecurityScopedResource()
         defer { if accessing { folder.stopAccessingSecurityScopedResource() } }
 
-        let url = folder.appendingPathComponent(spec.fileName)
         do {
+            let configFolder = try configurationFolder(
+                granted: folder,
+                preferred: spec.preferred,
+                fallback: spec.fallback
+            )
+            let url = configFolder.appendingPathComponent(spec.fileName)
             let didUpdate: (String, String) -> Void = { title, message in
                 Task { @MainActor in showAlert(.informational, title, message) }
             }
@@ -121,6 +130,7 @@ enum MCPClientInstall {
 
         let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: url, options: .atomic)
+        try verifyJSONConfig(at: url, command: command)
 
         let title = alreadyPresent ? "Updated \(client.displayName)" : "Added to \(client.displayName)"
         didUpdate(title, client.restartHint)
@@ -147,27 +157,36 @@ enum MCPClientInstall {
     ) throws {
         var text = ""
         if FileManager.default.fileExists(atPath: url.path) {
-            text = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+            text = try String(contentsOf: url, encoding: .utf8)
         }
 
         let block = codexServerBlock(command: command)
-        if text.contains("[mcp_servers.\(serverName)]") {
+        switch codexServerDeclaration(in: text) {
+        case .notDeclared:
+            let merged = text.isEmpty ? block : text + "\n" + block
+            try merged.write(to: url, atomically: true, encoding: .utf8)
+            try verifyCodexConfig(at: url, command: command)
+            didUpdate("Added to \(client.displayName)", client.restartHint)
+
+        case .table:
             guard shouldReplace(client) else { return }
 
             let updated = replacingCodexServer(in: text, with: block)
             try updated.write(to: url, atomically: true, encoding: .utf8)
+            try verifyCodexConfig(at: url, command: command)
             didUpdate("Updated \(client.displayName)", client.restartHint)
-        } else {
-            let merged = text.isEmpty ? block : text + "\n" + block
-            try merged.write(to: url, atomically: true, encoding: .utf8)
-            didUpdate("Added to \(client.displayName)", client.restartHint)
+
+        case .other:
+            throw CodexConfigError(errorDescription:
+                "config.toml already declares the \"rankbuddy\" server in a style RankBuddy can't safely rewrite. " +
+                    "Edit its command in config.toml yourself.")
         }
     }
 
     static func codexServerBlock(command: String) -> String {
         """
         [mcp_servers.\(serverName)]
-        command = "\(command)"
+        command = \(tomlBasicString(command))
         args = ["--mcp"]
 
         """
@@ -179,7 +198,8 @@ enum MCPClientInstall {
         var index = 0
 
         while index < lines.count {
-            if lines[index].trimmingCharacters(in: .whitespaces) == "[mcp_servers.\(serverName)]" {
+            let line = lines[index].trimmingCharacters(in: .whitespaces)
+            if tomlHeaderKeyPath(line) == ["mcp_servers", serverName], !line.hasPrefix("[[") {
                 result.append(contentsOf: block.components(separatedBy: "\n"))
                 index += 1
                 while index < lines.count,
@@ -195,7 +215,159 @@ enum MCPClientInstall {
         return result.joined(separator: "\n")
     }
 
-    private static var realHomeDirectory: URL {
+    static func configurationFolder(
+        granted: URL,
+        preferred: URL?,
+        fallback: URL?,
+        fileManager: FileManager = .default
+    ) throws -> URL {
+        guard let preferred,
+              let fallback,
+              granted.standardizedFileURL == fallback.standardizedFileURL,
+              preferred.deletingLastPathComponent().standardizedFileURL == fallback.standardizedFileURL,
+              !fileManager.fileExists(atPath: preferred.path) else {
+            return granted
+        }
+
+        try fileManager.createDirectory(at: preferred, withIntermediateDirectories: false)
+        return preferred
+    }
+
+    struct ConfigVerificationError: LocalizedError {
+        let errorDescription: String?
+    }
+
+    struct CodexConfigError: LocalizedError {
+        let errorDescription: String?
+    }
+
+    enum CodexDeclaration: Equatable {
+        case notDeclared
+        case table
+        case other
+    }
+
+    static func codexServerDeclaration(in text: String) -> CodexDeclaration {
+        var currentTable: [String] = []
+        var found = CodexDeclaration.notDeclared
+
+        for rawLine in text.components(separatedBy: "\n") {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if line.isEmpty || line.hasPrefix("#") { continue }
+
+            if line.hasPrefix("[") {
+                let isArrayOfTables = line.hasPrefix("[[")
+                guard let path = tomlHeaderKeyPath(line) else { continue }
+
+                currentTable = path
+                if path == ["mcp_servers", serverName] {
+                    return isArrayOfTables ? .other : .table
+                }
+                if path.count > 2, Array(path.prefix(2)) == ["mcp_servers", serverName] {
+                    found = .other
+                }
+                continue
+            }
+
+            guard let keyPath = tomlKeyValueKeyPath(line) else { continue }
+
+            let fullPath = currentTable + keyPath
+            if fullPath.count >= 2, Array(fullPath.prefix(2)) == ["mcp_servers", serverName] {
+                found = .other
+            }
+        }
+
+        return found
+    }
+
+    static func tomlBasicString(_ value: String) -> String {
+        var escaped = ""
+        for scalar in value.unicodeScalars {
+            switch scalar {
+            case "\\":
+                escaped += "\\\\"
+            case "\"":
+                escaped += "\\\""
+            case "\u{08}":
+                escaped += "\\b"
+            case "\t":
+                escaped += "\\t"
+            case "\n":
+                escaped += "\\n"
+            case "\u{0C}":
+                escaped += "\\f"
+            case "\r":
+                escaped += "\\r"
+            default:
+                if scalar.value < 0x20 || scalar.value == 0x7F {
+                    escaped += String(format: "\\u%04X", scalar.value)
+                } else {
+                    escaped.unicodeScalars.append(scalar)
+                }
+            }
+        }
+        return "\"\(escaped)\""
+    }
+
+    static func verifyJSONConfig(at url: URL, command: String) throws {
+        let data = try Data(contentsOf: url)
+        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let servers = root["mcpServers"] as? [String: Any],
+              let rankbuddy = servers[serverName] as? [String: Any],
+              rankbuddy["command"] as? String == command,
+              rankbuddy["args"] as? [String] == ["--mcp"] else {
+            throw ConfigVerificationError(
+                errorDescription: "The written JSON configuration did not contain the expected RankBuddy server."
+            )
+        }
+    }
+
+    static func verifyCodexConfig(at url: URL, command: String) throws {
+        let text = try String(contentsOf: url, encoding: .utf8)
+        guard codexServerDeclaration(in: text) == .table else {
+            throw ConfigVerificationError(
+                errorDescription: "The written config.toml did not contain a RankBuddy server table."
+            )
+        }
+
+        let block = codexServerBlock(command: command)
+        let rewritten = replacingCodexServer(in: text, with: block)
+        guard rewritten == text else {
+            throw ConfigVerificationError(
+                errorDescription: "The written RankBuddy server table did not preserve its command and arguments."
+            )
+        }
+    }
+
+    private static func tomlHeaderKeyPath(_ line: String) -> [String]? {
+        var inner = line
+        while inner.hasPrefix("[") {
+            inner.removeFirst()
+        }
+        guard let closing = inner.firstIndex(of: "]") else { return nil }
+
+        inner = String(inner[..<closing])
+        return inner.components(separatedBy: ".").map(normalizedTOMLKey)
+    }
+
+    private static func tomlKeyValueKeyPath(_ line: String) -> [String]? {
+        guard let equals = line.firstIndex(of: "=") else { return nil }
+
+        let key = String(line[..<equals])
+        guard !key.isEmpty else { return nil }
+
+        return key.components(separatedBy: ".").map(normalizedTOMLKey)
+    }
+
+    private static func normalizedTOMLKey(_ component: String) -> String {
+        var key = component.trimmingCharacters(in: .whitespaces)
+        for quote in ["\"", "'"] where key.hasPrefix(quote) && key.hasSuffix(quote) && key.count >= 2 {
+            key = String(key.dropFirst().dropLast())
+        }
+        return key
+    }
+
+    static var realHomeDirectory: URL {
         if let passwd = getpwuid(getuid()), let home = passwd.pointee.pw_dir {
             return URL(fileURLWithPath: String(cString: home), isDirectory: true)
         }
@@ -203,7 +375,7 @@ enum MCPClientInstall {
     }
 
     @MainActor
-    private static func grantFolderAccess(preferred: URL?, fallback: URL?, message: String) -> URL? {
+    static func grantFolderAccess(preferred: URL?, fallback: URL?, message: String) -> URL? {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false

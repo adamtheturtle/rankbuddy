@@ -9,6 +9,9 @@ import HackerRankKit
 import MCP
 import MCPKit
 
+// Tool dispatch is intentionally centralized so capability registration and routing cannot drift.
+// swiftlint:disable file_length
+
 /// The outcome of a bounded search: the matches plus how much of the collection was scanned.
 private struct SearchHits<Item> {
     let matches: [Item]
@@ -16,13 +19,14 @@ private struct SearchHits<Item> {
     let truncated: Bool
 }
 
-/// The RankBuddy MCP tool catalogue (#9): read-only, account-aware tools over the HackerRank
-/// for Work data, served via buddy-kit's `MCPServer`.
-///
-/// Read-only by default — no write/create tools (those would need an explicit, separately
-/// reviewed opt-in). Every tool resolves a target account (an `account` argument matching a
-/// label or id, else the current account) and dispatches through the same `HackerRankClient`
-/// the app uses, so the mock account works in tests without live credentials.
+// The RankBuddy MCP tool catalogue (#9): read-only, account-aware tools over the HackerRank
+// for Work data, served via buddy-kit's `MCPServer`.
+//
+// Read-only by default — no write/create tools (those would need an explicit, separately
+// reviewed opt-in). Every tool resolves a target account (an `account` argument matching a
+// label or id, else the current account) and dispatches through the same `HackerRankClient`
+// the app uses, so the mock account works in tests without live credentials.
+// swiftlint:disable:next type_body_length
 nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     /// The URI of the read-only accounts resource.
     static let accountsURI = "rankbuddy://accounts"
@@ -48,6 +52,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         mcpTools(from: allowWrites ? Self.descriptors + Self.writeDescriptors : Self.descriptors)
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func callTool(_ name: String, arguments: [String: Value]?) async -> CallTool.Result {
         let account = stringArgument(arguments, "account")
         MCPActivityLog.record(tool: name, detail: Self.callDetail(arguments))
@@ -73,8 +78,11 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         case "list_users", "list_teams":
             // Org enumeration (#9), in its own dispatch + file.
             return await callOrgListTool(name, account: account)
-        case "list_candidates", "search_tests", "search_questions", "search_interviews":
+        case "list_candidates", "candidate_report_pdf", "get_invite_template", "get_interview_template",
+             "search_tests", "search_questions", "search_interviews":
             return await callKeyedTool(name, arguments: arguments, account: account)
+        case "list_invite_templates", "list_interview_templates":
+            return await callTemplateTool(name, arguments: arguments, account: account)
         case "search_users", "search_candidates":
             // Server-side people/candidate search (#104), in its own dispatch + file.
             return await callPeopleSearchTool(name, arguments: arguments, account: account)
@@ -95,12 +103,35 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return parts.joined(separator: ", ")
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func callKeyedTool(_ name: String, arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         switch name {
         case "list_candidates":
             guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
 
             return await listCandidates(testID: testID, account: account)
+
+        case "candidate_report_pdf":
+            guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+            guard let candidateID = stringArgument(arguments, "candidate_id") else {
+                return missingArgument("candidate_id")
+            }
+
+            return await candidateReportPDF(testID: testID, candidateID: candidateID, account: account)
+
+        case "get_invite_template":
+            guard let templateID = stringArgument(arguments, "template_id") else {
+                return missingArgument("template_id")
+            }
+
+            return await getInviteTemplate(templateID: templateID, account: account)
+
+        case "get_interview_template":
+            guard case let .int(templateID)? = arguments?["template_id"] else {
+                return missingArgument("template_id")
+            }
+
+            return await getInterviewTemplate(templateID: templateID, account: account)
 
         case "search_tests":
             guard let query = stringArgument(arguments, "query") else { return missingArgument("query") }
@@ -119,6 +150,21 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         default:
             return errorResult("Unknown tool: \(name)")
+        }
+    }
+
+    private func callTemplateTool(
+        _ name: String,
+        arguments: [String: Value]?,
+        account: String?
+    ) async -> CallTool.Result {
+        switch name {
+        case "list_invite_templates":
+            await listInviteTemplates(access: stringArgument(arguments, "access"), account: account)
+        case "list_interview_templates":
+            await listInterviewTemplates(account: account)
+        default:
+            errorResult("Unknown tool: \(name)")
         }
     }
 
@@ -205,6 +251,106 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             ])
         } catch {
             return errorResult("Couldn't list candidates: \(error.localizedDescription)")
+        }
+    }
+
+    @MainActor
+    private func candidateReportPDF(testID: String, candidateID: String, account: String?) async -> CallTool.Result {
+        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+
+        do {
+            let pdf = try await HackerRankClient(account: resolved).candidateReportPDF(
+                testID: testID,
+                candidateID: candidateID
+            )
+            return jsonResult([
+                "account": resolved.label,
+                "test_id": testID,
+                "candidate_id": candidateID,
+                "url": pdf.url ?? pdf.pdfURL ?? ""
+            ])
+        } catch {
+            return errorResult("Couldn't fetch candidate report PDF: \(error.localizedDescription)")
+        }
+    }
+
+    @MainActor
+    private func listInviteTemplates(access: String?, account: String?) async -> CallTool.Result {
+        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+
+        do {
+            let page = try await HackerRankClient(account: resolved).inviteTemplatesPage(access: access)
+            let items = page.items.map {
+                ["id": $0.id ?? "", "name": $0.name ?? "", "subject": $0.subject ?? "", "access": $0.access ?? ""]
+            }
+            return jsonResult([
+                "account": resolved.label, "templates": items, "count": items.count, "has_more": page.next != nil
+            ])
+        } catch {
+            return errorResult("Couldn't list invite templates: \(error.localizedDescription)")
+        }
+    }
+
+    @MainActor
+    private func getInviteTemplate(templateID: String, account: String?) async -> CallTool.Result {
+        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+
+        do {
+            let template = try await HackerRankClient(account: resolved).inviteTemplate(id: templateID)
+            return jsonResult([
+                "account": resolved.label,
+                "template": [
+                    "id": template.id ?? templateID,
+                    "name": template.name ?? "",
+                    "subject": template.subject ?? "",
+                    "body": template.body ?? "",
+                    "access": template.access ?? ""
+                ]
+            ])
+        } catch {
+            return errorResult("Couldn't get invite template: \(error.localizedDescription)")
+        }
+    }
+
+    @MainActor
+    private func listInterviewTemplates(account: String?) async -> CallTool.Result {
+        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+
+        do {
+            let page = try await HackerRankClient(account: resolved).interviewTemplatesPage()
+            let items = page.items.map {
+                [
+                    "id": $0.id ?? 0,
+                    "name": $0.name ?? "",
+                    "title": $0.title ?? "",
+                    "description": $0.description ?? ""
+                ] as [String: Any]
+            }
+            return jsonResult([
+                "account": resolved.label, "templates": items, "count": items.count, "has_more": page.next != nil
+            ])
+        } catch {
+            return errorResult("Couldn't list interview templates: \(error.localizedDescription)")
+        }
+    }
+
+    @MainActor
+    private func getInterviewTemplate(templateID: Int, account: String?) async -> CallTool.Result {
+        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+
+        do {
+            let template = try await HackerRankClient(account: resolved).interviewTemplate(id: templateID)
+            return jsonResult([
+                "account": resolved.label,
+                "template": [
+                    "id": template.id ?? templateID,
+                    "name": template.name ?? "",
+                    "title": template.title ?? "",
+                    "description": template.description ?? ""
+                ] as [String: Any]
+            ])
+        } catch {
+            return errorResult("Couldn't get interview template: \(error.localizedDescription)")
         }
     }
 

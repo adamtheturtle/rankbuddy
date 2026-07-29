@@ -17,7 +17,7 @@ enum FileExport {
         failureTitle: String
     ) {
         let panel = NSSavePanel()
-        panel.nameFieldStringValue = suggestedName
+        panel.nameFieldStringValue = sanitizedSuggestedName(suggestedName)
         panel.allowedContentTypes = allowedContentTypes
 
         guard let window = NSApp.keyWindow ?? NSApp.mainWindow else {
@@ -47,5 +47,21 @@ enum FileExport {
                 alert.runModal()
             }
         }
+    }
+
+    nonisolated static func sanitizedSuggestedName(_ name: String) -> String {
+        let cleaned = name
+            .prefix(160)
+            .map { character -> Character in
+                if character == "/" || character == ":" ||
+                    character.unicodeScalars.contains(where: { $0.value < 0x20 || $0.value == 0x7F }) {
+                    return "-"
+                }
+                return character
+            }
+        let result = String(cleaned).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !result.isEmpty, result.contains(where: { $0 != "." }) else { return "Export" }
+
+        return result
     }
 }

@@ -53,7 +53,7 @@ enum CSVExport {
 
     static func tests(_ tests: [Test]) -> String {
         document(
-            header: ["Name", "State", "Unique ID", "Duration (min)", "Cutoff",
+            header: ["Name", "State", "Unique ID", "Duration (minutes)", "Cutoff",
                      "Starts", "Ends", "Created", "Languages", "Tags"],
             rows: tests.map {
                 [$0.name, $0.state ?? "", $0.uniqueID ?? "",
@@ -69,7 +69,7 @@ enum CSVExport {
     static func questions(_ questions: [Question]) -> String {
         document(
             header: ["Name", "Type", "Unique ID", "Status", "Max score",
-                     "Duration (min)", "Languages", "Skills"],
+                     "Duration (minutes)", "Languages", "Skills"],
             rows: questions.map {
                 [$0.name, $0.type, $0.uniqueID ?? "", $0.status ?? "",
                  $0.maxScore.map { String($0) } ?? "",

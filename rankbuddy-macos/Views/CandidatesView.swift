@@ -3,10 +3,12 @@
 //  rankbuddy-macos
 //
 
+import FastList
 import HackerRankKit
 import SwiftUI
 
-/// The candidates for a test, pushed from `TestDetailView`. Read-only list + detail, with
+/// The candidates for a test, opened in its own window from `TestDetailView`. Read-only list +
+/// detail, with
 /// an "Invite Candidate" write action (#12).
 struct CandidatesList: View {
     let testID: String
@@ -16,6 +18,9 @@ struct CandidatesList: View {
     @State private var invitePresented = false
     /// Bumped after a successful invite to refresh the list.
     @State private var reloadToken = 0
+    @State private var candidatePendingInviteCancel: TestCandidate?
+    @State private var candidatePendingReportDelete: TestCandidate?
+    @State private var actionError: String?
 
     var body: some View {
         LoadableList(
@@ -53,13 +58,21 @@ struct CandidatesList: View {
             filterDate: { DisplayFormat.parseDate($0.attemptEndTime ?? $0.attemptStartTime) },
             dateFilterLabel: "Attempted",
             contextMenu: { candidate in
-                rowMenuItems(
+                var items = rowMenuItems(
                     copyLabel: "Copy Email",
                     copyText: candidate.email,
                     link: candidate.reportURL,
                     openLabel: "Open Report",
                     openInWindow: { openWindow(value: DetailWindowValue.candidate(candidate)) }
                 )
+                items.append(.separator)
+                items.append(.button(title: "Cancel Invitation…") {
+                    candidatePendingInviteCancel = candidate
+                })
+                items.append(.button(title: "Delete Report…") {
+                    candidatePendingReportDelete = candidate
+                })
+                return items
             },
             openInWindow: { openWindow(value: DetailWindowValue.candidate($0)) },
             accessoryToolbar: { AnyView(inviteButton) },
@@ -83,10 +96,42 @@ struct CandidatesList: View {
             },
             rowDate: { DisplayFormat.parseDate($0.attemptEndTime ?? $0.attemptStartTime) },
             row: { CandidateRow(candidate: $0) },
-            detail: { CandidateDetailView(candidate: $0, testID: testID, account: account) }
+            detail: { CandidateDetailView(candidate: $0, testID: testID, account: account) { reloadToken += 1 } }
         )
         .sheet(isPresented: $invitePresented) {
             InviteCandidateSheet(testID: testID, account: account) { reloadToken += 1 }
+        }
+        .confirmationDialog(
+            "Cancel this invitation?",
+            isPresented: presented($candidatePendingInviteCancel),
+            titleVisibility: .visible,
+            presenting: candidatePendingInviteCancel
+        ) { candidate in
+            Button("Cancel Invitation", role: .destructive) {
+                Task { await cancelInvite(candidate) }
+            }
+            Button("Keep Invitation", role: .cancel) {}
+        } message: { candidate in
+            Text("This withdraws \(candidate.fullName ?? candidate.email)'s outstanding invite to the test.")
+        }
+        .confirmationDialog(
+            "Delete this report?",
+            isPresented: presented($candidatePendingReportDelete),
+            titleVisibility: .visible,
+            presenting: candidatePendingReportDelete
+        ) { candidate in
+            Button("Delete Report", role: .destructive) {
+                Task { await deleteReport(candidate) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { candidate in
+            Text("This permanently deletes \(candidate.fullName ?? candidate.email)'s test report "
+                + "on HackerRank. This can’t be undone.")
+        }
+        .alert("Couldn’t complete that action", isPresented: presented($actionError)) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(actionError ?? "")
         }
     }
 
@@ -97,6 +142,31 @@ struct CandidatesList: View {
             Label("Invite Candidate…", systemImage: "person.badge.plus")
         }
         .help("Invite a candidate to this test")
+    }
+
+    /// A presented-flag for optional "pending action" state: dismissing clears it.
+    private func presented(_ value: Binding<(some Any)?>) -> Binding<Bool> {
+        Binding(get: { value.wrappedValue != nil }, set: { if !$0 { value.wrappedValue = nil } })
+    }
+
+    private func cancelInvite(_ candidate: TestCandidate) async {
+        do {
+            _ = try await HackerRankClient(account: account)
+                .cancelCandidateInvite(testID: testID, candidateID: candidate.id)
+            reloadToken += 1
+        } catch {
+            actionError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    private func deleteReport(_ candidate: TestCandidate) async {
+        do {
+            _ = try await HackerRankClient(account: account)
+                .deleteCandidateReport(testID: testID, candidateID: candidate.id)
+            reloadToken += 1
+        } catch {
+            actionError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 }
 
@@ -137,119 +207,6 @@ struct CandidateRow: View {
     }
 }
 
-/// Read-only detail for a single candidate.
-struct CandidateDetailView: View {
-    let candidate: TestCandidate
-    var testID: String?
-    var account: Account?
-
-    @Environment(AppCommandContext.self) private var commandContext
-    @State private var detail: TestCandidate?
-
-    private var displayedCandidate: TestCandidate {
-        detail ?? candidate
-    }
-
-    var body: some View {
-        let candidate = displayedCandidate
-
-        Form {
-            InspectorHeader(title: candidate.fullName ?? candidate.email, badges: candidate.inspectorBadges)
-
-            Section("Properties") {
-                OptionalRow("Email", candidate.email)
-                OptionalRow("Attempt", candidate.attemptStatusLabel)
-                OptionalRow("Pipeline", candidate.pipelineStatusLabel)
-                OptionalRow("Score", candidate.score.map { $0.formatted() })
-                OptionalRow("Percentage", candidate.percentageScore.map { "\($0.formatted())%" })
-                OptionalRow("Integrity", candidate.integrityStatus)
-                OptionalRow("Plagiarism", candidate.plagiarismStatus.map { $0 ? "Flagged" : "Clear" })
-                OptionalRow("Started", DisplayFormat.date(candidate.attemptStartTime))
-                OptionalRow("Ended", DisplayFormat.date(candidate.attemptEndTime))
-                OptionalRow(
-                    "Time taken",
-                    DisplayFormat.duration(fromISO: candidate.attemptStartTime, toISO: candidate.attemptEndTime)
-                )
-
-                if let report = candidate.reportURL, let url = URL(string: report) {
-                    Link(destination: url) {
-                        Label("Open report", systemImage: "doc.text")
-                    }
-                }
-
-                if let pdf = candidate.pdfURL, let url = URL(string: pdf) {
-                    Link(destination: url) {
-                        Label("Download PDF report", systemImage: "arrow.down.doc")
-                    }
-                }
-            }
-
-            if candidate.hasProctoringSignals {
-                Section("Proctoring") {
-                    OptionalRow("Left test window", candidate.outOfWindowEvents.map { "\($0)×" })
-                    OptionalRow("Time outside window", DisplayFormat.interval(candidate.outOfWindowDuration))
-                    OptionalRow("Editor pastes", candidate.editorPasteCount.map { "\($0)×" })
-                }
-            }
-
-            if let tags = candidate.tags, !tags.isEmpty {
-                Section("Tags") {
-                    TagList(tags: tags)
-                }
-            }
-
-            if let feedback = candidate.feedback, !feedback.isEmpty {
-                Section("Feedback") {
-                    Text(feedback).textSelection(.enabled)
-                }
-            }
-
-            CandidateSummaryView(candidate: candidate)
-        }
-        .formStyle(.grouped)
-        .navigationTitle(candidate.fullName ?? candidate.email)
-        .task(id: self.candidate.id) { await loadDetail() }
-        .onAppear { registerDetailCommands() }
-        .onDisappear { commandContext.clearDetailActions() }
-        // Print and Markdown export are off the bar by default but one Customize Toolbar away.
-        .toolbar(id: "candidateDetail") {
-            ToolbarItem(id: "print") {
-                PrintReportButton(jobTitle: "Candidate: \(candidate.fullName ?? candidate.email)") {
-                    CandidateReport(candidate: candidate)
-                }
-            }
-            .defaultCustomization(.hidden)
-            ToolbarItem(id: "exportMarkdown") {
-                MarkdownExportButton(suggestedName: candidate.fullName ?? candidate.email) {
-                    MarkdownExport.candidate(candidate)
-                }
-            }
-            .defaultCustomization(.hidden)
-        }
-    }
-
-    private func registerDetailCommands() {
-        let candidate = displayedCandidate
-        let title = candidate.fullName ?? candidate.email
-        commandContext.print = AppCommandContext.Action(title: "Print Candidate…") {
-            printReport(CandidateReport(candidate: candidate), jobTitle: "Candidate: \(title)")
-        }
-        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Candidate as Markdown…") {
-            MarkdownExport.save(MarkdownExport.candidate(candidate), suggestedName: title)
-        }
-    }
-
-    private func loadDetail() async {
-        guard let testID, let account else { return }
-
-        detail = try? await HackerRankClient(account: account).candidate(
-            testID: testID,
-            candidateID: candidate.id
-        )
-        registerDetailCommands()
-    }
-}
-
 #Preview {
     let json = #"""
     [
@@ -270,20 +227,4 @@ struct CandidateDetailView: View {
     }
     .padding()
     .frame(width: 360)
-}
-
-#Preview("Detail") {
-    let json = #"""
-    {"id":"c3","email":"grace@example.com","full_name":"Grace Hopper","score":58.0,
-     "percentage_score":58.0,"integrity_status":"review","plagiarism_status":true,
-     "status":7,"ats_state":22,"out_of_window_events":4,"out_of_window_duration":95.0,
-     "editor_paste_count":7,"attempt_starttime":"2026-05-04T08:30:00Z",
-     "attempt_endtime":"2026-05-04T09:20:00Z"}
-    """#
-    let candidate = try? JSONDecoder().decode(TestCandidate.self, from: Data(json.utf8))
-    return NavigationStack {
-        if let candidate {
-            CandidateDetailView(candidate: candidate)
-        }
-    }
 }

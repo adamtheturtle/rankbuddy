@@ -28,6 +28,8 @@ struct AccountEditor: View {
     @State private var validation: CredentialValidationState = .idle
     @State private var isTokenRevealed = false
     @State private var scopeWarning: String?
+    @State private var validationTask: Task<Void, Never>?
+    @State private var validationGeneration = 0
 
     private let initialToken: String
     private let initialBaseURLOverride: String
@@ -63,6 +65,7 @@ struct AccountEditor: View {
             }
             .onChange(of: token) { _, _ in credentialsChanged() }
             .onChange(of: baseURLOverride) { _, _ in credentialsChanged() }
+            .onDisappear { cancelOutstandingWork() }
     }
 
     private var editorForm: some View {
@@ -164,8 +167,13 @@ struct AccountEditor: View {
             }
 
             fieldRow("") {
-                GetTokenLink()
-                    .font(.callout)
+                VStack(alignment: .leading, spacing: 4) {
+                    GetTokenLink()
+                        .font(.callout)
+                    Text("Requires a HackerRank for Work personal access token.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -192,11 +200,11 @@ struct AccountEditor: View {
         // which flips false *while* validating and made the button flash prominent
         // mid-validation on an already-saveable account.
         if isValidated || credentialsUnchanged {
-            Button("Validate") { Task { await validate() } }
+            Button("Validate") { startValidation() }
                 .buttonStyle(.bordered)
                 .disabled(validateDisabled)
         } else {
-            Button("Validate") { Task { await validate() } }
+            Button("Validate") { startValidation() }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(validateDisabled)
@@ -301,6 +309,8 @@ struct AccountEditor: View {
     private func credentialsChanged() {
         guard !credentialsUnchanged else { return }
 
+        validationTask?.cancel()
+        validationTask = nil
         validation = .idle
         scopeWarning = nil
     }
@@ -319,6 +329,7 @@ struct AccountEditor: View {
     }
 
     private func cancel() {
+        cancelOutstandingWork()
         if let onFinish {
             onFinish(nil)
         } else {
@@ -327,6 +338,7 @@ struct AccountEditor: View {
     }
 
     private func save() {
+        cancelOutstandingWork()
         let account = draft
         if existing == nil {
             store.add(account)
@@ -340,12 +352,49 @@ struct AccountEditor: View {
             dismiss()
         }
     }
+
+    private func startValidation() {
+        validationTask?.cancel()
+        validationGeneration &+= 1
+        let generation = validationGeneration
+        validationTask = Task {
+            await validate()
+            if validationGeneration == generation {
+                validationTask = nil
+            }
+        }
+    }
+
+    private func cancelOutstandingWork() {
+        validationTask?.cancel()
+        validationTask = nil
+        validationGeneration &+= 1
+        isTokenRevealed = false
+    }
 }
 
 // MARK: - Credential validation
-// Same-file extension so the struct body stays within the lint length budget; `private`
-// state remains accessible from here.
+
+/// Same-file extension so the struct body stays within the lint length budget; `private`
+/// state remains accessible from here.
 private extension AccountEditor {
+    static let allScopesRefusedWarning = "This token reached HackerRank but was refused for tests, " +
+        "questions, interviews, people, and teams. It may be expired or scoped too narrowly to be useful."
+
+    struct ValidationFingerprint: Equatable {
+        let token: String
+        let baseURL: URL
+    }
+
+    var currentValidationFingerprint: ValidationFingerprint {
+        ValidationFingerprint(token: trimmedToken, baseURL: draft.baseURL)
+    }
+
+    func validationStillMatches(_ fingerprint: ValidationFingerprint) -> Bool {
+        currentValidationFingerprint == fingerprint
+    }
+
+    // swiftlint:disable:next cyclomatic_complexity
     func validate() async {
         if let demo = Account.DemoMagicKey(typedToken: token) {
             let demoID: Account.ID? = switch demo {
@@ -362,19 +411,30 @@ private extension AccountEditor {
             return
         }
 
+        if draft.hasMalformedBaseURLOverride {
+            validation = .invalid(
+                "The Base URL isn't a valid web address. Enter a full URL starting with https://, " +
+                    "or leave it blank to use the standard HackerRank server."
+            )
+            return
+        }
         if let message = duplicateAccountMessage() {
             validation = .invalid(message)
             return
         }
 
+        let fingerprint = currentValidationFingerprint
+        let account = draft
         validation = .validating
         scopeWarning = nil
 
         do {
-            let client = HackerRankClient(account: draft)
+            let client = HackerRankClient(account: account)
             try await client.validateToken()
+            guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
 
             let signedInUser = try await currentUser(client: client)
+            guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
 
             userEmail = signedInUser.email
             if trimmedLabel.isEmpty {
@@ -382,8 +442,13 @@ private extension AccountEditor {
             }
 
             validation = .valid
-            scopeWarning = await missingScopesWarning(client: client)
+            let warning = await missingScopesWarning(client: client)
+            guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
+
+            scopeWarning = warning
         } catch {
+            guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
+
             validation = .invalid(friendlyValidationMessage(for: error))
         }
     }
@@ -397,7 +462,7 @@ private extension AccountEditor {
         let clashes = store.accounts.contains { account in
             account.id != candidate.id
                 && account.token.trimmingCharacters(in: .whitespacesAndNewlines) == candidate.token
-                && account.baseURL == candidate.baseURL
+                && account.serverIdentity == candidate.serverIdentity
         }
         guard clashes else { return nil }
 
@@ -418,6 +483,8 @@ private extension AccountEditor {
         if await peopleOK == false { missing.append("People") }
         if await teamsOK == false { missing.append("Teams") }
         guard !missing.isEmpty else { return nil }
+
+        if missing.count == 5 { return Self.allScopesRefusedWarning }
 
         return "This token works, but isn't authorized for: \(missing.joined(separator: ", ")). " +
             "Those sections may be empty."

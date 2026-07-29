@@ -6,9 +6,8 @@
 import HackerRankKit
 import SwiftUI
 
-/// A sheet that invites a candidate to a test (#12) — the app's first write flow. It states
-/// plainly when the action affects a real HackerRank account, and refreshes the list on
-/// success.
+/// A sheet that invites a candidate to a test (#12) — the app's first write flow. Refreshes
+/// the list on success.
 struct InviteCandidateSheet: View {
     let testID: String
     let account: Account
@@ -30,6 +29,9 @@ struct InviteCandidateSheet: View {
     @State private var atsRequisitionID = ""
     @State private var isSending = false
     @State private var errorMessage: String?
+    /// The account's invitation email templates (#147); the picker is hidden when none load.
+    @State private var templates: [InviteTemplate] = []
+    @State private var selectedTemplateID: String?
 
     private var trimmedEmail: String {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -64,10 +66,6 @@ struct InviteCandidateSheet: View {
                         .disableAutocorrection(true)
                     TextField("Full name (optional)", text: $fullName)
                     Toggle("Send invitation email", isOn: $sendEmail)
-                } footer: {
-                    Text(consequenceText)
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Section {
@@ -80,6 +78,14 @@ struct InviteCandidateSheet: View {
                         .disableAutocorrection(true)
                     TextField("ATS candidate ID", text: $atsCandidateID)
                     TextField("ATS requisition ID", text: $atsRequisitionID)
+                    if !templates.isEmpty {
+                        Picker("Email template", selection: $selectedTemplateID) {
+                            Text("None").tag(String?.none)
+                            ForEach(templates.compactMap(\.id), id: \.self) { id in
+                                Text(templateName(id)).tag(Optional(id))
+                            }
+                        }
+                    }
                     TextField("Email subject", text: $emailSubject)
                     TextField("Email message", text: $emailMessage, axis: .vertical)
                         .lineLimit(2 ... 4)
@@ -121,14 +127,30 @@ struct InviteCandidateSheet: View {
             }
         }
         .frame(width: 500, height: 560)
+        .task { await loadTemplates() }
     }
 
-    /// The footer text spelling out what the invite will do, so a live action is never a
-    /// surprise.
-    private var consequenceText: String {
-        sendEmail
-            ? "This invites a real candidate to this test on HackerRank and emails them the invitation."
-            : "This invites a real candidate to this test on HackerRank (no email is sent)."
+    private func templateName(_ id: String) -> String {
+        templates.first { $0.id == id }?.name ?? id
+    }
+
+    /// Loads the account's invitation email templates for the optional template picker,
+    /// following the cursor (bounded to stay snappy). Best-effort: a failure just leaves
+    /// the picker hidden, since a template has always been optional on an invite.
+    private func loadTemplates() async {
+        let client = HackerRankClient(account: account)
+        var loaded: [InviteTemplate] = []
+        var cursor: String?
+        do {
+            repeat {
+                let page = try await client.inviteTemplatesPage(after: cursor)
+                loaded.append(contentsOf: page.items)
+                cursor = page.next
+            } while cursor != nil && loaded.count < 200
+        } catch {
+            // Leave whatever loaded; the picker simply doesn't render when empty.
+        }
+        templates = loaded.filter { $0.id != nil }
     }
 
     private func trimmed(_ value: String) -> String? {
@@ -158,6 +180,7 @@ struct InviteCandidateSheet: View {
                     validUntil: trimmed(validUntil),
                     emailSubject: trimmed(emailSubject),
                     emailMessage: trimmed(emailMessage),
+                    templateID: selectedTemplateID,
                     evaluatorEmail: trimmed(evaluatorEmail),
                     tags: parsedTags(tags),
                     additionalTime: additionalTimeMinutes,

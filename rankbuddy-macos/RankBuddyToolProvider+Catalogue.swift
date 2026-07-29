@@ -16,6 +16,9 @@ extension RankBuddyToolProvider {
             "type": "string", "description": "Account label or id; defaults to the current account."
         ]
         let query: [String: Any] = ["type": "string", "description": "Case-insensitive substring to match."]
+        func string(_ description: String) -> [String: Any] {
+            ["type": "string", "description": description]
+        }
         func readOnly(
             _ name: String,
             _ description: String,
@@ -44,6 +47,25 @@ extension RankBuddyToolProvider {
             readOnly("list_candidates", "List the candidates for a test.",
                      properties: ["test_id": ["type": "string", "description": "The test's id."], "account": account],
                      required: ["test_id"]),
+            readOnly("candidate_report_pdf", "Fetch a candidate report PDF URL.",
+                     properties: [
+                         "test_id": ["type": "string", "description": "The test's id."],
+                         "candidate_id": ["type": "string", "description": "The candidate's id."],
+                         "account": account
+                     ],
+                     required: ["test_id", "candidate_id"]),
+            readOnly("list_invite_templates", "List invite email templates.",
+                     properties: ["access": string("Optional access filter."), "account": account]),
+            readOnly("get_invite_template", "Get an invite email template.",
+                     properties: ["template_id": ["type": "string", "description": "The template id."],
+                                  "account": account],
+                     required: ["template_id"]),
+            readOnly("list_interview_templates", "List interview templates.",
+                     properties: ["account": account]),
+            readOnly("get_interview_template", "Get an interview template.",
+                     properties: ["template_id": ["type": "integer", "description": "The template id."],
+                                  "account": account],
+                     required: ["template_id"]),
             readOnly("search_tests", "Search the account's tests by name (bounded paging).",
                      properties: ["query": query, "account": account], required: ["query"]),
             readOnly("search_questions", "Search the account's questions by name (bounded paging).",

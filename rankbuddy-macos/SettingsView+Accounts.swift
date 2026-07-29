@@ -16,6 +16,7 @@ struct AccountsSettingsView: View {
     @State private var selectedID: Account.ID?
     /// True while the detail pane shows a blank editor for a not-yet-saved account.
     @State private var addingNew = false
+    @State private var accountPendingRemoval: Account?
 
     var body: some View {
         HSplitView {
@@ -29,6 +30,12 @@ struct AccountsSettingsView: View {
             if selectedID == nil, !addingNew {
                 selectedID = store.currentAccountID ?? store.accounts.first?.id
             }
+        }
+        .alert("Remove Account?", isPresented: removalAlertPresented) {
+            Button("Remove", role: .destructive) { removePendingAccount() }
+            Button("Cancel", role: .cancel) { accountPendingRemoval = nil }
+        } message: {
+            Text("Remove \(accountPendingRemoval?.label ?? "this account") from RankBuddy?")
         }
     }
 
@@ -87,7 +94,7 @@ struct AccountsSettingsView: View {
             Divider().frame(height: 16)
 
             Button {
-                removeSelected()
+                confirmRemoveSelected()
             } label: {
                 Image(systemName: "minus")
                     .frame(width: 24, height: 20)
@@ -167,14 +174,26 @@ struct AccountsSettingsView: View {
 
     // MARK: Actions
 
-    /// Removes the selected account and moves the selection to a safe neighbour.
-    private func removeSelected() {
-        guard let removed = selectedAccount else { return }
+    private var removalAlertPresented: Binding<Bool> {
+        Binding(
+            get: { accountPendingRemoval != nil },
+            set: { if !$0 { accountPendingRemoval = nil } }
+        )
+    }
+
+    private func confirmRemoveSelected() {
+        accountPendingRemoval = selectedAccount
+    }
+
+    /// Removes the confirmed account and moves the selection to a safe neighbour.
+    private func removePendingAccount() {
+        guard let removed = accountPendingRemoval else { return }
 
         let remaining = store.accounts.filter { $0.id != removed.id }
         store.remove(id: removed.id)
         selectedID = store.currentAccountID ?? remaining.first?.id
         addingNew = false
+        accountPendingRemoval = nil
     }
 }
 

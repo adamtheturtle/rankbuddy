@@ -16,10 +16,24 @@ import Foundation
 /// Decode is best-effort: a missing, unreadable, or schema-changed file simply yields `nil`
 /// and the list loads fresh.
 enum DiskPageCache {
-    /// A persisted first page: the items and the cursor to the page after them.
+    /// A persisted first page: the items, the cursor to the page after them, and the last known total.
     private struct Payload<Item: Codable>: Codable {
         let items: [Item]
         let cursor: String?
+        let totalCount: Int?
+
+        init(items: [Item], cursor: String?, totalCount: Int?) {
+            self.items = items
+            self.cursor = cursor
+            self.totalCount = totalCount
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            items = try container.decode([Item].self, forKey: .items)
+            cursor = try container.decodeIfPresent(String.self, forKey: .cursor)
+            totalCount = try container.decodeIfPresent(Int.self, forKey: .totalCount)
+        }
     }
 
     /// The cache directory (`Caches/ListPageCache`), created on first use. `nil` only if the
@@ -46,9 +60,11 @@ enum DiskPageCache {
     /// synchronously: a single page is a few kilobytes, it happens just once per section load
     /// (never per frame), and a synchronous write gives a clean ordering against `clear()` — once
     /// `store` returns, the file reflects it, with no detached write racing a later invalidation.
-    static func store(items: [some Codable], cursor: String?, for key: String) {
+    static func store(items: [some Codable], cursor: String?, totalCount: Int?, for key: String) {
         guard let url = fileURL(for: key),
-              let data = try? JSONEncoder().encode(Payload(items: items, cursor: cursor))
+              let data = try? JSONEncoder().encode(
+                  Payload(items: items, cursor: cursor, totalCount: totalCount)
+              )
         else { return }
 
         // Recreate the directory if `clear()` removed it (or the OS purged the cache) — without
@@ -59,15 +75,18 @@ enum DiskPageCache {
         try? data.write(to: url, options: .atomic)
     }
 
-    /// The persisted first page for `key`, or `nil` when nothing is stored or the file can't be
-    /// decoded into `Item` (e.g. the model's shape changed since it was written).
-    static func load<Item: Codable>(_: [Item].Type, for key: String) -> (items: [Item], cursor: String?)? {
+    // The persisted first page for `key`, or `nil` when nothing is stored or the file can't be
+    // decoded into `Item` (e.g. the model's shape changed since it was written).
+    // swiftlint:disable:next large_tuple
+    static func load<Item: Codable>(_: [Item].Type, for key: String) -> (
+        items: [Item], cursor: String?, totalCount: Int?
+    )? {
         guard let url = fileURL(for: key),
               let data = try? Data(contentsOf: url),
               let payload = try? JSONDecoder().decode(Payload<Item>.self, from: data)
         else { return nil }
 
-        return (payload.items, payload.cursor)
+        return (payload.items, payload.cursor, payload.totalCount)
     }
 
     /// Drops every persisted page. Used when an account is re-keyed (its rows may now point at a

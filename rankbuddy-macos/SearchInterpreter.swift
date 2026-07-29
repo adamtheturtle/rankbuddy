@@ -13,7 +13,9 @@
 
 import BuddyAppKit
 import Foundation
-import FoundationModels
+#if canImport(FoundationModels) && arch(arm64)
+    import FoundationModels
+#endif
 
 enum SearchInterpreter {
     /// A facet the list filters on, paired with the distinct values actually present, so the
@@ -41,7 +43,12 @@ enum SearchInterpreter {
     /// Whether the on-device model can interpret a query right now, so the affordance can be
     /// hidden otherwise.
     static var isAvailable: Bool {
-        SystemLanguageModel.default.isAvailable
+        #if canImport(FoundationModels) && arch(arm64)
+            if #available(macOS 26, *) {
+                return SystemLanguageModel.default.isAvailable
+            }
+        #endif
+        return false
     }
 
     /// Interprets `text` into grounded filters, or `nil` when the model is unavailable, the
@@ -56,30 +63,35 @@ enum SearchInterpreter {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard isAvailable, !trimmed.isEmpty else { return nil }
 
-        let session = LanguageModelSession(instructions: instructions)
-        let prompt = prompt(
-            for: trimmed,
-            facets: facets,
-            dateRangeSupported: dateRangeSupported,
-            dateRangeOptions: dateRangeOptions
-        )
-        do {
-            // A plain-text response (not `@Generable`): the `Generable.promptRepresentation`
-            // accessor the macro emits is absent on some shipping OS builds and aborts the
-            // process at dyld load, so — like `CandidateSummarizer` — this parses a labeled reply.
-            let response = try await session.respond(to: prompt).content
-            let fields = parseModelResponse(response)
-            let grounded = ground(
-                fields,
-                query: trimmed,
-                facets: facets,
-                dateRangeSupported: dateRangeSupported,
-                dateRangeOptions: dateRangeOptions
-            )
-            return grounded.isEmpty ? nil : grounded
-        } catch {
-            return nil
-        }
+        #if canImport(FoundationModels) && arch(arm64)
+            if #available(macOS 26, *) {
+                let session = LanguageModelSession(instructions: instructions)
+                let prompt = prompt(
+                    for: trimmed,
+                    facets: facets,
+                    dateRangeSupported: dateRangeSupported,
+                    dateRangeOptions: dateRangeOptions
+                )
+                do {
+                    // A plain-text response (not `@Generable`): the `Generable.promptRepresentation`
+                    // accessor the macro emits is absent on some shipping OS builds and aborts the
+                    // process at dyld load, so — like `CandidateSummarizer` — this parses a labeled reply.
+                    let response = try await session.respond(to: prompt).content
+                    let fields = parseModelResponse(response)
+                    let grounded = ground(
+                        fields,
+                        query: trimmed,
+                        facets: facets,
+                        dateRangeSupported: dateRangeSupported,
+                        dateRangeOptions: dateRangeOptions
+                    )
+                    return grounded.isEmpty ? nil : grounded
+                } catch {
+                    return nil
+                }
+            }
+        #endif
+        return nil
     }
 
     /// The three raw, ungrounded fields read from the model's reply, before vetting.

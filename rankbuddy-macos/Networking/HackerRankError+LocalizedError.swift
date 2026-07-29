@@ -66,6 +66,7 @@ extension HackerRankError: @retroactive LocalizedError {
             .filter { !$0.isEmpty }
             .joined(separator: " ")
         guard !joined.isEmpty else { return nil }
+
         return joined.hasSuffix(".") ? joined : joined + "."
     }
 
@@ -73,13 +74,16 @@ extension HackerRankError: @retroactive LocalizedError {
         switch errors {
         case let strings as [String]:
             strings
+
         case let objects as [[String: Any]]:
             objects.compactMap { $0["message"] as? String }
+
         case let fields as [String: Any]:
             fields.sorted { $0.key < $1.key }.flatMap { field, value -> [String] in
                 let problems = (value as? [String]) ?? (value as? String).map { [$0] } ?? []
                 return problems.map { "\(field.capitalized) \($0)" }
             }
+
         default:
             []
         }

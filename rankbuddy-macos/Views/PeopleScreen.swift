@@ -4,8 +4,13 @@
 //
 
 import BuddyAppKit
+import FastList
 import HackerRankKit
 import SwiftUI
+
+/// The roles HackerRank accepts for an organisation user, shared by the create sheet
+/// and the detail view's role picker.
+let organisationUserRoles = ["recruiter", "interviewer", "developer"]
 
 /// The People section: the organisation's users (members), with read-only detail (#36) and
 /// a "Create User" write action (#58).
@@ -14,6 +19,8 @@ struct PeopleScreen: View {
     @Environment(\.openWindow) private var openWindow
     @State private var createPresented = false
     @State private var reloadToken = 0
+    @State private var userPendingLock: User?
+    @State private var lockError: String?
 
     var body: some View {
         if let account = store.currentAccount {
@@ -47,11 +54,14 @@ struct PeopleScreen: View {
                 searchPageCap: 40,
                 restorationKey: "selection.users.\(account.id)",
                 contextMenu: { user in
-                    rowMenuItems(
+                    var items = rowMenuItems(
                         copyLabel: "Copy Email",
                         copyText: user.email,
                         openInWindow: { openWindow(value: DetailWindowValue.user(user)) }
                     )
+                    items.append(.separator)
+                    items.append(.button(title: "Lock User…") { userPendingLock = user })
+                    return items
                 },
                 openInWindow: { openWindow(value: DetailWindowValue.user($0)) },
                 accessoryToolbar: { AnyView(createButton) },
@@ -67,10 +77,28 @@ struct PeopleScreen: View {
                 },
                 rowDate: { DisplayFormat.parseDate($0.lastActivityTime) },
                 row: { PersonRow(user: $0) },
-                detail: { PersonDetailView(user: $0) }
+                detail: { PersonDetailView(user: $0, account: account) { reloadToken += 1 } }
             )
             .sheet(isPresented: $createPresented) {
                 CreateUserSheet(account: account) { reloadToken += 1 }
+            }
+            .confirmationDialog(
+                "Lock user?",
+                isPresented: lockDialogPresented,
+                titleVisibility: .visible,
+                presenting: userPendingLock
+            ) { user in
+                Button("Lock \(user.displayName)", role: .destructive) {
+                    Task { await lock(user, account: account) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { user in
+                Text(UserLockCopy.message(for: user.displayName))
+            }
+            .alert("Couldn’t lock user", isPresented: lockErrorPresented) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(lockError ?? "")
             }
         } else {
             NavigationStack {
@@ -88,10 +116,26 @@ struct PeopleScreen: View {
         }
         .help("Create an organisation user")
     }
+
+    private var lockDialogPresented: Binding<Bool> {
+        Binding(get: { userPendingLock != nil }, set: { if !$0 { userPendingLock = nil } })
+    }
+
+    private var lockErrorPresented: Binding<Bool> {
+        Binding(get: { lockError != nil }, set: { if !$0 { lockError = nil } })
+    }
+
+    private func lock(_ user: User, account: Account) async {
+        do {
+            _ = try await HackerRankClient(account: account).lockUser(id: user.id)
+            reloadToken += 1
+        } catch {
+            lockError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
 }
 
-/// A sheet that creates an organisation user (#58) — a write flow. States plainly when it
-/// affects a real account, and refreshes the list on success.
+/// A sheet that creates an organisation user (#58) — a write flow. Refreshes the list on success.
 struct CreateUserSheet: View {
     let account: Account
     var onCreated: () -> Void
@@ -107,7 +151,7 @@ struct CreateUserSheet: View {
     @State private var isSending = false
     @State private var errorMessage: String?
 
-    private static let roles = ["recruiter", "interviewer", "developer"]
+    private static let roles = organisationUserRoles
 
     private var trimmedEmail: String {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -125,9 +169,9 @@ struct CreateUserSheet: View {
         EmailValidation.isLikelyValid(email)
     }
 
-    // The API requires email, firstname, role, and at least one team on POST /users (it
-    // rejects the request with HTTP 400 "Parameter … is required" otherwise); the last
-    // name is genuinely optional.
+    /// The API requires email, firstname, role, and at least one team on POST /users (it
+    /// rejects the request with HTTP 400 "Parameter … is required" otherwise); the last
+    /// name is genuinely optional.
     private var canCreate: Bool {
         isEmailValid && !trimmedFirstName.isEmpty && selectedTeamID != nil
     }
@@ -144,9 +188,12 @@ struct CreateUserSheet: View {
                         .textContentType(.emailAddress)
                         .disableAutocorrection(true)
                     if shouldShowEmailValidation {
-                        Label("Enter a valid email address, for example name@example.com.", systemImage: "exclamationmark.triangle")
-                            .font(.caption)
-                            .foregroundStyle(.red)
+                        Label(
+                            "Enter a valid email address, for example name@example.com.",
+                            systemImage: "exclamationmark.triangle"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.red)
                     }
                     TextField("First name", text: $firstName)
                     TextField("Last name (optional)", text: $lastName)
@@ -165,10 +212,6 @@ struct CreateUserSheet: View {
                             .foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                } footer: {
-                    Text("Create is enabled after you enter a valid email address, a first name, and a team.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {
@@ -238,6 +281,7 @@ struct CreateUserSheet: View {
         errorMessage = nil
         defer { isSending = false }
         guard let selectedTeamID else { return }
+
         do {
             try await HackerRankClient(account: account).createUser(
                 email: trimmedEmail,
@@ -285,54 +329,5 @@ struct PersonRow: View {
         // stretch them the way the tests/interviews rows do.
         .listRowTextColumn()
         .accessibilityElement(children: .combine)
-    }
-}
-
-/// Read-only detail for a single user.
-struct PersonDetailView: View {
-    let user: User
-
-    var body: some View {
-        Form {
-            InspectorHeader(title: user.displayName, badges: user.inspectorBadges)
-
-            Section("Properties") {
-                OptionalRow("Email", user.email)
-                OptionalRow("Role", user.role?.capitalized)
-                OptionalRow("Status", user.status?.capitalized)
-                OptionalRow("Country", user.country)
-                OptionalRow("Last active", DisplayFormat.date(user.lastActivityTime))
-                OptionalRow("Activated", user.activated.map { $0 ? "Yes" : "No" })
-                OptionalRow("Company admin", user.companyAdmin == true ? "Yes" : nil)
-                OptionalRow("Team admin", user.teamAdmin == true ? "Yes" : nil)
-            }
-
-            if let teams = user.teams, !teams.isEmpty {
-                Section("Teams") {
-                    OptionalRow("Member of", "\(teams.count) team\(teams.count == 1 ? "" : "s")")
-                }
-            }
-        }
-        .formStyle(.grouped)
-        .navigationTitle(user.displayName)
-    }
-}
-
-#Preview {
-    NavigationStack {
-        PersonDetailView(user: User(
-            id: "u1",
-            email: "rhea@example.com",
-            firstName: "Rhea",
-            lastName: "Recruiter",
-            country: "GB",
-            role: "recruiter",
-            status: "active",
-            teams: ["tm1", "tm2"],
-            activated: true,
-            companyAdmin: true,
-            teamAdmin: true,
-            lastActivityTime: "2026-06-20T08:30:00Z"
-        ))
     }
 }

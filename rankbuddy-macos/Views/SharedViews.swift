@@ -347,9 +347,43 @@ struct OptionalRow: View {
 
     var body: some View {
         if let value, !value.isEmpty {
-            LabeledContent(label, value: value)
-                .textSelection(.enabled)
+            LabeledContent(label) {
+                Text(value)
+                    .multilineTextAlignment(.trailing)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+            }
         }
+    }
+}
+
+/// A detail-form row that opens a related list in its own window. Replaces the earlier
+/// `NavigationLink` pushes: pushing a full `LoadableList` (with its own split panes, search
+/// field, and customizable toolbar) inside a detail pane nests navigation stacks in a way that
+/// wedges the window — the sidebar stops responding and the toolbar disappears.
+struct WindowLinkRow: View {
+    let title: String
+    let systemImage: String
+    let value: DetailWindowValue
+
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button {
+            openWindow(value: value)
+        } label: {
+            HStack {
+                Label(title, systemImage: systemImage)
+                Spacer()
+                Image(systemName: "arrow.up.forward.square")
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Open \(title.lowercased()) in a new window")
     }
 }
 

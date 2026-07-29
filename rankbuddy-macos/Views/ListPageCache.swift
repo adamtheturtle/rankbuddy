@@ -21,33 +21,37 @@ import Foundation
 /// cleanly. Lightweight by design — a single first page per section.
 @MainActor
 enum ListPageCache {
-    /// A cached first page: the items and the cursor to the page after them.
+    /// A cached first page: the items, the cursor to the page after them, and the last known total.
     private struct Entry<Item> {
         let items: [Item]
         let cursor: String?
+        let totalCount: Int?
     }
 
     private static var storage: [String: Any] = [:]
 
     /// Stores a freshly loaded first page for `key`, replacing any previous entry, and persists
     /// it so the section survives a relaunch.
-    static func store(items: [some Codable], cursor: String?, for key: String) {
-        storage[key] = Entry(items: items, cursor: cursor)
-        DiskPageCache.store(items: items, cursor: cursor, for: key)
+    static func store(items: [some Codable], cursor: String?, totalCount: Int?, for key: String) {
+        storage[key] = Entry(items: items, cursor: cursor, totalCount: totalCount)
+        DiskPageCache.store(items: items, cursor: cursor, totalCount: totalCount, for: key)
     }
 
-    /// The cached first page for `key`, or `nil` when nothing is cached. On an in-memory miss it
-    /// hydrates from the on-disk cache (the first visit after relaunch), populating memory so the
-    /// next visit is a fast hit.
-    static func cached<Item: Codable>(_: [Item].Type, for key: String) -> (items: [Item], cursor: String?)? {
+    // The cached first page for `key`, or `nil` when nothing is cached. On an in-memory miss it
+    // hydrates from the on-disk cache (the first visit after relaunch), populating memory so the
+    // next visit is a fast hit.
+    // swiftlint:disable:next large_tuple
+    static func cached<Item: Codable>(_: [Item].Type, for key: String) -> (
+        items: [Item], cursor: String?, totalCount: Int?
+    )? {
         if let entry = storage[key] as? Entry<Item> {
-            return (entry.items, entry.cursor)
+            return (entry.items, entry.cursor, entry.totalCount)
         }
 
         guard let disk = DiskPageCache.load([Item].self, for: key) else { return nil }
 
-        storage[key] = Entry(items: disk.items, cursor: disk.cursor)
-        return (disk.items, disk.cursor)
+        storage[key] = Entry(items: disk.items, cursor: disk.cursor, totalCount: disk.totalCount)
+        return (disk.items, disk.cursor, disk.totalCount)
     }
 
     /// Drops every cached page, in memory and on disk. Used when an account is re-keyed (#102)

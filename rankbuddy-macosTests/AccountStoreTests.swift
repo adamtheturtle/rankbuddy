@@ -22,13 +22,52 @@ struct AccountStoreTests {
     }
 
     @Test func `baseURL uses a valid override`() {
-        let account = Account(label: "EU", token: "t", baseURLOverride: "https://eu.hackerrank.test")
+        let account = Account(label: "EU", token: "t", baseURLOverride: " https://eu.hackerrank.test ")
         #expect(account.baseURL.absoluteString == "https://eu.hackerrank.test")
+        #expect(account.parsedBaseURLOverride == URL(string: "https://eu.hackerrank.test"))
+        #expect(!account.hasMalformedBaseURLOverride)
     }
 
     @Test func `baseURL ignores an unparseable override`() {
         let account = Account(label: "Bad", token: "t", baseURLOverride: "")
         #expect(account.baseURL == Account.defaultBaseURL)
+        #expect(!account.hasMalformedBaseURLOverride)
+    }
+
+    @Test func `non-empty invalid base URL overrides are malformed`() {
+        for raw in ["htps://hackerrank.internal", "hackerrank.internal", "ftp://hackerrank.internal", "https://"] {
+            let account = Account(label: "Bad", token: "t", baseURLOverride: raw)
+            #expect(account.hasMalformedBaseURLOverride, "\(raw) should be malformed")
+            #expect(account.parsedBaseURLOverride == nil, "\(raw) should not parse as an override")
+        }
+    }
+
+    @Test func `server identity folds cosmetic URL spelling differences`() {
+        let canonical = Account(label: "A", token: "t", baseURLOverride: "https://hackerrank.example").serverIdentity
+        for spelling in [
+            "https://hackerrank.example/",
+            "HTTPS://HACKERRANK.EXAMPLE",
+            "https://hackerrank.example:443",
+            "https://HackerRank.Example:443/"
+        ] {
+            #expect(Account(label: "A", token: "t", baseURLOverride: spelling).serverIdentity == canonical)
+        }
+    }
+
+    @Test func `server identity keeps different servers apart`() {
+        let base = Account(
+            label: "A",
+            token: "t",
+            baseURLOverride: "https://hackerrank.example"
+        ).serverIdentity
+        for differentServer in [
+            "https://other.example",
+            "https://hackerrank.example:8443",
+            "http://hackerrank.example",
+            "https://hackerrank.example/api"
+        ] {
+            #expect(Account(label: "A", token: "t", baseURLOverride: differentServer).serverIdentity != base)
+        }
     }
 
     @Test func `a changed token points at a different backend`() {
@@ -44,6 +83,12 @@ struct AccountStoreTests {
         let original = Account(label: "Work", token: "t")
         let moved = Account(label: "Work", token: "t", baseURLOverride: "https://eu.test", id: original.id)
         #expect(original.pointsAtDifferentBackend(than: moved))
+    }
+
+    @Test func `cosmetic base url changes do not point at a different backend`() {
+        let original = Account(label: "Work", token: "t", baseURLOverride: "https://eu.test")
+        let edited = Account(label: "Work", token: "t", baseURLOverride: "https://EU.TEST:443/", id: original.id)
+        #expect(!original.pointsAtDifferentBackend(than: edited))
     }
 
     @Test func `account round-trips through JSON without the override`() throws {

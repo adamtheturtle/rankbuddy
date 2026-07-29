@@ -60,12 +60,11 @@ extension LoadableList {
     }
 
     /// A loaded-count summary. Prefer the API's exact total when available; fall back to the
-    /// loaded visible count with a `+` while more pages remain.
+    /// loaded visible count while more pages remain.
     func subtitle(visibleCount: Int) -> String {
         let exactTotal = isLocalFiltering ? nil : totalCount
         let displayedCount = exactTotal ?? visibleCount
-        let suffix = exactTotal == nil && nextCursor != nil ? "+" : ""
-        let count = "\(displayedCount)\(suffix) \(displayedCount == 1 ? "item" : "items")"
+        let count = "\(displayedCount) \(displayedCount == 1 ? "item" : "items")"
         return isBackgroundRefreshing ? "\(count) · Refreshing…" : count
     }
 

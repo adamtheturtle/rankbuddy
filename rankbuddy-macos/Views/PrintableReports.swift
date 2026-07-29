@@ -222,7 +222,7 @@ struct QuestionReport: View {
                     ("Unique ID", question.uniqueID),
                     ("Status", question.status?.capitalized),
                     ("Max score", question.maxScore.map { $0.formatted() }),
-                    ("Recommended duration", question.recommendedDuration.map { "\($0) min" }),
+                    ("Recommended duration", question.recommendedDuration.map { "\($0) minutes" }),
                     ("Created", DisplayFormat.date(question.createdAt)),
                     ("Languages", DisplayFormat.languages(question.languages)),
                     ("Skills", DisplayFormat.list(question.skills))

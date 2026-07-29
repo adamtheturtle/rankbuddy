@@ -29,7 +29,10 @@ extension SettingsView {
             }
         }
         .formStyle(.grouped)
-        .onAppear { installedBrowsers = BrowserSettings.installedBrowsers() }
+        .onAppear {
+            BrowserSettings.invalidateInstalledBrowsers()
+            installedBrowsers = BrowserSettings.installedBrowsers()
+        }
     }
 
     /// The first picker row: "System Default (Safari)" when the default resolves, else just

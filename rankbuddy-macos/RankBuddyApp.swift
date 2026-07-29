@@ -85,9 +85,6 @@ struct RankBuddyApp: App {
         .commands {
             AppCommands(palette: palette, openLink: openLink, commandContext: commandContext)
             UpdateCommands()
-            // Adds the standard View ▸ Show/Hide Toolbar and Customize Toolbar… items (#107),
-            // which drive the customizable list toolbar (#101).
-            ToolbarCommands()
         }
 
         // Opens a single item in its own window (#49). Keyed by a Codable detail value passed
@@ -123,6 +120,11 @@ struct RankBuddyApp: App {
                 .environment(accountStore)
                 .environment(health)
                 .preferredColorScheme(appearance.colorScheme)
+        }
+        .commands {
+            // Adds the standard View > Show/Hide Toolbar and Customize Toolbar... items (#107),
+            // which drive the customizable list toolbar (#101).
+            ToolbarCommands()
         }
 
         MenuBarExtra("RankBuddy", systemImage: "checklist", isInserted: menuBarInserted) {

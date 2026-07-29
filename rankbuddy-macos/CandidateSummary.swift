@@ -3,7 +3,9 @@
 //  rankbuddy-macos
 //
 
-import FoundationModels
+#if canImport(FoundationModels) && arch(arm64)
+    import FoundationModels
+#endif
 import HackerRankKit
 import SwiftUI
 
@@ -85,7 +87,12 @@ enum CandidateBrief {
 enum CandidateSummarizer {
     /// Whether the on-device model is ready, so the UI can hide the affordance otherwise.
     static var isAvailable: Bool {
-        SystemLanguageModel.default.isAvailable
+        #if canImport(FoundationModels) && arch(arm64)
+            if #available(macOS 26, *) {
+                return SystemLanguageModel.default.isAvailable
+            }
+        #endif
+        return false
     }
 
     /// The instructions that set the model's tone and guardrails for every summary.
@@ -109,13 +116,18 @@ enum CandidateSummarizer {
         guard isAvailable else { return .unavailable }
         guard let prompt = CandidateBrief.prompt(for: candidate) else { return .noData }
 
-        let session = LanguageModelSession(instructions: instructions)
-        do {
-            let response = try await session.respond(to: prompt)
-            let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-            return text.isEmpty ? .failed : .summary(text)
-        } catch {
-            return .failed
-        }
+        #if canImport(FoundationModels) && arch(arm64)
+            if #available(macOS 26, *) {
+                let session = LanguageModelSession(instructions: instructions)
+                do {
+                    let response = try await session.respond(to: prompt)
+                    let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return text.isEmpty ? .failed : .summary(text)
+                } catch {
+                    return .failed
+                }
+            }
+        #endif
+        return .unavailable
     }
 }

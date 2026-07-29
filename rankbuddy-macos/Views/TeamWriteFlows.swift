@@ -69,8 +69,8 @@ struct CreateTeamSheet: View {
     }
 }
 
-/// A sheet that adds a member to a team (`POST /teams/{id}/users`, #59). States plainly when
-/// it touches a real organisation, and refreshes the members list on success.
+/// A sheet that adds a member to a team (`POST /teams/{id}/users`, #59). Refreshes the
+/// members list on success.
 struct AddTeamMemberSheet: View {
     let teamID: String
     let account: Account
@@ -98,10 +98,6 @@ struct AddTeamMemberSheet: View {
                     Picker("Role", selection: $role) {
                         ForEach(Self.roles, id: \.self) { Text($0.capitalized).tag($0) }
                     }
-                } footer: {
-                    Text("This adds a real member to the team on HackerRank.")
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let errorMessage {

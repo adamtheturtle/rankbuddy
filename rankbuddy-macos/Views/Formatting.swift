@@ -74,12 +74,62 @@ enum DisplayFormat {
         return values.formatted(.list(type: .and))
     }
 
+    nonisolated static let hackerRankLanguageOptions: [(code: String, name: String)] = [
+        ("bash", "Bash"),
+        ("c", "C"),
+        ("clojure", "Clojure"),
+        ("cpp", "C++"),
+        ("cpp14", "C++14"),
+        ("cpp17", "C++17"),
+        ("cpp20", "C++20"),
+        ("csharp", "C#"),
+        ("dart", "Dart"),
+        ("erlang", "Erlang"),
+        ("go", "Go"),
+        ("haskell", "Haskell"),
+        ("java", "Java"),
+        ("java7", "Java 7"),
+        ("java8", "Java 8"),
+        ("java11", "Java 11"),
+        ("java15", "Java 15"),
+        ("javascript", "JavaScript"),
+        ("kotlin", "Kotlin"),
+        ("objectivec", "Objective-C"),
+        ("perl", "Perl"),
+        ("php", "PHP"),
+        ("python", "Python"),
+        ("python2", "Python 2"),
+        ("python3", "Python 3"),
+        ("r", "R"),
+        ("ruby", "Ruby"),
+        ("rust", "Rust"),
+        ("scala", "Scala"),
+        ("swift", "Swift"),
+        ("typescript", "TypeScript")
+    ]
+
+    private nonisolated static let hackerRankLanguageNames: [String: String] = {
+        var names = Dictionary(uniqueKeysWithValues: hackerRankLanguageOptions)
+        names["cplusplus"] = "C++"
+        names["golang"] = "Go"
+        return names
+    }()
+
     /// A human-friendly name for a language code (e.g. `"cpp"` → `"C++"`, `"python"` →
-    /// `"Python"`), via buddy-kit's shared `LanguageCatalog` (#640) so the same raw API codes
-    /// read identically across RankBuddy and PadBuddy. `nonisolated` (pure) so off-main callers
-    /// like `CSVExport` can use it.
+    /// `"Python"`), via buddy-kit's shared `LanguageCatalog` (#640) with fallbacks for HackerRank's
+    /// versioned aliases. `nonisolated` (pure) so off-main callers like `CSVExport` can use it.
     nonisolated static func languageName(_ code: String) -> String {
-        code.languageDisplayName
+        let key = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let compactKey = key
+            .replacingOccurrences(of: "_", with: "")
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: " ", with: "")
+
+        if let name = hackerRankLanguageNames[key] ?? hackerRankLanguageNames[compactKey] {
+            return name
+        }
+
+        return code.languageDisplayName
     }
 
     /// Joins language codes for display, normalising each to its friendly name. Returns nil

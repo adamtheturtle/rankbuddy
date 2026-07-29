@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/buddy-kit",
       "state" : {
-        "revision" : "72d8c1f38d183d7518dfbfaf720a551fb86e23fb",
-        "version" : "0.14.2"
+        "revision" : "73e1238bbdcd6f83fdc017423c08c59d285ecb08",
+        "version" : "0.16.12"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/HackerRankKit",
       "state" : {
-        "revision" : "157699da90717f5f7d8e87798b9f42a75ca0d69c",
-        "version" : "0.3.1"
+        "revision" : "d0b8c8507752ed3233824c778c394a6cb4a49da5",
+        "version" : "0.4.0"
       }
     },
     {

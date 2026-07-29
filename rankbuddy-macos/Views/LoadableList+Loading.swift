@@ -31,7 +31,7 @@ extension LoadableList {
         if let key = cacheKey, let cached = ListPageCache.cached([Item].self, for: key), !cached.items.isEmpty {
             items = cached.items
             nextCursor = cached.cursor
-            totalCount = nil
+            totalCount = cached.totalCount
             phase = .loaded
             // Cached rows are shown immediately; the load below is a background refresh (#102).
             isBackgroundRefreshing = true
@@ -70,7 +70,9 @@ extension LoadableList {
             totalCount = page.totalCount
             phase = .loaded
             onFirstPage(page.items)
-            if let key = cacheKey { ListPageCache.store(items: page.items, cursor: page.next, for: key) }
+            if let key = cacheKey {
+                ListPageCache.store(items: page.items, cursor: page.next, totalCount: page.totalCount, for: key)
+            }
             if preservesVisibleState {
                 reconcilePreservedSelection(in: items)
             } else {
