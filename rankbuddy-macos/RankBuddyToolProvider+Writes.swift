@@ -318,7 +318,12 @@ extension RankBuddyToolProvider {
         // request with HTTP 400 otherwise), so fail fast with a clear message instead of
         // relaying the 400. The last name is genuinely optional.
         guard let firstName = stringArgument(arguments, "first_name") else { return missingArgument("first_name") }
-        guard let role = stringArgument(arguments, "role") else { return missingArgument("role") }
+        guard let rawRole = stringArgument(arguments, "role") else { return missingArgument("role") }
+
+        let role = rawRole.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard ["recruiter", "developer", "interviewer"].contains(role) else {
+            return errorResult("`role` must be recruiter, developer, or interviewer.")
+        }
         guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
@@ -881,7 +886,10 @@ extension RankBuddyToolProvider {
                       "email": string("The user's email.", minLength: 1, format: "email"),
                       "first_name": string("The user's first name."),
                       "last_name": string("Last name (optional)."),
-                      "role": string("Role: recruiter, developer, or interviewer."),
+                      "role": string(
+                          "Role: recruiter, developer, or interviewer.",
+                          allowedValues: ["recruiter", "developer", "interviewer"]
+                      ),
                       "team_id": string("Id of the team the user will belong to (see list_teams)."),
                       "account": account
                   ],
