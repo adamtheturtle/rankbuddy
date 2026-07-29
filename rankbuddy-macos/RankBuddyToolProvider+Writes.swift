@@ -559,7 +559,12 @@ extension RankBuddyToolProvider {
     @MainActor
     private func addTeamMemberTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
-        guard let email = stringArgument(arguments, "email") else { return missingArgument("email") }
+        guard let rawEmail = stringArgument(arguments, "email") else { return missingArgument("email") }
+
+        let email = rawEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard EmailValidation.isLikelyValid(email) else {
+            return errorResult("`email` must be a valid email address.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -747,9 +752,10 @@ extension RankBuddyToolProvider {
         let account: [String: Any] = [
             "type": "string", "description": "Account label or id; defaults to the current account."
         ]
-        func string(_ description: String, minLength: Int? = nil) -> [String: Any] {
+        func string(_ description: String, minLength: Int? = nil, format: String? = nil) -> [String: Any] {
             var schema: [String: Any] = ["type": "string", "description": description]
             if let minLength { schema["minLength"] = minLength }
+            if let format { schema["format"] = format }
             return schema
         }
         func integer(_ description: String) -> [String: Any] {
@@ -938,7 +944,8 @@ extension RankBuddyToolProvider {
                   required: ["team_id"], destructive: true),
             write("add_team_member", "Add a member to a team by email.",
                   properties: [
-                      "team_id": string("The team's id."), "email": string("The member's email."),
+                      "team_id": string("The team's id."),
+                      "email": string("The member's email.", minLength: 1, format: "email"),
                       "role": string("The member's role (optional)."), "account": account
                   ],
                   required: ["team_id", "email"]),
