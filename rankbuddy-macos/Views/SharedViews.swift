@@ -151,10 +151,12 @@ struct RelativeDateText: View {
     var prefix: String = ""
 
     var body: some View {
-        if let date = DisplayFormat.parseDate(iso) {
-            let labels = RelativeDateLabel.labels(for: date)
-            Text(prefix.isEmpty ? labels.relative : "\(prefix) \(labels.relative)")
-                .help(labels.tooltip)
+        TimelineView(.periodic(from: .now, by: 30)) { _ in
+            if let date = DisplayFormat.parseDate(iso) {
+                let labels = RelativeDateLabel.labels(for: date)
+                Text(prefix.isEmpty ? labels.relative : "\(prefix) \(labels.relative)")
+                    .help(labels.tooltip)
+            }
         }
     }
 }
@@ -197,20 +199,22 @@ struct RowDateLabel: View {
     static let minimumColumnWidth: CGFloat = 60, maximumColumnWidth: CGFloat = 160
 
     var body: some View {
-        Group {
-            if let date {
-                let labels = RelativeDateLabel.labels(for: date)
-                Text(labels.relative)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .help(labels.tooltip)
-                    .accessibilityLabel(labels.tooltip)
-            } else {
-                Color.clear
+        TimelineView(.periodic(from: .now, by: 30)) { _ in
+            Group {
+                if let date {
+                    let labels = RelativeDateLabel.labels(for: date)
+                    Text(labels.relative)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .help(labels.tooltip)
+                        .accessibilityLabel(labels.tooltip)
+                } else {
+                    Color.clear
+                }
             }
+            .frame(minWidth: Self.minimumColumnWidth, maxWidth: Self.maximumColumnWidth, alignment: .trailing)
         }
-        .frame(minWidth: Self.minimumColumnWidth, maxWidth: Self.maximumColumnWidth, alignment: .trailing)
     }
 }
 
