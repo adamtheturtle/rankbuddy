@@ -72,8 +72,31 @@ enum WhatsNew {
         currentBuild: String,
         lastSeenRelease: String
     ) -> Bool {
-        !highlights.isEmpty
-            && releaseIdentifier(version: currentVersion, build: currentBuild) != lastSeenRelease
+        guard !highlights.isEmpty else { return false }
+        guard !lastSeenRelease.isEmpty else { return true }
+
+        return isNewer(
+            version: currentVersion,
+            build: currentBuild,
+            than: lastSeenRelease
+        )
+    }
+
+    /// Compares marketing versions numerically first, then build numbers when the versions match.
+    /// A legacy version-only stored value is treated as build zero so it migrates forward once.
+    static func isNewer(version: String, build: String, than releaseIdentifier: String) -> Bool {
+        let components = releaseIdentifier.split(separator: "|", maxSplits: 1, omittingEmptySubsequences: false)
+        let previousVersion = String(components[0])
+        let previousBuild = components.count == 2 ? String(components[1]) : "0"
+
+        switch version.compare(previousVersion, options: .numeric) {
+        case .orderedDescending:
+            return true
+        case .orderedAscending:
+            return false
+        case .orderedSame:
+            return build.compare(previousBuild, options: .numeric) == .orderedDescending
+        }
     }
 }
 
