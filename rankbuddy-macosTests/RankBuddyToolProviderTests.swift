@@ -526,6 +526,27 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.hasCandidateUpdate(["accept_result_updates": .bool(false)]))
     }
 
+    @Test func `update_candidate rejects blank target ids`() async {
+        let blankTest = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string(" "), "candidate_id": .string("candidate-1"),
+                "full_name": .string("Ada")
+            ]
+        )
+        let blankCandidate = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("\n"),
+                "full_name": .string("Ada")
+            ]
+        )
+        #expect(blankTest.isError == true)
+        #expect(text(blankTest).contains("test_id"))
+        #expect(blankCandidate.isError == true)
+        #expect(text(blankCandidate).contains("candidate_id"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
