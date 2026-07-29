@@ -16,6 +16,15 @@ struct SearchInterpreterTests {
         id: "status", label: "Status", options: ["Active", "Ended", "Draft"]
     )
 
+    @Test func `prompt retrieval promotes matching options beyond the fixed prefix`() {
+        let options = (1 ... 50).map { "Team \($0)" }
+        let retrieved = SearchInterpreter.retrievedOptions(options, query: "Team 50 interviews", limit: 40)
+
+        #expect(retrieved.count == 40)
+        #expect(retrieved.first == "Team 50")
+        #expect(retrieved.contains("Team 50"))
+    }
+
     @Test func `parseModelResponse reads labeled fields and a multi-line filter block`() {
         let reply = """
         keywords: binary search

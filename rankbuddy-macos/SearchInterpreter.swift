@@ -152,7 +152,8 @@ enum SearchInterpreter {
             lines.append("- (none)")
         } else {
             for facet in facets {
-                let options = optionList(facet.options, limit: optionLimit)
+                let retrieved = retrievedOptions(facet.options, query: text, limit: optionLimit)
+                let options = optionList(retrieved, limit: optionLimit)
                 lines.append("- \(facet.id) (\(facet.label)): \(options.isEmpty ? "(no values)" : options)")
             }
         }
@@ -177,6 +178,22 @@ enum SearchInterpreter {
     /// list can't dominate the prompt. Delegates to buddy-kit's shared grounding core (#639).
     static func optionList(_ values: [String], limit: Int) -> String {
         SearchGrounding.optionList(values, limit: limit)
+    }
+
+    /// Retrieves query-relevant values before applying the prompt cap, so a matching value deep
+    /// in a large facet is never hidden merely because of API ordering.
+    static func retrievedOptions(_ values: [String], query: String, limit: Int) -> [String] {
+        guard limit > 0 else { return [] }
+
+        let queryWords = tokens(query)
+        return values.enumerated()
+            .sorted { lhs, rhs in
+                let lhsScore = tokens(lhs.element).intersection(queryWords).count
+                let rhsScore = tokens(rhs.element).intersection(queryWords).count
+                return lhsScore == rhsScore ? lhs.offset < rhs.offset : lhsScore > rhsScore
+            }
+            .prefix(limit)
+            .map(\.element)
     }
 
     private static let optionLimit = 40
