@@ -240,9 +240,12 @@ extension QuestionDetailView {
     @ViewBuilder
     private var editableRows: some View {
         EditableTextRow(label: "Max score", value: displayed.maxScore.map { $0.formatted() } ?? "") { newValue in
-            guard newValue.isEmpty || Double(newValue) != nil else { return false }
+            guard newValue.isEmpty || QuestionEditValidation.maxScore(from: newValue) != nil else {
+                editError = "Max score must be a finite number."
+                return false
+            }
 
-            return await save(QuestionWriteOptions(maxScore: Double(newValue)))
+            return await save(QuestionWriteOptions(maxScore: QuestionEditValidation.maxScore(from: newValue)))
         }
         EditableNumberRow(label: "Recommended duration (minutes)", value: displayed.recommendedDuration) { newValue in
             await save(QuestionWriteOptions(recommendedDuration: newValue))
