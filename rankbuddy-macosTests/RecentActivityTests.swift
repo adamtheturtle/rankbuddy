@@ -81,4 +81,26 @@ struct RecentActivityTests {
         // A missing subtitle can't be classified as active.
         #expect(!item("t", .tests, subtitle: nil).isActiveOrUpcoming)
     }
+
+    @Test func `active tests respect their cached availability end`() throws {
+        let now = try #require(ISO8601DateFormatter().date(from: "2026-07-01T12:00:00Z"))
+        let ended = RecentItem(
+            collection: .tests,
+            id: "ended",
+            title: "Ended",
+            subtitle: "Active",
+            endTime: "2026-07-01T11:59:59Z"
+        )
+        let upcoming = RecentItem(
+            collection: .tests,
+            id: "upcoming",
+            title: "Upcoming",
+            subtitle: "Active",
+            startTime: "2026-07-02T12:00:00Z",
+            endTime: "2026-07-03T12:00:00Z"
+        )
+
+        #expect(!ended.isActiveOrUpcoming(now: now))
+        #expect(upcoming.isActiveOrUpcoming(now: now))
+    }
 }

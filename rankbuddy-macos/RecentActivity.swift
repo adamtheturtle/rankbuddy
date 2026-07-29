@@ -15,21 +15,56 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
     let id: String
     let title: String
     var subtitle: String?
+    var startTime: String?
+    var endTime: String?
+
+    init(
+        collection: FavoriteCollection,
+        id: String,
+        title: String,
+        subtitle: String?,
+        startTime: String? = nil,
+        endTime: String? = nil
+    ) {
+        self.collection = collection
+        self.id = id
+        self.title = title
+        self.subtitle = subtitle
+        self.startTime = startTime
+        self.endTime = endTime
+    }
 
     /// Whether this item counts as "active or upcoming" for the menu-bar filter (#67): an
     /// open test or a scheduled / in-progress interview. Questions (no active/upcoming notion)
     /// and finished/archived items are excluded. Matches on the cached `subtitle`, which the
     /// lists record as the test state / interview status — the only signal available offline.
     var isActiveOrUpcoming: Bool {
+        isActiveOrUpcoming(now: Date())
+    }
+
+    func isActiveOrUpcoming(now: Date) -> Bool {
         let status = subtitle?.lowercased()
         switch collection {
         case .tests:
-            return status == "active"
+            guard status == "active" else { return false }
+
+            if let end = Self.parseWindowDate(endTime), now >= end { return false }
+            return true
+
         case .interviews:
             return status == "scheduled" || status == "in progress" || status == "in_progress"
+
         default:
             return false
         }
+    }
+
+    private static func parseWindowDate(_ value: String?) -> Date? {
+        guard let value, !value.isEmpty else { return nil }
+
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: value) ?? ISO8601DateFormatter().date(from: value)
     }
 }
 

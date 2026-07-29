@@ -72,7 +72,14 @@ struct TestsScreen: View {
                 onFirstPage: { tests in
                     RecentActivityStore.shared.record(
                         tests.map {
-                            RecentItem(collection: .tests, id: $0.id, title: $0.name, subtitle: $0.state?.capitalized)
+                            RecentItem(
+                                collection: .tests,
+                                id: $0.id,
+                                title: $0.name,
+                                subtitle: $0.state?.capitalized,
+                                startTime: $0.startTime,
+                                endTime: $0.endTime
+                            )
                         },
                         for: .tests,
                         account: account.id
