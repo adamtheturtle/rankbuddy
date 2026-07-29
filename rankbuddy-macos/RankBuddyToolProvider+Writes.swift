@@ -204,8 +204,11 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func inviteCandidateTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+        guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
         guard let email = stringArgument(arguments, "email") else { return missingArgument("email") }
+
+        let testID = rawTestID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !testID.isEmpty else { return errorResult("`test_id` must not be empty.") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         let additionalTime = intArgument(arguments, "additional_time")
