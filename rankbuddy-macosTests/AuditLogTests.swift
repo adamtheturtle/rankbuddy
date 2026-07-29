@@ -111,6 +111,35 @@ struct AuditLogTests {
         )
     }
 
+    @Test func `pagination must match its account generation and cursor`() {
+        let accountID = UUID()
+
+        #expect(
+            AccountActivityView.isCurrentPagination(
+                .init(accountID: accountID, generation: 3, cursor: "page-2"),
+                currentAccountID: accountID,
+                currentGeneration: 3,
+                currentCursor: "page-2"
+            )
+        )
+        #expect(
+            !AccountActivityView.isCurrentPagination(
+                .init(accountID: accountID, generation: 3, cursor: "page-2"),
+                currentAccountID: UUID(),
+                currentGeneration: 3,
+                currentCursor: "page-2"
+            )
+        )
+        #expect(
+            !AccountActivityView.isCurrentPagination(
+                .init(accountID: accountID, generation: 3, cursor: "page-2"),
+                currentAccountID: accountID,
+                currentGeneration: 4,
+                currentCursor: "new-page-2"
+            )
+        )
+    }
+
     // MARK: - Display helpers
 
     @Test func `headline summarises the action, type, and id`() throws {

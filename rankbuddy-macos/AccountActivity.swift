@@ -27,6 +27,12 @@ struct AccountActivityView: View {
         case failed(String)
     }
 
+    struct PaginationRequest: Equatable {
+        let accountID: Account.ID
+        let generation: Int
+        let cursor: String
+    }
+
     var body: some View {
         Group {
             if let account = store.currentAccount {
@@ -145,14 +151,33 @@ struct AccountActivityView: View {
     private func loadMore(account: Account) async {
         guard let cursor = nextCursor, !isLoadingMore else { return }
 
+        let request = PaginationRequest(
+            accountID: account.id,
+            generation: reloadGeneration,
+            cursor: cursor
+        )
         isLoadingMore = true
         loadMoreError = nil
         defer { isLoadingMore = false }
         do {
             let page = try await HackerRankClient(account: account).auditLogPage(after: cursor)
+            guard Self.isCurrentPagination(
+                request,
+                currentAccountID: store.currentAccount?.id,
+                currentGeneration: reloadGeneration,
+                currentCursor: nextCursor
+            ) else { return }
+
             entries = Self.mergedEntries(entries, with: page.items)
             nextCursor = page.next
         } catch {
+            guard Self.isCurrentPagination(
+                request,
+                currentAccountID: store.currentAccount?.id,
+                currentGeneration: reloadGeneration,
+                currentCursor: nextCursor
+            ) else { return }
+
             loadMoreError = error.localizedDescription
         }
     }
@@ -185,6 +210,22 @@ struct AccountActivityView: View {
         currentGeneration: Int
     ) -> Bool {
         accountID == currentAccountID && generation == currentGeneration
+    }
+
+    /// Pagination also pins the cursor it started from, so a response cannot append into a list
+    /// whose account, reload, or page boundary changed while the request was in flight.
+    static func isCurrentPagination(
+        _ request: PaginationRequest,
+        currentAccountID: Account.ID?,
+        currentGeneration: Int,
+        currentCursor: String?
+    ) -> Bool {
+        isCurrentRequest(
+            accountID: request.accountID,
+            currentAccountID: currentAccountID,
+            generation: request.generation,
+            currentGeneration: currentGeneration
+        ) && request.cursor == currentCursor
     }
 }
 
