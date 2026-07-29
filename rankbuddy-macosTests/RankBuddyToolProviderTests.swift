@@ -481,6 +481,27 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("evaluator_email"))
     }
 
+    @Test func `update_candidate rejects malformed invite timestamps`() async {
+        let badFrom = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "invite_valid_from": .string("tomorrowish")
+            ]
+        )
+        let badTo = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "invite_valid_to": .string("eventually")
+            ]
+        )
+        #expect(badFrom.isError == true)
+        #expect(text(badFrom).contains("invite_valid_from"))
+        #expect(badTo.isError == true)
+        #expect(text(badTo).contains("invite_valid_to"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

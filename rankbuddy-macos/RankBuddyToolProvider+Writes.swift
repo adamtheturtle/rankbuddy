@@ -151,6 +151,10 @@ extension RankBuddyToolProvider {
         }
     }
 
+    nonisolated static func isValidISO8601(_ value: String?) -> Bool {
+        value.map { ISO8601DateFormatter().date(from: $0) != nil } ?? true
+    }
+
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -265,6 +269,10 @@ extension RankBuddyToolProvider {
         let finishURL = rawFinishURL.flatMap { URL.remoteWebURL(from: $0)?.absoluteString }
         let resultURL = rawResultURL.flatMap { URL.remoteWebURL(from: $0)?.absoluteString }
         let evaluatorEmail = Self.normalizedOptionalString(stringArgument(arguments, "evaluator_email"))
+        let validFrom = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_from"))
+        let validTo = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_to"))
+        guard Self.isValidISO8601(validFrom) else { return errorResult("`invite_valid_from` must be ISO-8601.") }
+        guard Self.isValidISO8601(validTo) else { return errorResult("`invite_valid_to` must be ISO-8601.") }
         guard rawFinishURL == nil || finishURL != nil else {
             return errorResult("`test_finish_url` must be a valid HTTP or HTTPS URL.")
         }
@@ -283,8 +291,8 @@ extension RankBuddyToolProvider {
                 options: CandidateUpdateOptions(
                     fullName: stringArgument(arguments, "full_name"),
                     atsState: intArgument(arguments, "ats_state"),
-                    inviteValidFrom: stringArgument(arguments, "invite_valid_from"),
-                    inviteValidTo: stringArgument(arguments, "invite_valid_to"),
+                    inviteValidFrom: validFrom,
+                    inviteValidTo: validTo,
                     evaluatorEmail: evaluatorEmail,
                     testFinishURL: finishURL,
                     testResultURL: resultURL,
