@@ -101,6 +101,7 @@ struct CommandEditableTitle: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .onSubmit { Task { await commit() } }
+                .onExitCommand { cancelEditing() }
                 .onChange(of: fieldFocused) { _, focused in
                     if !focused, isEditing { Task { await commit() } }
                 }
@@ -117,6 +118,16 @@ struct CommandEditableTitle: View {
         draft = title
         isEditing = true
         fieldFocused = true
+    }
+
+    /// Escape follows the Mac convention: restore the current title and leave edit mode without
+    /// allowing the resulting focus loss to enter the commit path.
+    private func cancelEditing() {
+        guard isEditing, !isSaving else { return }
+
+        draft = title
+        isEditing = false
+        fieldFocused = false
     }
 
     private func commit() async {
