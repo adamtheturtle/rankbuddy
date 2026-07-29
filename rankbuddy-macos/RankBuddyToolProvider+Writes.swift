@@ -313,9 +313,15 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func deleteCandidateReportTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
-        guard let candidateID = stringArgument(arguments, "candidate_id") else {
+        guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+        guard let rawCandidateID = stringArgument(arguments, "candidate_id") else {
             return missingArgument("candidate_id")
+        }
+        guard let testID = Self.normalizedOptionalString(rawTestID) else {
+            return errorResult("`test_id` must not be empty.")
+        }
+        guard let candidateID = Self.normalizedOptionalString(rawCandidateID) else {
+            return errorResult("`candidate_id` must not be empty.")
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 

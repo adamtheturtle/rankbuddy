@@ -418,6 +418,21 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("test_id"))
     }
 
+    @Test func `delete_candidate_report rejects blank target ids`() async {
+        let blankTest = await writeProvider().callTool(
+            "delete_candidate_report",
+            arguments: ["test_id": .string(" "), "candidate_id": .string("candidate-1")]
+        )
+        let blankCandidate = await writeProvider().callTool(
+            "delete_candidate_report",
+            arguments: ["test_id": .string("test-1"), "candidate_id": .string("\n")]
+        )
+        #expect(blankTest.isError == true)
+        #expect(text(blankTest).contains("test_id"))
+        #expect(blankCandidate.isError == true)
+        #expect(text(blankCandidate).contains("candidate_id"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
