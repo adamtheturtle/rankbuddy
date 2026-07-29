@@ -18,7 +18,9 @@ import SwiftUI
 enum RankBuddyUpdates {
     /// The standard Sparkle controller, or `nil` when no appcast feed is configured.
     static let controller: SPUStandardUpdaterController? = {
-        guard feedConfigured(Bundle.main.object(forInfoDictionaryKey: "SUFeedURL")) else { return nil }
+        guard feedConfigured(Bundle.main.object(forInfoDictionaryKey: "SUFeedURL")),
+              signingKeyConfigured(Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey"))
+        else { return nil }
 
         return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
     }()
@@ -36,6 +38,16 @@ enum RankBuddyUpdates {
         else { return false }
 
         return components.url != nil
+    }
+
+    /// Whether Sparkle has a valid Ed25519 public key. Sparkle's generated `SUPublicEDKey` is a
+    /// base64-encoded 32-byte key; requiring that shape prevents exposing an updater that cannot
+    /// securely verify downloaded releases.
+    static func signingKeyConfigured(_ infoValue: Any?) -> Bool {
+        guard let string = infoValue as? String else { return false }
+
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        return Data(base64Encoded: trimmed)?.count == 32
     }
 }
 
