@@ -49,6 +49,38 @@ struct AuditLogTests {
         #expect(entry.userLabel == nil)
     }
 
+    @Test func `paged entries reconcile duplicate stable IDs in server order`() throws {
+        let first = try JSONDecoder().decode(
+            AuditLogEntry.self,
+            from: Data(
+                """
+                {"source_id":"t1","source_type":"test","action":"update",
+                 "created_at":"2026-07-01","modified_fields":["name"]}
+                """.utf8
+            )
+        )
+        let repeated = try JSONDecoder().decode(
+            AuditLogEntry.self,
+            from: Data(
+                """
+                {"source_id":"t1","source_type":"test","action":"update",
+                 "created_at":"2026-07-01","modified_fields":["cutoff_score"]}
+                """.utf8
+            )
+        )
+        let later = try JSONDecoder().decode(
+            AuditLogEntry.self,
+            from: Data(
+                #"{"source_id":"q2","source_type":"question","action":"create","created_at":"2026-06-30"}"#.utf8
+            )
+        )
+
+        let merged = AccountActivityView.mergedEntries([first], with: [repeated, later, later])
+
+        #expect(merged.map(\.id) == [first.id, later.id])
+        #expect(merged.first?.modifiedFields == ["cutoff_score"])
+    }
+
     // MARK: - Display helpers
 
     @Test func `headline summarises the action, type, and id`() throws {

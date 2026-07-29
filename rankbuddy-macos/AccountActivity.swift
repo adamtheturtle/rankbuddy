@@ -92,7 +92,7 @@ struct AccountActivityView: View {
         phase = .loading
         do {
             let page = try await HackerRankClient(account: account).auditLogPage()
-            entries = page.items
+            entries = Self.mergedEntries([], with: page.items)
             nextCursor = page.next
             phase = .loaded
         } catch {
@@ -106,9 +106,28 @@ struct AccountActivityView: View {
         isLoadingMore = true
         defer { isLoadingMore = false }
         if let page = try? await HackerRankClient(account: account).auditLogPage(after: cursor) {
-            entries += page.items
+            entries = Self.mergedEntries(entries, with: page.items)
             nextCursor = page.next
         }
+    }
+
+    /// Preserves server order while replacing an existing record when a later page repeats its
+    /// stable identity. This keeps SwiftUI's `ForEach` identities unique across page boundaries.
+    static func mergedEntries(
+        _ existing: [AuditLogEntry],
+        with incoming: [AuditLogEntry]
+    ) -> [AuditLogEntry] {
+        var merged: [AuditLogEntry] = []
+        var indexByID: [AuditLogEntry.ID: Int] = [:]
+        for entry in existing + incoming {
+            if let index = indexByID[entry.id] {
+                merged[index] = entry
+            } else {
+                indexByID[entry.id] = merged.endIndex
+                merged.append(entry)
+            }
+        }
+        return merged
     }
 }
 
