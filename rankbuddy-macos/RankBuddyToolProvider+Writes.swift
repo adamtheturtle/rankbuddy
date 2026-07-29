@@ -655,6 +655,9 @@ extension RankBuddyToolProvider {
         guard let from = ISO8601DateFormatter().date(from: fromText) else {
             return errorResult("`from` must be an ISO-8601 timestamp, e.g. 2026-07-01T14:00:00Z.")
         }
+        guard from > Date() else {
+            return errorResult("`from` must be a future timestamp.")
+        }
 
         let candidateEmail = stringArgument(arguments, "candidate_email")?
             .trimmingCharacters(in: .whitespacesAndNewlines)

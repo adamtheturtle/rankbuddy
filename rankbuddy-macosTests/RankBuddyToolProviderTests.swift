@@ -346,6 +346,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("ISO-8601"))
     }
 
+    @Test func `schedule_interview rejects a start time in the past`() async {
+        let result = await writeProvider().callTool(
+            "schedule_interview",
+            arguments: ["title": .string("Pairing"), "from": .string("2000-01-01T00:00:00Z")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("future"))
+    }
+
     @Test func `schedule_interview rejects a malformed candidate email`() async {
         let result = await writeProvider().callTool(
             "schedule_interview",
