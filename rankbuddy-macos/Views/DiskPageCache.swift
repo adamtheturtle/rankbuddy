@@ -73,6 +73,7 @@ enum DiskPageCache {
         for key: String,
         now: Date = Date()
     ) {
+        guard isPersistable(key) else { return }
         guard let url = fileURL(for: key),
               let data = try? JSONEncoder().encode(
                   Payload(items: items, cursor: cursor, totalCount: totalCount, storedAt: now)
@@ -97,6 +98,12 @@ enum DiskPageCache {
     ) -> (
         items: [Item], cursor: String?, totalCount: Int?
     )? {
+        guard isPersistable(key) else {
+            if let url = fileURL(for: key) {
+                try? FileManager.default.removeItem(at: url)
+            }
+            return nil
+        }
         guard let url = fileURL(for: key),
               let data = try? Data(contentsOf: url),
               let payload = try? JSONDecoder().decode(Payload<Item>.self, from: data)
@@ -115,6 +122,11 @@ enum DiskPageCache {
             return 15 * 60
         }
         return 60 * 60
+    }
+
+    /// Candidate records contain recruiting PII and must remain memory-only.
+    private static func isPersistable(_ key: String) -> Bool {
+        !key.lowercased().contains("candidate")
     }
 
     /// Drops every persisted page. Used when an account is re-keyed (its rows may now point at a

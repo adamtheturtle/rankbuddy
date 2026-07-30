@@ -61,4 +61,11 @@ struct DiskPageCacheTests {
         )
         #expect(loaded == nil)
     }
+
+    @Test func `candidate pages are never persisted`() async {
+        await DiskPageCache.clear()
+        let key = "selection.candidates.test.account"
+        await DiskPageCache.store(items: ["person@example.com"], cursor: nil, totalCount: 1, for: key)
+        #expect(await DiskPageCache.load([String].self, for: key) == nil)
+    }
 }
