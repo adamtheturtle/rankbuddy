@@ -6,7 +6,57 @@
 import Foundation
 import HackerRankKit
 @testable import rankbuddy_macos
+import Synchronization
 import Testing
+
+/// Fails the first two GETs with a retryable status, then returns a valid tests page.
+/// The mutex keeps the request count safe when URLSession invokes the protocol on its
+/// own worker queue.
+private final class TransientThenSuccessURLProtocol: URLProtocol {
+    private static let requestCounter = Mutex(0)
+
+    static func reset() {
+        requestCounter.withLock { $0 = 0 }
+    }
+
+    static var requestCount: Int {
+        requestCounter.withLock { $0 }
+    }
+
+    override static func canInit(with _: URLRequest) -> Bool {
+        true
+    }
+
+    override static func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        let attempt = Self.requestCounter.withLock {
+            $0 += 1
+            return $0
+        }
+        let status = attempt < 3 ? 429 : 200
+        let body = attempt < 3
+            ? Data(#"{"message":"Please retry"}"#.utf8)
+            : Data(#"{"data":[{"id":"retried","name":"Recovered"}],"next":null}"#.utf8)
+        let headers = attempt < 3 ? ["Retry-After": "0"] : ["Content-Type": "application/json"]
+        guard let url = request.url,
+              let response = HTTPURLResponse(
+                  url: url,
+                  statusCode: status,
+                  httpVersion: "HTTP/1.1",
+                  headerFields: headers
+              )
+        else { return }
+
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+}
 
 /// Coverage for `HackerRankClient` itself (#3, #32), driven through the in-process demo
 /// server. Where `MockHackerRankServerTests` fetches and decodes fixtures directly, these
@@ -45,6 +95,21 @@ struct HackerRankClientTests {
         #expect(second.items.count == 2)
         #expect(second.items.map(\.id) == ["t4", "t5"])
         #expect(second.next == nil)
+    }
+
+    @Test func `transient GET failures retry before succeeding`() async throws {
+        TransientThenSuccessURLProtocol.reset()
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [TransientThenSuccessURLProtocol.self]
+        let client = HackerRankClient(
+            account: Account(label: "Org", token: "live-token"),
+            session: URLSession(configuration: configuration)
+        )
+
+        let page = try await client.testsPage()
+
+        #expect(page.items.map(\.id) == ["retried"])
+        #expect(TransientThenSuccessURLProtocol.requestCount == 3)
     }
 
     // MARK: - Other collections
