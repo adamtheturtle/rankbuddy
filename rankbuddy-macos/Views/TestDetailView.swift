@@ -17,10 +17,10 @@ struct TestDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AppCommandContext.self) private var commandContext
-    /// Bumped by the Edit toolbar button to open the inline title rename (#95).
     @State private var titleEditRequest = 0
     @State private var archivePresented = false
     @State private var archiveError: String?
+    @State private var renameError: String?
     @State private var deletePresented = false
     @State private var deleteError: String?
     @State private var isDeleting = false
@@ -231,6 +231,11 @@ struct TestDetailView: View {
         } message: {
             Text(archiveError ?? "")
         }
+        .alert("Couldn’t rename test", isPresented: renameErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(renameError ?? "")
+        }
         .confirmationDialog(
             "Delete “\(displayedTest.name)”?",
             isPresented: $deletePresented,
@@ -286,6 +291,10 @@ struct TestDetailView: View {
 
     private var archiveErrorPresented: Binding<Bool> {
         Binding(get: { archiveError != nil }, set: { if !$0 { archiveError = nil } })
+    }
+
+    private var renameErrorPresented: Binding<Bool> {
+        Binding(get: { renameError != nil }, set: { if !$0 { renameError = nil } })
     }
 
     private func registerDetailCommands() {
@@ -357,6 +366,7 @@ struct TestDetailView: View {
         guard TestNameValidation.isValid(normalizedName) else { return false }
         guard TestNameValidation.canSubmit(normalizedName, currentName: displayedTest.name) else { return true }
 
+        renameError = nil
         do {
             try await HackerRankClient(account: account).updateTest(testID: displayedTest.id, name: normalizedName)
             var renamed = TestDetailMetadata()
@@ -365,6 +375,7 @@ struct TestDetailView: View {
             onChanged()
             return true
         } catch {
+            renameError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             return false
         }
     }
