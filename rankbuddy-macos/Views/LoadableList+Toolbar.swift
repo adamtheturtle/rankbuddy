@@ -17,6 +17,14 @@ enum ListLayout {
 }
 
 extension LoadableList {
+    var csvExportIsPartial: Bool {
+        nextCursor != nil
+    }
+
+    var csvExportSuggestedName: String {
+        csvExportIsPartial ? "\(csvFilename)-loaded" : csvFilename
+    }
+
     /// The list's customizable toolbar (#101). Built as identified `ToolbarItem`s so the window's
     /// "Customize Toolbar…" sheet can add, remove, and reorder them. The day-to-day actions — the
     /// section's write action and Refresh — show by default; the rarer ones (CSV export) are
@@ -66,11 +74,15 @@ extension LoadableList {
         if let csvExport {
             ToolbarItem(id: "exportCSV", placement: .automatic) {
                 Button {
-                    CSVExport.save(csvExport(visibleItems), suggestedName: csvFilename)
+                    CSVExport.save(csvExport(visibleItems), suggestedName: csvExportSuggestedName)
                 } label: {
-                    Label("Export CSV…", systemImage: "tablecells")
+                    Label(csvExportIsPartial ? "Export Loaded Rows CSV…" : "Export CSV…", systemImage: "tablecells")
                 }
-                .help("Export \(title) as CSV")
+                .help(
+                    csvExportIsPartial
+                        ? "Export the currently loaded \(title) rows as CSV"
+                        : "Export \(title) as CSV"
+                )
             }
             .defaultCustomization(.hidden)
 
