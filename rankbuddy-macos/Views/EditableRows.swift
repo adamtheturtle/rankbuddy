@@ -51,6 +51,7 @@ struct EditableTextRow: View {
                     }
                     .buttonStyle(.plain)
                     .help("Edit \(label.lowercased())")
+                    .accessibilityLabel("Edit \(label)")
                 } else {
                     TextField(label, text: $draft, prompt: fieldPrompt)
                         .textFieldStyle(.plain)
