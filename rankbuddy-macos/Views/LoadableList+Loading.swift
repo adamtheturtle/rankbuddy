@@ -11,6 +11,7 @@ extension LoadableList {
     // them in the background, so returning to a section does not flash a full-screen spinner.
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func reload() async {
+        loadGeneration = UUID()
         didRestore = false
         loadMoreError = nil
         backgroundRefreshError = nil
@@ -108,10 +109,13 @@ extension LoadableList {
     func loadMore() async {
         guard let cursor = nextCursor, !isLoadingMore, loadMoreError == nil else { return }
 
+        let generation = loadGeneration
         isLoadingMore = true
         defer { isLoadingMore = false }
         do {
             let page = try await loadCurrentPage(cursor)
+            guard generation == loadGeneration else { return }
+
             if page.next == cursor || page.next.map(loadedCursors.contains) == true {
                 loadMoreError = "The server repeated an earlier page. Retry to check again."
                 return
@@ -131,6 +135,8 @@ extension LoadableList {
             await restoreIfNeeded(items)
             resolvePendingDeepLinkIfLoaded()
         } catch {
+            guard generation == loadGeneration else { return }
+
             loadMoreError = message(for: error)
         }
     }
