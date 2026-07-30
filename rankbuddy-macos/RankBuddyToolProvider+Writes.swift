@@ -197,6 +197,27 @@ extension RankBuddyToolProvider {
         }
     }
 
+    nonisolated static func hasUserUpdate(_ arguments: [String: Value]?) -> Bool {
+        let textKeys = ["first_name", "last_name", "country", "role", "phone"]
+        if textKeys.contains(where: { key in
+            guard case let .string(value)? = arguments?[key] else { return false }
+
+            return normalizedOptionalString(value) != nil
+        }) { return true }
+        let integerKeys = [
+            "questions_permission", "tests_permission", "interviews_permission", "candidates_permission",
+            "shared_questions_permission", "shared_tests_permission",
+            "shared_interviews_permission", "shared_candidates_permission"
+        ]
+        if integerKeys.contains(where: { if case .int? = arguments?[$0] { return true }; return false }) {
+            return true
+        }
+        return ["company_admin", "team_admin"].contains {
+            if case .bool? = arguments?[$0] { return true }
+            return false
+        }
+    }
+
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -469,6 +490,9 @@ extension RankBuddyToolProvider {
     @MainActor
     private func updateUserTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let userID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
+        guard Self.hasUserUpdate(arguments) else {
+            return errorResult("At least one user field must be provided.")
+        }
 
         let rawRole = stringArgument(arguments, "role")
         let role = Self.normalizedOptionalString(rawRole)?.lowercased()
