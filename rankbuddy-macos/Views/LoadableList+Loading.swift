@@ -76,6 +76,7 @@ extension LoadableList {
             phase = .loaded
             backgroundRefreshError = nil
             await cacheFirstPage(page)
+            refreshDetailIfPresent(in: items)
             if preservesVisibleState {
                 reconcilePreservedSelection(in: items)
             } else {
@@ -160,6 +161,16 @@ extension LoadableList {
             selection = []
             detailItem = nil
         }
+    }
+
+    /// Rebinds a detail restored from cached data when the fresh page contains the same row.
+    func refreshDetailIfPresent(in loadedItems: [Item]) {
+        guard let selectedID = detailItem?.id,
+              let refreshed = ListRestoration.refreshedItem(id: selectedID, in: loadedItems)
+        else { return }
+
+        selection = [refreshed.id]
+        detailItem = refreshed
     }
 
     /// Once per load: re-opens the last-viewed item's detail and scrolls to it, or — when no

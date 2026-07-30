@@ -63,4 +63,9 @@ nonisolated enum ListRestoration {
 
         return !items.contains { String(describing: $0.id) == targetID }
     }
+
+    /// Finds the current value for a selected identity after cached rows are replaced.
+    static func refreshedItem<Item: Identifiable>(id: Item.ID, in items: [Item]) -> Item? {
+        items.first { $0.id == id }
+    }
 }

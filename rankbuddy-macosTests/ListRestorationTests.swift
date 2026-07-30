@@ -85,4 +85,11 @@ struct ListRestorationTests {
             hasMorePages: true
         ))
     }
+
+    @Test func `fresh rows replace a cached value with the same identity`() {
+        let fresh = [Item(id: "a"), Item(id: "b")]
+
+        #expect(ListRestoration.refreshedItem(id: "b", in: fresh) == Item(id: "b"))
+        #expect(ListRestoration.refreshedItem(id: "missing", in: fresh) == nil)
+    }
 }
