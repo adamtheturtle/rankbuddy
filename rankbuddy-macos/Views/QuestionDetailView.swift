@@ -256,21 +256,21 @@ extension QuestionDetailView {
             return await save(QuestionWriteOptions(recommendedDuration: newValue))
         }
         EditableLanguagesRow(value: displayed.languages) { newValue in
-            await save(QuestionWriteOptions(languages: newValue))
+            await save(QuestionWriteOptions(languages: newValue ?? []))
         }
         EditableTextRow(
             label: "Skills",
             value: displayed.skills?.joined(separator: ", ") ?? "",
             prompt: "Comma-separated"
         ) { newValue in
-            await save(QuestionWriteOptions(skills: splitList(newValue)))
+            await save(QuestionWriteOptions(skills: splitList(newValue) ?? []))
         }
         EditableTextRow(
             label: "Tags",
             value: displayed.tags?.joined(separator: ", ") ?? "",
             prompt: "Comma-separated"
         ) { newValue in
-            await save(QuestionWriteOptions(tags: splitList(newValue)))
+            await save(QuestionWriteOptions(tags: splitList(newValue) ?? []))
         }
     }
 

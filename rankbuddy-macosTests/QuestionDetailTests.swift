@@ -42,4 +42,20 @@ struct QuestionDetailTests {
         let detail = try await makeClient().question(id: "q3")
         #expect(!detail.options.isEmpty)
     }
+
+    @Test func `empty list updates clear question metadata`() throws {
+        let json = #"""
+        {"id":"q1","type":"code","name":"Two Sum","languages":["swift"],
+         "skills":["Algorithms"],"tags":["arrays"]}
+        """#
+        let question = try JSONDecoder().decode(Question.self, from: Data(json.utf8))
+        let updated = question.applying(
+            name: nil,
+            QuestionWriteOptions(languages: [], tags: [], skills: [])
+        )
+
+        #expect(updated.languages?.isEmpty == true)
+        #expect(updated.skills?.isEmpty == true)
+        #expect(updated.tags?.isEmpty == true)
+    }
 }
