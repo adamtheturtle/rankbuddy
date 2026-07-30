@@ -76,7 +76,7 @@ struct ListQueryFacetTests {
     }
 
     @Test func `facet matching uses the same case-insensitive semantics as its options`() {
-        let lowercase = Row(state: "active", langs: ["PYTHON"])
+        let lowercase = Row(state: " active\t", langs: [" PYTHON "])
 
         #expect(
             ListQuery.matchesFacets(
