@@ -126,10 +126,10 @@ extension AccountStore {
             migrateIfEmpty: { nil },
             onAccountsChanged: { _ in },
             onCurrentChanged: { _ in },
-            // Purge donated Spotlight items so a deleted account's tests/questions/interviews
-            // can't linger in system search (#24). The index repopulates with the current
-            // account on the next suggestion request.
-            onRemoved: { _ in Task { await RankBuddySpotlightIndex.clear() } },
+            // Purge only the deleted account's Spotlight domain, preserving other tenants.
+            onRemoved: { account in
+                Task { await RankBuddySpotlightIndex.remove(accountID: account.id) }
+            },
             // A changed token/base URL may point at a different backend, so drop the cached
             // first pages (memory and disk) that could otherwise show another org's rows (#102).
             onRekeyed: { account in

@@ -90,6 +90,16 @@ struct RankBuddyEntitiesTests {
         #expect(RankBuddySpotlightIndex.name == "RankBuddyObjects")
     }
 
+    @Test func `spotlight entities carry an account deletion domain`() {
+        let entity = RankBuddyObjectEntity(
+            collection: .tests,
+            accountID: "account-id",
+            itemID: "test-id",
+            title: "Test"
+        )
+        #expect(entity.attributeSet.domainIdentifier == "account-id")
+    }
+
     @Test func `clearing the spotlight index completes without throwing`() async {
         // Best-effort deletion: it must never throw into the account-removal path, even when
         // Spotlight is unavailable in the test environment.

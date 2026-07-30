@@ -83,6 +83,7 @@ struct RankBuddyObjectEntity: IndexedEntity {
     /// (#92). The default set must be added explicitly — the system does not merge it in.
     var attributeSet: CSSearchableItemAttributeSet {
         let set = defaultAttributeSet
+        set.domainIdentifier = accountID
         if !keywords.isEmpty {
             set.keywords = keywords
         }
@@ -176,6 +177,12 @@ enum RankBuddySpotlightIndex {
     /// the system requests suggestions, so only the current account is ever indexed.
     static func clear() async {
         try? await CSSearchableIndex(name: name).deleteAllSearchableItems()
+    }
+
+    /// Removes only one deleted account's donated items, preserving every surviving tenant.
+    static func remove(accountID: UUID) async {
+        try? await CSSearchableIndex(name: name)
+            .deleteSearchableItems(withDomainIdentifiers: [accountID.uuidString])
     }
 }
 
