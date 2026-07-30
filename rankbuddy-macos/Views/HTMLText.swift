@@ -97,7 +97,8 @@ struct HTMLFragmentText: View {
                                         Text("\(index + 1).")
                                             .font(.body.monospacedDigit())
                                             .foregroundStyle(.secondary)
-                                            .frame(width: 24, alignment: .trailing)
+                                            .fixedSize(horizontal: true, vertical: false)
+                                            .frame(minWidth: 24, alignment: .trailing)
 
                                         HTMLText(html: item, showsPlaceholder: showsPlaceholder)
                                             .frame(maxWidth: .infinity, alignment: .leading)
