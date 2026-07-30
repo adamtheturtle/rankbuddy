@@ -26,6 +26,17 @@ struct ListQueryTests {
     @Test func `the filter key is scoped by restoration key, nil without one`() {
         #expect(ListQuery.filterKey("tests.acc") == "filter.tests.acc")
         #expect(ListQuery.filterKey(nil) == nil)
+        #expect(ListQuery.queryKey("tests.acc") == "query.tests.acc")
+        #expect(ListQuery.queryKey(nil) == nil)
+    }
+
+    @Test func `a free-text query round-trips and clears when blank`() {
+        let defaults = UserDefaults(suiteName: "listquery.query.\(UUID().uuidString)") ?? .standard
+        ListQuery.persistQuery(" backend | swift ", key: "q", defaults: defaults)
+        #expect(ListQuery.restoredQuery(key: "q", defaults: defaults) == " backend | swift ")
+
+        ListQuery.persistQuery("  ", key: "q", defaults: defaults)
+        #expect(ListQuery.restoredQuery(key: "q", defaults: defaults).isEmpty)
     }
 
     @Test func `a range round-trips and an unknown stored value is ignored`() {

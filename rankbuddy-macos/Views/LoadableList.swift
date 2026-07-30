@@ -280,6 +280,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 }
                 .onChange(of: sortSelection) { persistSort() }
                 .onChange(of: sortReversed) { persistSort() }
+                .onChange(of: query) {
+                    ListQuery.persistQuery(query, key: ListQuery.queryKey(restorationKey))
+                }
                 .onChange(of: dateRange) {
                     ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
                     // Server-side date filtering re-queries from page 1; client-side just

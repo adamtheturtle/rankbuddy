@@ -17,6 +17,7 @@ extension LoadableList {
         loadMoreError = nil
         backgroundRefreshError = nil
         loadedCursors = []
+        query = ListQuery.restoredQuery(key: ListQuery.queryKey(restorationKey))
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
         let requestCacheKey = cacheKey

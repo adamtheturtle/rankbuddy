@@ -89,6 +89,27 @@ enum ListQuery {
         restorationKey.map { "facets.\($0)" }
     }
 
+    /// The `UserDefaults` key the free-text query persists under.
+    static func queryKey(_ restorationKey: String?) -> String? {
+        restorationKey.map { "query.\($0)" }
+    }
+
+    static func restoredQuery(key: String?, defaults: UserDefaults = .standard) -> String {
+        guard let key else { return "" }
+
+        return defaults.string(forKey: key) ?? ""
+    }
+
+    static func persistQuery(_ query: String, key: String?, defaults: UserDefaults = .standard) {
+        guard let key else { return }
+
+        if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            defaults.removeObject(forKey: key)
+        } else {
+            defaults.set(query, forKey: key)
+        }
+    }
+
     /// The saved facet selection for `key` (#55), or empty when absent/unreadable.
     static func restoredFacets(key: String?, defaults: UserDefaults = .standard) -> [String: Set<String>] {
         guard let key, let data = defaults.data(forKey: key),
