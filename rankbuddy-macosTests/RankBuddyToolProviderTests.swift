@@ -688,6 +688,18 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("question_id"))
     }
 
+    @Test func `delete_testcase rejects blank target ids`() async {
+        for key in ["question_id", "testcase_id"] {
+            var arguments: [String: Value] = [
+                "question_id": .string("question-1"), "testcase_id": .string("case-1")
+            ]
+            arguments[key] = .string(" \n")
+            let result = await writeProvider().callTool("delete_testcase", arguments: arguments)
+            #expect(result.isError == true)
+            #expect(text(result).contains(key))
+        }
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",
