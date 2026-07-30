@@ -132,7 +132,7 @@ extension LoadableList {
             fillColor: isActive ? Color.accentColor.opacity(0.18) : .chipIdleFill,
             strokeColor: isActive ? Color.accentColor.opacity(0.4) : .subtleStroke,
             labelColor: chipLabelColor(isActive: isActive),
-            menuDisabled: options.isEmpty,
+            menuDisabled: options.isEmpty && nextCursor == nil,
             clearLabel: "Clear \(facet.label) filter",
             onClear: { selectedFacets[facet.id] = [] },
             menu: {
@@ -140,9 +140,35 @@ extension LoadableList {
                 ForEach(options, id: \.self) { option in
                     Toggle(isOn: facetBinding(facet.id, option)) { Text(option) }
                 }
+                if nextCursor != nil {
+                    if !options.isEmpty { Divider() }
+                    Button {
+                        Task { await discoverMoreValues(for: facet) }
+                    } label: {
+                        Label("Discover More Values…", systemImage: "arrow.down.circle")
+                    }
+                    .disabled(isLoadingMore)
+                }
             }
         )
         .help("Filter by \(facet.label.lowercased())")
+    }
+
+    /// Pages forward until another value for this facet is found, the collection ends, or the
+    /// bounded scan cap is reached. This makes later-page values selectable before a filter exists.
+    private func discoverMoreValues(for facet: ListFacet<Item>) async {
+        let existing = Set(ListQuery.facetOptions(facet, in: items))
+        var pagesScanned = 0
+        loadMoreError = nil
+
+        while nextCursor != nil, pagesScanned < searchPageCap {
+            let countBefore = items.count
+            await loadMore()
+            pagesScanned += 1
+            let updated = Set(ListQuery.facetOptions(facet, in: items))
+            if !updated.subtracting(existing).isEmpty { return }
+            if items.count == countBefore || loadMoreError != nil { return }
+        }
     }
 
     /// Label PadBuddy-style: a single chosen value reads as itself (e.g. "Active"), so the chip
