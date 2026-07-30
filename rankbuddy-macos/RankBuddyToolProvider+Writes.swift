@@ -329,11 +329,17 @@ extension RankBuddyToolProvider {
         let atsRequisitionID = stringArgument(arguments, "ats_requisition_id")
         let finishURL = Self.normalizedOptionalString(stringArgument(arguments, "finish_url"))
         let resultURL = Self.normalizedOptionalString(stringArgument(arguments, "result_url"))
+        let validFrom = Self.normalizedOptionalString(stringArgument(arguments, "valid_from"))
+        let validUntil = Self.normalizedOptionalString(stringArgument(arguments, "valid_until"))
         guard finishURL.map({ URL.remoteWebURL(from: $0) != nil }) ?? true else {
             return errorResult("`finish_url` must be a valid HTTP or HTTPS URL.")
         }
         guard resultURL.map({ URL.remoteWebURL(from: $0) != nil }) ?? true else {
             return errorResult("`result_url` must be a valid HTTP or HTTPS URL.")
+        }
+
+        if CandidateInviteValidation.validityOrderIssue(validFrom: validFrom, validUntil: validUntil) != nil {
+            return errorResult("`valid_until` must be later than `valid_from`.")
         }
 
         if let issue = CandidateInviteValidation.textIssue(.init(
@@ -355,8 +361,8 @@ extension RankBuddyToolProvider {
                 fullName: fullName,
                 sendEmail: boolArgument(arguments, "send_email") ?? true,
                 options: CandidateInviteOptions(
-                    validFrom: stringArgument(arguments, "valid_from"),
-                    validUntil: stringArgument(arguments, "valid_until"),
+                    validFrom: validFrom,
+                    validUntil: validUntil,
                     emailSubject: emailSubject,
                     emailMessage: emailMessage,
                     templateID: stringArgument(arguments, "template_id"),

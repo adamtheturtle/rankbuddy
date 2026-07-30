@@ -591,6 +591,22 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `invite_candidate rejects a reversed validity window`() async {
+        let result = await writeProvider().callTool(
+            "invite_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "email": .string("new@example.com"),
+                "valid_from": .string("2026-08-02T12:00:00Z"),
+                "valid_until": .string("2026-08-01T12:00:00Z")
+            ]
+        )
+
+        #expect(result.isError == true)
+        #expect(text(result).contains("valid_until"))
+        #expect(text(result).contains("valid_from"))
+    }
+
     @Test func `invite_candidate rejects a blank test id`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
