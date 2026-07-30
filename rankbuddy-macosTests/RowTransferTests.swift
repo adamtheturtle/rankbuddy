@@ -48,6 +48,20 @@ struct RowTransferTests {
         #expect(row.tabularText == "Ada Lovelace Engineer")
     }
 
+    @Test func `tabular fields neutralize spreadsheet formula sigils`() {
+        let row = RowTransfer(
+            title: "Formulae",
+            fields: [
+                ("Equals", "=1+1"),
+                ("Plus", "+cmd"),
+                ("Minus", "-2"),
+                ("At", " @SUM(A1:A2)")
+            ]
+        )
+
+        #expect(row.tabularText == "'=1+1\t'+cmd\t'-2\t' @SUM(A1:A2)")
+    }
+
     @Test func `pasteboard item carries public text URL and private favourite payload`() throws {
         let favorite = FavoriteRef(accountID: "a", collection: .interviews, itemID: "i1", title: "Pairing")
         let row = RowTransfer(title: "Pairing", url: URL(string: "https://example.com/i1"))

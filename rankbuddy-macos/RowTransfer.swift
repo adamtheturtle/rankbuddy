@@ -7,6 +7,16 @@ import AppKit
 import Foundation
 import UniformTypeIdentifiers
 
+nonisolated enum SpreadsheetCell {
+    static func neutralized(_ value: String) -> String {
+        guard let first = value.drop(while: \.isWhitespace).first,
+              "=+-@".contains(first)
+        else { return value }
+
+        return "'\(value)"
+    }
+}
+
 /// Public copy/drag representations for a selectable list row (#123/#124).
 ///
 /// A row can carry concise text for plain-text targets, optional tabular fields for
@@ -119,10 +129,11 @@ nonisolated struct RowTransfer {
     }
 
     private static func escapeTabularField(_ value: String) -> String {
-        value
+        let singleLine = value
             .replacingOccurrences(of: "\t", with: " ")
             .replacingOccurrences(of: "\r\n", with: " ")
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "\r", with: " ")
+        return SpreadsheetCell.neutralized(singleLine)
     }
 }
