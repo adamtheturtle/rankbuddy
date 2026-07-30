@@ -29,12 +29,7 @@ struct MCPActivityView: View {
                             callRow(entry)
                         }
                     } header: {
-                        HStack {
-                            Text("Recent tool calls")
-                            Spacer()
-                            Button("Refresh") { reload() }
-                            Button("Clear", role: .destructive) { clearPresented = true }
-                        }
+                        Text("Recent tool calls")
                     } footer: {
                         Text("Recorded on this Mac — tool names, times, and a short detail only, never " +
                             "candidate or test content. The server runs as a separate process, so this " +
@@ -47,6 +42,19 @@ struct MCPActivityView: View {
         }
         .frame(minWidth: 440, minHeight: 360)
         .onAppear { reload() }
+        .toolbar {
+            Button {
+                reload()
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }
+            Button(role: .destructive) {
+                clearPresented = true
+            } label: {
+                Label("Clear", systemImage: "trash")
+            }
+            .disabled(activity.isEmpty)
+        }
         .confirmationDialog(
             "Clear MCP activity?",
             isPresented: $clearPresented,
