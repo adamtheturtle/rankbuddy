@@ -86,6 +86,13 @@ struct SyntaxHighlightingTests {
         #expect(text(template, .javascript, of: .comment).isEmpty)
     }
 
+    @Test func `javascript templates span lines and nested interpolation`() {
+        let template = "`first\n${value ? `nested ${other}` : \"// text\"}\nreturn /* text */`"
+        #expect(text(template, .javascript, of: .string) == [template])
+        #expect(text(template, .javascript, of: .comment).isEmpty)
+        #expect(text(template, .javascript, of: .keyword).isEmpty)
+    }
+
     @Test func `block comments span multiple lines for c-family`() {
         let code = "int x; /* a\nb */ y"
         #expect(text(code, .cFamily, of: .comment) == ["/* a\nb */"])

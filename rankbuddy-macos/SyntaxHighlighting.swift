@@ -183,7 +183,7 @@ nonisolated struct SyntaxHighlighter {
         return tokens
     }
 
-    private func lineCommentEnd(_ code: String, from start: String.Index) -> String.Index? {
+    func lineCommentEnd(_ code: String, from start: String.Index) -> String.Index? {
         for prefix in language.lineCommentPrefixes where code[start...].hasPrefix(prefix) {
             var end = start
             while end < code.endIndex, code[end] != "\n" {
@@ -194,7 +194,7 @@ nonisolated struct SyntaxHighlighter {
         return nil
     }
 
-    private func blockCommentEnd(_ code: String, from start: String.Index) -> String.Index? {
+    func blockCommentEnd(_ code: String, from start: String.Index) -> String.Index? {
         guard language.hasBlockComments, code[start...].hasPrefix("/*") else { return nil }
 
         var end = code.index(start, offsetBy: 2)
@@ -218,7 +218,10 @@ nonisolated struct SyntaxHighlighter {
         return code.endIndex
     }
 
-    private func stringEnd(_ code: String, from start: String.Index) -> String.Index? {
+    func stringEnd(_ code: String, from start: String.Index) -> String.Index? {
+        if language == .javascript, code[start] == "`" {
+            return javascriptTemplateEnd(code, from: start)
+        }
         guard let rule = stringRule(code, from: start) else { return nil }
 
         var end = code.index(start, offsetBy: rule.prefix.count)
