@@ -83,6 +83,24 @@ struct RankBuddyPaletteTests {
         #expect(opened)
     }
 
+    @Test func `activating an account exits all-accounts mode`() throws {
+        let first = Account(label: "Work", token: "t1")
+        let second = Account(label: "EU", token: "t2")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [first, second])
+        store.showAllAccounts = true
+        let results = staticCandidates(
+            store: store,
+            favorites: FavoritesStore(isTesting: true),
+            selection: makeBinding(SectionBox())
+        )
+
+        let account = try #require(results.first { $0.id == "account.\(second.id)" })
+        account.action()
+
+        #expect(!store.showAllAccounts)
+        #expect(store.currentAccountID == second.id)
+    }
+
     @Test func `the current account's favourites appear and route to their section`() throws {
         let store = AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Work", token: "t1")])
         let account = try #require(store.currentAccount)

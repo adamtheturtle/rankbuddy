@@ -69,7 +69,10 @@ enum RankBuddyPalette {
                 systemImage: "person.crop.circle",
                 searchText: "\(account.label) account \(account.baseURL.host() ?? "")",
                 showsOnlyWhenSearching: true
-            ) { store.currentAccountID = account.id })
+            ) {
+                store.showAllAccounts = false
+                store.currentAccountID = account.id
+            })
         }
 
         return results
