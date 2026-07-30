@@ -184,6 +184,19 @@ extension RankBuddyToolProvider {
         return false
     }
 
+    nonisolated static func invalidUserPermissionKey(_ arguments: [String: Value]?) -> String? {
+        let keys = [
+            "questions_permission", "tests_permission", "interviews_permission", "candidates_permission",
+            "shared_questions_permission", "shared_tests_permission",
+            "shared_interviews_permission", "shared_candidates_permission"
+        ]
+        return keys.first { key in
+            guard case let .int(value)? = arguments?[key] else { return false }
+
+            return !(0 ... 3).contains(value)
+        }
+    }
+
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -456,6 +469,10 @@ extension RankBuddyToolProvider {
     @MainActor
     private func updateUserTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let userID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
+
+        if let invalidKey = Self.invalidUserPermissionKey(arguments) {
+            return errorResult("`\(invalidKey)` must be a permission level from 0 to 3.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -1009,9 +1026,10 @@ extension RankBuddyToolProvider {
             if let allowedValues { schema["enum"] = allowedValues }
             return schema
         }
-        func integer(_ description: String, minimum: Int? = nil) -> [String: Any] {
+        func integer(_ description: String, minimum: Int? = nil, maximum: Int? = nil) -> [String: Any] {
             var schema: [String: Any] = ["type": "integer", "description": description]
             if let minimum { schema["minimum"] = minimum }
+            if let maximum { schema["maximum"] = maximum }
             return schema
         }
         func boolean(_ description: String) -> [String: Any] {
@@ -1120,14 +1138,14 @@ extension RankBuddyToolProvider {
                       "country": string("Country."),
                       "role": string("Role: recruiter, developer, or interviewer."),
                       "phone": string("Phone number."),
-                      "questions_permission": integer("Questions permission level."),
-                      "tests_permission": integer("Tests permission level."),
-                      "interviews_permission": integer("Interviews permission level."),
-                      "candidates_permission": integer("Candidates permission level."),
-                      "shared_questions_permission": integer("Shared questions permission level."),
-                      "shared_tests_permission": integer("Shared tests permission level."),
-                      "shared_interviews_permission": integer("Shared interviews permission level."),
-                      "shared_candidates_permission": integer("Shared candidates permission level."),
+                      "questions_permission": integer("Questions permission level.", minimum: 0, maximum: 3),
+                      "tests_permission": integer("Tests permission level.", minimum: 0, maximum: 3),
+                      "interviews_permission": integer("Interviews permission level.", minimum: 0, maximum: 3),
+                      "candidates_permission": integer("Candidates permission level.", minimum: 0, maximum: 3),
+                      "shared_questions_permission": integer("Shared questions permission.", minimum: 0, maximum: 3),
+                      "shared_tests_permission": integer("Shared tests permission.", minimum: 0, maximum: 3),
+                      "shared_interviews_permission": integer("Shared interviews permission.", minimum: 0, maximum: 3),
+                      "shared_candidates_permission": integer("Shared candidates permission.", minimum: 0, maximum: 3),
                       "company_admin": boolean("Whether the user is a company admin."),
                       "team_admin": boolean("Whether the user is a team admin."),
                       "account": account

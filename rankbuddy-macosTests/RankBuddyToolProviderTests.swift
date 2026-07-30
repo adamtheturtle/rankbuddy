@@ -638,6 +638,20 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("user_id"))
     }
 
+    @Test func `update_user rejects out-of-range permission levels`() async {
+        for value in [-1, 4, 999] {
+            let result = await writeProvider().callTool(
+                "update_user",
+                arguments: ["user_id": .string("user-1"), "questions_permission": .int(value)]
+            )
+            #expect(result.isError == true)
+            #expect(text(result).contains("questions_permission"))
+        }
+        #expect(RankBuddyToolProvider.invalidUserPermissionKey(
+            ["shared_candidates_permission": .int(3)]
+        ) == nil)
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",
