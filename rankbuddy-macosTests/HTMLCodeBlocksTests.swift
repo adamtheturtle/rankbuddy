@@ -83,4 +83,12 @@ struct HTMLCodeBlocksTests {
         let segments = HTMLCodeBlocks.segments(html)
         #expect(segments == [.prose("<p>Intro</p>"), .prose("<pre>broken")])
     }
+
+    @Test func `tags whose names begin with pre are not code blocks`() {
+        let html = "<presentation>slides</presentation><pre>actual code</pre>"
+        #expect(HTMLCodeBlocks.segments(html) == [
+            .prose("<presentation>slides</presentation>"),
+            .code(languageHint: nil, code: "actual code")
+        ])
+    }
 }

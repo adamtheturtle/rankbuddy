@@ -25,7 +25,7 @@ nonisolated enum HTMLCodeBlocks {
         var segments: [Segment] = []
         var rest = Substring(html)
 
-        while let preStart = rest.range(of: "<pre", options: .caseInsensitive) {
+        while let preStart = preTagStart(in: rest) {
             let prose = rest[rest.startIndex ..< preStart.lowerBound]
             if !prose.isEmpty {
                 segments.append(.prose(String(prose)))
@@ -54,6 +54,24 @@ nonisolated enum HTMLCodeBlocks {
             segments.append(.prose(String(rest)))
         }
         return segments
+    }
+
+    private static func preTagStart(in html: Substring) -> Range<String.Index>? {
+        var searchStart = html.startIndex
+        while let match = html.range(
+            of: "<pre",
+            options: .caseInsensitive,
+            range: searchStart ..< html.endIndex
+        ) {
+            guard match.upperBound < html.endIndex else { return match }
+
+            let boundary = html[match.upperBound]
+            if boundary == ">" || boundary == "/" || boundary.isWhitespace {
+                return match
+            }
+            searchStart = match.upperBound
+        }
+        return nil
     }
 
     /// A language hint pulled from a `language-xxx`/`lang-xxx` class or a `lang="xxx"` attribute
