@@ -442,6 +442,7 @@ extension RankBuddyToolProvider {
     // MARK: - Users
 
     @MainActor
+    // swiftlint:disable:next cyclomatic_complexity
     private func createUserTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawEmail = stringArgument(arguments, "email") else { return missingArgument("email") }
 
@@ -478,9 +479,13 @@ extension RankBuddyToolProvider {
                 role: role,
                 teamIDs: [teamID]
             )
+            guard let userID = Self.validatedCreatedID(created.id) else {
+                return errorResult("HackerRank created the user but returned no user ID.")
+            }
+
             return jsonResult([
                 "account": resolved.label,
-                "created_user": ["id": created.id ?? "", "email": created.email ?? email]
+                "created_user": ["id": userID, "email": created.email ?? email]
             ])
         } catch {
             return errorResult("Couldn't create user: \(error.localizedDescription)")
