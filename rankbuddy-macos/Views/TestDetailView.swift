@@ -30,6 +30,7 @@ struct TestDetailView: View {
     @State private var archiveError: String?
     @State private var deletePresented = false
     @State private var deleteError: String?
+    @State private var isDeleting = false
     @State private var detail: TestDetail?
     @State private var detailTest: Test?
     @State private var inviters: [TestInviter] = []
@@ -184,9 +185,14 @@ struct TestDetailView: View {
                 Button(role: .destructive) {
                     deletePresented = true
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    if isDeleting {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Label("Delete", systemImage: "trash")
+                    }
                 }
                 .help("Delete this test")
+                .disabled(isDeleting)
             }
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Test: \(displayedTest.name)") {
@@ -225,8 +231,9 @@ struct TestDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete Test", role: .destructive) {
-                Task { await delete() }
+                beginDelete()
             }
+            .disabled(isDeleting)
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This permanently deletes the test on HackerRank. This can’t be undone.")
@@ -304,7 +311,15 @@ struct TestDetailView: View {
         inviters = await (loadedInviters)?.items ?? []
     }
 
+    private func beginDelete() {
+        guard !isDeleting else { return }
+
+        isDeleting = true
+        Task { await delete() }
+    }
+
     private func delete() async {
+        defer { isDeleting = false }
         do {
             try await HackerRankClient(account: account).deleteTest(testID: displayedTest.id)
             onChanged()
