@@ -652,6 +652,15 @@ struct RankBuddyToolProviderTests {
         ) == nil)
     }
 
+    @Test func `update_user rejects unsupported roles`() async {
+        let result = await writeProvider().callTool(
+            "update_user",
+            arguments: ["user_id": .string("user-1"), "role": .string("owner")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("role"))
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",

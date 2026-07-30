@@ -470,6 +470,13 @@ extension RankBuddyToolProvider {
     private func updateUserTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let userID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
 
+        let rawRole = stringArgument(arguments, "role")
+        let role = Self.normalizedOptionalString(rawRole)?.lowercased()
+        let allowedRoles = ["recruiter", "developer", "interviewer"]
+        guard rawRole == nil || role.map(allowedRoles.contains) == true else {
+            return errorResult("`role` must be recruiter, developer, or interviewer.")
+        }
+
         if let invalidKey = Self.invalidUserPermissionKey(arguments) {
             return errorResult("`\(invalidKey)` must be a permission level from 0 to 3.")
         }
@@ -482,7 +489,7 @@ extension RankBuddyToolProvider {
                     firstName: stringArgument(arguments, "first_name"),
                     lastName: stringArgument(arguments, "last_name"),
                     country: stringArgument(arguments, "country"),
-                    role: stringArgument(arguments, "role"),
+                    role: role,
                     phone: stringArgument(arguments, "phone"),
                     questionsPermission: intArgument(arguments, "questions_permission"),
                     testsPermission: intArgument(arguments, "tests_permission"),
@@ -1136,7 +1143,10 @@ extension RankBuddyToolProvider {
                       "first_name": string("The user's first name."),
                       "last_name": string("The user's last name."),
                       "country": string("Country."),
-                      "role": string("Role: recruiter, developer, or interviewer."),
+                      "role": string(
+                          "Role: recruiter, developer, or interviewer.",
+                          allowedValues: ["recruiter", "developer", "interviewer"]
+                      ),
                       "phone": string("Phone number."),
                       "questions_permission": integer("Questions permission level.", minimum: 0, maximum: 3),
                       "tests_permission": integer("Tests permission level.", minimum: 0, maximum: 3),
