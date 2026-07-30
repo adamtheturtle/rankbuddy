@@ -42,4 +42,14 @@ struct AccountHealthMonitorTests {
         #expect(!AccountHealthMonitor.shouldCheck(Account(label: "x", token: "")))
         #expect(AccountHealthMonitor.shouldCheck(Account(label: "x", token: "abc")))
     }
+
+    @Test func `a captured probe identity does not follow a later account switch`() {
+        let first = Account(label: "First", token: "first")
+        let second = Account(label: "Second", token: "second")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [first, second])
+        store.currentAccountID = second.id
+
+        #expect(AccountHealthMonitor.accountToProbe(first.id, in: store) == first)
+        #expect(AccountHealthMonitor.accountToProbe(second.id, in: store) == second)
+    }
 }

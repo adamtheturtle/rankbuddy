@@ -33,6 +33,11 @@ final class AccountHealthMonitor {
         !account.token.isEmpty
     }
 
+    /// Resolves the exact account identity captured by the generic monitor before its async probe.
+    static func accountToProbe(_ accountID: UUID, in store: AccountStore) -> Account? {
+        store.accounts.first { $0.id == accountID }
+    }
+
     /// Builds (once) the wrapped monitor bound to this store. The probe and the unauthorized
     /// classifier are the app-specific closures the generic monitor takes.
     private func monitor(for store: AccountStore) -> BuddyAppKit.AccountHealthMonitor<UUID> {
@@ -44,8 +49,8 @@ final class AccountHealthMonitor {
 
                 return account.id
             },
-            probe: { [weak store] _ in
-                guard let account = store?.currentAccount else { return }
+            probe: { [weak store] accountID in
+                guard let store, let account = Self.accountToProbe(accountID, in: store) else { return }
 
                 try await HackerRankClient(account: account).validateToken()
             },
