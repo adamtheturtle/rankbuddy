@@ -590,9 +590,13 @@ extension RankBuddyToolProvider {
                 type: type,
                 options: questionWriteOptions(arguments)
             )
+            guard let questionID = Self.validatedCreatedID(written.id) else {
+                return errorResult("HackerRank created the question but returned no question ID.")
+            }
+
             return jsonResult([
                 "account": resolved.label,
-                "created_question": ["id": written.id ?? "", "name": written.name ?? name, "type": written.type ?? type]
+                "created_question": ["id": questionID, "name": written.name ?? name, "type": written.type ?? type]
             ])
         } catch {
             return errorResult("Couldn't create question: \(error.localizedDescription)")
