@@ -78,6 +78,20 @@ struct RecentActivityTests {
         #expect(store.recent(.tests, account: accountB).isEmpty)
     }
 
+    @Test func `clear removes every collection for only the selected account`() {
+        let store = store(#function)
+        let accountA = UUID()
+        let accountB = UUID()
+        store.record([item("t1", .tests)], for: .tests, account: accountA)
+        store.record([item("q1", .questions)], for: .questions, account: accountA)
+        store.record([item("other", .tests)], for: .tests, account: accountB)
+
+        store.clear(account: accountA)
+
+        #expect(store.recentAll(account: accountA).isEmpty)
+        #expect(store.recent(.tests, account: accountB).map(\.id) == ["other"])
+    }
+
     // MARK: - Active/upcoming filter (#67)
 
     private func item(_ id: String, _ collection: FavoriteCollection, subtitle: String?) -> RecentItem {

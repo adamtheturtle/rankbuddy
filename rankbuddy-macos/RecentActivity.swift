@@ -117,4 +117,11 @@ nonisolated struct RecentActivityStore {
     func recentAll(account: UUID) -> [RecentItem] {
         FavoriteCollection.allCases.flatMap { recent($0, account: account) }
     }
+
+    /// Removes every recent-activity snapshot belonging to an account.
+    func clear(account: UUID) {
+        for collection in FavoriteCollection.allCases {
+            cache.delete(kind: collection.rawValue, account: account)
+        }
+    }
 }
