@@ -11,8 +11,8 @@
     "lint": "npm run lint:html && npm run lint:css && npm run lint:md && npm run lint:links"
   },
   "devDependencies": {
-    "html-validate": "^9.7.1",
-    "linkinator": "^6.1.4",
+    "html-validate": "^11.6.0",
+    "linkinator": "^8.0.2",
     "markdownlint-cli2": "^0.23.2",
     "stylelint": "^16.19.1",
     "stylelint-config-standard": "^39.0.0"
