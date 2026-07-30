@@ -33,6 +33,23 @@ struct SavedSearchStoreTests {
         #expect(loaded == searches)
     }
 
+    @Test func `corrupt records preserve raw data and recover valid searches`() throws {
+        let defaults = makeDefaults()
+        let valid = SavedSearch(name: "Valid", query: "swift", dateRange: nil)
+        let validObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(valid))
+        let raw = try JSONSerialization.data(withJSONObject: [
+            validObject,
+            ["id": "not-a-uuid", "name": "Broken", "query": "x"]
+        ])
+        let restorationKey = "tests.acc"
+        defaults.set(raw, forKey: SavedSearchStore.defaultsKey(for: restorationKey))
+
+        let loaded = SavedSearchStore.load(restorationKey: restorationKey, defaults: defaults)
+
+        #expect(loaded == [valid])
+        #expect(defaults.data(forKey: SavedSearchStore.recoveryKey(for: restorationKey)) == raw)
+    }
+
     @Test func `searches are scoped by restoration key`() {
         let defaults = makeDefaults()
         SavedSearchStore.save(

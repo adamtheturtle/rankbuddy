@@ -97,13 +97,33 @@ enum SavedSearchStore {
         "savedsearch.\(restorationKey)"
     }
 
+    static func recoveryKey(for restorationKey: String) -> String {
+        "\(defaultsKey(for: restorationKey)).unreadable-backup"
+    }
+
     /// Loads the saved searches for a list, or an empty array when none/unreadable.
     static func load(restorationKey: String, defaults: UserDefaults = .standard) -> [SavedSearch] {
-        guard let data = defaults.data(forKey: defaultsKey(for: restorationKey)),
-              let searches = try? JSONDecoder().decode([SavedSearch].self, from: data)
-        else { return [] }
+        guard let data = defaults.data(forKey: defaultsKey(for: restorationKey)) else { return [] }
 
-        return searches
+        if let searches = try? JSONDecoder().decode([SavedSearch].self, from: data) {
+            return searches
+        }
+
+        // Keep the exact unreadable payload before recovering valid records independently. A
+        // later save may replace the primary key, but never destroys the only recoverable copy.
+        let recoveryKey = recoveryKey(for: restorationKey)
+        if defaults.data(forKey: recoveryKey) == nil {
+            defaults.set(data, forKey: recoveryKey)
+        }
+
+        guard let records = try? JSONSerialization.jsonObject(with: data) as? [Any] else { return [] }
+
+        return records.compactMap { record in
+            guard JSONSerialization.isValidJSONObject(record),
+                  let recordData = try? JSONSerialization.data(withJSONObject: record) else { return nil }
+
+            return try? JSONDecoder().decode(SavedSearch.self, from: recordData)
+        }
     }
 
     /// Persists the saved searches for a list, removing the key entirely when empty.
