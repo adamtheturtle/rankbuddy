@@ -68,6 +68,7 @@ struct CandidateSummaryView: View {
         }
         .onChange(of: candidate.id) {
             cancelGeneration()
+            state = .idle
         }
         .onDisappear {
             cancelGeneration()
