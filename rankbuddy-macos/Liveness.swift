@@ -306,32 +306,25 @@ final class LivenessMonitor {
     }
 }
 
-/// Posts a single, coalescing macOS notification when new interviews appear (#23). Opt-in and
-/// suppressed while the app is frontmost — you're already looking — so it only fires for
-/// background activity. Tapping it brings the app forward on the Interviews section.
+/// Posts account-coalesced notifications for new interviews (#23), suppressed while frontmost.
 @MainActor
 final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
     static let shared = LivenessNotifier()
     private let center = UNUserNotificationCenter.current()
-    /// One stable id so rapid bursts coalesce into a single alert rather than stacking.
-    private static let notificationID = "rb.newInterviews"
 
     override private init() {
         super.init()
     }
 
-    /// Wire up tap routing. Call once at launch.
     func register() {
         center.delegate = self
     }
 
-    /// Ask for alert permission, deferred until the user opts in so the prompt appears when
-    /// expected.
+    /// Ask for alert permission only after the user opts in.
     func requestAuthorization() {
         Task { _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge]) }
     }
 
-    /// Post a "new interviews" alert, unless the app is frontmost (you'd already see them).
     func notify(interviews: [Interview], accountID: UUID) {
         guard let target = interviews.first, !NSApp.isActive else { return }
 
@@ -357,12 +350,15 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
         content.sound = .default
         content.userInfo = Self.notificationUserInfo(accountID: accountID, interviewID: interviewID)
 
-        let request = UNNotificationRequest(identifier: Self.notificationID, content: content, trigger: nil)
+        let request = UNNotificationRequest(
+            identifier: Self.notificationID(accountID: accountID),
+            content: content,
+            trigger: nil
+        )
         try? await center.add(request)
     }
 
-    /// On tap, route to the Interviews section (the same defaults write the deep links use) and
-    /// bring the app forward.
+    /// On tap, route to Interviews and bring the app forward.
     nonisolated func userNotificationCenter(
         _: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -396,5 +392,9 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
             RankBuddyUserActivity.Key.accountID: accountID.uuidString,
             RankBuddyUserActivity.Key.itemID: interviewID
         ]
+    }
+
+    nonisolated static func notificationID(accountID: UUID) -> String {
+        "rb.newInterviews.\(accountID.uuidString)"
     }
 }

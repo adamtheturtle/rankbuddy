@@ -83,6 +83,16 @@ struct LivenessDigestTests {
         #expect(target.itemID == "interview-7")
     }
 
+    @Test func `notification identifiers coalesce only within an account`() {
+        let accountA = UUID()
+        let accountB = UUID()
+        let first = LivenessNotifier.notificationID(accountID: accountA)
+        let repeated = LivenessNotifier.notificationID(accountID: accountA)
+
+        #expect(first == repeated)
+        #expect(first != LivenessNotifier.notificationID(accountID: accountB))
+    }
+
     @Test func `the refresh cadence clamps unset and unknown values to the default`() {
         // Unset (0) and out-of-range values fall back to the default; supported options pass.
         #expect(LivenessSettings.intervalMinutes(raw: 0) == LivenessSettings.defaultIntervalMinutes)
