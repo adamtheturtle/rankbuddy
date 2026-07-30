@@ -131,6 +131,7 @@ extension LoadableList {
             pagesLoaded += 1
             loadMoreError = nil
             await restoreIfNeeded(items)
+            resolvePendingDeepLinkIfLoaded()
         } catch {
             loadMoreError = message(for: error)
         }
@@ -206,31 +207,43 @@ extension LoadableList {
         }
     }
 
-    /// Handles a live deep-link request (#122) when it targets this list. Consumes the request so
-    /// it fires once, then reveals the item — selecting its row and scrolling to it — paging in
-    /// further rows (capped) if it isn't on a loaded page yet.
+    /// Handles a live deep-link request (#122) when it targets this list. The request is consumed
+    /// only after resolution, so ordinary pagination can keep looking beyond the eager scan cap.
     func consumeDeepLinkIfMatching() async {
         guard let request = deepLinkRouter.request, request.key == restorationKey else { return }
 
-        deepLinkRouter.request = nil
-        await revealItem(id: request.itemID)
+        if await revealItem(id: request.itemID) {
+            deepLinkRouter.request = nil
+        }
     }
 
     /// Selects and scrolls to the item with the given persisted id. If it isn't among the loaded
     /// rows, pages in more (bounded by `searchPageCap`, mirroring the filter auto-load) until it
     /// appears or the list is exhausted; a still-missing item leaves the list untouched.
-    private func revealItem(id: String) async {
-        if select(id: id) { return }
+    private func revealItem(id: String) async -> Bool {
+        if select(id: id) { return true }
 
         var pagesLoadedThisReveal = 0
         while nextCursor != nil, pagesLoadedThisReveal < searchPageCap {
             let countBeforeLoad = items.count
             await loadMore()
             pagesLoadedThisReveal += 1
-            if select(id: id) { return }
+            if select(id: id) { return true }
             // Stop if a load made no progress (e.g. it failed and exposed a retry).
-            if items.count == countBeforeLoad { return }
+            if items.count == countBeforeLoad { return false }
         }
+        return false
+    }
+
+    /// Resolves a request left pending by the eager paging cap when normal scrolling later
+    /// appends the target row.
+    private func resolvePendingDeepLinkIfLoaded() {
+        guard let request = deepLinkRouter.request,
+              request.key == restorationKey,
+              select(id: request.itemID)
+        else { return }
+
+        deepLinkRouter.request = nil
     }
 
     /// Selects the loaded item matching the persisted id and drives the detail pane, returning
