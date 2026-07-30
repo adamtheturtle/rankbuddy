@@ -124,9 +124,18 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
             let value: String
             switch argument {
-            case let .string(text): value = key.contains("email") ? redactedEmail(text) : text
-            case let .int(number): value = String(number)
-            default: return nil
+            case let .string(text):
+                if key == "query" {
+                    value = normalizedSearchQuery(text)
+                } else {
+                    value = key.contains("email") ? redactedEmail(text) : text
+                }
+
+            case let .int(number):
+                value = String(number)
+
+            default:
+                return nil
             }
             guard !value.isEmpty else { return nil }
 
@@ -174,6 +183,10 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return "\(first)***@\(parts[1])"
     }
 
+    static func normalizedSearchQuery(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     // swiftlint:disable:next cyclomatic_complexity
     private func callKeyedTool(_ name: String, arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         switch name {
@@ -209,19 +222,19 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             return await getInterviewTemplate(templateID: templateID, account: account)
 
         case "search_tests":
-            guard let query = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
 
-            return await searchTests(query: query, account: account)
+            return await searchTests(query: Self.normalizedSearchQuery(rawQuery), account: account)
 
         case "search_questions":
-            guard let query = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
 
-            return await searchQuestions(query: query, account: account)
+            return await searchQuestions(query: Self.normalizedSearchQuery(rawQuery), account: account)
 
         case "search_interviews":
-            guard let query = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
 
-            return await searchInterviews(query: query, account: account)
+            return await searchInterviews(query: Self.normalizedSearchQuery(rawQuery), account: account)
 
         default:
             return errorResult("Unknown tool: \(name)")

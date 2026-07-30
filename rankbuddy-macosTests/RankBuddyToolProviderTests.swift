@@ -172,6 +172,22 @@ struct RankBuddyToolProviderTests {
         #expect(!body.contains("\"count\" : 0"))
     }
 
+    @Test func `search queries trim surrounding whitespace`() async {
+        let result = await provider().callTool(
+            "search_tests",
+            arguments: ["query": .string(" \n Backend \t")]
+        )
+        let body = text(result)
+
+        #expect(result.isError != true)
+        #expect(body.contains("Backend Screen"))
+        #expect(body.contains(#""query" : "Backend""#))
+        #expect(RankBuddyToolProvider.callDetail(
+            tool: "search_tests",
+            arguments: ["query": .string("  Backend  ")]
+        ) == "query: Backend")
+    }
+
     @Test func `search_tests returns no matches for an absent term`() async {
         let result = await provider().callTool("search_tests", arguments: ["query": .string("zzz-nope-zzz")])
         let body = text(result)

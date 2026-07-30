@@ -23,15 +23,19 @@ extension RankBuddyToolProvider {
     ) async -> CallTool.Result {
         switch name {
         case "search_users":
-            guard let query = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
 
-            return await searchUsers(query: query, account: account)
+            return await searchUsers(query: Self.normalizedSearchQuery(rawQuery), account: account)
 
         case "search_candidates":
             guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
-            guard let query = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
 
-            return await searchCandidates(testID: testID, query: query, account: account)
+            return await searchCandidates(
+                testID: testID,
+                query: Self.normalizedSearchQuery(rawQuery),
+                account: account
+            )
 
         default:
             return errorResult("Unknown tool: \(name)")
