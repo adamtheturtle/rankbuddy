@@ -15,13 +15,9 @@ import UserNotifications
 /// badge + background refresher. Off by default — the user turns it on in General settings,
 /// which is also where the system badge permission is requested.
 enum LivenessSettings {
-    /// `@AppStorage` key: whether the background sweep + Dock badge are enabled.
     static let backgroundUpdatesKey = "rb.backgroundUpdates"
-    /// `@AppStorage` key: whether to post a notification when new interviews appear.
     static let notifyKey = "rb.notifyNewInterviews"
-    /// `@AppStorage` key: how often the background sweep runs, in minutes.
     static let intervalMinutesKey = "rb.refreshMinutes"
-    /// `@AppStorage` key: which accounts the Dock badge counts (#68).
     static let dockScopeKey = "rb.dockBadgeScope"
 
     /// The Dock-badge scope as stored, defaulting to the current account (the historical
@@ -30,9 +26,7 @@ enum LivenessSettings {
         DockBadgeScope(rawValue: UserDefaults.standard.string(forKey: dockScopeKey) ?? "") ?? .currentAccount
     }
 
-    /// The cadence options offered in Settings, in minutes.
     static let intervalOptions = [1, 2, 5, 10, 15, 30]
-    /// The default sweep cadence in minutes.
     static let defaultIntervalMinutes = 5
 
     /// Clamps a raw stored minutes value to a supported option, falling back to the default for
@@ -41,7 +35,6 @@ enum LivenessSettings {
         intervalOptions.contains(raw) ? raw : defaultIntervalMinutes
     }
 
-    /// The current sweep cadence as a `Duration`, read from the stored setting.
     static func currentInterval() -> Duration {
         .seconds(intervalMinutes(raw: UserDefaults.standard.integer(forKey: intervalMinutesKey)) * 60)
     }
@@ -221,6 +214,13 @@ final class LivenessMonitor {
                 }
             }
         }
+    }
+
+    /// Cancels the current wait so a changed cadence takes effect immediately.
+    func restart(store: AccountStore) {
+        loop?.cancel()
+        loop = nil
+        start(store: store)
     }
 
     /// One sweep: when enabled, fetch the in-scope accounts' interviews and badge the total

@@ -66,6 +66,9 @@ extension SettingsView {
                 }
             }
             .disabled(!backgroundUpdates)
+            .onChange(of: refreshMinutes) {
+                LivenessMonitor.shared.restart(store: store)
+            }
 
             Picker("Badge counts", selection: $dockBadgeScope) {
                 ForEach(DockBadgeScope.allCases) { scope in
