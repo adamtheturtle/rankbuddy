@@ -22,6 +22,7 @@ struct TestDetailView: View {
     var onChanged: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(AppCommandContext.self) private var commandContext
     /// Bumped by the Edit toolbar button to open the inline title rename (#95).
     @State private var titleEditRequest = 0
@@ -139,7 +140,15 @@ struct TestDetailView: View {
         .navigationTitle(displayedTest.name)
         .task(id: displayedTest.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
-        .onDisappear { commandContext.clearDetailActions() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active {
+                passwordRevealed = false
+            }
+        }
+        .onDisappear {
+            passwordRevealed = false
+            commandContext.clearDetailActions()
+        }
         .advertisesItemActivity(collection: .tests, itemID: displayedTest.id, title: displayedTest.name)
         // Share and Open (the test on HackerRank) lead the bar like PadBuddy; Edit and Delete
         // follow; Print and Markdown export are off by default but one Customize Toolbar away.
