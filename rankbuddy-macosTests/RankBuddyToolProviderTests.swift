@@ -750,6 +750,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("type"))
     }
 
+    @Test func `create_question rejects unsupported types`() async {
+        let result = await writeProvider().callTool(
+            "create_question",
+            arguments: ["name": .string("Sum"), "type": .string("essay")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("type"))
+    }
+
     @Test func `update_question requires at least one changed field`() async {
         let result = await writeProvider().callTool(
             "update_question", arguments: ["question_id": .string("question-1")]

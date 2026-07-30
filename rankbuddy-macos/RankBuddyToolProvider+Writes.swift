@@ -575,7 +575,12 @@ extension RankBuddyToolProvider {
     @MainActor
     private func createQuestionTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let name = stringArgument(arguments, "name") else { return missingArgument("name") }
-        guard let type = stringArgument(arguments, "type") else { return missingArgument("type") }
+        guard let rawType = stringArgument(arguments, "type") else { return missingArgument("type") }
+        guard let type = Self.normalizedOptionalString(rawType)?.lowercased(),
+              Self.supportedQuestionTypes.contains(type)
+        else {
+            return errorResult("`type` must be coding, mcq, or subjective.")
+        }
         guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
             return errorResult("`max_score` must be a finite number of zero or greater.")
         }
@@ -1259,7 +1264,7 @@ extension RankBuddyToolProvider {
             write("create_question", "Create a question with shared metadata fields.",
                   properties: [
                       "name": string("The question's name."),
-                      "type": string("Question type, such as coding or mcq."),
+                      "type": string("Question type.", allowedValues: Self.supportedQuestionTypes),
                       "status": string("Question lifecycle status."),
                       "languages": ["type": "array", "items": ["type": "string"],
                                     "description": "Allowed languages; a comma-separated string is also accepted."],
