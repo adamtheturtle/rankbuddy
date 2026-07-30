@@ -97,4 +97,19 @@ struct RowTransferTests {
         let item = try #require(RowTransfer.pasteboardItem(for: rows))
         #expect(item.string(forType: .URL) == nil)
     }
+
+    @Test func `copy formats are alternatives on one provider`() throws {
+        let row = RowTransfer(
+            title: "Ada",
+            url: URL(string: "https://example.com/ada"),
+            fields: [("Name", "Ada")]
+        )
+        let providers = RowTransfer.itemProviders(for: [row])
+        let provider = try #require(providers.first)
+
+        #expect(providers.count == 1)
+        #expect(provider.registeredTypeIdentifiers.contains(UTType.plainText.identifier))
+        #expect(provider.registeredTypeIdentifiers.contains(UTType.tabSeparatedText.identifier))
+        #expect(provider.registeredTypeIdentifiers.contains(UTType.url.identifier))
+    }
 }

@@ -61,18 +61,16 @@ nonisolated struct RowTransfer {
         .joined(separator: "\n")
     }
 
-    /// Builds copy providers for Command-C. The first provider is the readable plain-text form;
-    /// the second is TSV when the selected rows expose tabular fields.
+    /// Builds one logical copy item with alternative plain-text, TSV, and URL representations.
     static func itemProviders(for rows: [Self]) -> [NSItemProvider] {
         guard !rows.isEmpty else { return [] }
 
         // NSItemProvider(object:) requires an NSItemProviderWriting reference type, so the
         // bridged NSString/NSURL casts here are load-bearing rather than avoidable.
         // swiftlint:disable:next legacy_objc_type
-        var providers = [NSItemProvider(object: plainText(rows) as NSString)]
+        let provider = NSItemProvider(object: plainText(rows) as NSString)
         if rows.contains(where: { !$0.fields.isEmpty }) {
             let tsv = tabularText(rows)
-            let provider = NSItemProvider()
             provider.registerDataRepresentation(
                 forTypeIdentifier: UTType.tabSeparatedText.identifier,
                 visibility: .all
@@ -80,13 +78,12 @@ nonisolated struct RowTransfer {
                 completion(Data(tsv.utf8), nil)
                 return nil
             }
-            providers.append(provider)
         }
         if rows.count == 1, let url = rows.first?.url {
             // swiftlint:disable:next legacy_objc_type
-            providers.append(NSItemProvider(object: url as NSURL))
+            provider.registerObject(url as NSURL, visibility: .all)
         }
-        return providers
+        return [provider]
     }
 
     /// A single drag pasteboard item carrying every row's public data, used when a multi-row
