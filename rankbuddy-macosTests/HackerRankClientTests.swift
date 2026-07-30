@@ -298,6 +298,30 @@ struct HackerRankClientTests {
         #expect(detail.members?.count == 1)
     }
 
+    @Test func `candidate write fixtures cover update cancel and report deletion`() async throws {
+        let client = makeClient()
+        let updated = try await client.updateCandidate(testID: "t1", candidateID: "c1")
+        let cancelled = try await client.cancelCandidateInvite(testID: "t1", candidateID: "c1")
+        let deleted = try await client.deleteCandidateReport(testID: "t1", candidateID: "c1")
+
+        #expect(updated.id == "c-created")
+        #expect(cancelled.id == "c-created")
+        #expect(deleted.id == "c-created")
+    }
+
+    @Test func `candidate report PDF fixture returns a sanitized URL`() async throws {
+        let report = try await makeClient().candidateReportPDF(testID: "t1", candidateID: "c1")
+
+        #expect(report.pdfURL == "https://www.hackerrank.com/x/candidates/c1/report.pdf")
+    }
+
+    @Test func `archive fixture uses the typed test acknowledgement`() async throws {
+        let archived = try await makeClient().archiveTest(testID: "t1")
+
+        #expect(archived.id == "t-created")
+        #expect(archived.name == "New Test")
+    }
+
     // MARK: - Token validation
 
     @Test func `validating an empty token fails before any request`() async {
