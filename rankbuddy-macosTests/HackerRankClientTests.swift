@@ -104,6 +104,38 @@ struct HackerRankClientTests {
         try await makeClient().validateToken()
     }
 
+    @Test func `demo failure scenarios are selected from the launch environment`() async throws {
+        let account = Account.demo
+        let key = DemoFailureScenario.environmentKey
+
+        let empty = try await HackerRankClient(
+            account: account,
+            environment: [key: DemoFailureScenario.empty.rawValue]
+        ).testsPage()
+        #expect(empty.items.isEmpty)
+
+        await #expect(throws: HackerRankError.self) {
+            try await HackerRankClient(
+                account: account,
+                environment: [key: DemoFailureScenario.validation.rawValue]
+            ).testsPage()
+        }
+        await #expect(throws: HackerRankError.self) {
+            try await HackerRankClient(
+                account: account,
+                environment: [key: DemoFailureScenario.malformed.rawValue]
+            ).testsPage()
+        }
+    }
+
+    @Test func `every documented demo failure scenario has a deterministic response`() {
+        #expect(DemoFailureScenario.allCases.map(\.rawValue) == [
+            "empty", "validation", "throttled", "malformed", "server-error"
+        ])
+        #expect(DemoFailureScenario.throttled.response.status == 429)
+        #expect(DemoFailureScenario.serverError.response.status == 503)
+    }
+
     // MARK: - Current user (#72)
 
     @Test func `currentUser decodes the single users-me object`() async throws {

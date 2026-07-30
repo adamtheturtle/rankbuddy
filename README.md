@@ -45,6 +45,11 @@ explored and screenshotted without a token. Set environment variables in the run
 The demo mock is installed only on a dedicated `URLSession`, so it never intercepts real
 network traffic.
 
+For deterministic failure-state work, launch RankBuddy with
+`RANKBUDDY_DEMO_SCENARIO` set to `empty`, `validation`, `throttled`, `malformed`, or
+`server-error`, then use the demo account. The override applies only to demo requests;
+configured live accounts continue using their authenticated network sessions.
+
 ## Development
 
 - **Build:** open `rankbuddy-macos.xcodeproj` in Xcode and build the `rankbuddy-macos`
