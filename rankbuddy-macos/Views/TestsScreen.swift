@@ -132,11 +132,10 @@ struct TestsScreen: View {
     }
 
     /// Loads one merged page of tests across every configured account (#17).
-    private func loadMergedTests(_: String?) async throws -> Page<AccountScoped<Test>> {
-        let items = try await MergedLoader.firstPages(accounts: store.accounts) {
-            try await HackerRankClient(account: $0).testsPage().items
+    private func loadMergedTests(_ cursor: String?) async throws -> Page<AccountScoped<Test>> {
+        try await MergedLoader.page(accounts: store.accounts, cursor: cursor) {
+            try await HackerRankClient(account: $0).testsPage(after: $1)
         }
-        return Page(items: items, next: nil)
     }
 
     /// Tests merged across every configured account (#17). One page per account; rows carry an
