@@ -37,6 +37,33 @@ unreviewed automation. It is the human-readable counterpart to
   git-ignored) so a fresh checkout — local or CI — resolves an identical package
   graph.
 
+### FastList usage audit
+
+RankBuddy intentionally has one `FastList` construction point:
+`Views/LoadableList.swift`. Tests, Questions, Interviews, People, Teams, and
+Candidates configure that app-owned wrapper rather than building package-specific
+lists themselves. The app still needs the macOS recycled `NSTableView` primitive
+for large, paginated collections.
+
+The package surface used by `LoadableList` falls into these ownership groups:
+
+- **Retain as platform primitives:** selection binding, recycled hosted rows,
+  double-click and Return activation, native row context menus and drag sessions,
+  scroll-to-row, top-row reporting, and end-of-viewport reporting.
+- **Already app-owned:** row height (`FastListRowMetrics`), favourite state and
+  drag payloads, menu construction (`rowMenuItems`), copy/CSV transfer models,
+  pagination retry/loading UI, scroll persistence, and detail activation.
+- **Compatibility conveniences to migrate when FastList deprecates them:**
+  `reloadID` (currently used to rebuild recycled favourite accessories) and
+  `onCopyCommand` (currently supplied by RankBuddy's `RowTransfer` providers).
+  Their replacements should remain in `LoadableList`, not move domain behavior
+  into the package.
+
+This boundary matches the reduced shared direction tracked in
+[`FastList#4`](https://github.com/adamtheturtle/FastList/issues/4). New RankBuddy
+features must be implemented in `LoadableList` or another app-owned layer unless
+they are required by the recycled-table primitive itself.
+
 ## Build & lint tool versions
 
 The validation tools are version-pinned in `ci.yml` and must be bumped in lockstep
