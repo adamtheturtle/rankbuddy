@@ -57,9 +57,12 @@ struct PeopleScreen: View {
                     SortOption("Name", systemImage: "textformat", kind: .text) {
                         $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
                     },
-                    SortOption("Role", systemImage: "person.text.rectangle", kind: .text) {
-                        ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending
-                    }
+                    SortOption("Role", systemImage: "person.text.rectangle", kind: .text,
+                               isMissing: {
+                                   $0.role?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false
+                               }, by: {
+                                   ($0.role ?? "").localizedStandardCompare($1.role ?? "") == .orderedAscending
+                               })
                 ],
                 facets: [
                     ListFacet("role", "Role", systemImage: "person.fill", value: { DisplayFormat.enumLabel($0.role) }),

@@ -38,19 +38,22 @@ struct CandidatesList: View {
             },
             searchableText: { "\($0.fullName ?? "") \($0.email) \($0.listStatusLabel ?? "")" },
             sortOptions: [
-                SortOption("Score", systemImage: "chart.bar", kind: .amount) {
-                    ($0.score ?? -.greatestFiniteMagnitude) > ($1.score ?? -.greatestFiniteMagnitude)
-                },
+                SortOption("Score", systemImage: "chart.bar", kind: .amount,
+                           isMissing: { $0.score == nil }, by: {
+                               ($0.score ?? -.greatestFiniteMagnitude) > ($1.score ?? -.greatestFiniteMagnitude)
+                           }),
                 SortOption("Name", systemImage: "textformat", kind: .text) {
                     ($0.fullName ?? $0.email).localizedStandardCompare($1.fullName ?? $1.email) == .orderedAscending
                 },
-                SortOption("Attempted", systemImage: "clock", kind: .date) {
-                    ($0.attemptEndTime ?? "") > ($1.attemptEndTime ?? "")
-                },
+                SortOption("Attempted", systemImage: "clock", kind: .date,
+                           isMissing: { $0.attemptEndTime == nil }, by: {
+                               ($0.attemptEndTime ?? "") > ($1.attemptEndTime ?? "")
+                           }),
                 // Higher ATS codes are further along the pipeline; unset/unknown sort last.
-                SortOption("Status", systemImage: "circle.fill", kind: .amount) {
-                    ($0.atsState ?? -1) > ($1.atsState ?? -1)
-                }
+                SortOption("Status", systemImage: "circle.fill", kind: .amount,
+                           isMissing: { $0.atsState == nil }, by: {
+                               ($0.atsState ?? -1) > ($1.atsState ?? -1)
+                           })
             ],
             facets: [
                 ListFacet("status", "Status", systemImage: "circle.fill", value: { $0.listStatusLabel })

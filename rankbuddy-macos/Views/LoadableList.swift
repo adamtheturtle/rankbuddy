@@ -38,15 +38,19 @@ struct SortOption<Item>: Identifiable {
     let systemImage: String
     /// Names the two directions the field can be ordered in.
     let kind: SortFieldKind
+    /// Rows with no value for this field remain last in either direction.
+    let isMissing: (Item) -> Bool
     /// A `sorted(by:)` predicate for the field's default direction (`kind`'s first label —
     /// newest/A-to-Z/highest first): returns true when `lhs` should come before `rhs`.
     let areInIncreasingOrder: (Item, Item) -> Bool
 
     init(_ label: String, systemImage: String, kind: SortFieldKind,
+         isMissing: @escaping (Item) -> Bool = { _ in false },
          by areInIncreasingOrder: @escaping (Item, Item) -> Bool) {
         self.label = label
         self.systemImage = systemImage
         self.kind = kind
+        self.isMissing = isMissing
         self.areInIncreasingOrder = areInIncreasingOrder
     }
 }

@@ -16,6 +16,23 @@ nonisolated enum ListSortPersistence {
     }
 }
 
+nonisolated enum ListSort {
+    static func sorted<Item>(
+        _ items: [Item],
+        reversed: Bool,
+        isMissing: (Item) -> Bool,
+        by forward: (Item, Item) -> Bool
+    ) -> [Item] {
+        items.sorted { lhs, rhs in
+            let lhsMissing = isMissing(lhs)
+            let rhsMissing = isMissing(rhs)
+            if lhsMissing != rhsMissing { return !lhsMissing }
+            if lhsMissing { return false }
+            return reversed ? forward(rhs, lhs) : forward(lhs, rhs)
+        }
+    }
+}
+
 /// The list's derived collections, split out of `LoadableList.swift` to keep that file within
 /// the file-length budget. `extension` (internal), not `private extension`, so the view's body
 /// in the other file can read them.
@@ -36,8 +53,12 @@ extension LoadableList {
 
         // Reversing swaps the comparator's arguments rather than negating it, so equal
         // elements still compare false and `sorted(by:)` keeps a valid strict weak ordering.
-        let forward = option.areInIncreasingOrder
-        return base.sorted(by: sortReversed ? { forward($1, $0) } : forward)
+        return ListSort.sorted(
+            base,
+            reversed: sortReversed,
+            isMissing: option.isMissing,
+            by: option.areInIncreasingOrder
+        )
     }
 
     /// The selected, currently-visible items — the bulk CSV export's input (#44).

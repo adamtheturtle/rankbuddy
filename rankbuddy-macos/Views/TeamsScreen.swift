@@ -29,9 +29,10 @@ struct TeamsScreen: View {
                     SortOption("Name", systemImage: "textformat", kind: .text) {
                         $0.name.localizedStandardCompare($1.name) == .orderedAscending
                     },
-                    SortOption("Size", systemImage: "person.3", kind: .amount) {
-                        ($0.developerCount ?? 0) > ($1.developerCount ?? 0)
-                    }
+                    SortOption("Size", systemImage: "person.3", kind: .amount,
+                               isMissing: { $0.developerCount == nil }, by: {
+                                   ($0.developerCount ?? 0) > ($1.developerCount ?? 0)
+                               })
                 ],
                 facets: [
                     ListFacet("department", "Department", systemImage: "building.2") { $0.departments ?? [] },

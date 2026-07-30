@@ -32,9 +32,10 @@ struct QuestionsScreen: View {
                     SortOption("Type", systemImage: "tag", kind: .text) {
                         $0.type.localizedStandardCompare($1.type) == .orderedAscending
                     },
-                    SortOption("Date Created", systemImage: "calendar", kind: .date) {
-                        ($0.createdAt ?? "") > ($1.createdAt ?? "")
-                    }
+                    SortOption("Date Created", systemImage: "calendar", kind: .date,
+                               isMissing: { $0.createdAt == nil }, by: {
+                                   ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                               })
                 ],
                 restorationKey: "selection.questions.\(account.id)",
                 contextMenu: { question in

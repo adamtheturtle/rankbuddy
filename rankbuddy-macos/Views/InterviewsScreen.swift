@@ -36,15 +36,19 @@ struct InterviewsScreen: View {
                 },
                 searchableText: { "\($0.title ?? "") \($0.status)" },
                 sortOptions: [
-                    SortOption("Date Created", systemImage: "calendar", kind: .date) {
-                        ($0.createdAt ?? "") > ($1.createdAt ?? "")
-                    },
+                    SortOption("Date Created", systemImage: "calendar", kind: .date,
+                               isMissing: { $0.createdAt == nil }, by: {
+                                   ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                               }),
                     SortOption("Status", systemImage: "circle.fill", kind: .text) {
                         $0.status.localizedStandardCompare($1.status) == .orderedAscending
                     },
-                    SortOption("Title", systemImage: "textformat", kind: .text) {
-                        ($0.title ?? "").localizedStandardCompare($1.title ?? "") == .orderedAscending
-                    }
+                    SortOption("Title", systemImage: "textformat", kind: .text,
+                               isMissing: {
+                                   $0.title?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false
+                               }, by: {
+                                   ($0.title ?? "").localizedStandardCompare($1.title ?? "") == .orderedAscending
+                               })
                 ],
                 facets: [
                     ListFacet(
@@ -189,9 +193,10 @@ struct InterviewsScreen: View {
             loadPage: loadMergedInterviews,
             searchableText: { "\($0.item.title ?? "") \($0.item.status) \($0.account.label)" },
             sortOptions: [
-                SortOption("Date Created", systemImage: "calendar", kind: .date) {
-                    ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "")
-                },
+                SortOption("Date Created", systemImage: "calendar", kind: .date,
+                           isMissing: { $0.item.createdAt == nil }, by: {
+                               ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "")
+                           }),
                 SortOption("Account", systemImage: "person.crop.circle", kind: .text,
                            by: AccountScoped.byAccountLabel),
                 SortOption("Status", systemImage: "circle.fill", kind: .text) {

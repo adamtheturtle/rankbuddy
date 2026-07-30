@@ -31,12 +31,14 @@ struct TestsScreen: View {
                     SortOption("Name", systemImage: "textformat", kind: .text) {
                         $0.name.localizedStandardCompare($1.name) == .orderedAscending
                     },
-                    SortOption("Date Created", systemImage: "calendar", kind: .date) {
-                        ($0.createdAt ?? "") > ($1.createdAt ?? "")
-                    },
-                    SortOption("Start Time", systemImage: "clock", kind: .date) {
-                        ($0.startTime ?? "") > ($1.startTime ?? "")
-                    }
+                    SortOption("Date Created", systemImage: "calendar", kind: .date,
+                               isMissing: { $0.createdAt == nil }, by: {
+                                   ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                               }),
+                    SortOption("Start Time", systemImage: "clock", kind: .date,
+                               isMissing: { $0.startTime == nil }, by: {
+                                   ($0.startTime ?? "") > ($1.startTime ?? "")
+                               })
                 ],
                 facets: [
                     ListFacet("library", "Library", systemImage: "books.vertical") { $0.libraryFilterValues },
@@ -162,9 +164,10 @@ struct TestsScreen: View {
                 },
                 SortOption("Account", systemImage: "person.crop.circle", kind: .text,
                            by: AccountScoped.byAccountLabel),
-                SortOption("Date Created", systemImage: "calendar", kind: .date) {
-                    ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "")
-                }
+                SortOption("Date Created", systemImage: "calendar", kind: .date,
+                           isMissing: { $0.item.createdAt == nil }, by: {
+                               ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "")
+                           })
             ],
             facets: [
                 ListFacet("account", "Account", systemImage: "person.crop.circle", value: { $0.account.label }),
