@@ -111,6 +111,12 @@ struct HTMLTextTests {
         ) == [.orderedList(items: ["eight", "seven"], start: 8, step: -1, markerStyle: .decimal)])
     }
 
+    @Test func `ordered lists begin at their explicit start value`() {
+        #expect(HTMLFragmentSegment.segments(
+            from: "<ol start=\"5\"><li>five</li><li>six</li></ol>"
+        ) == [.orderedList(items: ["five", "six"], start: 5, step: 1, markerStyle: .decimal)])
+    }
+
     @Test func `ordered lists retain alphabetic and Roman marker styles`() {
         #expect(HTMLFragmentSegment.segments(
             from: "<ol type=\"A\"><li>one</li></ol>"
