@@ -150,7 +150,7 @@ extension LoadableList {
     }
 
     private var activeTransfers: [RowTransfer] {
-        let rows = selectedItems.isEmpty ? detailItem.map { [$0] } ?? [] : selectedItems
+        let rows = selection.isEmpty ? detailItem.map { [$0] } ?? [] : selectedItems
         return rows.compactMap(rowTransfer)
     }
 
