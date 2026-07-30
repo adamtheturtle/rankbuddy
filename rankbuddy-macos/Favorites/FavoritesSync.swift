@@ -5,6 +5,7 @@
 
 import BuddyAppKit
 import Foundation
+import os
 
 /// A minimal key-value sync backend, abstracted so the favourites sync logic is testable
 /// without iCloud (#22). The app implementation adapts buddy-kit's `CloudSyncStore`.
@@ -97,6 +98,10 @@ final class FavoritesSyncCoordinator {
     /// The shared key, identical to the local `FavoritesStore` storage key so a future
     /// migration stays trivial.
     static let key = "rankbuddy.favorites"
+    private static let logger = Logger(
+        subsystem: "com.adamdangoor.rankbuddy",
+        category: "favorites-sync"
+    )
 
     private let favorites: FavoritesStore
     private let store: KeyValueSyncStore
@@ -147,7 +152,11 @@ final class FavoritesSyncCoordinator {
     func adoptRemote() {
         let remote: [FavoriteRef]
         if let data = store.data(forKey: Self.key) {
-            guard let decoded = try? JSONDecoder().decode([FavoriteRef].self, from: data) else { return }
+            guard let decoded = try? JSONDecoder().decode([FavoriteRef].self, from: data) else {
+                Self.logger.error("Replacing malformed remote favourites with local state")
+                pushLocal()
+                return
+            }
 
             remote = decoded
         } else {

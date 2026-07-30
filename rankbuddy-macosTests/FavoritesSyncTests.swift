@@ -48,6 +48,11 @@ struct FavoritesSyncTests {
             onExternalChange?()
         }
 
+        func remoteWriteMalformed() {
+            storage[FavoritesSyncCoordinator.key] = Data("not json".utf8)
+            onExternalChange?()
+        }
+
         func becomeAvailable(with refs: [FavoriteRef]) {
             storage[FavoritesSyncCoordinator.key] = try? JSONEncoder().encode(refs)
             isAvailable = true
@@ -127,6 +132,22 @@ struct FavoritesSyncTests {
             store.remoteDelete()
 
             #expect(favorites.favorites.isEmpty)
+        }
+    }
+
+    @Test func `malformed remote data is replaced with normalized local state`() {
+        let favorites = FavoritesStore(defaults: defaults(#function), isTesting: true)
+        let store = FakeStore()
+        withCoordinator(favorites, store) { _ in
+            favorites.toggle(ref("local"))
+            let writesBefore = store.writes
+
+            store.remoteWriteMalformed()
+
+            let repaired = store.data(forKey: FavoritesSyncCoordinator.key)
+                .flatMap { try? JSONDecoder().decode([FavoriteRef].self, from: $0) }
+            #expect(repaired?.map(\.itemID) == ["local"])
+            #expect(store.writes == writesBefore + 1)
         }
     }
 
