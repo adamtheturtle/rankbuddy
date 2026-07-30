@@ -204,22 +204,24 @@ struct TestRow: View {
     let test: Test
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(test.name).listRowTitleStyle(fullText: test.name)
-                HStack(spacing: 8) {
-                    if let state = test.state {
-                        Text(DisplayFormat.enumLabel(state))
+        TimelineView(.periodic(from: .now, by: 30)) { context in
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(test.name).listRowTitleStyle(fullText: test.name)
+                    HStack(spacing: 8) {
+                        if let state = test.state {
+                            Text(DisplayFormat.enumLabel(state))
+                        }
                     }
+                    .listRowMetadataStyle()
                 }
-                .listRowMetadataStyle()
-            }
-            .listRowTextColumn()
-            Spacer(minLength: 12)
-            HStack(spacing: 6) {
-                test.windowBadge(now: Date())
-                if test.enableProctoring == true {
-                    StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .blue)
+                .listRowTextColumn()
+                Spacer(minLength: 12)
+                HStack(spacing: 6) {
+                    test.windowBadge(now: context.date)
+                    if test.enableProctoring == true {
+                        StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .blue)
+                    }
                 }
             }
         }

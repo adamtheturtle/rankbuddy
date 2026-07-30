@@ -40,99 +40,105 @@ struct TestDetailView: View {
     }
 
     var body: some View {
-        Form {
-            InspectorHeader(
-                title: displayedTest.name,
-                badges: displayedTest.inspectorBadges(now: Date()),
-                onRename: { newName in await rename(to: newName) },
-                editRequest: titleEditRequest
-            )
-
-            Section("Properties") {
-                OptionalRow("State", DisplayFormat.enumLabel(displayedTest.state))
-                OptionalRow("Window", displayedTest.windowStatus(now: Date())?.label)
-                OptionalRow("Unique ID", displayedTest.uniqueID)
-                OptionalRow("Duration", displayedTest.duration.map { "\($0) min" })
-                OptionalRow("Cutoff score", displayedTest.cutoffScore.map(String.init))
-                OptionalRow("Questions", displayedTest.questions.map { "\($0.count)" })
-                OptionalRow("Library", DisplayFormat.list(displayedTest.libraryFilterValues))
-                OptionalRow("Role", DisplayFormat.list(displayedTest.roleFilterValues))
-                OptionalRow("Skills", DisplayFormat.list(displayedTest.skillFilterValues))
-                OptionalRow("Type", DisplayFormat.list(displayedTest.typeFilterValues))
-                OptionalRow("Languages", DisplayFormat.languages(displayedTest.languages))
-                OptionalRow(
-                    "Proctoring",
-                    DisplayFormat.boolean(displayedTest.enableProctoring, trueLabel: "Enabled", falseLabel: "Disabled")
+        TimelineView(.periodic(from: .now, by: 30)) { context in
+            Form {
+                InspectorHeader(
+                    title: displayedTest.name,
+                    badges: displayedTest.inspectorBadges(now: context.date),
+                    onRename: { newName in await rename(to: newName) },
+                    editRequest: titleEditRequest
                 )
-                OptionalRow("Shuffle questions", DisplayFormat.boolean(displayedTest.shuffleQuestions))
-                OptionalRow("Starred", DisplayFormat.boolean(displayedTest.starred))
-                OptionalRow("Locked", DisplayFormat.boolean(displayedTest.locked))
-                OptionalRow("Draft", DisplayFormat.boolean(displayedTest.draft))
-                OptionalRow("MCQ correct score", detail?.mcqCorrectScore.map { $0.formatted() })
-                OptionalRow("MCQ incorrect score", detail?.mcqIncorrectScore.map { $0.formatted() })
-            }
 
-            Section("Schedule") {
-                OptionalRow("Starts", DisplayFormat.date(displayedTest.startTime))
-                OptionalRow("Ends", DisplayFormat.date(displayedTest.endTime))
-                OptionalRow("Created", DisplayFormat.date(displayedTest.createdAt))
-            }
-
-            if let detail, detail.hasAccess {
-                accessSection(detail: detail)
-            }
-
-            if let sections = displayedTest.sections, !sections.isEmpty {
-                Section("Sections") {
-                    ForEach(sections) { section in
-                        LabeledContent(section.displayName) {
-                            if let count = section.questionCount {
-                                Text("\(count) question\(count == 1 ? "" : "s")")
-                            }
-                        }
-                    }
-                }
-            }
-
-            if let tags = displayedTest.tags, !tags.isEmpty {
-                Section("Tags") {
-                    TagList(tags: tags)
-                }
-            }
-
-            Section("Participants") {
-                WindowLinkRow(
-                    title: "Candidates",
-                    systemImage: "person.2",
-                    value: .testCandidates(
-                        testID: displayedTest.id,
-                        testName: displayedTest.name,
-                        accountID: account.id
+                Section("Properties") {
+                    OptionalRow("State", DisplayFormat.enumLabel(displayedTest.state))
+                    OptionalRow("Window", displayedTest.windowStatus(now: context.date)?.label)
+                    OptionalRow("Unique ID", displayedTest.uniqueID)
+                    OptionalRow("Duration", displayedTest.duration.map { "\($0) min" })
+                    OptionalRow("Cutoff score", displayedTest.cutoffScore.map(String.init))
+                    OptionalRow("Questions", displayedTest.questions.map { "\($0.count)" })
+                    OptionalRow("Library", DisplayFormat.list(displayedTest.libraryFilterValues))
+                    OptionalRow("Role", DisplayFormat.list(displayedTest.roleFilterValues))
+                    OptionalRow("Skills", DisplayFormat.list(displayedTest.skillFilterValues))
+                    OptionalRow("Type", DisplayFormat.list(displayedTest.typeFilterValues))
+                    OptionalRow("Languages", DisplayFormat.languages(displayedTest.languages))
+                    OptionalRow(
+                        "Proctoring",
+                        DisplayFormat.boolean(
+                            displayedTest.enableProctoring,
+                            trueLabel: "Enabled",
+                            falseLabel: "Disabled"
+                        )
                     )
-                )
+                    OptionalRow("Shuffle questions", DisplayFormat.boolean(displayedTest.shuffleQuestions))
+                    OptionalRow("Starred", DisplayFormat.boolean(displayedTest.starred))
+                    OptionalRow("Locked", DisplayFormat.boolean(displayedTest.locked))
+                    OptionalRow("Draft", DisplayFormat.boolean(displayedTest.draft))
+                    OptionalRow("MCQ correct score", detail?.mcqCorrectScore.map { $0.formatted() })
+                    OptionalRow("MCQ incorrect score", detail?.mcqIncorrectScore.map { $0.formatted() })
+                }
 
-                if !inviters.isEmpty {
-                    ForEach(inviters) { inviter in
-                        LabeledContent(inviter.displayName) {
-                            VStack(alignment: .trailing, spacing: 2) {
-                                if !inviter.email.isEmpty {
-                                    Text(inviter.email)
-                                }
-                                if let role = inviter.role, !role.isEmpty {
-                                    Text(role)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                Section("Schedule") {
+                    OptionalRow("Starts", DisplayFormat.date(displayedTest.startTime))
+                    OptionalRow("Ends", DisplayFormat.date(displayedTest.endTime))
+                    OptionalRow("Created", DisplayFormat.date(displayedTest.createdAt))
+                }
+
+                if let detail, detail.hasAccess {
+                    accessSection(detail: detail)
+                }
+
+                if let sections = displayedTest.sections, !sections.isEmpty {
+                    Section("Sections") {
+                        ForEach(sections) { section in
+                            LabeledContent(section.displayName) {
+                                if let count = section.questionCount {
+                                    Text("\(count) question\(count == 1 ? "" : "s")")
                                 }
                             }
-                            .textSelection(.enabled)
                         }
                     }
                 }
-            }
 
-            if let instructions = displayedTest.instructions, !instructions.isEmpty {
-                Section("Instructions") {
-                    HighlightedHTMLText(html: instructions)
+                if let tags = displayedTest.tags, !tags.isEmpty {
+                    Section("Tags") {
+                        TagList(tags: tags)
+                    }
+                }
+
+                Section("Participants") {
+                    WindowLinkRow(
+                        title: "Candidates",
+                        systemImage: "person.2",
+                        value: .testCandidates(
+                            testID: displayedTest.id,
+                            testName: displayedTest.name,
+                            accountID: account.id
+                        )
+                    )
+
+                    if !inviters.isEmpty {
+                        ForEach(inviters) { inviter in
+                            LabeledContent(inviter.displayName) {
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    if !inviter.email.isEmpty {
+                                        Text(inviter.email)
+                                    }
+                                    if let role = inviter.role, !role.isEmpty {
+                                        Text(role)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .textSelection(.enabled)
+                            }
+                        }
+                    }
+                }
+
+                if let instructions = displayedTest.instructions, !instructions.isEmpty {
+                    Section("Instructions") {
+                        HighlightedHTMLText(html: instructions)
+                    }
                 }
             }
         }
