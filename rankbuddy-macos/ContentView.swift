@@ -187,17 +187,29 @@ struct ContentView: View {
     /// originating account, not whichever happens to be active). Returns whether anything ours
     /// was accepted, which drives the drop animation.
     private func handleFavoriteDrop(_ providers: [NSItemProvider]) -> Bool {
-        var accepted = false
         let identifier = UTType.rankBuddyFavorite.identifier
-        for provider in providers where provider.hasItemConformingToTypeIdentifier(identifier) {
-            accepted = true
-            provider.loadDataRepresentation(forTypeIdentifier: identifier) { data, _ in
-                guard let data, let ref = FavoritePasteboard.decode(from: data) else { return }
+        let accepted = providers.filter { $0.hasItemConformingToTypeIdentifier(identifier) }
+        guard !accepted.isEmpty else { return false }
 
-                Task { @MainActor in favorites.add(ref, undoManager: undoManager) }
+        // Await providers sequentially so asynchronous pasteboard loading cannot reorder the
+        // user's drag selection.
+        Task { @MainActor in
+            for provider in accepted {
+                guard let data = await loadFavoriteData(provider, identifier: identifier),
+                      let ref = FavoritePasteboard.decode(from: data) else { continue }
+
+                favorites.add(ref, undoManager: undoManager)
             }
         }
-        return accepted
+        return true
+    }
+
+    private func loadFavoriteData(_ provider: NSItemProvider, identifier: String) async -> Data? {
+        await withCheckedContinuation { continuation in
+            provider.loadDataRepresentation(forTypeIdentifier: identifier) { data, _ in
+                continuation.resume(returning: data)
+            }
+        }
     }
 
     /// Persists a drag-reorder of the current account's favourites.
