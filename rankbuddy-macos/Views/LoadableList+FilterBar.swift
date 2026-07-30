@@ -106,6 +106,9 @@ extension LoadableList {
             .frame(maxWidth: .infinity, alignment: .leading)
             .alert("Save Search", isPresented: $isNamingSearch) {
                 TextField("Name", text: $newSearchName)
+                    .onChange(of: newSearchName) {
+                        newSearchName = String(newSearchName.prefix(SavedSearch.maxNameLength))
+                    }
                 Button("Cancel", role: .cancel) {}
                 Button(existingNamedSearch == nil ? "Save" : "Replace") { saveCurrentSearch() }
                     .disabled(trimmedSearchName.isEmpty)
@@ -198,7 +201,7 @@ extension LoadableList {
     // MARK: - Saved-search actions
 
     private var trimmedSearchName: String {
-        newSearchName.trimmingCharacters(in: .whitespacesAndNewlines)
+        SavedSearch.normalizedName(newSearchName)
     }
 
     private var existingNamedSearch: SavedSearch? {

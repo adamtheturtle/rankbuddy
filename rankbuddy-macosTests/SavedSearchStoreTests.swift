@@ -46,6 +46,17 @@ struct SavedSearchStoreTests {
         #expect(SavedSearchStore.load(restorationKey: "tests.acc", defaults: defaults).isEmpty)
     }
 
+    @Test func `names are trimmed and capped at the declared limit`() {
+        let search = SavedSearch(
+            name: "  \(String(repeating: "x", count: 100))  ",
+            query: "q",
+            dateRange: nil
+        )
+
+        #expect(search.name.count == SavedSearch.maxNameLength)
+        #expect(search.name == String(repeating: "x", count: SavedSearch.maxNameLength))
+    }
+
     @Test func `saved searches round-trip through persistence`() {
         let defaults = makeDefaults()
         let searches = [

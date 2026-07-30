@@ -29,7 +29,7 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
 
     init(name: String, query: String, dateRange: String?, facets: [String: [String]] = [:], id: UUID = UUID()) {
         self.id = id
-        self.name = name
+        self.name = Self.normalizedName(name)
         self.query = Self.normalizedQuery(query)
         self.dateRange = dateRange
         self.facets = facets.filter { !$0.value.isEmpty }
@@ -38,7 +38,7 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
+        name = try Self.normalizedName(container.decode(String.self, forKey: .name))
         query = try Self.normalizedQuery(container.decode(String.self, forKey: .query))
         dateRange = try container.decodeIfPresent(String.self, forKey: .dateRange)
         // Older snapshots predate facet capture; default to none so they still decode.
@@ -94,9 +94,13 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    static func normalizedName(_ name: String) -> String {
+        String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(maxNameLength))
+    }
+
     static func namesMatch(_ lhs: String, _ rhs: String) -> Bool {
-        let left = lhs.trimmingCharacters(in: .whitespacesAndNewlines)
-        let right = rhs.trimmingCharacters(in: .whitespacesAndNewlines)
+        let left = normalizedName(lhs)
+        let right = normalizedName(rhs)
         return left.localizedCaseInsensitiveCompare(right) == .orderedSame
     }
 }
@@ -131,7 +135,11 @@ enum SavedSearchStore {
         guard let data = defaults.data(forKey: defaultsKey(for: restorationKey)) else { return [] }
 
         if let searches = try? JSONDecoder().decode([SavedSearch].self, from: data) {
-            return validated(searches, restorationKey: restorationKey, defaults: defaults)
+            let valid = validated(searches, restorationKey: restorationKey, defaults: defaults)
+            if (try? JSONEncoder().encode(valid)) != data {
+                save(valid, restorationKey: restorationKey, defaults: defaults)
+            }
+            return valid
         }
 
         // Keep the exact unreadable payload before recovering valid records independently. A
