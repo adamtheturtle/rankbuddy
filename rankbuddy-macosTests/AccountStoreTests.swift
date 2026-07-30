@@ -24,6 +24,12 @@ struct AccountStoreTests {
         #expect(warning?.contains("couldn't be verified for: Teams") == true)
     }
 
+    @Test func `optional identity failures are warnings rather than validation failures`() {
+        #expect(AccountScopeAssessment.identityWarning(.authorized) == nil)
+        #expect(AccountScopeAssessment.identityWarning(.refused)?.contains("isn't authorized") == true)
+        #expect(AccountScopeAssessment.identityWarning(.unavailable)?.contains("still save") == true)
+    }
+
     @Test func `account descriptions conflict after trimming and case normalization`() {
         #expect(Account.labelsConflict(" Work ", "work"))
         #expect(!Account.labelsConflict("Work", "Personal"))

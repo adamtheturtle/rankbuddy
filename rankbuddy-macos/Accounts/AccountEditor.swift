@@ -39,6 +39,17 @@ nonisolated enum AccountScopeAssessment {
         }
         return messages.joined(separator: " ")
     }
+
+    static func identityWarning(_ result: AccountScopeProbeResult) -> String? {
+        switch result {
+        case .authorized:
+            nil
+        case .refused:
+            "This token works, but isn't authorized to read current-user details."
+        case .unavailable:
+            "Current-user details couldn't be verified. You can still save this validated token."
+        }
+    }
 }
 
 // A flat, Mail-style editor for adding or editing a HackerRank account.
@@ -551,18 +562,29 @@ private extension AccountEditor {
             try await client.validateToken()
             guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
 
-            let signedInUser = try await currentUser(client: client)
+            let identityResult: AccountScopeProbeResult
+            do {
+                let signedInUser = try await currentUser(client: client)
+                userEmail = signedInUser.email
+                identityResult = .authorized
+            } catch {
+                identityResult = isUnauthorized(error) ? .refused : .unavailable
+            }
             guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
 
-            userEmail = signedInUser.email
             if trimmedLabel.isEmpty {
                 label = defaultLabel
             }
 
-            let warning = await missingScopesWarning(client: client)
+            let endpointWarning = await missingScopesWarning(client: client)
+            let scopeWarnings = [
+                AccountScopeAssessment.identityWarning(identityResult),
+                endpointWarning
+            ]
             guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
 
-            scopeWarning = warning
+            let warning = scopeWarnings.compactMap(\.self).joined(separator: " ")
+            scopeWarning = warning.isEmpty ? nil : warning
             validation = .valid
         } catch {
             guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
