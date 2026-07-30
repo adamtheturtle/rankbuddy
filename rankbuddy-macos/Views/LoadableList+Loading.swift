@@ -127,7 +127,7 @@ extension LoadableList {
     /// Reconciles a preserved selection after a background server-filter reload. If the selected
     /// item is still present, refresh the detail with the new row instance; if not, clear once the
     /// replacement data is ready so the pane doesn't blank during the request.
-    private func reconcilePreservedSelection(in loadedItems: [Item]) {
+    func reconcilePreservedSelection(in loadedItems: [Item]) {
         guard let selectedID = detailItem?.id ?? selection.first else { return }
 
         if let selectedItem = loadedItems.first(where: { $0.id == selectedID }) {

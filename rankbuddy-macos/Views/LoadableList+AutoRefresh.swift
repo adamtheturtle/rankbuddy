@@ -40,10 +40,8 @@ extension LoadableList {
                 items: page.items, cursor: page.next, totalCount: page.totalCount, for: key
             )
         }
-        // Drop the pane's item if the refresh removed it (e.g. deleted elsewhere), so the
-        // detail never shows a row that's no longer in the list.
-        if let detailItem, !items.contains(where: { $0.id == detailItem.id }) {
-            self.detailItem = nil
-        }
+        // Refresh the detail from the replacement row, or atomically clear both detail and
+        // selection if the item disappeared elsewhere.
+        reconcilePreservedSelection(in: items)
     }
 }
