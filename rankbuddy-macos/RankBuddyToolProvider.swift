@@ -216,6 +216,17 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         jsonResult(accountsPayload())
     }
 
+    func pageMetadata(_ page: Page<some Sendable>) -> [String: Any] {
+        var metadata: [String: Any] = [
+            "returned_count": page.items.count,
+            "has_more": page.next != nil
+        ]
+        if let totalCount = page.totalCount {
+            metadata["total_count"] = totalCount
+        }
+        return metadata
+    }
+
     @MainActor
     private func listTests(account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
@@ -223,9 +234,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         do {
             let page = try await HackerRankClient(account: resolved).testsPage()
             let items = page.items.map { ["id": $0.id, "name": $0.name, "state": $0.state ?? ""] }
-            return jsonResult([
-                "account": resolved.label, "tests": items, "count": items.count, "has_more": page.next != nil
-            ])
+            return jsonResult(pageMetadata(page).merging([
+                "account": resolved.label, "tests": items
+            ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list tests: \(error.localizedDescription)")
         }
@@ -238,9 +249,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         do {
             let page = try await HackerRankClient(account: resolved).questionsPage()
             let items = page.items.map { ["id": $0.id, "name": $0.name, "type": $0.type] }
-            return jsonResult([
-                "account": resolved.label, "questions": items, "count": items.count, "has_more": page.next != nil
-            ])
+            return jsonResult(pageMetadata(page).merging([
+                "account": resolved.label, "questions": items
+            ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list questions: \(error.localizedDescription)")
         }
@@ -253,9 +264,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         do {
             let page = try await HackerRankClient(account: resolved).interviewsPage()
             let items = page.items.map { ["id": $0.id, "title": $0.title ?? "", "status": $0.status] }
-            return jsonResult([
-                "account": resolved.label, "interviews": items, "count": items.count, "has_more": page.next != nil
-            ])
+            return jsonResult(pageMetadata(page).merging([
+                "account": resolved.label, "interviews": items
+            ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list interviews: \(error.localizedDescription)")
         }
@@ -276,11 +287,10 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
                     "score": candidate.score ?? 0, "status": candidate.listStatusLabel ?? ""
                 ]
             }
-            return jsonResult([
+            return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "test_id": testID, "candidates": items,
-                "count": items.count, "has_more": page.next != nil,
                 "next_cursor": page.next ?? ""
-            ])
+            ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list candidates: \(error.localizedDescription)")
         }
@@ -315,9 +325,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             let items = page.items.map {
                 ["id": $0.id ?? "", "name": $0.name ?? "", "subject": $0.subject ?? "", "access": $0.access ?? ""]
             }
-            return jsonResult([
-                "account": resolved.label, "templates": items, "count": items.count, "has_more": page.next != nil
-            ])
+            return jsonResult(pageMetadata(page).merging([
+                "account": resolved.label, "templates": items
+            ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list invite templates: \(error.localizedDescription)")
         }
@@ -358,9 +368,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
                     "description": $0.description ?? ""
                 ] as [String: Any]
             }
-            return jsonResult([
-                "account": resolved.label, "templates": items, "count": items.count, "has_more": page.next != nil
-            ])
+            return jsonResult(pageMetadata(page).merging([
+                "account": resolved.label, "templates": items
+            ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list interview templates: \(error.localizedDescription)")
         }
@@ -394,7 +404,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         let accounts = store.accounts.map { account in
             ["id": account.id.uuidString, "label": account.label, "current": account.id == store.currentAccountID]
         }
-        return ["accounts": accounts, "count": accounts.count]
+        return ["accounts": accounts, "total_count": accounts.count]
     }
 
     /// Serialises the accounts payload on the main actor, returning a `Sendable` `String` so the

@@ -67,7 +67,8 @@ struct RankBuddyToolProviderTests {
         #expect(result.isError != true)
         #expect(body.contains("\"users\""))
         #expect(body.contains("rhea@example.com"))
-        #expect(!body.contains("\"count\" : 0"))
+        #expect(!body.contains("\"returned_count\" : 0"))
+        #expect(!body.contains("\"count\""))
     }
 
     @Test func `list_teams returns teams with member counts`() async {
@@ -94,7 +95,8 @@ struct RankBuddyToolProviderTests {
         #expect(body.contains("\"tests\""))
         #expect(body.contains("\"account\" : \"Demo\""))
         // The mock tests fixture is non-empty.
-        #expect(!body.contains("\"count\" : 0"))
+        #expect(!body.contains("\"returned_count\" : 0"))
+        #expect(!body.contains("\"count\""))
     }
 
     @Test func `list_candidates requires a test_id`() async {
@@ -106,7 +108,10 @@ struct RankBuddyToolProviderTests {
     @Test func `list_candidates returns a test's candidates`() async {
         let result = await provider().callTool("list_candidates", arguments: ["test_id": .string("t1")])
         #expect(result.isError != true)
-        #expect(text(result).contains("\"candidates\""))
+        let body = text(result)
+        #expect(body.contains("\"candidates\""))
+        #expect(body.contains("\"returned_count\""))
+        #expect(!body.contains("\"count\""))
     }
 
     @Test func `an unknown tool is an error`() async {

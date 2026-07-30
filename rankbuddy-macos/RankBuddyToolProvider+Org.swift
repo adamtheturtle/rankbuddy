@@ -31,9 +31,9 @@ extension RankBuddyToolProvider {
             let items = page.items.map {
                 ["id": $0.id, "email": $0.email, "name": $0.displayName, "role": $0.role ?? ""]
             }
-            return jsonResult([
-                "account": resolved.label, "users": items, "count": items.count, "has_more": page.next != nil
-            ])
+            return jsonResult(pageMetadata(page).merging([
+                "account": resolved.label, "users": items
+            ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list users: \(error.localizedDescription)")
         }
@@ -53,9 +53,9 @@ extension RankBuddyToolProvider {
                     "interviewers": team.interviewerCount ?? 0
                 ]
             }
-            return jsonResult([
-                "account": resolved.label, "teams": items, "count": items.count, "has_more": page.next != nil
-            ])
+            return jsonResult(pageMetadata(page).merging([
+                "account": resolved.label, "teams": items
+            ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list teams: \(error.localizedDescription)")
         }
