@@ -1,5 +1,5 @@
 {
-  "originHash" : "d8d7bc0c526924fb9d2edf077a7bdfe780bc4a5adf9216cd904ca1ed8c5d1396",
+  "originHash" : "840fc8c77184d112622a203503476a168f75191b7d14c7215b38606b0a0d1bc0",
   "pins" : [
     {
       "identity" : "buddy-kit",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/CommandPaletteKit",
       "state" : {
-        "revision" : "04bd21868e7d2df7362ab7ab88e4f834032e3b8f",
-        "version" : "0.1.0"
+        "revision" : "01b6b48c490f9dfdffb6a6175d3b206a88bd015a",
+        "version" : "0.2.1"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/FastList",
       "state" : {
-        "revision" : "460f4e8deb7aa5f89d53492127920f6ea35b9e7f",
-        "version" : "0.5.0"
+        "revision" : "bbcb9d47be99e0c0d584fc7b3e29fa5bd31a5ee0",
+        "version" : "0.8.0"
       }
     },
     {
@@ -78,7 +78,16 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/PrintableView",
       "state" : {
-        "revision" : "a84ec12f7d6e45c48855eaafd529563213a0fbdd",
+        "revision" : "4c8da3f1a66c16a0e80da1c103f66a171fb08435",
+        "version" : "0.1.2"
+      }
+    },
+    {
+      "identity" : "safeurlkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/SafeURLKit.git",
+      "state" : {
+        "revision" : "f71fa0333026fcd3ee357f86154997eea3b31a50",
         "version" : "0.1.1"
       }
     },
@@ -188,6 +197,15 @@
       "state" : {
         "revision" : "d7e8e12f84e8b7eefd38996a663331f9ee9d8792",
         "version" : "0.5.1"
+      }
+    },
+    {
+      "identity" : "whatsnewkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SvenTiigi/WhatsNewKit.git",
+      "state" : {
+        "revision" : "6157c77e8be9b3d2310bc680681b61a8d9e290ac",
+        "version" : "2.2.1"
       }
     }
   ],

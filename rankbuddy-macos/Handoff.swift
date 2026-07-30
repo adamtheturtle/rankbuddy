@@ -5,6 +5,7 @@
 
 import BuddyAppKit
 import HackerRankKit
+import SafeURLKit
 import SwiftUI
 
 /// Handoff / Continuity (#98): advertises the test, question, or interview currently on screen
@@ -29,6 +30,15 @@ enum RankBuddyUserActivity {
 
     /// Generous upper bound for API item identifiers carried in system activities.
     nonisolated static let maxItemIDLength = 256
+
+    /// Browser fallbacks may target HackerRank itself (including regional subdomains), never
+    /// credentials, custom schemes, IP literals, special-use hosts, or deceptive suffixes.
+    nonisolated static let fallbackURLPolicy = URLPolicy(
+        allowedSchemes: ["https", "http"],
+        allowedOrigins: [.hostSuffix("hackerrank.com")],
+        portRule: .any,
+        allowsFragment: true
+    )
 
     /// The account-scoped identity of a viewable item — everything the deep-link open path
     /// needs, and exactly what travels in the activity's `userInfo`.
@@ -115,12 +125,7 @@ enum RankBuddyUserActivity {
     /// enough: a malformed or foreign activity must not invoke local/custom handlers or navigate
     /// to an attacker-controlled host while claiming to be RankBuddy Handoff.
     nonisolated static func isTrustedFallbackURL(_ url: URL) -> Bool {
-        guard let scheme = url.scheme?.lowercased(),
-              scheme == "https" || scheme == "http",
-              let host = url.host()?.lowercased()
-        else { return false }
-
-        return host == "hackerrank.com" || host.hasSuffix(".hackerrank.com")
+        fallbackURLPolicy.allows(url)
     }
 
     /// Continues an activity: deep-links to the item in-app when the `userInfo` resolves,

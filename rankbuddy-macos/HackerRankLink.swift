@@ -5,6 +5,7 @@
 
 import AppKit
 import BuddyAppKit
+import SafeURLKit
 import SwiftUI
 
 /// Parsing + UI for "Open by URL / ID" (#42) — paste a HackerRank URL (or a bare id) and jump
@@ -25,12 +26,22 @@ enum HackerRankLink {
     ) -> (collection: FavoriteCollection, id: String)? {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         let components = URLComponents(string: trimmed)
-        if let host = components?.host?.lowercased() {
-            let scheme = components?.scheme?.lowercased()
-            let hosts = Set(allowedHosts.map { $0.lowercased() })
-            guard scheme == "https" || scheme == "http", hosts.contains(host) else {
-                return nil
+        if components?.host != nil {
+            let origins = allowedHosts.compactMap { host in
+                (try? URLHost.parse(host)).map(OriginRule.host)
             }
+            let policy = URLPolicy(
+                allowedSchemes: ["https", "http"],
+                allowedOrigins: origins,
+                portRule: .any,
+                allowsFragment: true,
+                // A configured self-hosted account may intentionally use an internal name
+                // or address. Exact-host matching keeps that widening account-scoped.
+                allowsIPLiteralHosts: true,
+                allowsSpecialUseHostNames: true,
+                allowsSpecialPurposeAddresses: true
+            )
+            guard policy.allows(trimmed) else { return nil }
         }
         let path = components?.path ?? trimmed
         let segments = path.split(separator: "/").map(String.init)
@@ -38,7 +49,9 @@ enum HackerRankLink {
         for (index, segment) in segments.enumerated() {
             if let collection = collections[segment.lowercased()], index + 1 < segments.count {
                 let id = segments[index + 1]
-                if !id.isEmpty { return (collection, id) }
+                if !id.isEmpty {
+                    return (collection, id)
+                }
             }
         }
         return nil

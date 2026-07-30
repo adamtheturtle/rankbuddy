@@ -12,7 +12,6 @@
 		66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
 		6638044A2FF64E51004A9FCE /* MCPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 663804492FF64E51004A9FCE /* MCPKit */; };
 		663804522FF65BBB004A9FCE /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 663804512FF65BBB004A9FCE /* AsyncAlgorithms */; };
-		66769E002FED4A320023907A /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66769DFF2FED4A320023907A /* PaginatedRESTClient */; };
 		6676A0A82FEEB2410023907A /* FastList in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0A72FEEB2410023907A /* FastList */; };
 		6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AA2FEEB24F0023907A /* Sparkle */; };
 		6676A0AE2FEEB2710023907A /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AD2FEEB2710023907A /* MCP */; };
@@ -21,19 +20,22 @@
 		66AE79D22FFE6820003A66B1 /* HackerRankKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D12FFE6820003A66B1 /* HackerRankKit */; };
 		66AE79D42FFE6820003A66B1 /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D32FFE6820003A66B1 /* HackerRankKitMock */; };
 		66AE79D62FFE6843003A66B1 /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D52FFE6843003A66B1 /* HackerRankKitMock */; };
-		66AE79D82FFE6843003A66B1 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D72FFE6843003A66B1 /* PaginatedRESTClient */; };
+		66AE79D82FFE6843003A66B1 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
+		66B000012FFF000000000001 /* WhatsNewKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000011 /* WhatsNewKit */; };
+		66B000012FFF000000000002 /* SafeURLKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000012 /* SafeURLKit */; };
 		780000000000000000000001 /* BuddyAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D142FEB0FB800352492 /* BuddyAppKit */; };
 		780000000000000000000002 /* BuddyDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D162FEB0FB800352492 /* BuddyDesignSystem */; };
 		780000000000000000000003 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
 		780000000000000000000004 /* MCPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 663804492FF64E51004A9FCE /* MCPKit */; };
 		780000000000000000000005 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 663804512FF65BBB004A9FCE /* AsyncAlgorithms */; };
-		780000000000000000000006 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66769DFF2FED4A320023907A /* PaginatedRESTClient */; };
 		780000000000000000000007 /* FastList in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0A72FEEB2410023907A /* FastList */; };
 		780000000000000000000008 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AD2FEEB2710023907A /* MCP */; };
 		780000000000000000000009 /* CommandPaletteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */; };
 		78000000000000000000000A /* PrintableView in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79CD2FFE5C93003A66B1 /* PrintableView */; };
 		78000000000000000000000B /* HackerRankKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D12FFE6820003A66B1 /* HackerRankKit */; };
 		78000000000000000000000C /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D32FFE6820003A66B1 /* HackerRankKitMock */; };
+		66B000012FFF000000000003 /* WhatsNewKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000011 /* WhatsNewKit */; };
+		66B000012FFF000000000004 /* SafeURLKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000012 /* SafeURLKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -112,9 +114,10 @@
 				66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */,
 				6676A0AE2FEEB2710023907A /* MCP in Frameworks */,
 				6676A0A82FEEB2410023907A /* FastList in Frameworks */,
-				66769E002FED4A320023907A /* PaginatedRESTClient in Frameworks */,
 				66062D152FEB0FB800352492 /* BuddyAppKit in Frameworks */,
 				668CA7EB2FEC7BFA00420E24 /* CommandPaletteKit in Frameworks */,
+				66B000012FFF000000000001 /* WhatsNewKit in Frameworks */,
+				66B000012FFF000000000002 /* SafeURLKit in Frameworks */,
 				663804522FF65BBB004A9FCE /* AsyncAlgorithms in Frameworks */,
 			);
 		};
@@ -141,9 +144,10 @@
 				780000000000000000000003 /* PaginatedRESTClient in Frameworks */,
 				780000000000000000000008 /* MCP in Frameworks */,
 				780000000000000000000007 /* FastList in Frameworks */,
-				780000000000000000000006 /* PaginatedRESTClient in Frameworks */,
 				780000000000000000000001 /* BuddyAppKit in Frameworks */,
 				780000000000000000000009 /* CommandPaletteKit in Frameworks */,
+				66B000012FFF000000000003 /* WhatsNewKit in Frameworks */,
+				66B000012FFF000000000004 /* SafeURLKit in Frameworks */,
 				780000000000000000000005 /* AsyncAlgorithms in Frameworks */,
 			);
 		};
@@ -201,7 +205,8 @@
 				66062D162FEB0FB800352492 /* BuddyDesignSystem */,
 				66062D182FEB0FB800352492 /* PaginatedRESTClient */,
 				668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */,
-				66769DFF2FED4A320023907A /* PaginatedRESTClient */,
+				66B000012FFF000000000011 /* WhatsNewKit */,
+				66B000012FFF000000000012 /* SafeURLKit */,
 				6676A0A72FEEB2410023907A /* FastList */,
 				6676A0AA2FEEB24F0023907A /* Sparkle */,
 				6676A0AD2FEEB2710023907A /* MCP */,
@@ -234,7 +239,7 @@
 			name = "rankbuddy-macosTests";
 			packageProductDependencies = (
 				66AE79D52FFE6843003A66B1 /* HackerRankKitMock */,
-				66AE79D72FFE6843003A66B1 /* PaginatedRESTClient */,
+				66062D182FEB0FB800352492 /* PaginatedRESTClient */,
 			);
 			productName = "rankbuddy-macosTests";
 			productReference = 662C2C552FEC525200FE99C0 /* rankbuddy-macosTests.xctest */;
@@ -280,7 +285,8 @@
 				66062D162FEB0FB800352492 /* BuddyDesignSystem */,
 				66062D182FEB0FB800352492 /* PaginatedRESTClient */,
 				668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */,
-				66769DFF2FED4A320023907A /* PaginatedRESTClient */,
+				66B000012FFF000000000011 /* WhatsNewKit */,
+				66B000012FFF000000000012 /* SafeURLKit */,
 				6676A0A72FEEB2410023907A /* FastList */,
 				6676A0AD2FEEB2710023907A /* MCP */,
 				663804492FF64E51004A9FCE /* MCPKit */,
@@ -331,7 +337,8 @@
 			packageReferences = (
 				66062D132FEB0FB800352492 /* XCRemoteSwiftPackageReference "buddy-kit" */,
 				668CA7E92FEC7BFA00420E24 /* XCRemoteSwiftPackageReference "CommandPaletteKit" */,
-				66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */,
+				66B000012FFF000000000021 /* XCRemoteSwiftPackageReference "WhatsNewKit" */,
+				66B000012FFF000000000022 /* XCRemoteSwiftPackageReference "SafeURLKit" */,
 				6676A0A62FEEB2410023907A /* XCRemoteSwiftPackageReference "FastList" */,
 				6676A0A92FEEB24F0023907A /* XCRemoteSwiftPackageReference "Sparkle" */,
 				6676A0AC2FEEB2710023907A /* XCRemoteSwiftPackageReference "swift-sdk" */,
@@ -861,20 +868,12 @@
 				minimumVersion = 1.1.5;
 			};
 		};
-		66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/adamtheturtle/PaginatedRESTClient.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.0;
-			};
-		};
 		6676A0A62FEEB2410023907A /* XCRemoteSwiftPackageReference "FastList" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/adamtheturtle/FastList";
 			requirement = {
 				kind = exactVersion;
-				version = 0.5.0;
+				version = 0.8.0;
 			};
 		};
 		6676A0A92FEEB24F0023907A /* XCRemoteSwiftPackageReference "Sparkle" */ = {
@@ -898,7 +897,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/CommandPaletteKit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.1.0;
+				version = 0.2.1;
 			};
 		};
 		66AE79CC2FFE5C93003A66B1 /* XCRemoteSwiftPackageReference "PrintableView" */ = {
@@ -906,7 +905,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/PrintableView";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.1;
+				minimumVersion = 0.1.2;
 			};
 		};
 		66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */ = {
@@ -915,6 +914,22 @@
 			requirement = {
 				kind = exactVersion;
 				version = 0.4.0;
+			};
+		};
+		66B000012FFF000000000021 /* XCRemoteSwiftPackageReference "WhatsNewKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SvenTiigi/WhatsNewKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.1;
+			};
+		};
+		66B000012FFF000000000022 /* XCRemoteSwiftPackageReference "SafeURLKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamtheturtle/SafeURLKit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -944,11 +959,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
 			productName = AsyncAlgorithms;
-		};
-		66769DFF2FED4A320023907A /* PaginatedRESTClient */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */;
-			productName = PaginatedRESTClient;
 		};
 		6676A0A72FEEB2410023907A /* FastList */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -990,10 +1000,15 @@
 			package = 66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */;
 			productName = HackerRankKitMock;
 		};
-		66AE79D72FFE6843003A66B1 /* PaginatedRESTClient */ = {
+		66B000012FFF000000000011 /* WhatsNewKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */;
-			productName = PaginatedRESTClient;
+			package = 66B000012FFF000000000021 /* XCRemoteSwiftPackageReference "WhatsNewKit" */;
+			productName = WhatsNewKit;
+		};
+		66B000012FFF000000000012 /* SafeURLKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66B000012FFF000000000022 /* XCRemoteSwiftPackageReference "SafeURLKit" */;
+			productName = SafeURLKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -58,7 +58,9 @@ struct HackerRankLinkTests {
     @Test(arguments: [
         "https://evil.example/tests/some-id",
         "https://hackerrank.com.evil.example/tests/some-id",
-        "ftp://hackerrank.com/tests/some-id"
+        "ftp://hackerrank.com/tests/some-id",
+        "https://user:secret@hackerrank.com/tests/some-id",
+        "https://hackerrank.com\\@evil.example/tests/some-id"
     ])
     func `hosted URLs require a trusted HackerRank origin`(_ input: String) {
         #expect(HackerRankLink.parse(input) == nil)
@@ -68,6 +70,15 @@ struct HackerRankLinkTests {
         let parsed = HackerRankLink.parse(
             "https://hiring.example.org/x/tests/t1",
             allowedHosts: ["hiring.example.org"]
+        )
+        #expect(parsed?.collection == .tests)
+        #expect(parsed?.id == "t1")
+    }
+
+    @Test func `a configured internal enterprise host remains supported`() {
+        let parsed = HackerRankLink.parse(
+            "http://hiring.acme.internal:8080/x/tests/t1",
+            allowedHosts: ["hiring.acme.internal"]
         )
         #expect(parsed?.collection == .tests)
         #expect(parsed?.id == "t1")

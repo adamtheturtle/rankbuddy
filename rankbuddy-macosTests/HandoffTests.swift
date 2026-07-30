@@ -131,6 +131,7 @@ struct HandoffTests {
         let customScheme = URL(string: "rankbuddy://tests/t1") ?? base
         let deceptiveHost = URL(string: "https://hackerrank.com.evil.example/x") ?? base
         let foreignHost = URL(string: "https://example.com/x/tests/t1") ?? base
+        let credentials = URL(string: "https://user:secret@hackerrank.com/x/tests/t1") ?? base
 
         #expect(RankBuddyUserActivity.isTrustedFallbackURL(trustedHTTPS))
         #expect(RankBuddyUserActivity.isTrustedFallbackURL(trustedHTTP))
@@ -138,5 +139,6 @@ struct HandoffTests {
         #expect(!RankBuddyUserActivity.isTrustedFallbackURL(customScheme))
         #expect(!RankBuddyUserActivity.isTrustedFallbackURL(deceptiveHost))
         #expect(!RankBuddyUserActivity.isTrustedFallbackURL(foreignHost))
+        #expect(!RankBuddyUserActivity.isTrustedFallbackURL(credentials))
     }
 }

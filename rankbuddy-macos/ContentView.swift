@@ -8,15 +8,13 @@ import BuddyAppKit
 import CommandPaletteKit
 import SwiftUI
 import UniformTypeIdentifiers
+import WhatsNewKit
 
 /// The main window's root: a split view with a sidebar of the top-level sections and a
 /// detail pane that hosts the selected section's read-only list and detail views.
 struct ContentView: View {
     /// The selected section, persisted across launches (#19).
     @AppStorage("selectedSection") private var selection: SidebarSection = .tests
-    /// The last app version/build whose "What's New" was shown (#47).
-    @AppStorage(WhatsNew.lastSeenKey) private var lastSeenRelease = ""
-    @State private var showWhatsNew = false
     @Environment(PaletteModel.self) private var palette
     @Environment(OpenLinkModel.self) private var openLink
     @Environment(AccountStore.self) private var store
@@ -28,6 +26,10 @@ struct ContentView: View {
     @State private var dragMonitor = FavoriteDragMonitor.shared
     /// Whether a drag is currently hovering the Favourites drop zone (drives its highlight).
     @State private var isFavoriteDropTargeted = false
+    private let whatsNewEnvironment = WhatsNewEnvironment(
+        versionStore: UserDefaultsWhatsNewVersionStore(),
+        whatsNewCollection: [WhatsNewContent.current]
+    )
 
     var body: some View {
         @Bindable var palette = palette
@@ -95,17 +97,8 @@ struct ContentView: View {
         .onAppear {
             favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
         }
-        // Presenting a sheet synchronously from the root view's first `onAppear` can re-enter
-        // AppKit's sheet-ordering pass and leave the main thread in a layout loop. Defer the
-        // release-notes decision until SwiftUI has completed that initial update.
-        .task {
-            await Task.yield()
-            showWhatsNew = WhatsNew.shouldShow(
-                currentVersion: WhatsNew.currentVersion,
-                currentBuild: WhatsNew.currentBuild,
-                lastSeenRelease: lastSeenRelease
-            )
-        }
+        .whatsNewSheet()
+        .environment(\.whatsNew, whatsNewEnvironment)
         .onChange(of: store.accounts.map(\.id)) {
             favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
         }
@@ -124,11 +117,6 @@ struct ContentView: View {
         .onContinueUserActivity(RankBuddyUserActivity.activityType) { activity in
             RankBuddyUserActivity.restore(activity, store: store)
         }
-        .sheet(
-            isPresented: $showWhatsNew,
-            onDismiss: { lastSeenRelease = WhatsNew.currentReleaseIdentifier },
-            content: { WhatsNewView() }
-        )
         .sheet(isPresented: $openLink.isPresented) {
             OpenLinkSheet().environment(store)
         }
