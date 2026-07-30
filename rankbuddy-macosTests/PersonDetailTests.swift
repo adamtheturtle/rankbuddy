@@ -3,6 +3,7 @@
 //  rankbuddy-macosTests
 //
 
+import Foundation
 @testable import rankbuddy_macos
 import Testing
 
@@ -20,5 +21,11 @@ struct PersonDetailTests {
             ids: ["team-1", "team-2"],
             namesByID: ["team-1": "Platform"]
         ) == ["Platform", "team-2"])
+    }
+
+    @Test func `team resolution identity includes its account`() {
+        let first = PersonTeamResolutionKey(accountID: UUID(), teamIDs: ["team-1"])
+        let second = PersonTeamResolutionKey(accountID: UUID(), teamIDs: ["team-1"])
+        #expect(first != second)
     }
 }
