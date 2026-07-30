@@ -51,6 +51,10 @@ nonisolated enum InterviewScheduleValidation {
         }
         return nil
     }
+
+    static func dateIssue(start: Date, now: Date = Date()) -> String? {
+        start > now ? nil : "Start time must be in the future."
+    }
 }
 
 /// A sheet that creates an instant collaborative Pad interview (`POST /interviews`,
@@ -146,7 +150,7 @@ struct ScheduleInterviewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
     @State private var candidateEmail = ""
-    @State private var date = Date()
+    @State private var date = Date().addingTimeInterval(300)
     @State private var notes = ""
     @State private var isSending = false
     @State private var errorMessage: String?
@@ -161,7 +165,9 @@ struct ScheduleInterviewSheet: View {
         guard !trimmedTitle.isEmpty else { return false }
 
         let email = candidateEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (email.isEmpty || EmailValidation.isLikelyValid(email)) && textValidationIssue == nil
+        return (email.isEmpty || EmailValidation.isLikelyValid(email))
+            && textValidationIssue == nil
+            && InterviewScheduleValidation.dateIssue(start: date) == nil
     }
 
     private var textValidationIssue: String? {
@@ -180,12 +186,14 @@ struct ScheduleInterviewSheet: View {
                     TextField("Candidate email (optional)", text: $candidateEmail)
                         .textContentType(.emailAddress)
                         .disableAutocorrection(true)
-                    DatePicker("Starts", selection: $date)
+                    DatePicker("Starts", selection: $date, in: Date()...)
                     TextField("Notes (optional)", text: $notes, axis: .vertical)
                         .lineLimit(2 ... 4)
                 } footer: {
                     if let textValidationIssue {
                         Text(textValidationIssue).foregroundStyle(.red)
+                    } else if let dateIssue = InterviewScheduleValidation.dateIssue(start: date) {
+                        Text(dateIssue).foregroundStyle(.red)
                     }
                 }
 
@@ -222,6 +230,11 @@ struct ScheduleInterviewSheet: View {
     }
 
     private func schedule() async {
+        if let issue = InterviewScheduleValidation.dateIssue(start: date) {
+            errorMessage = issue
+            return
+        }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }

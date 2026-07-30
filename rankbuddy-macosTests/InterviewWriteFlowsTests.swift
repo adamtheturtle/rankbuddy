@@ -33,6 +33,15 @@ struct InterviewWriteFlowsTests {
         )?.contains("Notes") == true)
     }
 
+    @Test func `scheduled interviews require a future start`() {
+        let now = Date(timeIntervalSince1970: 1000)
+
+        #expect(InterviewScheduleValidation.dateIssue(start: now, now: now) != nil)
+        #expect(InterviewScheduleValidation.dateIssue(
+            start: now.addingTimeInterval(1), now: now
+        ) == nil)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
