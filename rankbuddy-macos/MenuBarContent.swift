@@ -207,7 +207,7 @@ struct MenuBarContent: View {
     @ViewBuilder private var recentSection: some View {
         if let account = store.currentAccount, displayedRecentCount > 0 {
             let cached = RecentActivityStore.shared.recentAll(account: account.id)
-            let recents = activeOnly ? cached.filter(\.isActiveOrUpcoming) : cached
+            let recents = cached.filter { $0.isIncludedInRecentSection(activeOnly: activeOnly) }
             if !recents.isEmpty {
                 Divider()
                 Section(activeOnly ? "Active & Upcoming" : "Recent") {

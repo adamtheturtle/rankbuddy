@@ -25,6 +25,16 @@ struct RecentActivityTests {
         RecentItem(collection: collection, id: id, title: id.uppercased(), subtitle: nil)
     }
 
+    @Test func `active items appear in only the selected menu section`() {
+        let active = RecentItem(collection: .tests, id: "active", title: "Active", subtitle: "active")
+        let archived = RecentItem(collection: .tests, id: "archived", title: "Archived", subtitle: "archived")
+
+        #expect(!active.isIncludedInRecentSection(activeOnly: false))
+        #expect(active.isIncludedInRecentSection(activeOnly: true))
+        #expect(archived.isIncludedInRecentSection(activeOnly: false))
+        #expect(!archived.isIncludedInRecentSection(activeOnly: true))
+    }
+
     @Test func `records and reads back per collection`() {
         let store = store(#function)
         let account = UUID()

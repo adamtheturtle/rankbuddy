@@ -65,6 +65,12 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
         }
     }
 
+    /// Active items are rendered in the higher-priority menu section unless that section is
+    /// intentionally replacing Recent via the active-only preference.
+    func isIncludedInRecentSection(activeOnly: Bool) -> Bool {
+        activeOnly ? isActiveOrUpcoming : !isActiveOrUpcoming
+    }
+
     private static func parseWindowDate(_ value: String?) -> Date? {
         guard let value, !value.isEmpty else { return nil }
 
