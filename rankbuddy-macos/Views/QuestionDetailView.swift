@@ -48,6 +48,8 @@ struct QuestionDetailView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: QuestionDetail?
+    @State private var detailError: String?
+    @State private var isDetailLoading = false
     @State private var answerRevealed = false
     @State private var deletePresented = false
     @State private var deleteError: String?
@@ -111,6 +113,8 @@ struct QuestionDetailView: View {
     var body: some View {
         Form {
             InspectorHeader(title: displayed.name, badges: displayed.inspectorBadges, onRename: renameAction)
+
+            detailLoadStatus
 
             Section("Properties") {
                 OptionalRow("Unique ID", displayed.uniqueID)
@@ -287,6 +291,22 @@ struct QuestionDetailView: View {
             Text("This removes every testcase from “\(displayed.name)” on HackerRank. This can’t be undone.")
         }
     }
+
+    @ViewBuilder private var detailLoadStatus: some View {
+        if isDetailLoading {
+            Section {
+                ProgressView("Loading question details…")
+            }
+        } else if let detailError {
+            Section {
+                Label(detailError, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.red)
+                Button("Retry Details") {
+                    Task { await loadDetail(for: requestIdentity) }
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Editing, destructive actions, and detail loading
@@ -442,19 +462,46 @@ extension QuestionDetailView {
     /// ambiguous, so the wrong account is never queried. Re-hides the answer for each question.
     private func loadDetail(for identity: QuestionDetailRequestIdentity) async {
         detail = nil
+        detailError = nil
+        isDetailLoading = true
         detailQuestion = nil
         answerRevealed = false
-        guard let account = owningAccount else { return }
+        guard let account = owningAccount else {
+            isDetailLoading = false
+            return
+        }
 
         let client = HackerRankClient(account: account)
         let metadataClient = HackerRankDetailMetadataClient(account: account)
-        async let loadedDetail = try? client.question(id: question.id)
+        async let loadedDetail = Self.fetchDetail(client: client, questionID: question.id)
         async let loadedMetadata = try? metadataClient.question(id: question.id)
         let loaded = await (loadedDetail, loadedMetadata)
         guard !Task.isCancelled, identity == requestIdentity else { return }
 
-        detail = loaded.0
+        isDetailLoading = false
+        switch loaded.0 {
+        case let .loaded(value):
+            detail = value
+        case let .failed(message):
+            detailError = message
+        }
         detailQuestion = loaded.1?.applying(to: question)
+    }
+
+    private enum DetailLoadResult {
+        case loaded(QuestionDetail)
+        case failed(String)
+    }
+
+    private nonisolated static func fetchDetail(
+        client: HackerRankClient,
+        questionID: String
+    ) async -> DetailLoadResult {
+        do {
+            return try await .loaded(client.question(id: questionID))
+        } catch {
+            return .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
     }
 }
 
