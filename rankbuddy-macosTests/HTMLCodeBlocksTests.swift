@@ -69,6 +69,21 @@ struct HTMLCodeBlocksTests {
         #expect(CodeLanguage.detect(hint: "node.js") == .javascript)
     }
 
+    @Test func `multi-class hints ignore presentation classes and select a known language`() {
+        #expect(HTMLCodeBlocks.languageHint(
+            openTag: "<pre>",
+            inner: "<code class=\"hljs python\">code</code>"
+        ) == "python")
+        #expect(HTMLCodeBlocks.languageHint(
+            openTag: "<pre class=\"prettyprint ruby\">",
+            inner: "code"
+        ) == "ruby")
+        #expect(HTMLCodeBlocks.languageHint(
+            openTag: "<pre>",
+            inner: "<code class=\"hljs prettyprint\">code</code>"
+        ) == nil)
+    }
+
     @Test func `metadata attributes are not mistaken for lang`() {
         #expect(HTMLCodeBlocks.languageHint(openTag: "<pre data-lang=\"python\">", inner: "code") == nil)
         #expect(HTMLCodeBlocks.languageHint(openTag: "<pre x-lang=\"python\">", inner: "code") == nil)

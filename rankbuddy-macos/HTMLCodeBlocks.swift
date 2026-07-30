@@ -106,7 +106,7 @@ nonisolated enum HTMLCodeBlocks {
             if let lang = attribute(named: "lang", in: tag) {
                 return lang
             }
-            return classes.first
+            return classes.first { CodeLanguage.detect(hint: $0) != .plain }
         }
         return attribute(named: "lang", in: tag)
     }
