@@ -19,24 +19,34 @@ final class DemoSmokeTests: XCTestCase {
     }
 
     @MainActor
-    func testCaptureMarketingScreenshots() {
-        let app = launchDemo()
+    func testCaptureLightMarketingScreenshots() {
+        captureScreenshots(appearance: "Light")
+    }
+
+    @MainActor
+    func testCaptureDarkMarketingScreenshots() {
+        captureScreenshots(appearance: "Dark")
+    }
+
+    @MainActor
+    private func captureScreenshots(appearance: String) {
+        let app = launchDemo(appearance: appearance)
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
 
         for section in sections {
             navigate(to: section, in: app)
             let attachment = XCTAttachment(screenshot: app.screenshot())
-            attachment.name = "RankBuddy-\(section)"
+            attachment.name = "RankBuddy-\(appearance)-\(section)"
             attachment.lifetime = .keepAlways
             add(attachment)
         }
     }
 
     @MainActor
-    private func launchDemo() -> XCUIApplication {
+    private func launchDemo(appearance: String = "Light") -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["RANKBUDDY_DEMO"] = "1"
-        app.launchArguments += ["-AppleInterfaceStyle", "Light"]
+        app.launchArguments += ["-AppleInterfaceStyle", appearance]
         app.launch()
         return app
     }
