@@ -122,9 +122,7 @@ extension LoadableList {
             }
 
             loadedCursors.insert(cursor)
-            var seenIDs = Set(items.map(\.id))
-            let newItems = page.items.filter { seenIDs.insert($0.id).inserted }
-            items.append(contentsOf: newItems)
+            items = ListPageMerge.merge(items, with: page.items)
             onItemsLoaded(page.items)
             nextCursor = page.next
             totalCount = page.totalCount ?? totalCount
