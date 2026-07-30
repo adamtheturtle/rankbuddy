@@ -72,5 +72,7 @@ struct QuestionEditValidationTests {
         #expect(TestcaseValidation.isValidScore(" 10\n"))
         #expect(!TestcaseValidation.isValidScore("ten"))
         #expect(!TestcaseValidation.isValidScore("1.5"))
+        #expect(!TestcaseValidation.isValidScore("-1"))
+        #expect(TestcaseValidation.isValidScore("0"))
     }
 }

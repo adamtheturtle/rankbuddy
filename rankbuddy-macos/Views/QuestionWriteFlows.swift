@@ -187,7 +187,7 @@ struct AddTestcaseSheet: View {
             return
         }
         guard TestcaseValidation.isValidScore(score) else {
-            errorMessage = "Score must be a whole number."
+            errorMessage = "Score must be a whole number of zero or greater."
             return
         }
 
@@ -223,7 +223,7 @@ nonisolated enum TestcaseValidation {
 
     static func isValidScore(_ score: String) -> Bool {
         let normalized = score.trimmingCharacters(in: .whitespacesAndNewlines)
-        return normalized.isEmpty || Int(normalized) != nil
+        return normalized.isEmpty || Int(normalized).map { $0 >= 0 } == true
     }
 }
 
