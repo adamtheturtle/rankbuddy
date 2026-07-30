@@ -116,11 +116,10 @@ struct QuestionsScreen: View {
     }
 
     /// Loads one merged page of questions across every configured account (#17).
-    private func loadMergedQuestions(_: String?) async throws -> Page<AccountScoped<Question>> {
-        let items = try await MergedLoader.firstPages(accounts: store.accounts) {
-            try await HackerRankClient(account: $0).questionsPage().items
+    private func loadMergedQuestions(_ cursor: String?) async throws -> Page<AccountScoped<Question>> {
+        try await MergedLoader.page(accounts: store.accounts, cursor: cursor) {
+            try await HackerRankClient(account: $0).questionsPage(after: $1)
         }
-        return Page(items: items, next: nil)
     }
 
     /// Questions merged across every configured account (#17).
