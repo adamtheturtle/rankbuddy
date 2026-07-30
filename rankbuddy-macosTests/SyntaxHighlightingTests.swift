@@ -61,6 +61,15 @@ struct SyntaxHighlightingTests {
         #expect(text(raw, .swift, of: .comment).isEmpty)
     }
 
+    @Test func `swift and python triple quoted strings span lines`() {
+        let swift = "\"\"\"first\nreturn // text\nlast\"\"\""
+        let python = "'''first\nreturn # text\nlast'''"
+        let rawSwift = "#\"\"\"first\n\"quoted\" // text\nlast\"\"\"#"
+        #expect(text(swift, .swift, of: .string) == [swift])
+        #expect(text(python, .python, of: .string) == [python])
+        #expect(text(rawSwift, .swift, of: .string) == [rawSwift])
+    }
+
     @Test func `c sharp interpolated and verbatim strings protect their contents`() {
         let code = #"$"value {item} // text" @"quote "" and /* text */" $@"{item} // text""#
         #expect(text(code, .cFamily, of: .string) == [

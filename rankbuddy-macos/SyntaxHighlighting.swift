@@ -254,11 +254,27 @@ nonisolated struct SyntaxHighlighter {
             }
             if quote > start, quote < code.endIndex, code[quote] == "\"" {
                 let hashes = String(code[start ..< quote])
+                let delimiter = code[quote...].hasPrefix("\"\"\"") ? "\"\"\"" : "\""
                 return StringRule(
-                    prefix: hashes + "\"",
-                    terminator: "\"" + hashes,
+                    prefix: hashes + delimiter,
+                    terminator: delimiter + hashes,
                     escape: .literal,
-                    allowsNewline: false
+                    allowsNewline: delimiter.count == 3
+                )
+            }
+        }
+
+        if language == .swift, code[start...].hasPrefix("\"\"\"") {
+            return StringRule(prefix: "\"\"\"", terminator: "\"\"\"", escape: .backslash, allowsNewline: true)
+        }
+
+        if language == .python {
+            for delimiter in ["\"\"\"", "'''"] where code[start...].hasPrefix(delimiter) {
+                return StringRule(
+                    prefix: delimiter,
+                    terminator: delimiter,
+                    escape: .backslash,
+                    allowsNewline: true
                 )
             }
         }
