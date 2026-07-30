@@ -11,6 +11,26 @@ import SwiftUI
 /// file-length limit. Driven by the General settings cadence, independent of the background
 /// liveness sweep.
 extension LoadableList {
+    /// Invalidates client-side rolling ranges as time advances and refreshes server-side ranges
+    /// when their calendar-day bounds cross midnight.
+    func rollingDateFilterLoop() async {
+        guard filterDate != nil, dateRange != nil else { return }
+
+        var day = Calendar.current.startOfDay(for: dateFilterNow)
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(60))
+            guard !Task.isCancelled else { return }
+
+            let now = Date()
+            dateFilterNow = now
+            let currentDay = Calendar.current.startOfDay(for: now)
+            if serverDateFiltering, currentDay != day {
+                day = currentDay
+                await reload()
+            }
+        }
+    }
+
     /// Reloads the list on the user's chosen cadence. The loop restarts when the interval
     /// changes (`.task(id:)`) and stops when off. A tick refreshes only while nothing is
     /// mid-load and the user is on the first page — so it never interrupts a load or pulls them

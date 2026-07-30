@@ -17,7 +17,8 @@ enum ListQuery {
         query: String,
         searchableText: (Item) -> String,
         date: ((Item) -> Date?)?,
-        dateRange: String?
+        dateRange: String?,
+        now: Date = Date()
     ) -> [Item] {
         var result = items
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -26,7 +27,7 @@ enum ListQuery {
         }
 
         if let date {
-            result = DateRangeFilter.apply(result, range: dateRange, date: date)
+            result = DateRangeFilter.apply(result, range: dateRange, now: now, date: date)
         }
 
         return result

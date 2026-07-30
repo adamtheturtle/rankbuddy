@@ -19,7 +19,7 @@ extension LoadableList {
         // row's `searchableText` doesn't include).
         let base = ListQuery.filtered(
             items, query: isServerSearching ? "" : query, searchableText: searchableText,
-            date: serverDateFiltering ? nil : filterDate, dateRange: dateRange
+            date: serverDateFiltering ? nil : filterDate, dateRange: dateRange, now: dateFilterNow
         )
         .filter { ListQuery.matchesFacets($0, facets: facets, selected: selectedFacets) }
         guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return base }

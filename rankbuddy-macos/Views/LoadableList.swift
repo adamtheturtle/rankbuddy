@@ -193,6 +193,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// The selected date-range filter (one of `NamedDateRange.options`), or `nil` for no
     /// date constraint.
     @State var dateRange: String?
+    @State var dateFilterNow = Date()
     @State var sortSelection: SortOption<Item>.ID?
     /// Whether the chosen sort runs opposite its default direction (Oldest First, Z to A, …).
     /// Kept separate from the field selection — like PadBuddy, switching fields keeps the
@@ -253,6 +254,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 // pane before loading the new account's data (#19).
                 .task(id: restorationKey) { await reload() }
                 .task(id: autoRefreshSeconds) { await autoRefreshLoop() }
+                .task(id: dateRange) { await rollingDateFilterLoop() }
                 // While a client-side filter (search/facet/date) is active, page in more (capped)
                 // so the match isn't limited to the first page — see `LoadableList+Search` (#86).
                 .task(id: clientFilterToken) { await autoLoadWhileFiltering() }
