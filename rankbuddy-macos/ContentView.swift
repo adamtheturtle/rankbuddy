@@ -107,9 +107,11 @@ struct ContentView: View {
         .onContinueUserActivity(RankBuddyUserActivity.activityType) { activity in
             RankBuddyUserActivity.restore(activity, store: store)
         }
-        .sheet(isPresented: $showWhatsNew) {
-            WhatsNewView { lastSeenRelease = WhatsNew.currentReleaseIdentifier }
-        }
+        .sheet(
+            isPresented: $showWhatsNew,
+            onDismiss: { lastSeenRelease = WhatsNew.currentReleaseIdentifier },
+            content: { WhatsNewView() }
+        )
         .sheet(isPresented: $openLink.isPresented) {
             OpenLinkSheet().environment(store)
         }

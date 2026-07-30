@@ -100,11 +100,8 @@ enum WhatsNew {
     }
 }
 
-/// The What's New sheet: a titled list of highlights with a dismiss button that records the
-/// current version as seen.
+/// The What's New sheet: a titled list of highlights with a dismiss button.
 struct WhatsNewView: View {
-    /// Called when dismissed, so the caller can record the version as seen.
-    var onDismiss: () -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -138,7 +135,6 @@ struct WhatsNewView: View {
 
             Divider()
             Button("Continue") {
-                onDismiss()
                 dismiss()
             }
             .keyboardShortcut(.defaultAction)
@@ -150,5 +146,5 @@ struct WhatsNewView: View {
 }
 
 #Preview {
-    WhatsNewView {}
+    WhatsNewView()
 }
