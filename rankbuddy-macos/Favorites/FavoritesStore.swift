@@ -60,12 +60,15 @@ nonisolated struct FavoriteRef: Codable, Hashable, Identifiable {
 @Observable
 @MainActor
 final class FavoritesStore {
+    static let storageKey = "rankbuddy.favorites"
+    static let recoveryKey = "rankbuddy.favorites.unreadable-backup"
     private let defaults: UserDefaults
-    private let storageKey = "rankbuddy.favorites"
 
     /// The favourites in insertion order (oldest first); display surfaces reverse to show
     /// the most-recently-added first.
     private(set) var favorites: [FavoriteRef]
+    private(set) var hasUnreadableData = false
+    var showsRecoveryAlert = false
 
     /// Called after any local mutation persists, so a sync coordinator can mirror the change
     /// (#22). Not part of the observable surface.
@@ -79,9 +82,16 @@ final class FavoritesStore {
         self.defaults = defaults
         if isTesting {
             favorites = []
-        } else if let data = defaults.data(forKey: storageKey),
+        } else if let data = defaults.data(forKey: Self.storageKey),
                   let decoded = try? JSONDecoder().decode([FavoriteRef].self, from: data) {
             favorites = decoded
+        } else if let data = defaults.data(forKey: Self.storageKey) {
+            favorites = []
+            hasUnreadableData = true
+            showsRecoveryAlert = true
+            if defaults.data(forKey: Self.recoveryKey) == nil {
+                defaults.set(data, forKey: Self.recoveryKey)
+            }
         } else {
             favorites = []
         }
@@ -98,6 +108,7 @@ final class FavoritesStore {
     /// repeated add never removes — the right semantics for drag-to-pin (#89), where dropping an
     /// already-pinned row should leave it pinned rather than silently un-favourite it.
     func add(_ ref: FavoriteRef, undoManager: UndoManager? = nil) {
+        guard !hasUnreadableData else { return }
         guard !favorites.contains(where: { $0.id == ref.id }) else { return }
 
         replace(with: favorites + [ref], undoManager: undoManager, actionName: "Add Favourite")
@@ -106,6 +117,10 @@ final class FavoritesStore {
     /// Adds the item when absent, removes it when present. Returns the resulting state.
     @discardableResult
     func toggle(_ ref: FavoriteRef, undoManager: UndoManager? = nil) -> Bool {
+        guard !hasUnreadableData else {
+            return isFavorite(collection: ref.collection, accountID: ref.accountID, itemID: ref.itemID)
+        }
+
         if let index = favorites.firstIndex(where: { $0.id == ref.id }) {
             var updated = favorites
             updated.remove(at: index)
@@ -129,6 +144,8 @@ final class FavoritesStore {
     /// Drops every favourite whose account is no longer configured, so a removed account
     /// leaves no dangling navigation entries (#25). No-op when nothing changes.
     func prune(toAccountIDs ids: Set<String>) {
+        guard !hasUnreadableData else { return }
+
         let kept = favorites.filter { ids.contains($0.accountID) }
         guard kept.count != favorites.count else { return }
 
@@ -143,6 +160,8 @@ final class FavoritesStore {
         undoManager: UndoManager? = nil,
         actionName: String = "Change Favourites"
     ) {
+        guard !hasUnreadableData else { return }
+
         let previous = favorites
         guard refs != previous else { return }
 
@@ -161,10 +180,21 @@ final class FavoritesStore {
     }
 
     private func persist() {
+        guard !hasUnreadableData else { return }
         guard let data = try? JSONEncoder().encode(favorites) else { return }
 
-        defaults.set(data, forKey: storageKey)
+        defaults.set(data, forKey: Self.storageKey)
         onChange?()
+    }
+
+    /// Explicitly abandons the quarantined payload and starts a new empty favourites list.
+    func resetUnreadableData() {
+        guard hasUnreadableData else { return }
+
+        favorites = []
+        hasUnreadableData = false
+        showsRecoveryAlert = false
+        persist()
     }
 
     /// The favourite-toggle state for a row's context menu, or `nil` when there is no current

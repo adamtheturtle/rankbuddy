@@ -75,6 +75,25 @@ struct FavoritesStoreTests {
         #expect(second.isFavorite(collection: .interviews, accountID: "acc1", itemID: "i1"))
     }
 
+    @Test func `corrupt favourites are quarantined until explicitly reset`() {
+        let defaults = makeDefaults(#function)
+        let corrupt = Data("not json".utf8)
+        defaults.set(corrupt, forKey: FavoritesStore.storageKey)
+        let store = FavoritesStore(defaults: defaults)
+
+        #expect(store.hasUnreadableData)
+        #expect(store.showsRecoveryAlert)
+        #expect(defaults.data(forKey: FavoritesStore.recoveryKey) == corrupt)
+        store.add(ref())
+        #expect(defaults.data(forKey: FavoritesStore.storageKey) == corrupt)
+
+        store.resetUnreadableData()
+        #expect(!store.hasUnreadableData)
+        store.add(ref())
+        #expect(store.favorites == [ref()])
+        #expect(defaults.data(forKey: FavoritesStore.recoveryKey) == corrupt)
+    }
+
     @Test func `a testing store ignores persisted favourites`() {
         let defaults = makeDefaults(#function)
         FavoritesStore(defaults: defaults).toggle(ref())

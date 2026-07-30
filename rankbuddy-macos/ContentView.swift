@@ -32,6 +32,7 @@ struct ContentView: View {
     var body: some View {
         @Bindable var palette = palette
         @Bindable var openLink = openLink
+        @Bindable var favorites = favorites
 
         NavigationSplitView {
             VStack(spacing: 0) {
@@ -121,6 +122,17 @@ struct ContentView: View {
                     openSettings: { openSettings() }
                 )
             }
+        }
+        .alert("Favourites Couldn’t Be Read", isPresented: $favorites.showsRecoveryAlert) {
+            Button("Keep Recovery Copy", role: .cancel) {}
+            Button("Reset Favourites", role: .destructive) {
+                favorites.resetUnreadableData()
+            }
+        } message: {
+            Text(
+                "Your existing favourites were preserved and changes are disabled. " +
+                    "Reset only if you want to start with an empty list."
+            )
         }
     }
 
