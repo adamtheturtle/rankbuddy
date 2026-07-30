@@ -12,6 +12,7 @@ import SwiftUI
 
 struct MCPActivityView: View {
     @State private var activity: [MCPActivityEntry] = []
+    @State private var clearPresented = false
 
     var body: some View {
         Group {
@@ -32,7 +33,7 @@ struct MCPActivityView: View {
                             Text("Recent tool calls")
                             Spacer()
                             Button("Refresh") { reload() }
-                            Button("Clear") { MCPActivityLog.clear(); activity = [] }
+                            Button("Clear", role: .destructive) { clearPresented = true }
                         }
                     } footer: {
                         Text("Recorded on this Mac — tool names, times, and a short detail only, never " +
@@ -46,6 +47,19 @@ struct MCPActivityView: View {
         }
         .frame(minWidth: 440, minHeight: 360)
         .onAppear { reload() }
+        .confirmationDialog(
+            "Clear MCP activity?",
+            isPresented: $clearPresented,
+            titleVisibility: .visible
+        ) {
+            Button("Clear Activity", role: .destructive) {
+                MCPActivityLog.clear()
+                activity = []
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently deletes the MCP audit history on this Mac. This can’t be undone.")
+        }
     }
 
     private func reload() {
