@@ -67,4 +67,5 @@ network traffic.
 
 The HackerRank API contract RankBuddy relies on is documented in
 [`docs/hackerrank-api.md`](docs/hackerrank-api.md); dependency notes are in
-[`docs/dependencies.md`](docs/dependencies.md).
+[`docs/dependencies.md`](docs/dependencies.md), and the tagged Developer ID
+release process is in [`docs/releasing.md`](docs/releasing.md).

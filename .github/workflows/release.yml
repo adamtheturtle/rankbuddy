@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Sign, notarize, and publish
+    runs-on: macos-26
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.5.app
+          xcodebuild -version
+
+      - name: Validate required secrets
+        env:
+          CERTIFICATE: ${{ secrets.DEVELOPER_ID_APP_CERT_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_APP_CERT_PASSWORD }}
+          ASC_KEY: ${{ secrets.ASC_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          for name in CERTIFICATE CERTIFICATE_PASSWORD ASC_KEY ASC_KEY_ID ASC_ISSUER_ID; do
+            test -n "${!name}" || { echo "::error::$name is required"; exit 1; }
+          done
+
+      - name: Build Release app
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          build="$(git rev-list --count HEAD)"
+          scripts/validate-release-version.sh "$version" "$build" "$GITHUB_REF_NAME"
+          xcodebuild build \
+            -project rankbuddy-macos.xcodeproj \
+            -scheme rankbuddy-macos \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath DerivedData-Release \
+            MARKETING_VERSION="$version" \
+            CURRENT_PROJECT_VERSION="$build" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466
+        with:
+          p12-file-base64: ${{ secrets.DEVELOPER_ID_APP_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.DEVELOPER_ID_APP_CERT_PASSWORD }}
+
+      - name: Resolve signing identity
+        run: |
+          set -euo pipefail
+          identity="$(security find-identity -v -p codesigning \
+            | grep 'Developer ID Application' | head -1 \
+            | sed -E 's/.*"(.*)".*/\1/')"
+          test -n "$identity" || { echo "::error::Developer ID identity not found"; exit 1; }
+          echo "SIGNING_IDENTITY=$identity" >> "$GITHUB_ENV"
+
+      - name: Package and notarize
+        env:
+          ASC_KEY: ${{ secrets.ASC_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          scripts/package-and-notarize.sh \
+            DerivedData-Release/Build/Products/Release/rankbuddy-macos.app \
+            "rankbuddy-${GITHUB_REF_NAME}.dmg"
+
+      - name: Generate release notes
+        run: scripts/release-notes.sh > RELEASE_NOTES.md
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "rankbuddy-${GITHUB_REF_NAME}.dmg" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file RELEASE_NOTES.md
