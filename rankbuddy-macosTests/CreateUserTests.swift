@@ -24,6 +24,17 @@ struct CreateUserTests {
         )?.contains("Last name") == true)
     }
 
+    @Test func `team loading stops repeated and empty cursors`() throws {
+        var seen: Set<String> = []
+        #expect(try CreateUserTeamPaging.next("next", itemCount: 1, seen: &seen) == "next")
+        #expect(throws: CreateUserTeamPaging.NoProgress.self) {
+            try CreateUserTeamPaging.next("next", itemCount: 1, seen: &seen)
+        }
+        #expect(throws: CreateUserTeamPaging.NoProgress.self) {
+            try CreateUserTeamPaging.next("later", itemCount: 0, seen: &seen)
+        }
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
