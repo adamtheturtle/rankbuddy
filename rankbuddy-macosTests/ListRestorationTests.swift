@@ -52,4 +52,37 @@ struct ListRestorationTests {
         let action = ListRestoration.action(storedDetailID: "x", storedAnchorID: "y", items: items)
         #expect(action == ListRestoration.Action<Item>.startAtTop)
     }
+
+    @Test func `a missing target remains pending while later pages exist`() {
+        #expect(ListRestoration.isPending(
+            storedDetailID: "later",
+            storedAnchorID: nil,
+            items: items,
+            hasMorePages: true
+        ))
+        #expect(!ListRestoration.isPending(
+            storedDetailID: "later",
+            storedAnchorID: nil,
+            items: items,
+            hasMorePages: false
+        ))
+    }
+
+    @Test func `the saved detail remains pending even when the scroll anchor is loaded`() {
+        #expect(ListRestoration.isPending(
+            storedDetailID: "later",
+            storedAnchorID: "a",
+            items: items,
+            hasMorePages: true
+        ))
+    }
+
+    @Test func `restoration stops pending when its target arrives`() {
+        #expect(!ListRestoration.isPending(
+            storedDetailID: "b",
+            storedAnchorID: nil,
+            items: items,
+            hasMorePages: true
+        ))
+    }
 }

@@ -48,4 +48,19 @@ nonisolated enum ListRestoration {
 
         return .startAtTop
     }
+
+    /// Whether the highest-priority saved target may still appear on a later page.
+    static func isPending(
+        storedDetailID: String?,
+        storedAnchorID: String?,
+        items: [some Identifiable],
+        hasMorePages: Bool
+    ) -> Bool {
+        guard hasMorePages else { return false }
+
+        let targetID = storedDetailID ?? storedAnchorID
+        guard let targetID else { return false }
+
+        return !items.contains { String(describing: $0.id) == targetID }
+    }
 }

@@ -124,6 +124,7 @@ extension LoadableList {
             totalCount = page.totalCount ?? totalCount
             pagesLoaded += 1
             loadMoreError = nil
+            await restoreIfNeeded(items)
         } catch {
             loadMoreError = message(for: error)
         }
@@ -163,11 +164,16 @@ extension LoadableList {
     func restoreIfNeeded(_ items: [Item]) async {
         guard !didRestore, detailItem == nil else { return }
 
-        didRestore = true
-
         let storedDetail = restorationKey.flatMap { UserDefaults.standard.string(forKey: $0) }
         let storedAnchor = scrollDefaultsKey.flatMap { UserDefaults.standard.string(forKey: $0) }
+        guard !ListRestoration.isPending(
+            storedDetailID: storedDetail,
+            storedAnchorID: storedAnchor,
+            items: items,
+            hasMorePages: nextCursor != nil
+        ) else { return }
 
+        didRestore = true
         switch ListRestoration.action(storedDetailID: storedDetail, storedAnchorID: storedAnchor, items: items) {
         case let .restoreDetail(item):
             // Reselect the row and show its detail in the persistent pane (#53/#19).
