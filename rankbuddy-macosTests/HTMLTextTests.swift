@@ -94,6 +94,15 @@ struct HTMLTextTests {
         #expect(HTMLFragmentSegment.segments(from: script) == [.prose(script)])
         #expect(HTMLFragmentSegment.segments(
             from: "<ol><li>shown</li><!-- <li>hidden</li> --></ol>"
-        ) == [.orderedList(["shown"])])
+        ) == [.orderedList(items: ["shown"], start: 1, step: 1)])
+    }
+
+    @Test func `reversed ordered lists count down from their effective start`() {
+        #expect(HTMLFragmentSegment.segments(
+            from: "<ol reversed><li>three</li><li>two</li><li>one</li></ol>"
+        ) == [.orderedList(items: ["three", "two", "one"], start: 3, step: -1)])
+        #expect(HTMLFragmentSegment.segments(
+            from: "<ol reversed start=\"8\"><li>eight</li><li>seven</li></ol>"
+        ) == [.orderedList(items: ["eight", "seven"], start: 8, step: -1)])
     }
 }

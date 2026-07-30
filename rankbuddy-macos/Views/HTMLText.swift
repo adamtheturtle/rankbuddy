@@ -92,11 +92,11 @@ struct HTMLFragmentText: View {
                                 HTMLText(html: prose, showsPlaceholder: showsPlaceholder)
                             }
 
-                        case let .orderedList(items):
+                        case let .orderedList(items, start, step):
                             VStack(alignment: .leading, spacing: 6) {
                                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                                     HStack(alignment: .firstTextBaseline, spacing: 10) {
-                                        Text("\(index + 1).")
+                                        Text("\(start + index * step).")
                                             .font(.body.monospacedDigit())
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: true, vertical: false)
@@ -148,10 +148,10 @@ struct HTMLFragmentText: View {
 
 nonisolated enum HTMLFragmentSegment: Equatable {
     case prose(String)
-    case orderedList([String])
+    case orderedList(items: [String], start: Int, step: Int)
 
     static func segments(from html: String) -> [Self] {
-        let listPattern = #"(?is)<ol\b[^>]*>(.*?)</ol>"#
+        let listPattern = #"(?is)<ol\b([^>]*)>(.*?)</ol>"#
         guard let listExpression = try? NSRegularExpression(pattern: listPattern) else {
             return [.prose(html)]
         }
@@ -172,12 +172,16 @@ nonisolated enum HTMLFragmentSegment: Equatable {
                 segments.append(.prose(nsHTML.substring(with: range)))
             }
 
-            let listHTML = nsHTML.substring(with: match.range(at: 1))
+            let attributes = nsHTML.substring(with: match.range(at: 1))
+            let listHTML = nsHTML.substring(with: match.range(at: 2))
             let items = orderedListItems(from: listHTML)
             if items.isEmpty {
                 segments.append(.prose(nsHTML.substring(with: match.range)))
             } else {
-                segments.append(.orderedList(items))
+                let reversed = hasAttribute("reversed", in: attributes)
+                let explicitStart = integerAttribute("start", in: attributes)
+                let start = explicitStart ?? (reversed ? items.count : 1)
+                segments.append(.orderedList(items: items, start: start, step: reversed ? -1 : 1))
             }
 
             cursor = match.range.location + match.range.length
@@ -201,6 +205,32 @@ nonisolated enum HTMLFragmentSegment: Equatable {
         return itemExpression.matches(in: searchableHTML, range: fullRange).map { match in
             nsHTML.substring(with: match.range(at: 1))
         }
+    }
+
+    private static func hasAttribute(_ name: String, in attributes: String) -> Bool {
+        let escapedName = NSRegularExpression.escapedPattern(for: name)
+        let pattern = #"(?i)(?:^|\s)"# + escapedName + #"(?:\s|=|$)"#
+        guard let expression = try? NSRegularExpression(pattern: pattern) else { return false }
+
+        let range = NSRange(attributes.startIndex ..< attributes.endIndex, in: attributes)
+        return expression.firstMatch(in: attributes, range: range) != nil
+    }
+
+    private static func integerAttribute(_ name: String, in attributes: String) -> Int? {
+        let escapedName = NSRegularExpression.escapedPattern(for: name)
+        let pattern = #"(?i)(?:^|\s)"# + escapedName
+            + #"\s*=\s*(?:"\s*(-?\d+)\s*"|'\s*(-?\d+)\s*'|(-?\d+))"#
+        guard let expression = try? NSRegularExpression(pattern: pattern) else { return nil }
+
+        let range = NSRange(attributes.startIndex ..< attributes.endIndex, in: attributes)
+        guard let match = expression.firstMatch(in: attributes, range: range) else { return nil }
+
+        // swiftlint:disable:next legacy_objc_type
+        let source = attributes as NSString
+        for index in 1 ..< match.numberOfRanges where match.range(at: index).location != NSNotFound {
+            return Int(source.substring(with: match.range(at: index)))
+        }
+        return nil
     }
 
     /// Replaces ignored HTML regions with equal-length whitespace so regex match offsets still
