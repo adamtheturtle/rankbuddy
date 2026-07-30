@@ -63,7 +63,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         }
 
         let account = stringArgument(arguments, "account")
-        MCPActivityLog.record(tool: name, detail: Self.callDetail(arguments))
+        MCPActivityLog.record(tool: name, detail: Self.callDetail(tool: name, arguments: arguments))
 
         // Write tools are gated behind the separate opt-in even if a client calls one by name
         // while it isn't advertised (#73).
@@ -115,16 +115,63 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return arguments.keys.sorted().first { !allowed.contains($0) }
     }
 
-    /// The tools that need a keyed argument (a test id, or a search query).
     /// A short, human-readable summary of a tool call's arguments, for the activity log (#52).
-    private static func callDetail(_ arguments: [String: Value]?) -> String {
-        let keys = ["account", "test_id", "query"]
+    static func callDetail(tool: String, arguments: [String: Value]?) -> String {
+        let readFields = ["account", "test_id", "candidate_id", "query"]
+        let keys = writeAuditFields[tool] ?? readFields
         let parts = keys.compactMap { key -> String? in
-            guard case let .string(value)? = arguments?[key], !value.isEmpty else { return nil }
+            guard let argument = arguments?[key] else { return nil }
+
+            let value: String
+            switch argument {
+            case let .string(text): value = key.contains("email") ? redactedEmail(text) : text
+            case let .int(number): value = String(number)
+            default: return nil
+            }
+            guard !value.isEmpty else { return nil }
 
             return "\(key): \(MCPActivityLog.normalizedSummary(value, maxCharacters: 160))"
         }
         return parts.joined(separator: ", ")
+    }
+
+    private static let writeAuditFields: [String: [String]] = [
+        "create_test": ["account", "name"],
+        "update_test": ["account", "test_id", "name"],
+        "archive_test": ["account", "test_id"],
+        "delete_test": ["account", "test_id"],
+        "invite_candidate": ["account", "test_id", "email"],
+        "update_candidate": ["account", "test_id", "candidate_id"],
+        "cancel_candidate_invite": ["account", "test_id", "candidate_id"],
+        "delete_candidate_report": ["account", "test_id", "candidate_id"],
+        "create_user": ["account", "email", "team_id"],
+        "update_user": ["account", "user_id"],
+        "lock_user": ["account", "user_id"],
+        "create_question": ["account", "name", "type"],
+        "update_question": ["account", "question_id", "name"],
+        "delete_question": ["account", "question_id"],
+        "delete_testcase": ["account", "question_id", "testcase_id"],
+        "delete_all_testcases": ["account", "question_id"],
+        "create_team": ["account", "name"],
+        "update_team": ["account", "team_id", "name"],
+        "delete_team": ["account", "team_id"],
+        "add_team_member": ["account", "team_id", "email"],
+        "add_team_member_by_user_id": ["account", "team_id", "user_id"],
+        "remove_team_member": ["account", "team_id", "user_id"],
+        "create_pad": ["account", "title"],
+        "schedule_interview": ["account", "title", "candidate_email"],
+        "delete_interview": ["account", "interview_id"],
+        "create_ats_codepair_invite": ["account", "candidate_id", "requisition_id", "title"],
+        "create_ats_codescreen_invite": ["account", "test_id", "candidate_id", "requisition_id", "email"]
+    ]
+
+    private static func redactedEmail(_ value: String) -> String {
+        let parts = value.split(separator: "@", omittingEmptySubsequences: false)
+        guard parts.count == 2, let first = parts[0].first, !parts[1].isEmpty else {
+            return "[redacted email]"
+        }
+
+        return "\(first)***@\(parts[1])"
     }
 
     // swiftlint:disable:next cyclomatic_complexity

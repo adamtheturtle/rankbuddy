@@ -126,6 +126,29 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.isKnownTool("update_test"))
     }
 
+    @Test func `write audit summaries identify targets and redact email addresses`() {
+        let detail = RankBuddyToolProvider.callDetail(
+            tool: "remove_team_member",
+            arguments: [
+                "account": .string("Work"),
+                "team_id": .string("team-1"),
+                "user_id": .string("user-2")
+            ]
+        )
+        #expect(detail.contains("team_id: team-1"))
+        #expect(detail.contains("user_id: user-2"))
+
+        let invite = RankBuddyToolProvider.callDetail(
+            tool: "invite_candidate",
+            arguments: [
+                "test_id": .string("test-1"),
+                "email": .string("candidate@example.com")
+            ]
+        )
+        #expect(invite.contains("email: c***@example.com"))
+        #expect(!invite.contains("candidate@example.com"))
+    }
+
     // MARK: - Search
 
     @Test func `search_tests finds a matching test`() async {
