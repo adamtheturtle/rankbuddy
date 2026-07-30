@@ -24,16 +24,22 @@ extension RankBuddyToolProvider {
         switch name {
         case "search_users":
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let query = Self.validatedSearchQuery(rawQuery) else {
+                return errorResult("`query` must contain non-whitespace text.")
+            }
 
-            return await searchUsers(query: Self.normalizedSearchQuery(rawQuery), account: account)
+            return await searchUsers(query: query, account: account)
 
         case "search_candidates":
             guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let query = Self.validatedSearchQuery(rawQuery) else {
+                return errorResult("`query` must contain non-whitespace text.")
+            }
 
             return await searchCandidates(
                 testID: testID,
-                query: Self.normalizedSearchQuery(rawQuery),
+                query: query,
                 account: account
             )
 

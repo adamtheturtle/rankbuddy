@@ -203,6 +203,20 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("query"))
     }
 
+    @Test(arguments: [
+        "search_tests", "search_questions", "search_interviews", "search_users", "search_candidates"
+    ])
+    func `search rejects whitespace-only queries`(_ tool: String) async {
+        var arguments: [String: Value] = ["query": .string(" \n\t ")]
+        if tool == "search_candidates" {
+            arguments["test_id"] = .string("t1")
+        }
+
+        let result = await provider().callTool(tool, arguments: arguments)
+        #expect(result.isError == true)
+        #expect(text(result).contains("non-whitespace"))
+    }
+
     // MARK: - Server-side people/candidate search (#104)
 
     @Test func `the catalogue advertises the server-side search tools`() async {

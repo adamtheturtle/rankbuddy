@@ -187,6 +187,15 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    static func validatedSearchQuery(_ value: String) -> String? {
+        let normalized = normalizedSearchQuery(value)
+        return normalized.isEmpty ? nil : normalized
+    }
+
+    private func invalidSearchQuery() -> CallTool.Result {
+        errorResult("`query` must contain non-whitespace text.")
+    }
+
     // swiftlint:disable:next cyclomatic_complexity
     private func callKeyedTool(_ name: String, arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         switch name {
@@ -223,18 +232,21 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         case "search_tests":
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let query = Self.validatedSearchQuery(rawQuery) else { return invalidSearchQuery() }
 
-            return await searchTests(query: Self.normalizedSearchQuery(rawQuery), account: account)
+            return await searchTests(query: query, account: account)
 
         case "search_questions":
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let query = Self.validatedSearchQuery(rawQuery) else { return invalidSearchQuery() }
 
-            return await searchQuestions(query: Self.normalizedSearchQuery(rawQuery), account: account)
+            return await searchQuestions(query: query, account: account)
 
         case "search_interviews":
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
+            guard let query = Self.validatedSearchQuery(rawQuery) else { return invalidSearchQuery() }
 
-            return await searchInterviews(query: Self.normalizedSearchQuery(rawQuery), account: account)
+            return await searchInterviews(query: query, account: account)
 
         default:
             return errorResult("Unknown tool: \(name)")

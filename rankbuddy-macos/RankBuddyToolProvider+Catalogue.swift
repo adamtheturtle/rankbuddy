@@ -15,7 +15,10 @@ extension RankBuddyToolProvider {
         let account: [String: Any] = [
             "type": "string", "description": "Account label or id; defaults to the current account."
         ]
-        let query: [String: Any] = ["type": "string", "description": "Case-insensitive substring to match."]
+        let query: [String: Any] = [
+            "type": "string", "minLength": 1,
+            "description": "Non-empty, case-insensitive substring to match."
+        ]
         func string(_ description: String) -> [String: Any] {
             ["type": "string", "description": description]
         }
