@@ -123,9 +123,11 @@ enum RankBuddyPalette {
                 searchText: "\(test.name) \(test.tags?.joined(separator: " ") ?? "") test",
                 showsOnlyWhenSearching: true
             ) {
-                // Route through the same per-account key the Tests list restores from (#19),
-                // then switch to the section so the list opens that test's detail.
-                UserDefaults.standard.set(test.id, forKey: "selection.tests.\(account.id)")
+                RankBuddyDeepLink.open(
+                    collection: .tests,
+                    accountID: account.id.uuidString,
+                    itemID: test.id
+                )
                 selection.wrappedValue = .tests
             }
         }
