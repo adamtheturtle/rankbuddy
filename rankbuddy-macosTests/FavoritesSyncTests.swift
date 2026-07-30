@@ -76,9 +76,14 @@ struct FavoritesSyncTests {
     private func withCoordinator(
         _ favorites: FavoritesStore,
         _ store: FakeStore,
+        validAccountIDs: @escaping () -> Set<String> = { ["acc1"] },
         _ body: (FavoritesSyncCoordinator) -> Void
     ) {
-        let coordinator = FavoritesSyncCoordinator(favorites: favorites, store: store)
+        let coordinator = FavoritesSyncCoordinator(
+            favorites: favorites,
+            store: store,
+            validAccountIDs: validAccountIDs
+        )
         coordinator.start()
         withExtendedLifetime(coordinator) { body(coordinator) }
     }
@@ -97,6 +102,27 @@ struct FavoritesSyncTests {
         withCoordinator(favorites, store) { _ in
             store.remoteWrite([ref("t1"), ref("q1", .questions)])
             #expect(favorites.favorites.map(\.itemID) == ["t1", "q1"])
+        }
+    }
+
+    @Test func `external changes prune and repair removed accounts`() {
+        let favorites = FavoritesStore(defaults: defaults(#function), isTesting: true)
+        let store = FakeStore()
+        withCoordinator(favorites, store) { _ in
+            let writesBefore = store.writes
+            let removed = FavoriteRef(
+                accountID: "deleted",
+                collection: .tests,
+                itemID: "stale",
+                title: "Stale"
+            )
+            store.remoteWrite([ref("keep"), removed])
+
+            #expect(favorites.favorites.map(\.itemID) == ["keep"])
+            let repaired = store.data(forKey: FavoritesSyncCoordinator.key)
+                .flatMap { try? JSONDecoder().decode([FavoriteRef].self, from: $0) }
+            #expect(repaired?.map(\.itemID) == ["keep"])
+            #expect(store.writes == writesBefore + 1)
         }
     }
 

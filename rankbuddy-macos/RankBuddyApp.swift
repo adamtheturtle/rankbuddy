@@ -57,7 +57,8 @@ struct RankBuddyApp: App {
             ? nil
             : FavoritesSyncCoordinator(
                 favorites: favorites,
-                store: CloudSyncKeyValueStore(key: FavoritesSyncCoordinator.key)
+                store: CloudSyncKeyValueStore(key: FavoritesSyncCoordinator.key),
+                validAccountIDs: { Set(store.accounts.map(\.id.uuidString)) }
             )
         _favoritesSync = State(initialValue: favoritesSync)
         let health = AccountHealthMonitor()

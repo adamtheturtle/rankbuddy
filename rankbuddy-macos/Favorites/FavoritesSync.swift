@@ -105,13 +105,19 @@ final class FavoritesSyncCoordinator {
 
     private let favorites: FavoritesStore
     private let store: KeyValueSyncStore
+    private let validAccountIDs: () -> Set<String>
     private var isAdopting = false
     private var isActive = false
     private var isStarted = false
 
-    init(favorites: FavoritesStore, store: KeyValueSyncStore) {
+    init(
+        favorites: FavoritesStore,
+        store: KeyValueSyncStore,
+        validAccountIDs: @escaping () -> Set<String>
+    ) {
         self.favorites = favorites
         self.store = store
+        self.validAccountIDs = validAccountIDs
     }
 
     /// Whether sync is active (the backing store is usable).
@@ -151,6 +157,7 @@ final class FavoritesSyncCoordinator {
     /// back out as a local change.
     func adoptRemote() {
         let remote: [FavoriteRef]
+        var needsRemoteRepair = false
         if let data = store.data(forKey: Self.key) {
             guard let decoded = try? JSONDecoder().decode([FavoriteRef].self, from: data) else {
                 Self.logger.error("Replacing malformed remote favourites with local state")
@@ -158,7 +165,9 @@ final class FavoritesSyncCoordinator {
                 return
             }
 
-            remote = decoded
+            let validIDs = validAccountIDs()
+            remote = decoded.filter { validIDs.contains($0.accountID) }
+            needsRemoteRepair = remote != decoded
         } else {
             remote = []
         }
@@ -166,6 +175,10 @@ final class FavoritesSyncCoordinator {
         isAdopting = true
         defer { isAdopting = false }
         favorites.replace(with: remote)
+        if needsRemoteRepair, let data = try? JSONEncoder().encode(remote) {
+            store.setData(data, forKey: Self.key)
+            store.synchronize()
+        }
     }
 
     /// Pushes the current local favourites to the store, unless this change came from adopting
