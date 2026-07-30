@@ -278,7 +278,10 @@ struct RankBuddyToolProviderTests {
         let prompts = await provider().prompts()
         #expect(prompts.contains { $0.name == "triage_candidates" })
 
-        let rendered = try await provider().getPrompt("triage_candidates", arguments: ["test_id": "t1"])
+        let rendered = try await provider().getPrompt(
+            "triage_candidates",
+            arguments: ["account": "Demo", "test_id": "t1"]
+        )
         #expect(!rendered.messages.isEmpty)
         let promptText = String(describing: rendered.messages)
         #expect(promptText.contains("has_more"))
@@ -286,12 +289,28 @@ struct RankBuddyToolProviderTests {
         #expect(promptText.contains("all pages"))
         #expect(promptText.contains("do not infer pass/fail"))
         #expect(!promptText.contains("who passed"))
-        #expect(promptText.contains(#"{"test_id":"t1"}"#))
+        #expect(promptText.contains(#""account":"00000000-0000-0000-0000-00000000DEAD""#))
+        #expect(promptText.contains(#""test_id":"t1""#))
     }
 
     @Test func `the triage prompt requires a test id`() async {
         await #expect(throws: (any Error).self) {
             _ = try await provider().getPrompt("triage_candidates", arguments: nil)
+        }
+    }
+
+    @Test func `the triage prompt requires a known account`() async {
+        await #expect(throws: (any Error).self) {
+            _ = try await provider().getPrompt(
+                "triage_candidates",
+                arguments: ["account": "Missing", "test_id": "t1"]
+            )
+        }
+        await #expect(throws: (any Error).self) {
+            _ = try await provider().getPrompt(
+                "triage_candidates",
+                arguments: ["test_id": "t1"]
+            )
         }
     }
 
