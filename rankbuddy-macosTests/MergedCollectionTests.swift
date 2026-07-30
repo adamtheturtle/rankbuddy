@@ -52,13 +52,20 @@ struct MergedCollectionTests {
         #expect(merged.filter { $0.account == personal }.map(\.item.id) == ["p1"])
     }
 
-    @Test func `firstPages keeps succeeding accounts when one fails`() async throws {
-        let merged = try await MergedLoader.firstPages(accounts: [work, personal]) { account in
-            if account.label == "Work" { throw LoadFailure() }
-            return [Row(id: "p1")]
+    @Test func `firstPages reports the failed account alongside successful rows`() async {
+        do {
+            _ = try await MergedLoader.firstPages(accounts: [work, personal]) { account in
+                if account.label == "Work" { throw LoadFailure() }
+                return [Row(id: "p1")]
+            }
+            Issue.record("Expected a partial merged page")
+        } catch let partial as PartialMergedPage<AccountScoped<Row>> {
+            #expect(partial.page.items.map(\.item.id) == ["p1"])
+            #expect(partial.failures.map(\.account.label) == ["Work"])
+            #expect(partial.warning.contains("Work"))
+        } catch {
+            Issue.record("Unexpected error: \(error)")
         }
-        // The failing account is skipped, not fatal — partial results.
-        #expect(merged.map(\.item.id) == ["p1"])
     }
 
     @Test func `firstPages throws only when every account fails`() async {

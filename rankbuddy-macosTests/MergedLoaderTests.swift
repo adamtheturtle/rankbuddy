@@ -32,15 +32,22 @@ struct MergedLoaderTests {
         #expect(merged.last?.account.id == accB.id)
     }
 
-    @Test func `a failing account is skipped but the others still return`() async throws {
+    @Test func `a failing account is identified while the others still return`() async {
         let good = account("Good")
         let bad = account("Bad")
-        let merged = try await MergedLoader.firstPages(accounts: [bad, good]) { acct in
-            if acct.id == bad.id { throw Boom() }
-            return [Item(id: "ok")]
+        do {
+            _ = try await MergedLoader.firstPages(accounts: [bad, good]) { acct in
+                if acct.id == bad.id { throw Boom() }
+                return [Item(id: "ok")]
+            }
+            Issue.record("Expected a partial merged page")
+        } catch let partial as PartialMergedPage<AccountScoped<Item>> {
+            #expect(partial.page.items.map(\.item.id) == ["ok"])
+            #expect(partial.page.items.first?.account.id == good.id)
+            #expect(partial.failures.map(\.account.id) == [bad.id])
+        } catch {
+            Issue.record("Unexpected error: \(error)")
         }
-        #expect(merged.map(\.item.id) == ["ok"])
-        #expect(merged.first?.account.id == good.id)
     }
 
     @Test func `it throws only when every account fails`() async {

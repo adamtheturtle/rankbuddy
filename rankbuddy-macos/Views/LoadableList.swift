@@ -231,6 +231,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @State var isBackgroundRefreshing = false
     /// A non-blocking failure from refreshing already-visible rows.
     @State var backgroundRefreshError: String?
+    /// A merged load may contain valid rows while omitting named accounts. Keep those rows usable
+    /// but make the incompleteness and retry path explicit (#291).
+    @State var partialLoadWarning: String?
     /// Suppresses the server-search task's initial empty-token invocation; later transitions back
     /// to an empty query still reload the canonical first page.
     @State var hasObservedInitialServerSearchToken = false
@@ -352,7 +355,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             )
 
         case .loaded where items.isEmpty:
-            emptyState
+            VStack(spacing: 0) {
+                if let partialLoadWarning {
+                    partialLoadFailure(message: partialLoadWarning)
+                }
+                emptyState
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
 
         case .loaded:
             loadedList
@@ -395,6 +404,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             // nothing when it has nothing to show, so plain lists are unchanged.
             savedSearchesBar
             filterBar
+            if let partialLoadWarning {
+                partialLoadFailure(message: partialLoadWarning)
+            }
             if let backgroundRefreshError {
                 backgroundRefreshFailure(message: backgroundRefreshError)
             }

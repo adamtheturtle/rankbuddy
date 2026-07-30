@@ -31,17 +31,36 @@ nonisolated struct AccountScoped<Item: Identifiable & Hashable & Sendable>: Iden
 /// account's token to disk.
 extension AccountScoped: Codable where Item: Codable {}
 
+/// One account omitted from a merged collection load.
+nonisolated struct MergedAccountFailure: Equatable {
+    let account: Account
+    let message: String
+}
+
+/// Carries usable rows and the accounts that could not be loaded through `LoadableList`'s
+/// throwing page boundary. `LoadableList` recognizes this error, keeps the page visible, and
+/// presents a retryable warning instead of making a partial collection look complete.
+nonisolated struct PartialMergedPage<Item: Identifiable & Hashable & Sendable>: Error {
+    let page: Page<Item>
+    let failures: [MergedAccountFailure]
+
+    var warning: String {
+        let labels = failures.map(\.account.label).formatted()
+        let noun = failures.count == 1 ? "account" : "accounts"
+        return "Couldn’t load \(labels). Rows from \(noun) may be missing."
+    }
+}
+
 /// Loads the first page of a collection from several accounts and merges the results (#17).
 enum MergedLoader {
     private nonisolated struct Cursor: Codable {
         let byAccountID: [String: String]
     }
 
-    // swiftlint:disable function_body_length
-    /// Fetches each account's first page, tagging every item with its account. Accounts whose
-    /// fetch fails are skipped so one failing account never discards the others' results
-    /// (partial results); throws only when **every** account fails, so the list surfaces an
-    /// error instead of a misleading empty state. No accounts → an empty list.
+    // swiftlint:disable function_body_length cyclomatic_complexity
+    /// Fetches each account's first page, tagging every item with its account. A partial failure
+    /// carries both the successful rows and per-account errors so the list can identify omitted
+    /// accounts and offer retry. Throws the underlying error when every account fails.
     nonisolated static func firstPages<Item: Identifiable & Hashable & Sendable>(
         accounts: [Account],
         maxConcurrent: Int = 4,
@@ -88,6 +107,7 @@ enum MergedLoader {
 
         var scoped: [AccountScoped<Item>] = []
         var firstError: (any Error)?
+        var failures: [MergedAccountFailure] = []
         var anySuccess = false
         for (index, result) in results.sorted(by: { $0.0 < $1.0 }) {
             switch result {
@@ -97,10 +117,20 @@ enum MergedLoader {
 
             case let .failure(error):
                 firstError = firstError ?? error
+                failures.append(MergedAccountFailure(
+                    account: accounts[index],
+                    message: error.localizedDescription
+                ))
             }
         }
         if !anySuccess, let firstError {
             throw firstError
+        }
+        if !failures.isEmpty {
+            throw PartialMergedPage<AccountScoped<Item>>(
+                page: Page(items: scoped, next: nil),
+                failures: failures
+            )
         }
         return scoped
     }
@@ -137,6 +167,7 @@ enum MergedLoader {
         var items: [AccountScoped<Item>] = []
         var nextByAccount: [String: String] = [:]
         var firstError: (any Error)?
+        var failures: [MergedAccountFailure] = []
         var anySuccess = false
         for (_, account, result) in results.sorted(by: { $0.0 < $1.0 }) {
             switch result {
@@ -149,13 +180,23 @@ enum MergedLoader {
 
             case let .failure(error):
                 firstError = firstError ?? error
+                failures.append(MergedAccountFailure(account: account, message: error.localizedDescription))
+                // Keep this account active at the same cursor so an explicit retry does not
+                // silently abandon its remaining rows.
+                if let previous = saved[account.id.uuidString] {
+                    nextByAccount[account.id.uuidString] = previous
+                }
             }
         }
         if !anySuccess, let firstError {
             throw firstError
         }
 
-        return try Page(items: items, next: encodedCursor(nextByAccount))
+        let page = try Page(items: items, next: encodedCursor(nextByAccount))
+        if !failures.isEmpty {
+            throw PartialMergedPage<AccountScoped<Item>>(page: page, failures: failures)
+        }
+        return page
     }
 
     private nonisolated static func decodedCursor(_ value: String?) throws -> [String: String] {
@@ -169,7 +210,7 @@ enum MergedLoader {
 
         return try JSONEncoder().encode(Cursor(byAccountID: values)).base64EncodedString()
     }
-    // swiftlint:enable function_body_length
+    // swiftlint:enable function_body_length cyclomatic_complexity
 }
 
 /// A merged-list row: the item's title/subtitle plus a trailing chip naming its source account,

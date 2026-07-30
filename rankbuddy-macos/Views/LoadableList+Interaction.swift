@@ -20,6 +20,23 @@ nonisolated struct FavoritesReloadIdentity: Hashable {
 /// selection/scroll persistence that back `LoadableList`. Split out of `LoadableList.swift`
 /// to keep that file within the repo's length limits, per the repo's split-file rule.
 extension LoadableList {
+    func partialLoadFailure(message: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.yellow)
+            Text(message)
+                .font(.callout)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button("Retry") {
+                Task { await reload() }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.yellow.opacity(0.12))
+        .accessibilityElement(children: .combine)
+    }
+
     /// The interactive trailing column shared by every row: a clickable favourite star (for
     /// lists that map rows to a `favoriteRef`) and an adaptive relative-date column (for lists
     /// that set `rowDate`), matching PadBuddy. Rendered outside the row's hit-transparent content

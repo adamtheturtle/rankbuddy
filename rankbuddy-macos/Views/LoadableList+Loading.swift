@@ -16,6 +16,7 @@ extension LoadableList {
         didRestore = false
         loadMoreError = nil
         backgroundRefreshError = nil
+        partialLoadWarning = nil
         loadedCursors = []
         query = ListQuery.restoredQuery(key: ListQuery.queryKey(restorationKey))
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
@@ -102,6 +103,18 @@ extension LoadableList {
         } catch {
             guard generation == loadGeneration else { return }
 
+            if let partial = error as? PartialMergedPage<Item> {
+                let page = partial.page
+                items = page.items
+                onItemsLoaded(page.items)
+                nextCursor = page.next
+                totalCount = page.totalCount
+                phase = .loaded
+                partialLoadWarning = partial.warning
+                await restoreIfNeeded(items)
+                return
+            }
+
             // Keep cached rows usable, but make their failed refresh and retry path explicit.
             if items.isEmpty {
                 phase = .failed(message(for: error))
@@ -154,6 +167,19 @@ extension LoadableList {
             resolvePendingDeepLinkIfLoaded()
         } catch {
             guard generation == loadGeneration else { return }
+
+            if let partial = error as? PartialMergedPage<Item> {
+                let page = partial.page
+                loadedCursors.insert(cursor)
+                items = ListPageMerge.merge(items, with: page.items)
+                onItemsLoaded(page.items)
+                nextCursor = page.next
+                totalCount = page.totalCount ?? totalCount
+                pagesLoaded += 1
+                partialLoadWarning = partial.warning
+                await restoreIfNeeded(items)
+                return
+            }
 
             loadMoreError = message(for: error)
         }
