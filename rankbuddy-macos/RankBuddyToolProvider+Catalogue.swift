@@ -19,6 +19,10 @@ extension RankBuddyToolProvider {
             "type": "string", "minLength": 1,
             "description": "Non-empty, case-insensitive substring to match."
         ]
+        let searchCursor: [String: Any] = [
+            "type": "string", "minLength": 1,
+            "description": "Opaque next_cursor from a preceding truncated search."
+        ]
         func string(_ description: String) -> [String: Any] {
             ["type": "string", "description": description]
         }
@@ -76,11 +80,11 @@ extension RankBuddyToolProvider {
                                   "account": account],
                      required: ["template_id"]),
             readOnly("search_tests", "Search the account's tests by name (bounded paging).",
-                     properties: ["query": query, "account": account], required: ["query"]),
+                     properties: ["query": query, "cursor": searchCursor, "account": account], required: ["query"]),
             readOnly("search_questions", "Search the account's questions by name (bounded paging).",
-                     properties: ["query": query, "account": account], required: ["query"]),
+                     properties: ["query": query, "cursor": searchCursor, "account": account], required: ["query"]),
             readOnly("search_interviews", "Search the account's interviews by title/status (bounded paging).",
-                     properties: ["query": query, "account": account], required: ["query"]),
+                     properties: ["query": query, "cursor": searchCursor, "account": account], required: ["query"]),
             readOnly("search_users", "Search the organisation's users by name or email (server-side).",
                      properties: ["query": query, "account": account], required: ["query"]),
             readOnly("search_candidates", "Search a test's candidates by name or email (server-side).",

@@ -17,6 +17,7 @@ private struct SearchHits<Item> {
     let matches: [Item]
     let scanned: Int
     let truncated: Bool
+    let nextCursor: String?
 }
 
 // The RankBuddy MCP tool catalogue (#9): read-only, account-aware tools over the HackerRank
@@ -211,7 +212,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         errorResult("`query` must contain non-whitespace text.")
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func callKeyedTool(_ name: String, arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         switch name {
         case "list_candidates":
@@ -249,19 +250,34 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
             guard let query = Self.validatedSearchQuery(rawQuery) else { return invalidSearchQuery() }
 
-            return await searchTests(query: query, account: account)
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+
+            return await searchTests(query: query, cursor: cursor, account: account)
 
         case "search_questions":
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
             guard let query = Self.validatedSearchQuery(rawQuery) else { return invalidSearchQuery() }
 
-            return await searchQuestions(query: query, account: account)
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+
+            return await searchQuestions(query: query, cursor: cursor, account: account)
 
         case "search_interviews":
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
             guard let query = Self.validatedSearchQuery(rawQuery) else { return invalidSearchQuery() }
 
-            return await searchInterviews(query: query, account: account)
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+
+            return await searchInterviews(query: query, cursor: cursor, account: account)
 
         default:
             return errorResult("Unknown tool: \(name)")
@@ -515,6 +531,12 @@ nonisolated struct BoundedSearchProgress<ID: Hashable> {
     private var seenIDs: Set<ID> = []
     private var seenCursors: Set<String> = []
 
+    init(initialCursor: String? = nil) {
+        if let initialCursor {
+            seenCursors.insert(initialCursor)
+        }
+    }
+
     mutating func accept<Item>(
         _ items: [Item],
         next: String?,
@@ -536,16 +558,17 @@ extension RankBuddyToolProvider {
     @MainActor
     private func search<Item>(
         query: String,
+        cursor startCursor: String?,
         maxPages: Int = 5,
         page: @MainActor (_ cursor: String?) async throws -> Page<Item>,
         id: (Item) -> String,
         text: (Item) -> String
     ) async throws -> SearchHits<Item> {
-        var cursor: String?
+        var cursor = startCursor
         var scanned = 0
         var matches: [Item] = []
         var pages = 0
-        var progress = BoundedSearchProgress<String>()
+        var progress = BoundedSearchProgress<String>(initialCursor: startCursor)
         repeat {
             let result = try await page(cursor)
             let accepted = progress.accept(result.items, next: result.next, id: id)
@@ -554,17 +577,18 @@ extension RankBuddyToolProvider {
             cursor = accepted.next
             pages += 1
         } while cursor != nil && pages < maxPages
-        return SearchHits(matches: matches, scanned: scanned, truncated: cursor != nil)
+        return SearchHits(matches: matches, scanned: scanned, truncated: cursor != nil, nextCursor: cursor)
     }
 
     @MainActor
-    private func searchTests(query: String, account: String?) async -> CallTool.Result {
+    private func searchTests(query: String, cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let client = HackerRankClient(account: resolved)
             let hits = try await search(
                 query: query,
+                cursor: cursor,
                 page: { try await client.testsPage(after: $0) },
                 id: \.id,
                 text: { $0.name }
@@ -577,13 +601,14 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
-    private func searchQuestions(query: String, account: String?) async -> CallTool.Result {
+    private func searchQuestions(query: String, cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let client = HackerRankClient(account: resolved)
             let hits = try await search(
                 query: query,
+                cursor: cursor,
                 page: { try await client.questionsPage(after: $0) },
                 id: \.id,
                 text: { $0.name }
@@ -596,13 +621,14 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
-    private func searchInterviews(query: String, account: String?) async -> CallTool.Result {
+    private func searchInterviews(query: String, cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let client = HackerRankClient(account: resolved)
             let hits = try await search(
                 query: query,
+                cursor: cursor,
                 page: { try await client.interviewsPage(after: $0) },
                 id: \.id,
                 text: { "\($0.title ?? "") \($0.status)" }
@@ -623,7 +649,8 @@ extension RankBuddyToolProvider {
     ) -> CallTool.Result {
         jsonResult([
             "account": account.label, "query": query, key: items,
-            "count": items.count, "scanned": hits.scanned, "truncated": hits.truncated
+            "count": items.count, "scanned": hits.scanned, "truncated": hits.truncated,
+            "next_cursor": hits.nextCursor ?? NSNull()
         ])
     }
 }

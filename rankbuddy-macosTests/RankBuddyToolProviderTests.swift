@@ -26,6 +26,14 @@ struct RankBuddyToolProviderTests {
         #expect(repeated.next == nil)
     }
 
+    @Test func `bounded search stops when a page repeats its starting cursor`() {
+        var progress = BoundedSearchProgress<String>(initialCursor: "resume-here")
+        let page = progress.accept(["one"], next: "resume-here", id: { $0 })
+
+        #expect(page.items == ["one"])
+        #expect(page.next == nil)
+    }
+
     private func provider() -> RankBuddyToolProvider {
         RankBuddyToolProvider(makeStore: {
             AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Demo", token: Account.demoToken)])
@@ -170,6 +178,23 @@ struct RankBuddyToolProviderTests {
         #expect(result.isError != true)
         #expect(body.contains("Backend"))
         #expect(!body.contains("\"count\" : 0"))
+        #expect(body.contains("\"next_cursor\""))
+    }
+
+    @Test func `bounded search tools advertise and validate continuation cursors`() async throws {
+        let tools = await provider().tools()
+        for name in ["search_tests", "search_questions", "search_interviews"] {
+            let tool = try #require(tools.first { $0.name == name })
+            let schema = String(describing: tool.inputSchema)
+            #expect(schema.contains("cursor"))
+
+            let result = await provider().callTool(
+                name,
+                arguments: ["query": .string("anything"), "cursor": .string(" \n ")]
+            )
+            #expect(result.isError == true)
+            #expect(text(result).contains("cursor"))
+        }
     }
 
     @Test func `search queries trim surrounding whitespace`() async {
