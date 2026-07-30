@@ -680,6 +680,14 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("user_id"))
     }
 
+    @Test func `delete_all_testcases rejects a blank question id`() async {
+        let result = await writeProvider().callTool(
+            "delete_all_testcases", arguments: ["question_id": .string(" \n")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("question_id"))
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",
