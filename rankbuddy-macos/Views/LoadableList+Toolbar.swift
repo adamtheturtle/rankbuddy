@@ -90,15 +90,18 @@ extension LoadableList {
             ToolbarItem(id: "exportSelected", placement: .automatic) {
                 Button {
                     let snapshot = selectedItems
+                    guard !snapshot.isEmpty else { return }
+
                     CSVExport.save({ csvExport(snapshot) }, suggestedName: "\(csvFilename)-selected")
                 } label: {
-                    let title = selection.isEmpty ? "Export Selected…" : "Export Selected (\(selection.count))…"
+                    let count = selectedItems.count
+                    let title = count == 0 ? "Export Selected…" : "Export Selected (\(count))…"
                     Label(title, systemImage: "tablecells.badge.ellipsis")
                 }
                 .help("Export the selected \(title) as CSV (#44)")
             }
             // Only meaningful with a selection; stays in Customize but hides from the bar until then.
-            .hidden(selection.isEmpty)
+            .hidden(selectedItems.isEmpty)
             .defaultCustomization(.hidden)
         }
 

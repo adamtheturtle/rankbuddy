@@ -294,6 +294,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                     syncDetail()
                     registerListCommands()
                 }
+                .onChange(of: selectedItems.map(\.id)) {
+                    registerListCommands()
+                }
                 // Reveal a deep-linked item when this list is already on screen (#122): a
                 // same-section favourite/Open-by-URL never changes `restorationKey`, so nothing
                 // else re-reads the persisted selection.
