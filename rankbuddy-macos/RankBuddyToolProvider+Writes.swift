@@ -574,8 +574,11 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func createQuestionTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let name = stringArgument(arguments, "name") else { return missingArgument("name") }
+        guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
         guard let rawType = stringArgument(arguments, "type") else { return missingArgument("type") }
+        guard let name = Self.normalizedOptionalString(rawName) else {
+            return errorResult("`name` must not be empty.")
+        }
         guard let type = Self.normalizedOptionalString(rawType)?.lowercased(),
               Self.supportedQuestionTypes.contains(type)
         else {
@@ -1263,7 +1266,7 @@ extension RankBuddyToolProvider {
                   required: ["user_id"], destructive: true),
             write("create_question", "Create a question with shared metadata fields.",
                   properties: [
-                      "name": string("The question's name."),
+                      "name": string("The question's name.", minLength: 1),
                       "type": string("Question type.", allowedValues: Self.supportedQuestionTypes),
                       "status": string("Question lifecycle status."),
                       "languages": ["type": "array", "items": ["type": "string"],

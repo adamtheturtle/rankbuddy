@@ -759,6 +759,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("type"))
     }
 
+    @Test func `create_question rejects a blank name`() async {
+        let result = await writeProvider().callTool(
+            "create_question",
+            arguments: ["name": .string(" \n"), "type": .string("coding")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("name"))
+    }
+
     @Test func `update_question requires at least one changed field`() async {
         let result = await writeProvider().callTool(
             "update_question", arguments: ["question_id": .string("question-1")]
