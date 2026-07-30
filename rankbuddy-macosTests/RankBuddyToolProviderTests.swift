@@ -102,6 +102,19 @@ struct RankBuddyToolProviderTests {
         #expect(!body.lowercased().contains("token"))
     }
 
+    @Test func `list_accounts exposes merged scope without a current account`() async {
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [
+            Account(label: "One", token: Account.demoToken),
+            Account(label: "Two", token: Account.demoToken)
+        ])
+        store.showAllAccounts = true
+        let result = await RankBuddyToolProvider(makeStore: { store }).callTool("list_accounts", arguments: nil)
+        let body = text(result)
+
+        #expect(body.contains(#""scope" : "all_accounts""#))
+        #expect(!body.contains(#""current" : true"#))
+    }
+
     @Test func `list_tests returns the mock account's tests`() async {
         let result = await provider().callTool("list_tests", arguments: nil)
         let body = text(result)

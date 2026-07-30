@@ -507,10 +507,19 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     @MainActor
     private func accountsPayload() -> [String: Any] {
         let store = makeStore()
+        let merged = store.isMergedView
         let accounts = store.accounts.map { account in
-            ["id": account.id.uuidString, "label": account.label, "current": account.id == store.currentAccountID]
+            [
+                "id": account.id.uuidString,
+                "label": account.label,
+                "current": !merged && account.id == store.currentAccountID
+            ] as [String: Any]
         }
-        return ["accounts": accounts, "total_count": accounts.count]
+        return [
+            "accounts": accounts,
+            "total_count": accounts.count,
+            "scope": merged ? "all_accounts" : "current_account"
+        ]
     }
 
     /// Serialises the accounts payload on the main actor, returning a `Sendable` `String` so the
