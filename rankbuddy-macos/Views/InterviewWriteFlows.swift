@@ -65,6 +65,12 @@ struct NewPadSheet: View {
     @State private var errorMessage: String?
     @State private var mutationTask: Task<Void, Never>?
 
+    /// The optional request field, normalized separately from the editable UI value so blank
+    /// whitespace is omitted rather than sent as an explicit title.
+    private var requestTitle: String? {
+        PadTitleValidation.normalized(title)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -118,7 +124,7 @@ struct NewPadSheet: View {
         defer { isSending = false }
         do {
             let created = try await HackerRankClient(account: account)
-                .createPad(title: PadTitleValidation.normalized(title))
+                .createPad(title: requestTitle)
             let destination = try padDestinationURL(rawURL: created.url, isMock: account.isMock)
             onCreated()
             if let destination {
