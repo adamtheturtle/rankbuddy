@@ -28,4 +28,10 @@ struct QuestionEditValidationTests {
         #expect(splitList("swift, Swift, SWIFT, résumé, resume") == ["swift", "résumé"])
         #expect(splitList(" , ") == nil)
     }
+
+    @Test func `custom code stubs require visible source`() {
+        #expect(!CodeStubValidation.hasSource(""))
+        #expect(!CodeStubValidation.hasSource(" \n\t "))
+        #expect(CodeStubValidation.hasSource("  return value\n"))
+    }
 }

@@ -114,7 +114,7 @@ struct CustomCodeStubSheet: View {
     @State private var errorMessage: String?
 
     private var canSave: Bool {
-        !language.trimmingCharacters(in: .whitespaces).isEmpty && !code.isEmpty
+        !language.trimmingCharacters(in: .whitespaces).isEmpty && CodeStubValidation.hasSource(code)
     }
 
     var body: some View {
@@ -160,6 +160,11 @@ struct CustomCodeStubSheet: View {
     }
 
     private func save() async {
+        guard CodeStubValidation.hasSource(code) else {
+            errorMessage = "Stub code must not be blank."
+            return
+        }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }
@@ -178,6 +183,12 @@ struct CustomCodeStubSheet: View {
 }
 
 // MARK: - Request bodies
+
+nonisolated enum CodeStubValidation {
+    static func hasSource(_ code: String) -> Bool {
+        !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
 
 // These mirror HackerRankKit's typed requests (which land in a future Kit release); Kit
 // 0.4.0's codestub endpoints accept any `Encodable` body. Synthesized encoding omits
