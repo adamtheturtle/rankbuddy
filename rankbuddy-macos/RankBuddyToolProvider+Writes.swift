@@ -244,8 +244,11 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+        guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
         guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
+        guard let testID = Self.normalizedOptionalString(rawTestID) else {
+            return errorResult("`test_id` must not be empty.")
+        }
 
         let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard TestNameValidation.isValid(name) else {
@@ -1266,7 +1269,8 @@ extension RankBuddyToolProvider {
                   properties: ["name": string("The test's name.", minLength: 1), "account": account],
                   required: ["name"]),
             write("update_test", "Rename a test.",
-                  properties: ["test_id": string("The test's id."), "name": string("The new name."),
+                  properties: ["test_id": string("The test's id.", minLength: 1),
+                               "name": string("The new name.", minLength: 1),
                                "account": account],
                   required: ["test_id", "name"]),
             write("archive_test", "Archive a test.",

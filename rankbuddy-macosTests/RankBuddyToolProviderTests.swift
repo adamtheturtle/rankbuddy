@@ -637,6 +637,16 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `update_test rejects blank identifiers and names`() async {
+        for arguments: [String: Value] in [
+            ["test_id": .string(" "), "name": .string("Renamed")],
+            ["test_id": .string("test-1"), "name": .string("\n")]
+        ] {
+            let result = await writeProvider().callTool("update_test", arguments: arguments)
+            #expect(result.isError == true)
+        }
+    }
+
     @Test func `invite_candidate rejects a blank test id`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
