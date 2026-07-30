@@ -607,6 +607,24 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("valid_from"))
     }
 
+    @Test func `invite_candidate rejects malformed validity timestamps`() async {
+        for field in ["valid_from", "valid_until"] {
+            let result = await writeProvider().callTool(
+                "invite_candidate",
+                arguments: [
+                    "test_id": .string("t1"),
+                    "email": .string("new@example.com"),
+                    field: .string("tomorrow afternoon")
+                ]
+            )
+
+            #expect(result.isError == true)
+            #expect(text(result).localizedCaseInsensitiveContains(
+                field == "valid_from" ? "Valid from" : "Valid until"
+            ))
+        }
+    }
+
     @Test func `invite_candidate rejects a blank test id`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

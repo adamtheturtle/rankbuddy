@@ -338,6 +338,13 @@ extension RankBuddyToolProvider {
             return errorResult("`result_url` must be a valid HTTP or HTTPS URL.")
         }
 
+        if let issue = CandidateInviteValidation.validityTimestampIssue(
+            validFrom: validFrom,
+            validUntil: validUntil
+        ) {
+            return errorResult(issue)
+        }
+
         if CandidateInviteValidation.validityOrderIssue(validFrom: validFrom, validUntil: validUntil) != nil {
             return errorResult("`valid_until` must be later than `valid_from`.")
         }
@@ -1225,6 +1232,9 @@ extension RankBuddyToolProvider {
         func url(_ description: String) -> [String: Any] {
             ["type": "string", "format": "uri", "description": description]
         }
+        func dateTime(_ description: String) -> [String: Any] {
+            ["type": "string", "format": "date-time", "description": description]
+        }
         func write(
             _ name: String,
             _ description: String,
@@ -1262,8 +1272,8 @@ extension RankBuddyToolProvider {
                       "full_name": string("The candidate's name (optional)."),
                       "send_email": boolean("Email the invite (default true)."),
                       "additional_time": integer("Extra time accommodation in minutes (0–1,440)."),
-                      "valid_from": string("ISO-8601 timestamp before which the invite is inactive."),
-                      "valid_until": string("ISO-8601 timestamp after which the invite expires."),
+                      "valid_from": dateTime("ISO-8601 timestamp before which the invite is inactive."),
+                      "valid_until": dateTime("ISO-8601 timestamp after which the invite expires."),
                       "email_subject": string("Custom invitation email subject."),
                       "email_message": string("Custom invitation email message."),
                       "template_id": string("Invitation email template id."),
