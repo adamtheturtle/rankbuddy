@@ -69,6 +69,7 @@ struct ListQueryFacetTests {
             Row(state: "Active", langs: []),
             Row(state: "active", langs: []),
             Row(state: " ACTIVE ", langs: []),
+            Row(state: " \t\n ", langs: []),
             Row(state: "Closed", langs: [])
         ]
 
