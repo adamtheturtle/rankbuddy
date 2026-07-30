@@ -16,7 +16,7 @@ import SwiftUI
 /// account (single-account context).
 nonisolated enum DetailWindowValue: Codable, Hashable {
     case test(Test, accountID: UUID?)
-    case candidate(TestCandidate)
+    case candidate(testID: String, candidateID: String, accountID: UUID?)
     case question(Question, accountID: UUID?)
     case interview(Interview)
     case user(userID: String, userName: String, accountID: UUID?)
@@ -28,7 +28,7 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
     var windowTitle: String {
         switch self {
         case let .test(test, _): test.name
-        case let .candidate(candidate): candidate.fullName ?? candidate.email
+        case .candidate: "Candidate"
         case let .question(question, _): question.name
         case let .interview(interview): interview.title ?? "Interview \(interview.id)"
         case let .user(_, userName, _): userName
@@ -56,6 +56,10 @@ nonisolated enum DetailWindowAccountResolution {
 }
 
 nonisolated extension DetailWindowValue {
+    static func candidateWindow(_ candidate: TestCandidate, testID: String, accountID: UUID?) -> Self {
+        .candidate(testID: testID, candidateID: candidate.id, accountID: accountID)
+    }
+
     static func userWindow(_ user: User, accountID: UUID?) -> Self {
         .user(userID: user.id, userName: user.displayName, accountID: accountID)
     }
@@ -96,8 +100,16 @@ struct DetailWindowContent: View {
                 NoAccountView()
             }
 
-        case let .candidate(candidate):
-            CandidateDetailView(candidate: candidate)
+        case let .candidate(testID, candidateID, accountID):
+            if let account = resolvedAccount(accountID) {
+                StandaloneCandidateDetailView(
+                    testID: testID,
+                    candidateID: candidateID,
+                    account: account
+                )
+            } else {
+                NoAccountView()
+            }
 
         case let .question(question, accountID):
             if let account = resolvedAccount(accountID) {
@@ -146,6 +158,53 @@ struct DetailWindowContent: View {
     /// or the current account only when the value never carried an explicit account.
     private func resolvedAccount(_ id: UUID?) -> Account? {
         DetailWindowAccountResolution.resolve(id: id, accounts: store.accounts, current: store.currentAccount)
+    }
+}
+
+/// Fetches sensitive candidate details only after resolving the authorized account; window
+/// restoration stores opaque identifiers rather than candidate PII or assessment results.
+private struct StandaloneCandidateDetailView: View {
+    let testID: String
+    let candidateID: String
+    let account: Account
+
+    @State private var candidate: TestCandidate?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Group {
+            if let candidate {
+                CandidateDetailView(candidate: candidate, testID: testID, account: account) {
+                    Task { await load() }
+                }
+            } else if let errorMessage {
+                ContentUnavailableView {
+                    Label("Couldn’t Load Candidate", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(errorMessage)
+                } actions: {
+                    Button("Try Again") { Task { await load() } }
+                }
+            } else {
+                ProgressView("Loading candidate…")
+            }
+        }
+        .task(id: candidateID) { await load() }
+    }
+
+    private func load() async {
+        errorMessage = nil
+        do {
+            candidate = try await HackerRankClient(account: account).candidate(
+                testID: testID,
+                candidateID: candidateID
+            )
+        } catch {
+            guard !Task.isCancelled else { return }
+
+            candidate = nil
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 }
 

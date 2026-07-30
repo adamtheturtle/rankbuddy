@@ -77,4 +77,20 @@ struct DetailWindowValueTests {
         #expect(value.windowTitle == "Platform")
         #expect(try #require(String(data: data, encoding: .utf8)).contains("departments") == false)
     }
+
+    @Test func `standalone candidate persists only opaque lookup identifiers`() throws {
+        let value = DetailWindowValue.candidate(
+            testID: "test-1",
+            candidateID: "candidate-1",
+            accountID: UUID()
+        )
+        let data = try JSONEncoder().encode(value)
+        let encoded = try #require(String(data: data, encoding: .utf8))
+
+        #expect(try JSONDecoder().decode(DetailWindowValue.self, from: data) == value)
+        #expect(value.windowTitle == "Candidate")
+        #expect(!encoded.contains("email"))
+        #expect(!encoded.contains("score"))
+        #expect(!encoded.contains("feedback"))
+    }
 }

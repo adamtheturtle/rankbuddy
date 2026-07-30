@@ -63,7 +63,13 @@ struct CandidatesList: View {
                     copyText: candidate.email,
                     link: candidate.reportURL,
                     openLabel: "Open Report",
-                    openInWindow: { openWindow(value: DetailWindowValue.candidate(candidate)) }
+                    openInWindow: {
+                        openWindow(value: DetailWindowValue.candidateWindow(
+                            candidate,
+                            testID: testID,
+                            accountID: account.id
+                        ))
+                    }
                 )
                 items.append(.separator)
                 items.append(.button(title: "Cancel Invitation…") {
@@ -74,7 +80,13 @@ struct CandidatesList: View {
                 })
                 return items
             },
-            openInWindow: { openWindow(value: DetailWindowValue.candidate($0)) },
+            openInWindow: {
+                openWindow(value: DetailWindowValue.candidateWindow(
+                    $0,
+                    testID: testID,
+                    accountID: account.id
+                ))
+            },
             accessoryToolbar: { AnyView(inviteButton) },
             primaryMenuAction: AppCommandContext.Action(title: "Invite Candidate…") { invitePresented = true },
             reloadToken: reloadToken,
