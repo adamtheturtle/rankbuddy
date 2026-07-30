@@ -87,6 +87,22 @@ struct MCPActivityView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                if let outcome = entry.outcome {
+                    HStack(spacing: 8) {
+                        Label(
+                            outcome == .succeeded ? "Succeeded" : "Failed",
+                            systemImage: outcome == .succeeded ? "checkmark.circle.fill" : "xmark.circle.fill"
+                        )
+                        .foregroundStyle(outcome == .succeeded ? .green : .red)
+                        if let account = entry.account {
+                            Text(account)
+                        }
+                        if let duration = entry.durationMilliseconds {
+                            Text("\(duration) ms")
+                        }
+                    }
+                    .font(.caption)
+                }
             }
             Spacer()
             Text(DisplayFormat.date(entry.timestamp) ?? entry.timestamp)

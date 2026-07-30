@@ -9,20 +9,39 @@ import MCPKit
 
 /// One recorded MCP tool call (#52).
 nonisolated struct MCPActivityEntry: Codable, Identifiable, Hashable {
+    enum Outcome: String, Codable, Hashable {
+        case succeeded
+        case failed
+    }
+
     let eventID: UUID
     let timestamp: String
     let tool: String
     let detail: String
+    let outcome: Outcome?
+    let durationMilliseconds: Int?
+    let account: String?
 
     var id: UUID {
         eventID
     }
 
-    init(timestamp: String, tool: String, detail: String, eventID: UUID = UUID()) {
+    init(
+        timestamp: String,
+        tool: String,
+        detail: String,
+        outcome: Outcome? = nil,
+        durationMilliseconds: Int? = nil,
+        account: String? = nil,
+        eventID: UUID = UUID()
+    ) {
         self.eventID = eventID
         self.timestamp = timestamp
         self.tool = tool
         self.detail = detail
+        self.outcome = outcome
+        self.durationMilliseconds = durationMilliseconds
+        self.account = account
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -30,6 +49,9 @@ nonisolated struct MCPActivityEntry: Codable, Identifiable, Hashable {
         case timestamp
         case tool
         case detail
+        case outcome
+        case durationMilliseconds = "duration_ms"
+        case account
     }
 
     init(from decoder: Decoder) throws {
@@ -38,6 +60,9 @@ nonisolated struct MCPActivityEntry: Codable, Identifiable, Hashable {
         timestamp = try container.decode(String.self, forKey: .timestamp)
         tool = try container.decode(String.self, forKey: .tool)
         detail = try container.decode(String.self, forKey: .detail)
+        outcome = try container.decodeIfPresent(Outcome.self, forKey: .outcome)
+        durationMilliseconds = try container.decodeIfPresent(Int.self, forKey: .durationMilliseconds)
+        account = try container.decodeIfPresent(String.self, forKey: .account)
     }
 }
 
@@ -73,9 +98,23 @@ nonisolated enum MCPActivityLog {
     }
 
     /// Appends a tool call to the log. Called from the `--mcp` subprocess.
-    static func record(tool: String, detail: String, to url: URL = fileURL) {
+    static func record(
+        tool: String,
+        detail: String,
+        outcome: MCPActivityEntry.Outcome? = nil,
+        durationMilliseconds: Int? = nil,
+        account: String? = nil,
+        to url: URL = fileURL
+    ) {
         let stamp = ISO8601DateFormatter().string(from: Date())
-        let entry = boundedEntry(timestamp: stamp, tool: tool, detail: detail)
+        let entry = boundedEntry(
+            timestamp: stamp,
+            tool: tool,
+            detail: detail,
+            outcome: outcome,
+            durationMilliseconds: durationMilliseconds,
+            account: account
+        )
         _ = withLock(for: url, mode: LOCK_EX) {
             store(for: url).append(entry)
         }
@@ -97,19 +136,38 @@ nonisolated enum MCPActivityLog {
         return wasTruncated ? "\(normalized)…" : normalized
     }
 
-    static func boundedEntry(timestamp: String, tool: String, detail: String) -> MCPActivityEntry {
+    static func boundedEntry(
+        timestamp: String,
+        tool: String,
+        detail: String,
+        outcome: MCPActivityEntry.Outcome? = nil,
+        durationMilliseconds: Int? = nil,
+        account: String? = nil
+    ) -> MCPActivityEntry {
         let eventID = UUID()
         var tool = normalizedSummary(tool, maxCharacters: maxToolCharacters)
         var detail = normalizedSummary(detail, maxCharacters: maxDetailCharacters)
-        var entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail, eventID: eventID)
+        let account = account.map { normalizedSummary($0, maxCharacters: 160) }
+        func makeEntry() -> MCPActivityEntry {
+            MCPActivityEntry(
+                timestamp: timestamp,
+                tool: tool,
+                detail: detail,
+                outcome: outcome,
+                durationMilliseconds: durationMilliseconds,
+                account: account,
+                eventID: eventID
+            )
+        }
+        var entry = makeEntry()
 
         while encodedSize(of: entry) > maxEncodedEntryBytes, !detail.isEmpty {
             detail = String(detail.prefix(detail.count / 2))
-            entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail, eventID: eventID)
+            entry = makeEntry()
         }
         while encodedSize(of: entry) > maxEncodedEntryBytes, !tool.isEmpty {
             tool = String(tool.prefix(tool.count / 2))
-            entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail, eventID: eventID)
+            entry = makeEntry()
         }
         return entry
     }

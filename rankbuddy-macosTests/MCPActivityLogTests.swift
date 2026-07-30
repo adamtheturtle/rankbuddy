@@ -43,6 +43,25 @@ struct MCPActivityLogTests {
         #expect(restored.id == first.id)
     }
 
+    @Test func `completed calls preserve outcome duration and account`() throws {
+        let entry = MCPActivityLog.boundedEntry(
+            timestamp: "2026-07-30T10:00:00Z",
+            tool: "create_test",
+            detail: "name: Backend",
+            outcome: .failed,
+            durationMilliseconds: 42,
+            account: "Work"
+        )
+        let restored = try JSONDecoder().decode(
+            MCPActivityEntry.self,
+            from: JSONEncoder().encode(entry)
+        )
+
+        #expect(restored.outcome == .failed)
+        #expect(restored.durationMilliseconds == 42)
+        #expect(restored.account == "Work")
+    }
+
     @Test func `recorded calls read back newest-first`() {
         let url = tempURL()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }

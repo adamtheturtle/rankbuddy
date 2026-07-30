@@ -52,19 +52,34 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         mcpTools(from: allowWrites ? Self.descriptors + Self.writeDescriptors : Self.descriptors)
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     func callTool(_ name: String, arguments: [String: Value]?) async -> CallTool.Result {
-        guard Self.isKnownTool(name) else {
-            return errorResult("Unknown tool: \(name)")
-        }
-
-        if let unknown = Self.unknownArgument(in: arguments, toolName: name) {
-            return errorResult("Unknown argument “\(unknown)” for tool \(name).")
-        }
-
+        let startedAt = Date()
         let account = stringArgument(arguments, "account")
-        MCPActivityLog.record(tool: name, detail: Self.callDetail(tool: name, arguments: arguments))
+        let resolvedAccount = name == "list_accounts" ? nil : await resolveAccount(account)?.label
+        let result: CallTool.Result = if !Self.isKnownTool(name) {
+            errorResult("Unknown tool: \(name)")
+        } else if let unknown = Self.unknownArgument(in: arguments, toolName: name) {
+            errorResult("Unknown argument “\(unknown)” for tool \(name).")
+        } else {
+            await dispatchTool(name, arguments: arguments, account: account)
+        }
+        let duration = max(0, Int(Date().timeIntervalSince(startedAt) * 1000))
+        MCPActivityLog.record(
+            tool: name,
+            detail: Self.callDetail(tool: name, arguments: arguments),
+            outcome: result.isError == true ? .failed : .succeeded,
+            durationMilliseconds: duration,
+            account: resolvedAccount
+        )
+        return result
+    }
 
+    // swiftlint:disable:next cyclomatic_complexity
+    private func dispatchTool(
+        _ name: String,
+        arguments: [String: Value]?,
+        account: String?
+    ) async -> CallTool.Result {
         // Write tools are gated behind the separate opt-in even if a client calls one by name
         // while it isn't advertised (#73).
         if Self.isWriteTool(name) {
