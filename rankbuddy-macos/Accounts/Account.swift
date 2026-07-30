@@ -112,7 +112,11 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
               let scheme = url.scheme?.lowercased(),
               scheme == "http" || scheme == "https",
               let host = url.host,
-              !host.isEmpty else {
+              !host.isEmpty,
+              url.user == nil,
+              url.password == nil,
+              url.query == nil,
+              url.fragment == nil else {
             return nil
         }
 

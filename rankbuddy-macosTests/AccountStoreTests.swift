@@ -71,7 +71,15 @@ struct AccountStoreTests {
     }
 
     @Test func `non-empty invalid base URL overrides are malformed`() {
-        for raw in ["htps://hackerrank.internal", "hackerrank.internal", "ftp://hackerrank.internal", "https://"] {
+        for raw in [
+            "htps://hackerrank.internal",
+            "hackerrank.internal",
+            "ftp://hackerrank.internal",
+            "https://",
+            "https://user@hackerrank.internal",
+            "https://hackerrank.internal?region=eu",
+            "https://hackerrank.internal#api"
+        ] {
             let account = Account(label: "Bad", token: "t", baseURLOverride: raw)
             #expect(account.hasMalformedBaseURLOverride, "\(raw) should be malformed")
             #expect(account.parsedBaseURLOverride == nil, "\(raw) should not parse as an override")
