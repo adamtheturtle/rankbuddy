@@ -11,6 +11,12 @@ nonisolated struct InterviewDetailRequestIdentity: Hashable {
     let interviewID: String
 }
 
+nonisolated enum InterviewDetailAccountResolution {
+    static func resolve(explicit: Account?, current: Account?, isMerged: Bool) -> Account? {
+        explicit ?? (isMerged ? nil : current)
+    }
+}
+
 /// Everything currently displayed by an interview inspector, captured for print and export.
 nonisolated struct InterviewReportData {
     let interview: Interview

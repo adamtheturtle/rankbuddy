@@ -50,9 +50,17 @@ struct InterviewDetailView: View {
         editedScheduledTo ?? detail?.scheduledTo
     }
 
+    private var owningAccount: Account? {
+        InterviewDetailAccountResolution.resolve(
+            explicit: account,
+            current: store.currentAccount,
+            isMerged: store.isMergedView
+        )
+    }
+
     private var requestIdentity: InterviewDetailRequestIdentity {
         InterviewDetailRequestIdentity(
-            accountID: store.isMergedView ? nil : store.currentAccount?.id,
+            accountID: owningAccount?.id,
             interviewID: interview.id
         )
     }
@@ -318,7 +326,7 @@ struct InterviewDetailView: View {
     private func loadDetail(for identity: InterviewDetailRequestIdentity) async {
         detail = nil
         transcript = nil
-        guard !store.isMergedView, let account = store.currentAccount else { return }
+        guard let account = owningAccount else { return }
 
         let client = HackerRankClient(account: account)
         async let fetchedDetail = try? client.interview(id: interview.id)

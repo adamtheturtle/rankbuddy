@@ -91,4 +91,20 @@ struct InterviewDetailTests {
         #expect(original != InterviewDetailRequestIdentity(accountID: accountA, interviewID: "i2"))
         #expect(original == InterviewDetailRequestIdentity(accountID: accountA, interviewID: "i1"))
     }
+
+    @Test func `merged interview detail uses its explicit originating account`() {
+        let explicit = Account(label: "Origin", token: "origin")
+        let current = Account(label: "Other", token: "other")
+
+        #expect(InterviewDetailAccountResolution.resolve(
+            explicit: explicit,
+            current: current,
+            isMerged: true
+        )?.id == explicit.id)
+        #expect(InterviewDetailAccountResolution.resolve(
+            explicit: nil,
+            current: current,
+            isMerged: true
+        ) == nil)
+    }
 }
