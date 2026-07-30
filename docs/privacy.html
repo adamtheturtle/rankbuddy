@@ -16,7 +16,9 @@
     <p class="note">This describes the privacy design of RankBuddy. It will be finalised before the first public release.</p>
 
     <h2>What RankBuddy stores</h2>
-    <p>RankBuddy stores the HackerRank personal access token you enter in the macOS Keychain, and your app preferences locally on your Mac. It does not transmit them anywhere except to HackerRank.</p>
+    <p>RankBuddy stores the HackerRank personal access token you enter in the macOS Keychain and app preferences locally on your Mac. The token is sent only to HackerRank when it is needed for an API request; RankBuddy does not transmit your local preferences.</p>
+    <p>To display lists quickly after a relaunch, RankBuddy also caches the first API page for each account and section as JSON in its sandboxed <code>Library/Caches/ListPageCache</code> directory. The cache can contain the fields returned for tests, candidates, questions, interviews, people, and teams—including candidate names, email addresses, scores, assessment status, and related recruiting metadata. It also stores pagination cursors and result counts, but not the HackerRank access token.</p>
+    <p>Each cached page is replaced after a newer first page loads. RankBuddy does not currently apply a time-based expiry. macOS may purge files in the Caches directory, and RankBuddy clears an account's list-page cache when that account's token or server changes. Removing an account from RankBuddy does not currently remove its list-page cache; deleting RankBuddy's sandbox container as described below removes it.</p>
 
     <h2>Who RankBuddy talks to</h2>
     <p>RankBuddy contacts the HackerRank for Work API to fetch the data you ask it to display. There are no analytics services, advertising SDKs, or third-party telemetry endpoints.</p>
