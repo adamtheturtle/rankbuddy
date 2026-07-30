@@ -10,6 +10,28 @@ import SwiftUI
 // The inspector and its export projection intentionally share one source file.
 // swiftlint:disable file_length
 
+struct QuestionEditOverlay {
+    private(set) var name: String?
+    private(set) var options = QuestionWriteOptions()
+
+    mutating func merge(name: String?, options update: QuestionWriteOptions) {
+        self.name = name ?? self.name
+        options = QuestionWriteOptions(
+            status: update.status ?? options.status,
+            languages: update.languages ?? options.languages,
+            problemStatement: update.problemStatement ?? options.problemStatement,
+            recommendedDuration: update.recommendedDuration ?? options.recommendedDuration,
+            tags: update.tags ?? options.tags,
+            maxScore: update.maxScore ?? options.maxScore,
+            skills: update.skills ?? options.skills
+        )
+    }
+
+    func applying(to question: Question) -> Question {
+        question.applying(name: name, options)
+    }
+}
+
 /// Detail for a single question. Beyond the list row's fields, it fetches the richer
 /// single-question read on selection (#105) and merges the MCQ options, the (sensitive) correct
 /// answer — gated behind an explicit reveal — and the author's internal notes. The fetch is
@@ -28,8 +50,8 @@ struct QuestionDetailView: View {
     @State private var deleteError: String?
     @State private var editError: String?
     @State private var detailQuestion: Question?
-    /// Local overlay for saved edits: the write echo is sparse, so successful saves land here.
-    @State private var edited: Question?
+    /// Local field overlay for saved edits; fresh server metadata remains the underlying model.
+    @State private var editOverlay = QuestionEditOverlay()
     @State private var addTestcasePresented = false
     @State private var deleteTestcasesPresented = false
     @State private var generateStubsPresented = false
@@ -37,7 +59,7 @@ struct QuestionDetailView: View {
 
     /// The freshest copy of the question: saved edits overlay the detail metadata, then the list row.
     private var displayed: Question {
-        edited ?? detailQuestion ?? question
+        editOverlay.applying(to: detailQuestion ?? question)
     }
 
     /// Editing needs a single owning account, so the merged view stays read-only.
@@ -319,7 +341,7 @@ extension QuestionDetailView {
                 type: nil,
                 options: options
             )
-            edited = displayed.applying(name: name, options)
+            editOverlay.merge(name: name, options: options)
             registerDetailCommands()
             onChanged()
             return true

@@ -58,4 +58,20 @@ struct QuestionDetailTests {
         #expect(updated.skills?.isEmpty == true)
         #expect(updated.tags?.isEmpty == true)
     }
+
+    @Test func `edit overlay preserves newer unedited metadata`() throws {
+        let original = try JSONDecoder().decode(
+            Question.self,
+            from: Data(#"{"id":"q1","type":"code","name":"Old","languages":["swift"]}"#.utf8)
+        )
+        let refreshed = try JSONDecoder().decode(
+            Question.self,
+            from: Data(#"{"id":"q1","type":"code","name":"Old","languages":["python"]}"#.utf8)
+        )
+        var overlay = QuestionEditOverlay()
+        overlay.merge(name: "Renamed", options: QuestionWriteOptions())
+
+        #expect(overlay.applying(to: original).name == "Renamed")
+        #expect(overlay.applying(to: refreshed).languages == ["python"])
+    }
 }
