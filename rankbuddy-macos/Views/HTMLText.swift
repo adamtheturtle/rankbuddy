@@ -272,17 +272,21 @@ extension AttributedString {
     /// Replaces the importer's hard-coded fonts with the system body font (preserving
     /// bold/italic/monospace traits) and removes explicit colours, so the text inherits the
     /// app's appearance and adapts to light/dark mode.
-    private static func normalised(_ attributed: NSAttributedString) -> NSAttributedString {
+    static func normalised(_ attributed: NSAttributedString) -> NSAttributedString {
         let result = NSMutableAttributedString(attributedString: attributed)
         let full = NSRange(location: 0, length: result.length)
         let body = NSFont.preferredFont(forTextStyle: .body)
 
+        var fontRuns: [(range: NSRange, traits: NSFontDescriptor.SymbolicTraits)] = []
         result.enumerateAttribute(.font, in: full) { value, range, _ in
             let traits = (value as? NSFont)?.fontDescriptor.symbolicTraits ?? []
-            let kept = traits.intersection([.bold, .italic, .monoSpace])
-            let descriptor = body.fontDescriptor.withSymbolicTraits(kept)
+            fontRuns.append((range, traits.intersection([.bold, .italic, .monoSpace])))
+        }
+        result.addAttribute(.font, value: body, range: full)
+        for run in fontRuns {
+            let descriptor = body.fontDescriptor.withSymbolicTraits(run.traits)
             let font = NSFont(descriptor: descriptor, size: body.pointSize) ?? body
-            result.addAttribute(.font, value: font, range: range)
+            result.addAttribute(.font, value: font, range: run.range)
         }
         result.removeAttribute(.foregroundColor, range: full)
         result.removeAttribute(.backgroundColor, range: full)

@@ -58,4 +58,19 @@ struct HTMLTextTests {
         #expect(attributed.attribute(.foregroundColor, at: 0, effectiveRange: nil) == nil)
         #expect(attributed.attribute(.backgroundColor, at: 0, effectiveRange: nil) == nil)
     }
+
+    @Test func `normalisation applies a body font to every range`() {
+        let source = NSMutableAttributedString(string: "plain bold")
+        source.addAttribute(
+            .font,
+            value: NSFont.boldSystemFont(ofSize: 30),
+            range: NSRange(location: 6, length: 4)
+        )
+
+        let rendered = AttributedString.normalised(source)
+        let plainFont = rendered.attribute(.font, at: 0, effectiveRange: nil) as? NSFont
+        let boldFont = rendered.attribute(.font, at: 6, effectiveRange: nil) as? NSFont
+        #expect(plainFont?.pointSize == NSFont.preferredFont(forTextStyle: .body).pointSize)
+        #expect(boldFont?.fontDescriptor.symbolicTraits.contains(.bold) == true)
+    }
 }
