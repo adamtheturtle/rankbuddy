@@ -26,6 +26,7 @@ struct TestDetailView: View {
     @State private var deleteError: String?
     @State private var isDeleting = false
     @State private var detail: TestDetail?
+    @State private var detailLoadError: String?
     @State private var detailTest: Test?
     @State private var inviters: [TestInviter] = []
     @State private var inviterLoadError: String?
@@ -85,6 +86,19 @@ struct TestDetailView: View {
                     OptionalRow("Draft", DisplayFormat.boolean(displayedTest.draft))
                     OptionalRow("MCQ correct score", detail?.mcqCorrectScore.map { $0.formatted() })
                     OptionalRow("MCQ incorrect score", detail?.mcqIncorrectScore.map { $0.formatted() })
+                }
+
+                if let detailLoadError {
+                    Section("Additional details") {
+                        Text("Additional test details couldn’t be loaded.")
+                            .foregroundStyle(.secondary)
+                        Text(detailLoadError)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Button("Retry") {
+                            Task { await retryDetail(for: requestIdentity) }
+                        }
+                    }
                 }
 
                 Section("Schedule") {
@@ -329,22 +343,41 @@ struct TestDetailView: View {
     /// password for each test.
     private func loadDetail(for identity: TestDetailRequestIdentity) async {
         detail = nil
+        detailLoadError = nil
         detailTest = nil
         inviters = []
         inviterLoadError = nil
         passwordRevealed = false
-        let client = HackerRankClient(account: account)
         let metadataClient = HackerRankDetailMetadataClient(account: account)
-        async let loadedDetail = try? client.test(id: test.id)
+        async let loadedDetail = fetchDetail(account: account, testID: test.id)
         async let loadedInviters = fetchInviters(account: account, testID: test.id)
         async let loadedMetadata = try? metadataClient.test(id: test.id)
         let loaded = await (loadedDetail, loadedInviters, loadedMetadata)
         guard !Task.isCancelled, identity == requestIdentity else { return }
 
-        detail = loaded.0
+        detail = loaded.0.detail
+        detailLoadError = loaded.0.error
         inviters = loaded.1.items
         inviterLoadError = loaded.1.error
         detailTest = loaded.2?.applying(to: test)
+    }
+
+    private func retryDetail(for identity: TestDetailRequestIdentity) async {
+        detailLoadError = nil
+        let loaded = await fetchDetail(account: account, testID: test.id)
+        guard !Task.isCancelled, identity == requestIdentity else { return }
+
+        detail = loaded.detail
+        detailLoadError = loaded.error
+    }
+
+    private func fetchDetail(account: Account, testID: String) async -> (detail: TestDetail?, error: String?) {
+        do {
+            let detail = try await HackerRankClient(account: account).test(id: testID)
+            return (detail, nil)
+        } catch {
+            return (nil, (error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
     }
 
     private func retryInviters(for identity: TestDetailRequestIdentity) async {
