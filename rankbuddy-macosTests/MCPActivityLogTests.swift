@@ -73,6 +73,19 @@ struct MCPActivityLogTests {
         #expect(entries.map(\.tool) == ["search_tests", "list_tests"])
     }
 
+    @Test func `legacy persisted search queries are redacted and rewritten`() throws {
+        let url = tempURL()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        MCPActivityLog.record(tool: "search_candidates", detail: "query: ada@example.com", to: url)
+
+        let entries = MCPActivityLog.entries(from: url)
+
+        #expect(entries.first?.detail == "query: [redacted]")
+        let persisted = try String(contentsOf: url, encoding: .utf8)
+        #expect(!persisted.contains("ada@example.com"))
+        #expect(persisted.contains("[redacted]"))
+    }
+
     @Test func `activity entries normalize controls and enforce an encoded byte ceiling`() throws {
         let huge = String(repeating: "👨‍👩‍👧‍👦\n\u{0000}", count: 10000)
         let entry = MCPActivityLog.boundedEntry(

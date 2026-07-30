@@ -64,6 +64,27 @@ nonisolated struct MCPActivityEntry: Codable, Identifiable, Hashable {
         durationMilliseconds = try container.decodeIfPresent(Int.self, forKey: .durationMilliseconds)
         account = try container.decodeIfPresent(String.self, forKey: .account)
     }
+
+    /// Removes query text written by older app versions while retaining other audit fields.
+    func redactingSensitiveDetail() -> Self {
+        guard tool.hasPrefix("search_") else { return self }
+
+        let fields = detail.split(separator: ",", omittingEmptySubsequences: false).map { field in
+            let trimmed = field.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.hasPrefix("query:")
+                ? "query: [redacted]"
+                : trimmed
+        }
+        return Self(
+            timestamp: timestamp,
+            tool: tool,
+            detail: fields.joined(separator: ", "),
+            outcome: outcome,
+            durationMilliseconds: durationMilliseconds,
+            account: account,
+            eventID: eventID
+        )
+    }
 }
 
 /// A cross-process activity log for the MCP server (#52). The `--mcp` subprocess appends a line
@@ -180,14 +201,22 @@ nonisolated enum MCPActivityLog {
     static func parse(_ contents: String) -> [MCPActivityEntry] {
         contents.split(separator: "\n").compactMap {
             try? JSONDecoder().decode(MCPActivityEntry.self, from: Data($0.utf8))
-        }
+        }.map { $0.redactingSensitiveDetail() }
     }
 
     /// The most recent entries, newest first, capped at `limit`.
     static func entries(limit: Int = maxEntries, from url: URL = fileURL) -> [MCPActivityEntry] {
         withLock(for: url, mode: LOCK_EX) {
             let store = store(for: url)
-            let entries = Array(store.load().suffix(limit).reversed())
+            let loaded = store.load()
+            let sanitized = loaded.map { $0.redactingSensitiveDetail() }
+            if sanitized != loaded {
+                store.clear()
+                for entry in sanitized.suffix(maxEntries) {
+                    store.append(entry)
+                }
+            }
+            let entries = Array(sanitized.suffix(limit).reversed())
             store.trim()
             return entries
         } ?? []

@@ -31,9 +31,10 @@ struct MCPActivityView: View {
                     } header: {
                         Text("Recent tool calls")
                     } footer: {
-                        Text("Recorded on this Mac — tool names, times, and a short detail only, never " +
-                            "candidate or test content. The server runs as a separate process, so this " +
-                            "updates when you Refresh.")
+                        Text("Recorded on this Mac — tool names, times, account labels, target IDs, and " +
+                            "redacted argument summaries. Search text and returned candidate or test " +
+                            "content are never stored; email addresses are masked. The server runs as a " +
+                            "separate process, so this updates when you Refresh.")
                             .foregroundStyle(.secondary)
                     }
                 }

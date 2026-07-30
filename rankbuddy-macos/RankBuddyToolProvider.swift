@@ -145,7 +145,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             switch argument {
             case let .string(text):
                 if key == "query" {
-                    value = normalizedSearchQuery(text)
+                    value = normalizedSearchQuery(text).isEmpty ? "" : "[redacted]"
                 } else {
                     value = key.contains("email") ? redactedEmail(text) : text
                 }

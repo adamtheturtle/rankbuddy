@@ -246,7 +246,7 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.callDetail(
             tool: "search_tests",
             arguments: ["query": .string("  Backend  ")]
-        ) == "query: Backend")
+        ) == "query: [redacted]")
     }
 
     @Test func `search_tests returns no matches for an absent term`() async {
