@@ -88,8 +88,8 @@ struct AccountEditor: View {
         _selectedIcon = State(initialValue: existing?.displayIcon ?? Account.defaultIconSymbol)
         _selectedTintHex = State(initialValue: existing?.tintHex)
         _savedDraft = State(initialValue: initialDraft)
-        initialToken = existing?.token ?? ""
-        initialBaseURLOverride = existing?.baseURLOverride ?? ""
+        initialToken = Self.normalizedCredential(existing?.token)
+        initialBaseURLOverride = Self.normalizedCredential(existing?.baseURLOverride)
     }
 
     var body: some View {
@@ -317,11 +317,11 @@ struct AccountEditor: View {
     }
 
     private var trimmedToken: String {
-        token.trimmingCharacters(in: .whitespacesAndNewlines)
+        Self.normalizedCredential(token)
     }
 
     private var trimmedOverride: String {
-        baseURLOverride.trimmingCharacters(in: .whitespacesAndNewlines)
+        Self.normalizedCredential(baseURLOverride)
     }
 
     private var trimmedEmail: String {
@@ -449,6 +449,10 @@ struct AccountEditor: View {
         validationTask = nil
         validationGeneration &+= 1
         isTokenRevealed = false
+    }
+
+    nonisolated static func normalizedCredential(_ value: String?) -> String {
+        value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 }
 

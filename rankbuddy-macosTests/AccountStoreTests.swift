@@ -30,6 +30,11 @@ struct AccountStoreTests {
         #expect(!Account.labelsConflict(" ", ""))
     }
 
+    @Test func `credential comparison normalization trims stored and edited values`() {
+        #expect(AccountEditor.normalizedCredential(" token \n") == "token")
+        #expect(AccountEditor.normalizedCredential(nil).isEmpty)
+    }
+
     @Test func `account descriptions are bounded when created and decoded`() throws {
         let oversized = String(repeating: "A", count: Account.maximumLabelLength + 20)
         #expect(Account(label: oversized, token: "t").label.count == Account.maximumLabelLength)
