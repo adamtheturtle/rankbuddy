@@ -149,30 +149,33 @@ enum MCPClientInstall {
         client: MCPClient,
         command: String,
         shouldReplace: (MCPClient) -> Bool,
+        beforeWrite: () throws -> Void = {},
         didUpdate: (String, String) -> Void = { _, _ in }
     ) throws {
         let targetURL = try resolvedWriteTarget(for: url)
-        var root = try existingJSON(at: targetURL)
-        var servers = root["mcpServers"] as? [String: Any] ?? [:]
-        let alreadyPresent = servers[serverName] != nil
-        if alreadyPresent, !shouldReplace(client) { return }
+        try coordinatedWrite(to: targetURL) { coordinatedURL in
+            let original = try existingData(at: coordinatedURL)
+            var root = try existingJSON(data: original)
+            var servers = root["mcpServers"] as? [String: Any] ?? [:]
+            let alreadyPresent = servers[serverName] != nil
+            if alreadyPresent, !shouldReplace(client) { return }
 
-        servers[serverName] = ["command": command, "args": ["--mcp"]]
-        root["mcpServers"] = servers
+            servers[serverName] = ["command": command, "args": ["--mcp"]]
+            root["mcpServers"] = servers
 
-        let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
-        try data.write(to: targetURL, options: .atomic)
-        try verifyJSONConfig(at: targetURL, command: command)
+            let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
+            try beforeWrite()
+            try requireUnchanged(original, at: coordinatedURL)
+            try data.write(to: coordinatedURL, options: .atomic)
+            try verifyJSONConfig(at: coordinatedURL, command: command)
 
-        let title = alreadyPresent ? "Updated \(client.displayName)" : "Added to \(client.displayName)"
-        didUpdate(title, client.restartHint)
+            let title = alreadyPresent ? "Updated \(client.displayName)" : "Added to \(client.displayName)"
+            didUpdate(title, client.restartHint)
+        }
     }
 
-    private static func existingJSON(at url: URL) throws -> [String: Any] {
-        guard FileManager.default.fileExists(atPath: url.path) else { return [:] }
-
-        let data = try Data(contentsOf: url)
-        guard !data.isEmpty else { return [:] }
+    private static func existingJSON(data: Data?) throws -> [String: Any] {
+        guard let data, !data.isEmpty else { return [:] }
         guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw CocoaError(.propertyListReadCorrupt)
         }
@@ -185,35 +188,77 @@ enum MCPClientInstall {
         client: MCPClient,
         command: String,
         shouldReplace: (MCPClient) -> Bool,
+        beforeWrite: () throws -> Void = {},
         didUpdate: (String, String) -> Void = { _, _ in }
     ) throws {
         let targetURL = try resolvedWriteTarget(for: url)
-        var text = ""
-        if FileManager.default.fileExists(atPath: targetURL.path) {
-            text = try String(contentsOf: targetURL, encoding: .utf8)
+        try coordinatedWrite(to: targetURL) { coordinatedURL in
+            let original = try existingData(at: coordinatedURL)
+            let text = try original.map { data in
+                guard let value = String(data: data, encoding: .utf8) else {
+                    throw CocoaError(.fileReadInapplicableStringEncoding)
+                }
+
+                return value
+            } ?? ""
+
+            let block = codexServerBlock(command: command)
+            let updated: String
+            let title: String
+            switch codexServerDeclaration(in: text) {
+            case .notDeclared:
+                updated = text.isEmpty ? block : text + "\n" + block
+                title = "Added to \(client.displayName)"
+
+            case .table:
+                guard shouldReplace(client) else { return }
+
+                updated = replacingCodexServer(in: text, with: block)
+                title = "Updated \(client.displayName)"
+
+            case .other:
+                throw CodexConfigError(errorDescription:
+                    "config.toml already declares the \"rankbuddy\" server in a style " +
+                        "RankBuddy can't safely rewrite. " +
+                        "Edit its command in config.toml yourself.")
+            }
+
+            try beforeWrite()
+            try requireUnchanged(original, at: coordinatedURL)
+            try updated.write(to: coordinatedURL, atomically: true, encoding: .utf8)
+            try verifyCodexConfig(at: coordinatedURL, command: command)
+            didUpdate(title, client.restartHint)
         }
+    }
 
-        let block = codexServerBlock(command: command)
-        switch codexServerDeclaration(in: text) {
-        case .notDeclared:
-            let merged = text.isEmpty ? block : text + "\n" + block
-            try merged.write(to: targetURL, atomically: true, encoding: .utf8)
-            try verifyCodexConfig(at: targetURL, command: command)
-            didUpdate("Added to \(client.displayName)", client.restartHint)
+    private static func existingData(at url: URL) throws -> Data? {
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
 
-        case .table:
-            guard shouldReplace(client) else { return }
+        return try Data(contentsOf: url)
+    }
 
-            let updated = replacingCodexServer(in: text, with: block)
-            try updated.write(to: targetURL, atomically: true, encoding: .utf8)
-            try verifyCodexConfig(at: targetURL, command: command)
-            didUpdate("Updated \(client.displayName)", client.restartHint)
-
-        case .other:
-            throw CodexConfigError(errorDescription:
-                "config.toml already declares the \"rankbuddy\" server in a style RankBuddy can't safely rewrite. " +
-                    "Edit its command in config.toml yourself.")
+    private static func requireUnchanged(_ original: Data?, at url: URL) throws {
+        guard try existingData(at: url) == original else {
+            throw ConfigVerificationError(
+                errorDescription: "The client config changed while RankBuddy was updating it. " +
+                    "No changes were saved; try again."
+            )
         }
+    }
+
+    private static func coordinatedWrite(to url: URL, body: (URL) throws -> Void) throws {
+        let coordinator = NSFileCoordinator()
+        var coordinationError: NSError?
+        var bodyError: Error?
+        coordinator.coordinate(writingItemAt: url, options: .forReplacing, error: &coordinationError) {
+            do {
+                try body($0)
+            } catch {
+                bodyError = error
+            }
+        }
+        if let bodyError { throw bodyError }
+        if let coordinationError { throw coordinationError }
     }
 
     /// Atomic replacement must target a symlink's destination; writing atomically to the link

@@ -102,6 +102,40 @@ struct MCPClientInstallTests {
         #expect(text.contains(#"command = "/tmp/we\"ird/rankbuddy-macos""#))
     }
 
+    @Test func `JSON install refuses to overwrite a concurrent edit`() throws {
+        let url = try temporaryFile(named: "mcp.json")
+        try "{}".write(to: url, atomically: true, encoding: .utf8)
+        let concurrent = #"{"mcpServers":{"other":{"command":"new"}}}"#
+
+        #expect(throws: MCPClientInstall.ConfigVerificationError.self) {
+            try MCPClientInstall.mergeJSONServer(
+                into: url,
+                client: .cursor,
+                command: "rankbuddy",
+                shouldReplace: { _ in true },
+                beforeWrite: { try concurrent.write(to: url, atomically: true, encoding: .utf8) }
+            )
+        }
+        #expect(try String(contentsOf: url, encoding: .utf8) == concurrent)
+    }
+
+    @Test func `codex install refuses to overwrite a concurrent edit`() throws {
+        let url = try temporaryFile(named: "config.toml")
+        try "".write(to: url, atomically: true, encoding: .utf8)
+        let concurrent = "[mcp_servers.other]\ncommand = \"new\"\n"
+
+        #expect(throws: MCPClientInstall.ConfigVerificationError.self) {
+            try MCPClientInstall.upsertCodexServer(
+                into: url,
+                client: .codex,
+                command: "rankbuddy",
+                shouldReplace: { _ in true },
+                beforeWrite: { try concurrent.write(to: url, atomically: true, encoding: .utf8) }
+            )
+        }
+        #expect(try String(contentsOf: url, encoding: .utf8) == concurrent)
+    }
+
     @Test func `JSON install preserves a config symlink`() throws {
         let directory = try temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
