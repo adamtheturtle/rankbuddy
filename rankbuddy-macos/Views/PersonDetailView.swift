@@ -17,6 +17,16 @@ enum UserLockCopy {
     }
 }
 
+nonisolated enum UserLockAvailability {
+    static func canLock(status: String?, activated: Bool?) -> Bool {
+        guard activated != false else { return false }
+
+        let unavailable = ["locked", "inactive", "deactivated", "disabled"]
+        return status.map { !unavailable.contains($0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) }
+            ?? true
+    }
+}
+
 /// Detail for a single user. With an account it is editable in place — name, role, and
 /// admin flags save per field (PadBuddy's pad-detail Properties pattern) — and offers a
 /// destructive Lock User action; without one it stays read-only (#147).
@@ -59,6 +69,10 @@ struct PersonDetailView: View {
         return DisplayFormat.list(resolvedTeamNames ?? teamIDs)
     }
 
+    private var canLock: Bool {
+        UserLockAvailability.canLock(status: displayed.status, activated: displayed.activated)
+    }
+
     var body: some View {
         Form {
             InspectorHeader(title: displayed.displayName, badges: displayed.inspectorBadges)
@@ -99,7 +113,8 @@ struct PersonDetailView: View {
                     } label: {
                         Label("Lock User", systemImage: "lock")
                     }
-                    .help("Lock this user's account")
+                    .disabled(!canLock)
+                    .help(canLock ? "Lock this user's account" : "This user is already locked or inactive")
                 }
             }
             .defaultCustomization(.hidden)
@@ -169,7 +184,7 @@ struct PersonDetailView: View {
     }
 
     private func lock() async {
-        guard let account else { return }
+        guard let account, canLock else { return }
 
         let client = HackerRankClient(account: account)
         do {
