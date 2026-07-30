@@ -25,6 +25,11 @@ struct CandidateStatusTests {
         try JSONDecoder().decode(TestCandidate.self, from: Data(json.utf8))
     }
 
+    @Test func `report PDF fetch gate rejects overlapping work`() {
+        #expect(CandidatePDFFetchGate.canStart(isFetching: false))
+        #expect(!CandidatePDFFetchGate.canStart(isFetching: true))
+    }
+
     // MARK: - Attempt status
 
     @Test func `known attempt-status codes get labels`() throws {

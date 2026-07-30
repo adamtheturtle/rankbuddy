@@ -6,6 +6,12 @@
 import HackerRankKit
 import SwiftUI
 
+nonisolated enum CandidatePDFFetchGate {
+    static func canStart(isFetching: Bool) -> Bool {
+        !isFetching
+    }
+}
+
 /// Detail for a single candidate. With a test and account the name renames in place and
 /// the tags save per field via `updateCandidate` (#147); otherwise it stays read-only.
 struct CandidateDetailView: View {
@@ -120,6 +126,7 @@ struct CandidateDetailView: View {
                             Label("Report PDF", systemImage: "arrow.down.doc")
                         }
                     }
+                    .disabled(isFetchingPDF)
                     .help("Fetch the candidate's report PDF from HackerRank and open it")
                 }
             }
@@ -180,7 +187,8 @@ struct CandidateDetailView: View {
     /// Asks the server for the candidate's report PDF link (`candidateReportPDF`) and opens
     /// it in the browser; falls back to the PDF URL already on the row when present.
     private func openServerPDF() async {
-        guard let testID, let account else { return }
+        guard CandidatePDFFetchGate.canStart(isFetching: isFetchingPDF),
+              let testID, let account else { return }
 
         isFetchingPDF = true
         defer { isFetchingPDF = false }
