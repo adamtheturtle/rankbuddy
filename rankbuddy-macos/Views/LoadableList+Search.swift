@@ -65,11 +65,12 @@ extension LoadableList {
     /// A change token over every client-side filter, so `.task(id:)` restarts the auto-load when
     /// the search text, facet selection, or (client-side) date range changes.
     var clientFilterToken: ClientFilterToken {
-        // The interviews date range is applied server-side, so it isn't part of the client filter.
+        // Search requests cannot carry the interviews date range, so it becomes a local filter
+        // while server search is active.
         ClientFilterToken(
             query: query,
             selectedFacets: selectedFacets,
-            dateRange: serverDateFiltering ? nil : dateRange
+            dateRange: appliesDateFilterLocally ? dateRange : nil
         )
     }
 
@@ -77,7 +78,7 @@ extension LoadableList {
     var isClientFiltering: Bool {
         !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || selectedFacets.contains { !$0.value.isEmpty }
-            || (!serverDateFiltering && filterDate != nil && dateRange != nil)
+            || (appliesDateFilterLocally && filterDate != nil && dateRange != nil)
     }
 
     /// The empty state shown when a filter matches nothing in the loaded rows: a "Searching…"

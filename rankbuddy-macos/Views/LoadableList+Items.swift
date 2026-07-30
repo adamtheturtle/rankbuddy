@@ -46,7 +46,7 @@ extension LoadableList {
         // row's `searchableText` doesn't include).
         let base = ListQuery.filtered(
             items, query: isServerSearching ? "" : query, searchableText: searchableText,
-            date: serverDateFiltering ? nil : filterDate, dateRange: dateRange, now: dateFilterNow
+            date: appliesDateFilterLocally ? filterDate : nil, dateRange: dateRange, now: dateFilterNow
         )
         .filter { ListQuery.matchesFacets($0, facets: facets, selected: selectedFacets) }
         guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return base }
@@ -71,6 +71,12 @@ extension LoadableList {
         loadPageInDateRange != nil
     }
 
+    /// Server search has no date parameter, so its returned matches still need the selected date
+    /// constraint applied locally. Plain list loads send the date range to the server.
+    var appliesDateFilterLocally: Bool {
+        !serverDateFiltering || isServerSearching
+    }
+
     /// The search field's text with surrounding whitespace removed.
     var trimmedQuery: String {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -87,7 +93,7 @@ extension LoadableList {
     var isLocalFiltering: Bool {
         (!isServerSearching && !trimmedQuery.isEmpty)
             || selectedFacets.contains { !$0.value.isEmpty }
-            || (!serverDateFiltering && filterDate != nil && dateRange != nil)
+            || (appliesDateFilterLocally && filterDate != nil && dateRange != nil)
     }
 
     /// The `.task(id:)` token that reloads a server-search list when its query changes (#104).
