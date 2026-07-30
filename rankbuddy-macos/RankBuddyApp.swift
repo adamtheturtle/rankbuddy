@@ -90,7 +90,9 @@ struct RankBuddyApp: App {
         }
         .commands {
             AppCommands(palette: palette, openLink: openLink, commandContext: commandContext)
-            UpdateCommands()
+            #if canImport(Sparkle)
+                UpdateCommands()
+            #endif
         }
 
         // Opens a single item in its own window (#49). Keyed by a Codable detail value passed

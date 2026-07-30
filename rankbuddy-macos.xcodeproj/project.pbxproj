@@ -22,17 +22,29 @@
 		66AE79D42FFE6820003A66B1 /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D32FFE6820003A66B1 /* HackerRankKitMock */; };
 		66AE79D62FFE6843003A66B1 /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D52FFE6843003A66B1 /* HackerRankKitMock */; };
 		66AE79D82FFE6843003A66B1 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D72FFE6843003A66B1 /* PaginatedRESTClient */; };
+		780000000000000000000001 /* BuddyAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D142FEB0FB800352492 /* BuddyAppKit */; };
+		780000000000000000000002 /* BuddyDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D162FEB0FB800352492 /* BuddyDesignSystem */; };
+		780000000000000000000003 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
+		780000000000000000000004 /* MCPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 663804492FF64E51004A9FCE /* MCPKit */; };
+		780000000000000000000005 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 663804512FF65BBB004A9FCE /* AsyncAlgorithms */; };
+		780000000000000000000006 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66769DFF2FED4A320023907A /* PaginatedRESTClient */; };
+		780000000000000000000007 /* FastList in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0A72FEEB2410023907A /* FastList */; };
+		780000000000000000000008 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AD2FEEB2710023907A /* MCP */; };
+		780000000000000000000009 /* CommandPaletteKit in Frameworks */ = {isa = PBXBuildFile; productRef = 668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */; };
+		78000000000000000000000A /* PrintableView in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79CD2FFE5C93003A66B1 /* PrintableView */; };
+		78000000000000000000000B /* HackerRankKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D12FFE6820003A66B1 /* HackerRankKit */; };
+		78000000000000000000000C /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D32FFE6820003A66B1 /* HackerRankKitMock */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		770000000000000000000001 /* PBXContainerItemProxy */ = {
+		662C2C5C2FEC544B00FE99C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 000000000000000000000000 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 000000000000000100000000;
 			remoteInfo = "rankbuddy-macos";
 		};
-		662C2C5C2FEC544B00FE99C0 /* PBXContainerItemProxy */ = {
+		770000000000000000000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 000000000000000000000000 /* Project object */;
 			proxyType = 1;
@@ -45,6 +57,7 @@
 		000000000000000000000120 /* rankbuddy-macos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "rankbuddy-macos.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		662C2C552FEC525200FE99C0 /* rankbuddy-macosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "rankbuddy-macosTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		770000000000000000000002 /* rankbuddy-macosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "rankbuddy-macosUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		78000000000000000000000D /* RankBuddy-AppStore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RankBuddy-AppStore.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -55,6 +68,13 @@
 			);
 			target = 000000000000000100000000 /* rankbuddy-macos */;
 		};
+		78000000000000000000000E /* Exceptions for "rankbuddy-macos" folder in "RankBuddy-AppStore" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 780000000000000000000012 /* RankBuddy-AppStore */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -62,6 +82,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				66AE79CF2FFE5D28003A66B1 /* Exceptions for "rankbuddy-macos" folder in "rankbuddy-macos" target */,
+				78000000000000000000000E /* Exceptions for "rankbuddy-macos" folder in "RankBuddy-AppStore" target */,
 			);
 			path = "rankbuddy-macos";
 			sourceTree = "<group>";
@@ -109,6 +130,23 @@
 			files = (
 			);
 		};
+		78000000000000000000000F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				780000000000000000000004 /* MCPKit in Frameworks */,
+				78000000000000000000000A /* PrintableView in Frameworks */,
+				78000000000000000000000C /* HackerRankKitMock in Frameworks */,
+				78000000000000000000000B /* HackerRankKit in Frameworks */,
+				780000000000000000000002 /* BuddyDesignSystem in Frameworks */,
+				780000000000000000000003 /* PaginatedRESTClient in Frameworks */,
+				780000000000000000000008 /* MCP in Frameworks */,
+				780000000000000000000007 /* FastList in Frameworks */,
+				780000000000000000000006 /* PaginatedRESTClient in Frameworks */,
+				780000000000000000000001 /* BuddyAppKit in Frameworks */,
+				780000000000000000000009 /* CommandPaletteKit in Frameworks */,
+				780000000000000000000005 /* AsyncAlgorithms in Frameworks */,
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -129,6 +167,7 @@
 				000000000000000000000120 /* rankbuddy-macos.app */,
 				662C2C552FEC525200FE99C0 /* rankbuddy-macosTests.xctest */,
 				770000000000000000000002 /* rankbuddy-macosUITests.xctest */,
+				78000000000000000000000D /* RankBuddy-AppStore.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -222,6 +261,38 @@
 			productReference = 770000000000000000000002 /* rankbuddy-macosUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		780000000000000000000012 /* RankBuddy-AppStore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 780000000000000000000017 /* Build configuration list for PBXNativeTarget "RankBuddy-AppStore" */;
+			buildPhases = (
+				780000000000000000000010 /* Sources */,
+				78000000000000000000000F /* Frameworks */,
+				780000000000000000000011 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				000000000000000000000010 /* rankbuddy-macos */,
+			);
+			name = "RankBuddy-AppStore";
+			packageProductDependencies = (
+				66062D142FEB0FB800352492 /* BuddyAppKit */,
+				66062D162FEB0FB800352492 /* BuddyDesignSystem */,
+				66062D182FEB0FB800352492 /* PaginatedRESTClient */,
+				668CA7EA2FEC7BFA00420E24 /* CommandPaletteKit */,
+				66769DFF2FED4A320023907A /* PaginatedRESTClient */,
+				6676A0A72FEEB2410023907A /* FastList */,
+				6676A0AD2FEEB2710023907A /* MCP */,
+				663804492FF64E51004A9FCE /* MCPKit */,
+				663804512FF65BBB004A9FCE /* AsyncAlgorithms */,
+				66AE79CD2FFE5C93003A66B1 /* PrintableView */,
+				66AE79D12FFE6820003A66B1 /* HackerRankKit */,
+				66AE79D32FFE6820003A66B1 /* HackerRankKitMock */,
+			);
+			productName = "RankBuddy-AppStore";
+			productReference = 78000000000000000000000D /* RankBuddy-AppStore.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -242,6 +313,9 @@
 					770000000000000000000005 = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = 000000000000000100000000;
+					};
+					780000000000000000000012 = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -274,6 +348,7 @@
 				000000000000000100000000 /* rankbuddy-macos */,
 				662C2C542FEC525200FE99C0 /* rankbuddy-macosTests */,
 				770000000000000000000005 /* rankbuddy-macosUITests */,
+				780000000000000000000012 /* RankBuddy-AppStore */,
 			);
 		};
 /* End PBXProject section */
@@ -294,6 +369,11 @@
 			files = (
 			);
 		};
+		780000000000000000000011 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -308,6 +388,11 @@
 			);
 		};
 		770000000000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		780000000000000000000010 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
@@ -631,6 +716,81 @@
 			};
 			name = Release;
 		};
+		780000000000000000000013 /* Debug configuration for PBXNativeTarget "RankBuddy-AppStore" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "rankbuddy-macos/RankBuddy-AppStore.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6L9H6Q8CUF;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "rankbuddy-macos/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = RankBuddy;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.adamdangoor.rankbuddy;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "APP_STORE $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		780000000000000000000014 /* Release configuration for PBXNativeTarget "RankBuddy-AppStore" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "rankbuddy-macos/RankBuddy-AppStore.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6L9H6Q8CUF;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "rankbuddy-macos/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = RankBuddy;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.adamdangoor.rankbuddy;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "APP_STORE $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -663,6 +823,14 @@
 			buildConfigurations = (
 				770000000000000000000009 /* Debug configuration for PBXNativeTarget "rankbuddy-macosUITests" */,
 				77000000000000000000000A /* Release configuration for PBXNativeTarget "rankbuddy-macosUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		780000000000000000000017 /* Build configuration list for PBXNativeTarget "RankBuddy-AppStore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				780000000000000000000013 /* Debug configuration for PBXNativeTarget "RankBuddy-AppStore" */,
+				780000000000000000000014 /* Release configuration for PBXNativeTarget "RankBuddy-AppStore" */,
 			);
 			defaultConfigurationName = Release;
 		};
