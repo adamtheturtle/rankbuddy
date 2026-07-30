@@ -49,6 +49,12 @@ struct MCPSetupTests {
         defaults.removePersistentDomain(forName: "mcp-server-settings-test")
     }
 
+    @Test func `disabling the MCP server revokes write authorization`() {
+        #expect(MCPServerSettings.writeAuthorization(serverEnabled: false, currentlyAllowed: true) == false)
+        #expect(MCPServerSettings.writeAuthorization(serverEnabled: true, currentlyAllowed: false) == false)
+        #expect(MCPServerSettings.writeAuthorization(serverEnabled: true, currentlyAllowed: true))
+    }
+
     @Test func `the JSON clients emit a valid mcpServers block with the launch command`() throws {
         for client in [MCPClient.claudeDesktop, .cursor] {
             #expect(client.isCommand == false)

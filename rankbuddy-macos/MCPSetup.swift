@@ -31,6 +31,12 @@ enum MCPServerSettings {
     static func allowsWrites(defaults: UserDefaults = .standard) -> Bool {
         defaults.bool(forKey: allowWritesKey)
     }
+
+    /// Disabling the server revokes its separate write authorization. Re-enabling therefore
+    /// always starts read-only until the user explicitly opts in again.
+    static func writeAuthorization(serverEnabled: Bool, currentlyAllowed: Bool) -> Bool {
+        serverEnabled && currentlyAllowed
+    }
 }
 
 /// Helpers for configuring an external MCP client to use RankBuddy's `--mcp` server (#9).

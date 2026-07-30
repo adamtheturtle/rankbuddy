@@ -161,7 +161,7 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("Enable the MCP server", isOn: $mcpServerEnabled)
+                Toggle("Enable the MCP server", isOn: mcpServerEnabledBinding)
             }
 
             if mcpServerEnabled {
@@ -183,6 +183,19 @@ struct SettingsView: View {
 
 /// Setting bindings, in an extension so they don't count toward `SettingsView`'s body length.
 private extension SettingsView {
+    var mcpServerEnabledBinding: Binding<Bool> {
+        Binding(
+            get: { mcpServerEnabled },
+            set: { enabled in
+                mcpAllowWrites = MCPServerSettings.writeAuthorization(
+                    serverEnabled: enabled,
+                    currentlyAllowed: mcpAllowWrites
+                )
+                mcpServerEnabled = enabled
+            }
+        )
+    }
+
     var loginItemErrorPresented: Binding<Bool> {
         Binding(get: { loginItemError != nil }, set: { if !$0 { loginItemError = nil } })
     }
