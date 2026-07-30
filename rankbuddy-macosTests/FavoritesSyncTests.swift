@@ -43,6 +43,11 @@ struct FavoritesSyncTests {
             onExternalChange?()
         }
 
+        func remoteDelete() {
+            storage[FavoritesSyncCoordinator.key] = nil
+            onExternalChange?()
+        }
+
         func becomeAvailable(with refs: [FavoriteRef]) {
             storage[FavoritesSyncCoordinator.key] = try? JSONEncoder().encode(refs)
             isAvailable = true
@@ -109,6 +114,19 @@ struct FavoritesSyncTests {
             #expect(favorites.favorites.count == 2)
             store.remoteWrite([ref("t1")]) // t2 removed elsewhere
             #expect(favorites.favorites.map(\.itemID) == ["t1"])
+        }
+    }
+
+    @Test func `deleting the remote key clears local favourites`() {
+        let favorites = FavoritesStore(defaults: defaults(#function), isTesting: true)
+        let store = FakeStore()
+        withCoordinator(favorites, store) { _ in
+            store.remoteWrite([ref("t1")])
+            #expect(favorites.favorites.count == 1)
+
+            store.remoteDelete()
+
+            #expect(favorites.favorites.isEmpty)
         }
     }
 

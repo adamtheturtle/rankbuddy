@@ -145,9 +145,14 @@ final class FavoritesSyncCoordinator {
     /// Adopts the remote favourites wholesale (last-writer-wins), guarded so it doesn't echo
     /// back out as a local change.
     func adoptRemote() {
-        guard let data = store.data(forKey: Self.key),
-              let remote = try? JSONDecoder().decode([FavoriteRef].self, from: data)
-        else { return }
+        let remote: [FavoriteRef]
+        if let data = store.data(forKey: Self.key) {
+            guard let decoded = try? JSONDecoder().decode([FavoriteRef].self, from: data) else { return }
+
+            remote = decoded
+        } else {
+            remote = []
+        }
 
         isAdopting = true
         defer { isAdopting = false }
