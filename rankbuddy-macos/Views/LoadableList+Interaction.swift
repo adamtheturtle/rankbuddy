@@ -69,6 +69,27 @@ extension LoadableList {
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
+    func loadMoreFailure(message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundStyle(.secondary)
+            Text(message)
+                .lineLimit(2)
+            Button("Retry") {
+                loadMoreError = nil
+                Task { await loadMore() }
+            }
+        }
+        .font(.callout)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.separator))
+        .padding(.horizontal, 12)
+        .padding(.bottom, 12)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
     /// A loaded-count summary. Prefer the API's exact total when available; fall back to the
     /// loaded visible count while more pages remain.
     func subtitle(visibleCount: Int) -> String {

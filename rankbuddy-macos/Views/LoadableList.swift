@@ -181,6 +181,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// Exact collection total from the most recent page envelope, when the endpoint provides one.
     @State var totalCount: Int?
     @State var isLoadingMore = false
+    @State var loadMoreError: String?
     /// How many pages are currently loaded. Auto-refresh only fires on the first page, so it
     /// never yanks a user who has paged deep back to the top (#69).
     @State var pagesLoaded = 1
@@ -413,9 +414,13 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 // clear more rows are on the way when scrolling to the end (rather than the list
                 // appearing to simply stop) (#85).
                 .overlay(alignment: .bottom) {
-                    if isLoadingMore { loadMoreIndicator }
+                    if isLoadingMore {
+                        loadMoreIndicator
+                    } else if let loadMoreError {
+                        loadMoreFailure(message: loadMoreError)
+                    }
                 }
-                .animation(.default, value: isLoadingMore)
+                .animation(.default, value: isLoadingMore || loadMoreError != nil)
                 .navigationSubtitle(subtitle(visibleCount: visible.count))
                 // Make the list itself greedy so it fills the column under the facet bar (#111).
                 // Inside a VStack, FastList is otherwise offered only its ideal height, so a few

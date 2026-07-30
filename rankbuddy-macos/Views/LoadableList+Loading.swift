@@ -12,6 +12,7 @@ extension LoadableList {
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func reload() async {
         didRestore = false
+        loadMoreError = nil
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
 
@@ -99,11 +100,11 @@ extension LoadableList {
         return restorationKey
     }
 
-    /// Appends the next page when the user nears the end. A failed load-more keeps the
-    /// items already shown and stops paging rather than discarding the list. Internal so the
-    /// search auto-load extension (`LoadableList+Search`) can drive it too.
+    /// Appends the next page when the user nears the end. A failed load-more keeps both the
+    /// items and cursor, then waits for an explicit retry. Internal so the search auto-load
+    /// extension (`LoadableList+Search`) can drive it too.
     func loadMore() async {
-        guard let cursor = nextCursor, !isLoadingMore else { return }
+        guard let cursor = nextCursor, !isLoadingMore, loadMoreError == nil else { return }
 
         isLoadingMore = true
         defer { isLoadingMore = false }
@@ -113,8 +114,9 @@ extension LoadableList {
             nextCursor = page.next
             totalCount = page.totalCount ?? totalCount
             pagesLoaded += 1
+            loadMoreError = nil
         } catch {
-            nextCursor = nil
+            loadMoreError = message(for: error)
         }
     }
 
@@ -186,7 +188,7 @@ extension LoadableList {
             await loadMore()
             pagesLoadedThisReveal += 1
             if select(id: id) { return }
-            // Stop if a load made no progress (e.g. it failed and cleared the cursor).
+            // Stop if a load made no progress (e.g. it failed and exposed a retry).
             if items.count == countBeforeLoad { return }
         }
     }
