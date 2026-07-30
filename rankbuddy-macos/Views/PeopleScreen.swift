@@ -26,21 +26,6 @@ nonisolated enum UserNameValidation {
     }
 }
 
-nonisolated enum CreateUserTeamPaging {
-    struct NoProgress: LocalizedError {
-        var errorDescription: String? {
-            "Team loading stopped because HackerRank repeated a page. Reload the sheet to try again."
-        }
-    }
-
-    static func next(_ cursor: String?, itemCount: Int, seen: inout Set<String>) throws -> String? {
-        guard let cursor else { return nil }
-        guard itemCount > 0, seen.insert(cursor).inserted else { throw NoProgress() }
-
-        return cursor
-    }
-}
-
 /// The People section: the organisation's users (members), with read-only detail (#36) and
 /// a "Create User" write action (#58).
 struct PeopleScreen: View {
@@ -305,10 +290,16 @@ struct CreateUserSheet: View {
         var loaded: [Team] = []
         var cursor: String?
         var seenCursors: Set<String> = []
+        var seenTeamIDs: Set<String> = []
         do {
             repeat {
                 let page = try await client.teamsPage(after: cursor)
-                loaded.append(contentsOf: page.items)
+                CreateUserTeamPaging.appendUnique(
+                    page.items,
+                    to: &loaded,
+                    seenIDs: &seenTeamIDs,
+                    id: \.id
+                )
                 cursor = try CreateUserTeamPaging.next(
                     page.next,
                     itemCount: page.items.count,

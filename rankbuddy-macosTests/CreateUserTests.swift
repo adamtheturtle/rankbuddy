@@ -35,6 +35,15 @@ struct CreateUserTests {
         }
     }
 
+    @Test func `team paging keeps first-seen id order without duplicates`() {
+        var loaded: [String] = []
+        var seen: Set<String> = []
+        CreateUserTeamPaging.appendUnique(["a", "b"], to: &loaded, seenIDs: &seen, id: \.self)
+        CreateUserTeamPaging.appendUnique(["b", "c", "a"], to: &loaded, seenIDs: &seen, id: \.self)
+
+        #expect(loaded == ["a", "b", "c"])
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
