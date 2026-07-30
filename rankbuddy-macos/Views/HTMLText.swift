@@ -249,7 +249,8 @@ extension AttributedString {
     /// HTML, so the user always sees the content (just without formatting).
     ///
     nonisolated static func fromHTML(_ html: String) -> AttributedString {
-        guard let data = html.data(using: .utf8),
+        let safeHTML = resourceSafeHTML(html)
+        guard let data = safeHTML.data(using: .utf8),
               let parsed = try? NSAttributedString(
                   data: data,
                   options: [
@@ -270,6 +271,22 @@ extension AttributedString {
             result.removeSubrange(last ..< result.endIndex)
         }
         return result
+    }
+
+    /// Removes constructs that can cause AppKit's HTML importer to load a remote resource.
+    nonisolated static func resourceSafeHTML(_ html: String) -> String {
+        let patterns = [
+            #"(?is)<(script|style|iframe|object|video|audio)\b[^>]*>.*?</\1\s*>"#,
+            #"(?is)<(?:link|meta|base|img|embed|source|track)\b[^>]*>"#,
+            #"(?is)\s+style\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)"#,
+            #"(?is)\s+(?:src|srcset|href|xlink:href|background|poster)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)"#
+        ]
+        return patterns.reduce(html) { value, pattern in
+            guard let expression = try? NSRegularExpression(pattern: pattern) else { return value }
+
+            let range = NSRange(value.startIndex ..< value.endIndex, in: value)
+            return expression.stringByReplacingMatches(in: value, range: range, withTemplate: "")
+        }
     }
 
     /// Replaces the importer's hard-coded fonts with the system body font (preserving

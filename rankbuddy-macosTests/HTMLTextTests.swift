@@ -72,4 +72,18 @@ struct HTMLTextTests {
         #expect(plainFont?.pointSize == NSFont.preferredFont(forTextStyle: .body).pointSize)
         #expect(boldFont?.fontDescriptor.symbolicTraits.contains(.bold) == true)
     }
+
+    @Test func `remote resources are removed before HTML import`() {
+        let html = """
+        <style>@import "https://styles.example/theme.css";</style>
+        <p style="background:url(https://track.example/pixel)">Safe text</p>
+        <img src="https://images.example/pixel.png">
+        <a href="https://links.example/">Link text</a>
+        """
+        let safe = AttributedString.resourceSafeHTML(html)
+        #expect(!safe.contains("https://"))
+        #expect(!safe.lowercased().contains("<img"))
+        #expect(plainText(html).contains("Safe text"))
+        #expect(plainText(html).contains("Link text"))
+    }
 }
