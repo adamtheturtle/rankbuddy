@@ -142,11 +142,11 @@ struct QuestionDetailView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(question.name)
+        .navigationTitle(displayed.name)
         .task(id: question.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
         .onDisappear { commandContext.clearDetailActions() }
-        .advertisesItemActivity(collection: .questions, itemID: question.id, title: question.name)
+        .advertisesItemActivity(collection: .questions, itemID: question.id, title: displayed.name)
         // Share and Open stay in the bar; Print and Markdown export are off the bar by default but
         // one Customize Toolbar away.
         .toolbar(id: "questionDetail") {
@@ -320,6 +320,7 @@ extension QuestionDetailView {
                 options: options
             )
             edited = displayed.applying(name: name, options)
+            registerDetailCommands()
             onChanged()
             return true
         } catch {
