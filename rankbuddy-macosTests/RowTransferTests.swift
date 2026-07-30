@@ -87,4 +87,14 @@ struct RowTransferTests {
         )
         #expect(item.string(forType: .URL) == "https://example.com/ada")
     }
+
+    @Test func `multi row pasteboard omits a later rows URL`() throws {
+        let rows = [
+            RowTransfer(title: "No link"),
+            RowTransfer(title: "Later", url: URL(string: "https://example.com/later"))
+        ]
+
+        let item = try #require(RowTransfer.pasteboardItem(for: rows))
+        #expect(item.string(forType: .URL) == nil)
+    }
 }
