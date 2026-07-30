@@ -47,8 +47,11 @@ extension RankBuddyToolProvider {
                      properties: ["account": account]),
             readOnly("list_questions", "List the account's questions (first page).",
                      properties: ["account": account]),
-            readOnly("list_interviews", "List the account's interviews (first page).",
-                     properties: ["account": account]),
+            readOnly("list_interviews", "List one page of the account's interviews.",
+                     properties: [
+                         "cursor": string("Opaque next_cursor from the preceding page."),
+                         "account": account
+                     ]),
             readOnly("list_users", "List one page of the organisation's users/members.",
                      properties: [
                          "cursor": string("Opaque next_cursor from the preceding page."),

@@ -99,20 +99,34 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         switch name {
         case "list_accounts": return await listAccounts()
+
         case "list_tests": return await listTests(account: account)
+
         case "list_questions": return await listQuestions(account: account)
-        case "list_interviews": return await listInterviews(account: account)
+
+        case "list_interviews":
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+
+            return await listInterviews(cursor: cursor, account: account)
+
         case "list_users", "list_teams":
             // Org enumeration (#9), in its own dispatch + file.
             return await callOrgListTool(name, arguments: arguments, account: account)
+
         case "list_candidates", "candidate_report_pdf", "get_invite_template", "get_interview_template",
              "search_tests", "search_questions", "search_interviews":
             return await callKeyedTool(name, arguments: arguments, account: account)
+
         case "list_invite_templates", "list_interview_templates":
             return await callTemplateTool(name, arguments: arguments, account: account)
+
         case "search_users", "search_candidates":
             // Server-side people/candidate search (#104), in its own dispatch + file.
             return await callPeopleSearchTool(name, arguments: arguments, account: account)
+
         default:
             return errorResult("Unknown tool: \(name)")
         }
@@ -389,14 +403,15 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     }
 
     @MainActor
-    private func listInterviews(account: String?) async -> CallTool.Result {
+    private func listInterviews(cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let page = try await HackerRankClient(account: resolved).interviewsPage()
+            let page = try await HackerRankClient(account: resolved).interviewsPage(after: cursor)
             let items = page.items.map { ["id": $0.id, "title": $0.title ?? "", "status": $0.status] }
             return jsonResult(pageMetadata(page).merging([
-                "account": resolved.label, "interviews": items
+                "account": resolved.label, "interviews": items,
+                "next_cursor": page.next ?? NSNull()
             ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list interviews: \(error.localizedDescription)")

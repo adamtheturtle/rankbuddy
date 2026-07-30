@@ -128,6 +128,14 @@ struct RankBuddyToolProviderTests {
         #expect(!body.contains("\"count\""))
     }
 
+    @Test func `list_interviews returns a continuation cursor`() async {
+        let result = await provider().callTool("list_interviews", arguments: nil)
+        let body = text(result)
+        #expect(result.isError != true)
+        #expect(body.contains("\"interviews\""))
+        #expect(body.contains("\"next_cursor\""))
+    }
+
     @Test func `list_candidates requires a test_id`() async {
         let result = await provider().callTool("list_candidates", arguments: nil)
         #expect(result.isError == true)
