@@ -8,56 +8,56 @@ import Testing
 
 @MainActor
 struct ListPageCacheTests {
-    @Test func `stores and returns a first page by key`() {
-        ListPageCache.clear()
-        ListPageCache.store(items: ["a", "b"], cursor: "next", totalCount: nil, for: "tests.acc")
+    @Test func `stores and returns a first page by key`() async {
+        await ListPageCache.clear()
+        await ListPageCache.store(items: ["a", "b"], cursor: "next", totalCount: nil, for: "tests.acc")
 
-        let cached = ListPageCache.cached([String].self, for: "tests.acc")
+        let cached = await ListPageCache.cached([String].self, for: "tests.acc")
         #expect(cached?.items == ["a", "b"])
         #expect(cached?.cursor == "next")
     }
 
-    @Test func `an unknown key is a miss`() {
-        ListPageCache.clear()
-        #expect(ListPageCache.cached([String].self, for: "missing") == nil)
+    @Test func `an unknown key is a miss`() async {
+        await ListPageCache.clear()
+        #expect(await ListPageCache.cached([String].self, for: "missing") == nil)
     }
 
-    @Test func `storing again replaces the entry`() {
-        ListPageCache.clear()
-        ListPageCache.store(items: [1, 2], cursor: nil, totalCount: nil, for: "k")
-        ListPageCache.store(items: [3], cursor: "c", totalCount: nil, for: "k")
+    @Test func `storing again replaces the entry`() async {
+        await ListPageCache.clear()
+        await ListPageCache.store(items: [1, 2], cursor: nil, totalCount: nil, for: "k")
+        await ListPageCache.store(items: [3], cursor: "c", totalCount: nil, for: "k")
 
-        let cached = ListPageCache.cached([Int].self, for: "k")
+        let cached = await ListPageCache.cached([Int].self, for: "k")
         #expect(cached?.items == [3])
         #expect(cached?.cursor == "c")
     }
 
-    @Test func `clear empties the cache`() {
-        ListPageCache.store(items: ["x"], cursor: nil, totalCount: nil, for: "k")
-        ListPageCache.clear()
-        #expect(ListPageCache.cached([String].self, for: "k") == nil)
+    @Test func `clear empties the cache`() async {
+        await ListPageCache.store(items: ["x"], cursor: nil, totalCount: nil, for: "k")
+        await ListPageCache.clear()
+        #expect(await ListPageCache.cached([String].self, for: "k") == nil)
     }
 
-    @Test func `account clear preserves unrelated cache entries`() {
+    @Test func `account clear preserves unrelated cache entries`() async {
         let changedID = UUID()
         let otherID = UUID()
         let changedKey = "selection.tests.\(changedID)"
         let otherKey = "selection.tests.\(otherID)"
-        ListPageCache.store(items: ["changed"], cursor: nil, totalCount: nil, for: changedKey)
-        ListPageCache.store(items: ["other"], cursor: nil, totalCount: nil, for: otherKey)
+        await ListPageCache.store(items: ["changed"], cursor: nil, totalCount: nil, for: changedKey)
+        await ListPageCache.store(items: ["other"], cursor: nil, totalCount: nil, for: otherKey)
 
-        ListPageCache.clear(accountID: changedID)
+        await ListPageCache.clear(accountID: changedID)
 
-        #expect(ListPageCache.cached([String].self, for: changedKey) == nil)
-        #expect(ListPageCache.cached([String].self, for: otherKey)?.items == ["other"])
+        #expect(await ListPageCache.cached([String].self, for: changedKey) == nil)
+        #expect(await ListPageCache.cached([String].self, for: otherKey)?.items == ["other"])
     }
 
-    @Test func `keys are independent`() {
-        ListPageCache.clear()
-        ListPageCache.store(items: ["tests"], cursor: nil, totalCount: nil, for: "tests.acc")
-        ListPageCache.store(items: ["questions"], cursor: nil, totalCount: nil, for: "questions.acc")
+    @Test func `keys are independent`() async {
+        await ListPageCache.clear()
+        await ListPageCache.store(items: ["tests"], cursor: nil, totalCount: nil, for: "tests.acc")
+        await ListPageCache.store(items: ["questions"], cursor: nil, totalCount: nil, for: "questions.acc")
 
-        #expect(ListPageCache.cached([String].self, for: "tests.acc")?.items == ["tests"])
-        #expect(ListPageCache.cached([String].self, for: "questions.acc")?.items == ["questions"])
+        #expect(await ListPageCache.cached([String].self, for: "tests.acc")?.items == ["tests"])
+        #expect(await ListPageCache.cached([String].self, for: "questions.acc")?.items == ["questions"])
     }
 }

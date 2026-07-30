@@ -36,7 +36,9 @@ extension LoadableList {
         totalCount = page.totalCount
         onFirstPage(page.items)
         if let key = cacheKey {
-            ListPageCache.store(items: page.items, cursor: page.next, totalCount: page.totalCount, for: key)
+            await ListPageCache.store(
+                items: page.items, cursor: page.next, totalCount: page.totalCount, for: key
+            )
         }
         // Drop the pane's item if the refresh removed it (e.g. deleted elsewhere), so the
         // detail never shows a row that's no longer in the list.

@@ -11,10 +11,15 @@ import Foundation
 ///
 /// One small JSON file per section, keyed by the list's per-account restoration key. The
 /// payload is the same first page the in-memory cache holds (items + the cursor to the next
-/// page), so a hydrated section can keep paging. Encoding happens on the caller's actor (a
-/// single page is tiny) and only the file write is detached, so the UI never blocks on disk.
-/// Decode is best-effort: a missing, unreadable, or schema-changed file simply yields `nil`
-/// and the list loads fresh.
+/// page), so a hydrated section can keep paging. A dedicated global actor serialises encoding,
+/// decoding, and file access away from the UI actor. Decode is best-effort: a missing, unreadable,
+/// or schema-changed file simply yields `nil` and the list loads fresh.
+@globalActor
+actor DiskPageCacheActor {
+    static let shared = DiskPageCacheActor()
+}
+
+@DiskPageCacheActor
 enum DiskPageCache {
     /// A persisted first page: the items, the cursor to the page after them, and the last known total.
     private struct Payload<Item: Codable>: Codable {
@@ -56,11 +61,9 @@ enum DiskPageCache {
         return directory.appendingPathComponent(name).appendingPathExtension("json")
     }
 
-    /// Persists a freshly loaded first page for `key`, replacing any previous file. Writes
-    /// synchronously: a single page is a few kilobytes, it happens just once per section load
-    /// (never per frame), and a synchronous write gives a clean ordering against `clear()` — once
-    /// `store` returns, the file reflects it, with no detached write racing a later invalidation.
-    static func store(items: [some Codable], cursor: String?, totalCount: Int?, for key: String) {
+    /// Persists a freshly loaded first page for `key`, replacing any previous file. The cache
+    /// actor gives stores and invalidations a clean ordering without blocking the main actor.
+    static func store(items: [some Codable & Sendable], cursor: String?, totalCount: Int?, for key: String) {
         guard let url = fileURL(for: key),
               let data = try? JSONEncoder().encode(
                   Payload(items: items, cursor: cursor, totalCount: totalCount)
@@ -78,7 +81,7 @@ enum DiskPageCache {
     // The persisted first page for `key`, or `nil` when nothing is stored or the file can't be
     // decoded into `Item` (e.g. the model's shape changed since it was written).
     // swiftlint:disable:next large_tuple
-    static func load<Item: Codable>(_: [Item].Type, for key: String) -> (
+    static func load<Item: Codable & Sendable>(_: [Item].Type, for key: String) -> (
         items: [Item], cursor: String?, totalCount: Int?
     )? {
         guard let url = fileURL(for: key),

@@ -28,7 +28,9 @@ extension LoadableList {
         }
         pagesLoaded = 1
 
-        if let key = cacheKey, let cached = ListPageCache.cached([Item].self, for: key), !cached.items.isEmpty {
+        if let key = cacheKey,
+           let cached = await ListPageCache.cached([Item].self, for: key),
+           !cached.items.isEmpty {
             items = cached.items
             nextCursor = cached.cursor
             totalCount = cached.totalCount
@@ -71,7 +73,9 @@ extension LoadableList {
             phase = .loaded
             onFirstPage(page.items)
             if let key = cacheKey {
-                ListPageCache.store(items: page.items, cursor: page.next, totalCount: page.totalCount, for: key)
+                await ListPageCache.store(
+                    items: page.items, cursor: page.next, totalCount: page.totalCount, for: key
+                )
             }
             if preservesVisibleState {
                 reconcilePreservedSelection(in: items)

@@ -34,9 +34,11 @@ enum SectionPrefetch {
         key: String,
         load: () async throws -> Page<Item>
     ) async {
-        guard ListPageCache.cached([Item].self, for: key) == nil else { return }
+        guard await ListPageCache.cached([Item].self, for: key) == nil else { return }
         guard let page = try? await load() else { return }
 
-        ListPageCache.store(items: page.items, cursor: page.next, totalCount: page.totalCount, for: key)
+        await ListPageCache.store(
+            items: page.items, cursor: page.next, totalCount: page.totalCount, for: key
+        )
     }
 }

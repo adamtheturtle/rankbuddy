@@ -32,23 +32,28 @@ enum ListPageCache {
 
     /// Stores a freshly loaded first page for `key`, replacing any previous entry, and persists
     /// it so the section survives a relaunch.
-    static func store(items: [some Codable], cursor: String?, totalCount: Int?, for key: String) {
+    static func store(
+        items: [some Codable & Sendable],
+        cursor: String?,
+        totalCount: Int?,
+        for key: String
+    ) async {
         storage[key] = Entry(items: items, cursor: cursor, totalCount: totalCount)
-        DiskPageCache.store(items: items, cursor: cursor, totalCount: totalCount, for: key)
+        await DiskPageCache.store(items: items, cursor: cursor, totalCount: totalCount, for: key)
     }
 
     // The cached first page for `key`, or `nil` when nothing is cached. On an in-memory miss it
     // hydrates from the on-disk cache (the first visit after relaunch), populating memory so the
     // next visit is a fast hit.
     // swiftlint:disable:next large_tuple
-    static func cached<Item: Codable>(_: [Item].Type, for key: String) -> (
+    static func cached<Item: Codable & Sendable>(_: [Item].Type, for key: String) async -> (
         items: [Item], cursor: String?, totalCount: Int?
     )? {
         if let entry = storage[key] as? Entry<Item> {
             return (entry.items, entry.cursor, entry.totalCount)
         }
 
-        guard let disk = DiskPageCache.load([Item].self, for: key) else { return nil }
+        guard let disk = await DiskPageCache.load([Item].self, for: key) else { return nil }
 
         storage[key] = Entry(items: disk.items, cursor: disk.cursor, totalCount: disk.totalCount)
         return (disk.items, disk.cursor, disk.totalCount)
@@ -56,15 +61,15 @@ enum ListPageCache {
 
     /// Drops every cached page, in memory and on disk. Used when an account is re-keyed (#102)
     /// and by tests to stay isolated.
-    static func clear() {
+    static func clear() async {
         storage.removeAll()
-        DiskPageCache.clear()
+        await DiskPageCache.clear()
     }
 
     /// Drops cached pages for one account while preserving every other tenant's snapshots.
-    static func clear(accountID: UUID) {
+    static func clear(accountID: UUID) async {
         storage = storage.filter { !cacheKey($0.key, belongsTo: accountID) }
-        DiskPageCache.clear(accountID: accountID)
+        await DiskPageCache.clear(accountID: accountID)
     }
 
     nonisolated static func cacheKey(_ key: String, belongsTo accountID: UUID) -> Bool {
