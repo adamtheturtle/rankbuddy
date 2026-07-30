@@ -107,10 +107,14 @@ extension LoadableList {
             .alert("Save Search", isPresented: $isNamingSearch) {
                 TextField("Name", text: $newSearchName)
                 Button("Cancel", role: .cancel) {}
-                Button("Save") { saveCurrentSearch() }
+                Button(existingNamedSearch == nil ? "Save" : "Replace") { saveCurrentSearch() }
                     .disabled(trimmedSearchName.isEmpty)
             } message: {
-                Text("Save the current filters so you can re-apply them later.")
+                if let existingNamedSearch {
+                    Text("Replace “\(existingNamedSearch.name)” with the current filters?")
+                } else {
+                    Text("Save the current filters so you can re-apply them later.")
+                }
             }
         }
     }
@@ -171,6 +175,10 @@ extension LoadableList {
         newSearchName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var existingNamedSearch: SavedSearch? {
+        savedSearches.first { SavedSearch.namesMatch($0.name, trimmedSearchName) }
+    }
+
     /// Loads the saved searches for the current list into state (#25). Called on appear and when
     /// the account-scoped restoration key changes, so each account shows its own.
     func loadSavedSearches() {
@@ -207,15 +215,18 @@ extension LoadableList {
         guard let restorationKey else { return }
 
         let name = trimmedSearchName
+        let existing = existingNamedSearch
         let search = SavedSearch(
             name: name,
             query: query,
             dateRange: dateRange,
-            facets: selectedFacets.mapValues(Array.init)
+            facets: selectedFacets.mapValues(Array.init),
+            id: existing?.id ?? UUID()
         )
         guard !name.isEmpty, !search.isEmpty else { return }
 
-        let retained = Array((savedSearches + [search]).suffix(SavedSearchStore.maximumCount))
+        let updated = savedSearches.map { $0.id == existing?.id ? search : $0 }
+        let retained = Array((existing == nil ? updated + [search] : updated).suffix(SavedSearchStore.maximumCount))
         replaceSavedSearches(retained, restorationKey: restorationKey, actionName: "Save Search")
     }
 

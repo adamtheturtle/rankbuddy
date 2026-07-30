@@ -101,6 +101,11 @@ struct SavedSearchStoreTests {
         #expect(search.matches(query: "\tbackend ", dateRange: nil, facets: [:]))
     }
 
+    @Test func `saved search names match case insensitively after trimming`() {
+        #expect(SavedSearch.namesMatch(" Backend ", "backend"))
+        #expect(!SavedSearch.namesMatch("Backend", "Frontend"))
+    }
+
     @Test func `facet selections round-trip through persistence`() {
         let defaults = makeDefaults()
         let searches = [

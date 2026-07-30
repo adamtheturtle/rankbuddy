@@ -93,6 +93,12 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
     static func normalizedQuery(_ query: String) -> String {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    static func namesMatch(_ lhs: String, _ rhs: String) -> Bool {
+        let left = lhs.trimmingCharacters(in: .whitespacesAndNewlines)
+        let right = rhs.trimmingCharacters(in: .whitespacesAndNewlines)
+        return left.localizedCaseInsensitiveCompare(right) == .orderedSame
+    }
 }
 
 /// Per-list persistence for saved searches, scoped by the list's restoration key so each
