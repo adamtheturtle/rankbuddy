@@ -102,6 +102,9 @@ struct ContentView: View {
                 lastSeenRelease: lastSeenRelease
             )
         }
+        .onChange(of: store.accounts.map(\.id)) {
+            favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
+        }
         // Continue a Handoff / Spotlight / Siri activity by routing to the item via the same
         // deep-link path favourites and the open intent use (#98).
         .onContinueUserActivity(RankBuddyUserActivity.activityType) { activity in
