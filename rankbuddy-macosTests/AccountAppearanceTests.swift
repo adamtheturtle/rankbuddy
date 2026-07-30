@@ -11,6 +11,11 @@ import Testing
 /// Coverage for per-account icon + tint (#64): persistence, the icon default, and hex parsing.
 @MainActor
 struct AccountAppearanceTests {
+    @Test func `account icons have human readable names`() {
+        #expect(AccountAppearance.icons.allSatisfy { !$0.name.contains(".") })
+        #expect(AccountAppearance.icons.first { $0.symbol == "building.2" }?.name == "Building")
+    }
+
     @Test func `icon and tint round-trip and are absent from older saved accounts`() throws {
         let account = Account(label: "Work", token: "t", iconSymbol: "briefcase", tintHex: "#3B82F6")
         let restored = try JSONDecoder().decode(Account.self, from: JSONEncoder().encode(account))

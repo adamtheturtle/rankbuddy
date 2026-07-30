@@ -25,10 +25,26 @@ extension Account {
 
 /// The icon + tint choices shown in the account editor (#64).
 enum AccountAppearance {
+    struct Icon: Identifiable, Hashable {
+        let symbol: String
+        let name: String
+        var id: String {
+            symbol
+        }
+    }
+
     /// SF Symbols a user can pick from to distinguish an account.
-    static let icons = [
-        "person.crop.circle", "briefcase", "building.2", "globe",
-        "star", "flag", "graduationcap", "person.3", "bolt", "leaf"
+    static let icons: [Icon] = [
+        Icon(symbol: "person.crop.circle", name: "Person"),
+        Icon(symbol: "briefcase", name: "Briefcase"),
+        Icon(symbol: "building.2", name: "Building"),
+        Icon(symbol: "globe", name: "Globe"),
+        Icon(symbol: "star", name: "Star"),
+        Icon(symbol: "flag", name: "Flag"),
+        Icon(symbol: "graduationcap", name: "Education"),
+        Icon(symbol: "person.3", name: "Team"),
+        Icon(symbol: "bolt", name: "Bolt"),
+        Icon(symbol: "leaf", name: "Leaf")
     ]
 
     /// A named tint with its stored hex; the first ("Default") stores `nil` to follow the
@@ -120,27 +136,27 @@ struct AccountIconPicker: View {
 
     var body: some View {
         HFlow(spacing: 6) {
-            ForEach(AccountAppearance.icons, id: \.self) { symbol in
+            ForEach(AccountAppearance.icons) { option in
                 Button {
-                    selectedIcon = symbol
+                    selectedIcon = option.symbol
                 } label: {
-                    Image(systemName: symbol)
+                    Image(systemName: option.symbol)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(selectedIcon == symbol ? .white : tint)
+                        .foregroundStyle(selectedIcon == option.symbol ? .white : tint)
                         .frame(width: 28, height: 28)
                         .background {
                             RoundedRectangle(cornerRadius: 6)
-                                .fill(selectedIcon == symbol ? tint : Color.clear)
+                                .fill(selectedIcon == option.symbol ? tint : Color.clear)
                         }
                         .overlay {
                             RoundedRectangle(cornerRadius: 6)
-                                .strokeBorder(selectedIcon == symbol ? tint : Color.secondary.opacity(0.25))
+                                .strokeBorder(selectedIcon == option.symbol ? tint : Color.secondary.opacity(0.25))
                         }
                 }
                 .buttonStyle(.plain)
-                .help(symbol)
-                .accessibilityLabel(symbol)
-                .accessibilityAddTraits(selectedIcon == symbol ? [.isButton, .isSelected] : .isButton)
+                .help(option.name)
+                .accessibilityLabel(option.name)
+                .accessibilityAddTraits(selectedIcon == option.symbol ? [.isButton, .isSelected] : .isButton)
             }
         }
     }
