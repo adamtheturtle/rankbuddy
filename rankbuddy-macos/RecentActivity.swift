@@ -43,7 +43,9 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
     }
 
     func isActiveOrUpcoming(now: Date) -> Bool {
-        let status = subtitle?.lowercased()
+        let status = subtitle?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
         switch collection {
         case .tests:
             guard status == "active" else { return false }
@@ -52,7 +54,8 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
             return true
 
         case .interviews:
-            return status == "scheduled" || status == "in progress" || status == "in_progress"
+            return status == "active" || status == "scheduled"
+                || status == "in progress" || status == "in_progress"
 
         default:
             return false

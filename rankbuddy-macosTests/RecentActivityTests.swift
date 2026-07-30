@@ -67,6 +67,7 @@ struct RecentActivityTests {
     @Test func `active or upcoming keeps open tests and scheduled interviews`() {
         #expect(item("t", .tests, subtitle: "Active").isActiveOrUpcoming)
         #expect(item("i", .interviews, subtitle: "Scheduled").isActiveOrUpcoming)
+        #expect(item("i", .interviews, subtitle: " ACTIVE ").isActiveOrUpcoming)
         #expect(item("i", .interviews, subtitle: "In progress").isActiveOrUpcoming)
         // Matching is case-insensitive and tolerant of the snake_case status.
         #expect(item("i", .interviews, subtitle: "in_progress").isActiveOrUpcoming)
