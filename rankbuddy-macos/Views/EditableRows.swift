@@ -28,6 +28,7 @@ struct EditableTextRow: View {
     @State private var draft = ""
     @State private var isSaving = false
     @State private var isEditingDisplayValue = false
+    @State private var submitWillEndEditing = false
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -59,6 +60,7 @@ struct EditableTextRow: View {
                         .labelsHidden()
                         .focused($isFocused)
                         .onSubmit {
+                            submitWillEndEditing = displayValue != nil
                             Task {
                                 await save()
                                 finishDisplayValueEditing()
@@ -66,6 +68,10 @@ struct EditableTextRow: View {
                         }
                         .onChange(of: isFocused) { _, focused in
                             if !focused {
+                                if submitWillEndEditing {
+                                    submitWillEndEditing = false
+                                    return
+                                }
                                 Task {
                                     await save()
                                     finishDisplayValueEditing()
