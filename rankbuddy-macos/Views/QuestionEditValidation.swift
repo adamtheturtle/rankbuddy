@@ -18,3 +18,14 @@ nonisolated enum QuestionEditValidation {
         value.map(recommendedDurationRange.contains) ?? true
     }
 }
+
+nonisolated enum QuestionCreationValidation {
+    static func isValidDurationText(_ text: String) -> Bool {
+        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.isEmpty || Int(normalized) != nil
+    }
+
+    static func duration(from text: String) -> Int? {
+        Int(text.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+}

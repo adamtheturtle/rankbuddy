@@ -24,6 +24,13 @@ struct QuestionEditValidationTests {
         #expect(!QuestionEditValidation.isValidRecommendedDuration(1441))
     }
 
+    @Test func `question creation duration rejects non-numeric text`() {
+        #expect(QuestionCreationValidation.isValidDurationText(""))
+        #expect(QuestionCreationValidation.isValidDurationText(" 30\n"))
+        #expect(!QuestionCreationValidation.isValidDurationText("thirty"))
+        #expect(QuestionCreationValidation.duration(from: " 30\n") == 30)
+    }
+
     @Test func `comma-separated values deduplicate without losing first spelling`() {
         #expect(splitList("swift, Swift, SWIFT, résumé, resume") == ["swift", "résumé"])
         #expect(splitList(" , ") == nil)
