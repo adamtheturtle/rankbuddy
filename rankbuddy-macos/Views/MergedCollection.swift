@@ -31,34 +31,74 @@ extension AccountScoped: Codable where Item: Codable {}
 
 /// Loads the first page of a collection from several accounts and merges the results (#17).
 enum MergedLoader {
+    // swiftlint:disable function_body_length
     /// Fetches each account's first page, tagging every item with its account. Accounts whose
     /// fetch fails are skipped so one failing account never discards the others' results
     /// (partial results); throws only when **every** account fails, so the list surfaces an
     /// error instead of a misleading empty state. No accounts → an empty list.
-    @MainActor
-    static func firstPages<Item>(
+    nonisolated static func firstPages<Item: Identifiable & Hashable & Sendable>(
         accounts: [Account],
-        fetch: @MainActor (Account) async throws -> [Item]
+        maxConcurrent: Int = 4,
+        fetch: @escaping @Sendable (Account) async throws -> [Item]
     ) async throws -> [AccountScoped<Item>] {
-        var scoped: [AccountScoped<Item>] = []
-        var firstError: Error?
-        var anySuccess = false
+        guard !accounts.isEmpty else { return [] }
 
-        for account in accounts {
-            do {
-                let items = try await fetch(account)
-                anySuccess = true
-                scoped += items.map { AccountScoped(account: account, item: $0) }
-            } catch {
-                if firstError == nil { firstError = error }
+        let limit = max(1, min(maxConcurrent, accounts.count))
+        let results = await withTaskGroup(
+            of: (Int, Result<[Item], any Error>).self,
+            returning: [(Int, Result<[Item], any Error>)].self
+        ) { group in
+            for (index, account) in accounts.prefix(limit).enumerated() {
+                group.addTask {
+                    do {
+                        let items = try await fetch(account)
+                        return (index, .success(items))
+                    } catch {
+                        return (index, .failure(error))
+                    }
+                }
             }
+
+            var nextIndex = limit
+            var completed: [(Int, Result<[Item], any Error>)] = []
+            for await result in group {
+                completed.append(result)
+                if nextIndex < accounts.count {
+                    let index = nextIndex
+                    let account = accounts[index]
+                    group.addTask {
+                        do {
+                            let items = try await fetch(account)
+                            return (index, .success(items))
+                        } catch {
+                            return (index, .failure(error))
+                        }
+                    }
+                    nextIndex += 1
+                }
+            }
+            return completed
         }
 
+        var scoped: [AccountScoped<Item>] = []
+        var firstError: (any Error)?
+        var anySuccess = false
+        for (index, result) in results.sorted(by: { $0.0 < $1.0 }) {
+            switch result {
+            case let .success(items):
+                anySuccess = true
+                scoped += items.map { AccountScoped(account: accounts[index], item: $0) }
+
+            case let .failure(error):
+                firstError = firstError ?? error
+            }
+        }
         if !anySuccess, let firstError {
             throw firstError
         }
         return scoped
     }
+    // swiftlint:enable function_body_length
 }
 
 /// A merged-list row: the item's title/subtitle plus a trailing chip naming its source account,
