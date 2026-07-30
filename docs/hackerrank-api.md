@@ -160,3 +160,17 @@ API (neither `InterviewShow` nor the transcript carries it) — only the convers
 Write/CRUD (`POST`/`PUT`/`DELETE`) exists for tests, questions (+ test cases/codestubs),
 interviews, interview_templates, users, teams, and candidates; the app's write flows (#12/#57–#60)
 cover a subset.
+
+## ATS integration boundary
+
+RankBuddy exposes the two documented ATS embed endpoints through its explicitly enabled MCP
+write catalogue:
+
+- `POST /x/api/v3/ats/codepair` as `create_ats_codepair_invite`
+- `POST /x/api/v3/ats/codescreen` as `create_ats_codescreen_invite`
+
+They are intentionally absent from the desktop UI. These calls require external ATS candidate
+and requisition identifiers, so a general-purpose form would expose organisation-integration
+plumbing to users who cannot act on it. MCP clients that already hold that context can opt into
+write access and use the endpoints directly. RankBuddy validates required identifiers and email
+addresses before sending either request.
