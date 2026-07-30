@@ -19,6 +19,7 @@ struct CandidateSummaryView: View {
         case idle
         case loading
         case summary(String)
+        case policyViolation
         case failed
     }
 
@@ -39,6 +40,16 @@ struct CandidateSummaryView: View {
                 case let .summary(text):
                     VStack(alignment: .leading, spacing: 8) {
                         Text(text).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                        regenerateButton
+                    }
+
+                case .policyViolation:
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(
+                            "The generated text was hidden because it included a hiring recommendation.",
+                            systemImage: "exclamationmark.shield"
+                        )
+                        .foregroundStyle(.secondary)
                         regenerateButton
                     }
 
@@ -77,6 +88,8 @@ struct CandidateSummaryView: View {
         switch await CandidateSummarizer.summarize(candidate) {
         case let .summary(text):
             state = .summary(text)
+        case .policyViolation:
+            state = .policyViolation
         case .noData, .unavailable, .failed:
             state = .failed
         }

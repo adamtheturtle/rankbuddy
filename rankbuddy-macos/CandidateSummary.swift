@@ -81,6 +81,24 @@ enum CandidateBrief {
     }
 }
 
+nonisolated enum CandidateSummaryPolicy {
+    private static let prohibitedPatterns = [
+        #"\b(recommend|recommends|recommended|recommendation)\b"#,
+        #"\b(no[ -]?hire|hire|hired|hiring)\b"#,
+        #"\b(reject|rejects|rejected|rejection)\b"#,
+        #"\b(advance|advanced|proceed|progress)\b"#,
+        #"\b(move|moving)\s+forward\b"#,
+        #"\b(good|poor|strong|weak)\s+(candidate|fit)\b"#,
+        #"\b(suitable|unsuitable|worthy|unworthy)\b"#
+    ]
+
+    static func allows(_ summary: String) -> Bool {
+        !prohibitedPatterns.contains {
+            summary.range(of: $0, options: [.regularExpression, .caseInsensitive]) != nil
+        }
+    }
+}
+
 /// The on-device summariser for a candidate report (#93). Strictly opt-in (never auto-runs),
 /// nothing persisted, and a graceful no-op when Apple's on-device model is unavailable.
 @MainActor
@@ -107,6 +125,7 @@ enum CandidateSummarizer {
         case summary(String)
         case noData
         case unavailable
+        case policyViolation
         case failed
     }
 
@@ -122,7 +141,10 @@ enum CandidateSummarizer {
                 do {
                     let response = try await session.respond(to: prompt)
                     let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-                    return text.isEmpty ? .failed : .summary(text)
+                    guard !text.isEmpty else { return .failed }
+                    guard CandidateSummaryPolicy.allows(text) else { return .policyViolation }
+
+                    return .summary(text)
                 } catch {
                     return .failed
                 }

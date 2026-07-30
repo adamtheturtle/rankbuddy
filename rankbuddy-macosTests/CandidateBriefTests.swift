@@ -65,4 +65,12 @@ struct CandidateBriefTests {
         #expect(prompt.contains("- Score: 92"))
         #expect(prompt.contains("- Attempt status: Reports ready"))
     }
+
+    @Test func `summary policy rejects hiring decisions but allows factual observations`() {
+        #expect(CandidateSummaryPolicy.allows("The score was 82%, with two editor paste events."))
+        #expect(!CandidateSummaryPolicy.allows("I recommend hiring this candidate."))
+        #expect(!CandidateSummaryPolicy.allows("This is a strong candidate who should move forward."))
+        #expect(!CandidateSummaryPolicy.allows("The candidate is unsuitable for the role."))
+        #expect(!CandidateSummaryPolicy.allows("No-hire."))
+    }
 }
