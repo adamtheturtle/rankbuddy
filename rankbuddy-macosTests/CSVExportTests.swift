@@ -21,7 +21,8 @@ struct CSVExportTests {
 
     @Test func `a document is a header row over escaped data rows`() {
         let csv = CSVExport.document(header: ["A", "B"], rows: [["1", "x,y"], ["2", "z"]])
-        #expect(csv == "A,B\n1,\"x,y\"\n2,z")
+        #expect(csv == "\u{FEFF}A,B\n1,\"x,y\"\n2,z")
+        #expect(Array(Data(csv.utf8).prefix(3)) == [0xEF, 0xBB, 0xBF])
     }
 
     @Test func `the candidates document has a header and one row per candidate`() throws {
@@ -34,7 +35,7 @@ struct CSVExportTests {
         let csv = CSVExport.candidates(candidates)
         let lines = csv.split(separator: "\n")
         #expect(lines.count == 3) // header + 2
-        #expect(lines[0].hasPrefix("Name,Email,Score"))
+        #expect(lines[0].hasPrefix("\u{FEFF}Name,Email,Score"))
         // The comma in the name forces quoting.
         #expect(lines[1].contains("\"Ada, Lovelace\""))
         #expect(lines[1].contains("ada@example.com"))

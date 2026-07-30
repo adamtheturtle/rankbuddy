@@ -29,7 +29,7 @@ enum CSVExport {
 
     /// Builds a CSV document from a header and rows.
     nonisolated static func document(header: [String], rows: [[String]]) -> String {
-        ([header] + rows).map(row).joined(separator: "\n")
+        "\u{FEFF}" + ([header] + rows).map(row).joined(separator: "\n")
     }
 
     // MARK: - Per-collection documents
