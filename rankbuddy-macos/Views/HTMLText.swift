@@ -92,11 +92,11 @@ struct HTMLFragmentText: View {
                                 HTMLText(html: prose, showsPlaceholder: showsPlaceholder)
                             }
 
-                        case let .orderedList(items, start, step):
+                        case let .orderedList(items, start, step, markerStyle):
                             VStack(alignment: .leading, spacing: 6) {
                                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                                     HStack(alignment: .firstTextBaseline, spacing: 10) {
-                                        Text("\(start + index * step).")
+                                        Text("\(markerStyle.marker(for: start + index * step)).")
                                             .font(.body.monospacedDigit())
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: true, vertical: false)
@@ -148,7 +148,7 @@ struct HTMLFragmentText: View {
 
 nonisolated enum HTMLFragmentSegment: Equatable {
     case prose(String)
-    case orderedList(items: [String], start: Int, step: Int)
+    case orderedList(items: [String], start: Int, step: Int, markerStyle: OrderedListMarkerStyle)
 
     static func segments(from html: String) -> [Self] {
         let listPattern = #"(?is)<ol\b([^>]*)>(.*?)</ol>"#
@@ -181,7 +181,13 @@ nonisolated enum HTMLFragmentSegment: Equatable {
                 let reversed = hasAttribute("reversed", in: attributes)
                 let explicitStart = integerAttribute("start", in: attributes)
                 let start = explicitStart ?? (reversed ? items.count : 1)
-                segments.append(.orderedList(items: items, start: start, step: reversed ? -1 : 1))
+                let markerStyle = OrderedListMarkerStyle(htmlType: attribute("type", in: attributes))
+                segments.append(.orderedList(
+                    items: items,
+                    start: start,
+                    step: reversed ? -1 : 1,
+                    markerStyle: markerStyle
+                ))
             }
 
             cursor = match.range.location + match.range.length
@@ -217,9 +223,13 @@ nonisolated enum HTMLFragmentSegment: Equatable {
     }
 
     private static func integerAttribute(_ name: String, in attributes: String) -> Int? {
+        attribute(name, in: attributes).flatMap(Int.init)
+    }
+
+    private static func attribute(_ name: String, in attributes: String) -> String? {
         let escapedName = NSRegularExpression.escapedPattern(for: name)
         let pattern = #"(?i)(?:^|\s)"# + escapedName
-            + #"\s*=\s*(?:"\s*(-?\d+)\s*"|'\s*(-?\d+)\s*'|(-?\d+))"#
+            + #"\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))"#
         guard let expression = try? NSRegularExpression(pattern: pattern) else { return nil }
 
         let range = NSRange(attributes.startIndex ..< attributes.endIndex, in: attributes)
@@ -228,7 +238,7 @@ nonisolated enum HTMLFragmentSegment: Equatable {
         // swiftlint:disable:next legacy_objc_type
         let source = attributes as NSString
         for index in 1 ..< match.numberOfRanges where match.range(at: index).location != NSNotFound {
-            return Int(source.substring(with: match.range(at: index)))
+            return source.substring(with: match.range(at: index)).trimmingCharacters(in: .whitespaces)
         }
         return nil
     }
