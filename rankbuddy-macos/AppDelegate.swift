@@ -15,9 +15,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let servicesProvider = ServicesProvider()
     private let showMainWindow: () -> Void
 
-    init(showMainWindow: @escaping () -> Void = {
-        MainActor.assumeIsolated { MainWindowPresenter.shared.show() }
-    }) {
+    override init() {
+        showMainWindow = {
+            Task { @MainActor in MainWindowPresenter.shared.show() }
+        }
+        super.init()
+    }
+
+    init(showMainWindow: @escaping () -> Void) {
         self.showMainWindow = showMainWindow
         super.init()
     }
