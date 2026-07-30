@@ -149,12 +149,16 @@ extension LoadableList {
 
         let exportTitle = csvExportIsPartial ? "Export Loaded \(title) Rows CSV…" : "Export \(title) CSV…"
         commandContext.exportCSV = AppCommandContext.Action(title: exportTitle) {
-            CSVExport.save(csvExport(visibleItems), suggestedName: csvExportSuggestedName)
+            let snapshot = visibleItems
+            CSVExport.save({ csvExport(snapshot) }, suggestedName: csvExportSuggestedName)
         }
         commandContext.exportSelectedCSV = AppCommandContext.Action(
             title: selection.isEmpty ? "Export Selected CSV…" : "Export Selected CSV (\(selection.count))…",
             isEnabled: { !selection.isEmpty },
-            perform: { CSVExport.save(csvExport(selectedItems), suggestedName: "\(csvFilename)-selected") }
+            perform: {
+                let snapshot = selectedItems
+                CSVExport.save({ csvExport(snapshot) }, suggestedName: "\(csvFilename)-selected")
+            }
         )
     }
 

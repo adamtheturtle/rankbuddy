@@ -185,7 +185,8 @@ struct QuestionDetailView: View {
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                MarkdownExportButton(suggestedName: displayed.name) { MarkdownExport.question(displayed) }
+                let snapshot = displayed
+                MarkdownExportButton(suggestedName: snapshot.name) { MarkdownExport.question(snapshot) }
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "delete") {
@@ -384,7 +385,8 @@ extension QuestionDetailView {
             printReport(QuestionReport(question: displayed), jobTitle: "Question: \(displayed.name)")
         }
         commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Question as Markdown…") {
-            MarkdownExport.save(MarkdownExport.question(displayed), suggestedName: displayed.name)
+            let question = displayed
+            MarkdownExport.save({ MarkdownExport.question(question) }, suggestedName: question.name)
         }
     }
 

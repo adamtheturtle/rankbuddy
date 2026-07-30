@@ -191,8 +191,10 @@ struct InterviewDetailView: View {
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                MarkdownExportButton(suggestedName: displayTitle) {
-                    MarkdownExport.interview(interview, title: displayTitle, notes: displayNotes)
+                let title = displayTitle
+                let notes = displayNotes
+                MarkdownExportButton(suggestedName: title) {
+                    MarkdownExport.interview(interview, title: title, notes: notes)
                 }
             }
             .defaultCustomization(.hidden)
@@ -282,9 +284,11 @@ struct InterviewDetailView: View {
             )
         }
         commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Interview as Markdown…") {
+            let title = displayTitle
+            let notes = displayNotes
             MarkdownExport.save(
-                MarkdownExport.interview(interview, title: displayTitle, notes: displayNotes),
-                suggestedName: displayTitle
+                { MarkdownExport.interview(interview, title: title, notes: notes) },
+                suggestedName: title
             )
         }
     }

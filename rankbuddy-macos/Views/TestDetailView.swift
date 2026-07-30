@@ -180,8 +180,9 @@ struct TestDetailView: View {
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                MarkdownExportButton(suggestedName: displayedTest.name) {
-                    MarkdownExport.test(displayedTest)
+                let snapshot = displayedTest
+                MarkdownExportButton(suggestedName: snapshot.name) {
+                    MarkdownExport.test(snapshot)
                 }
             }
             .defaultCustomization(.hidden)
@@ -265,7 +266,8 @@ struct TestDetailView: View {
             printReport(TestReport(test: displayedTest), jobTitle: "Test: \(displayedTest.name)")
         }
         commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Test as Markdown…") {
-            MarkdownExport.save(MarkdownExport.test(displayedTest), suggestedName: displayedTest.name)
+            let test = displayedTest
+            MarkdownExport.save({ MarkdownExport.test(test) }, suggestedName: test.name)
         }
     }
 

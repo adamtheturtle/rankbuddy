@@ -127,7 +127,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// the list). Changing the value re-runs the first-page load.
     var reloadToken: Int = 0
     /// When set, offers an "Export CSV" action over the shown (filtered, sorted) items (#39).
-    var csvExport: (([Item]) -> String)?
+    var csvExport: (@Sendable ([Item]) -> String)?
     /// Suggested CSV file name (no extension).
     var csvFilename = "export"
     /// The favourite a row maps to, so the row can be dragged onto the sidebar's Favourites

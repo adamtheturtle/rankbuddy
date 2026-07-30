@@ -74,7 +74,8 @@ extension LoadableList {
         if let csvExport {
             ToolbarItem(id: "exportCSV", placement: .automatic) {
                 Button {
-                    CSVExport.save(csvExport(visibleItems), suggestedName: csvExportSuggestedName)
+                    let snapshot = visibleItems
+                    CSVExport.save({ csvExport(snapshot) }, suggestedName: csvExportSuggestedName)
                 } label: {
                     Label(csvExportIsPartial ? "Export Loaded Rows CSV…" : "Export CSV…", systemImage: "tablecells")
                 }
@@ -88,7 +89,8 @@ extension LoadableList {
 
             ToolbarItem(id: "exportSelected", placement: .automatic) {
                 Button {
-                    CSVExport.save(csvExport(selectedItems), suggestedName: "\(csvFilename)-selected")
+                    let snapshot = selectedItems
+                    CSVExport.save({ csvExport(snapshot) }, suggestedName: "\(csvFilename)-selected")
                 } label: {
                     let title = selection.isEmpty ? "Export Selected…" : "Export Selected (\(selection.count))…"
                     Label(title, systemImage: "tablecells.badge.ellipsis")

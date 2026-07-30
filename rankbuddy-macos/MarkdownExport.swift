@@ -18,7 +18,7 @@ enum MarkdownExport {
     }
 
     /// A `## Heading` over `- **Label:** value` lines; empty (dropped) when no field has a value.
-    static func section(_ title: String, _ fields: [(String, String?)]) -> String {
+    nonisolated static func section(_ title: String, _ fields: [(String, String?)]) -> String {
         let lines = fields.compactMap { label, value in
             value.map { "- **\(inlineText(label)):** \(inlineText($0))" }
         }
@@ -26,7 +26,7 @@ enum MarkdownExport {
     }
 
     /// A `## Heading` over a block of free text; empty when the text is missing.
-    static func textSection(_ title: String, _ text: String?) -> String {
+    nonisolated static func textSection(_ title: String, _ text: String?) -> String {
         guard let text, !text.isEmpty else { return "" }
 
         let bounded = boundedText(text, maximumCharacters: Limits.proseCharacters)
@@ -35,7 +35,7 @@ enum MarkdownExport {
     }
 
     /// Assembles a document: an `# Title`, an italic subtitle, then the non-empty sections.
-    static func document(title: String, subtitle: String, sections: [String]) -> String {
+    nonisolated static func document(title: String, subtitle: String, sections: [String]) -> String {
         (["# \(inlineText(title))", "_\(inlineText(subtitle))_"] + sections.filter { !$0.isEmpty })
             .joined(separator: "\n\n") + "\n"
     }
@@ -77,9 +77,42 @@ enum MarkdownExport {
         return normalized + (bounded.omitted ? "..." : "")
     }
 
+    private nonisolated static func formattedDate(_ value: String?) -> String? {
+        guard let value, !value.isEmpty else { return nil }
+
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        guard let parsed = fractional.date(from: value) ?? plain.date(from: value) else { return value }
+
+        return parsed.formatted(date: .abbreviated, time: .shortened)
+    }
+
+    private nonisolated static func formattedInterval(_ seconds: Double?) -> String? {
+        guard let seconds, seconds > 0 else { return nil }
+
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: seconds)
+    }
+
+    private nonisolated static func formattedList(_ values: [String]?) -> String? {
+        guard let values, !values.isEmpty else { return nil }
+
+        return values.formatted(.list(type: .and))
+    }
+
+    private nonisolated static func formattedLanguages(_ codes: [String]?) -> String? {
+        guard let codes, !codes.isEmpty else { return nil }
+
+        return codes.map(DisplayFormat.languageName).formatted(.list(type: .and))
+    }
+
     // MARK: - Per-collection documents
 
-    static func candidate(_ candidate: TestCandidate) -> String {
+    nonisolated static func candidate(_ candidate: TestCandidate) -> String {
         document(title: candidate.fullName ?? candidate.email, subtitle: "HackerRank Candidate Report", sections: [
             section("Candidate", [
                 ("Name", candidate.fullName), ("Email", candidate.email),
@@ -88,12 +121,12 @@ enum MarkdownExport {
                 ("Percentage", candidate.percentageScore.map { "\($0.formatted())%" }),
                 ("Integrity", candidate.integrityStatus),
                 ("Plagiarism", candidate.plagiarismStatus.map { $0 ? "Flagged" : "Clear" }),
-                ("Started", DisplayFormat.date(candidate.attemptStartTime)),
-                ("Ended", DisplayFormat.date(candidate.attemptEndTime))
+                ("Started", formattedDate(candidate.attemptStartTime)),
+                ("Ended", formattedDate(candidate.attemptEndTime))
             ]),
             candidate.hasProctoringSignals ? section("Proctoring", [
                 ("Left test window", candidate.outOfWindowEvents.map { "\($0)×" }),
-                ("Time outside window", DisplayFormat.interval(candidate.outOfWindowDuration)),
+                ("Time outside window", formattedInterval(candidate.outOfWindowDuration)),
                 ("Editor pastes", candidate.editorPasteCount.map { "\($0)×" })
             ]) : "",
             textSection("Tags", candidate.tags.flatMap { $0.isEmpty ? nil : $0.joined(separator: ", ") }),
@@ -101,42 +134,42 @@ enum MarkdownExport {
         ])
     }
 
-    static func test(_ test: Test) -> String {
+    nonisolated static func test(_ test: Test) -> String {
         document(title: test.name, subtitle: "HackerRank Test Report", sections: [
             section("Test", [
                 ("State", DisplayFormat.enumLabel(test.state)), ("Unique ID", test.uniqueID),
                 ("Duration", test.duration.map { "\($0) min" }),
                 ("Cutoff", test.cutoffScore.map(String.init)),
-                ("Starts", DisplayFormat.date(test.startTime)), ("Ends", DisplayFormat.date(test.endTime)),
-                ("Languages", DisplayFormat.languages(test.languages))
+                ("Starts", formattedDate(test.startTime)), ("Ends", formattedDate(test.endTime)),
+                ("Languages", formattedLanguages(test.languages))
             ]),
             textSection("Tags", test.tags.flatMap { $0.isEmpty ? nil : $0.joined(separator: ", ") }),
             textSection("Instructions", test.instructions.map(plainText(fromHTML:)))
         ])
     }
 
-    static func question(_ question: Question) -> String {
+    nonisolated static func question(_ question: Question) -> String {
         document(title: question.name, subtitle: "HackerRank Question Report", sections: [
             section("Question", [
                 ("Type", DisplayFormat.enumLabel(question.type)), ("Unique ID", question.uniqueID),
                 ("Status", DisplayFormat.enumLabel(question.status)),
                 ("Max score", question.maxScore.map { $0.formatted() }),
-                ("Languages", DisplayFormat.languages(question.languages)),
-                ("Skills", DisplayFormat.list(question.skills))
+                ("Languages", formattedLanguages(question.languages)),
+                ("Skills", formattedList(question.skills))
             ]),
             textSection("Problem statement", question.problemStatement.map(plainText(fromHTML:)))
         ])
     }
 
-    static func interview(_ interview: Interview, title: String? = nil, notes: String? = nil) -> String {
+    nonisolated static func interview(_ interview: Interview, title: String? = nil, notes: String? = nil) -> String {
         document(
             title: title ?? interview.title ?? "Interview \(interview.id)",
             subtitle: "HackerRank Interview Report",
             sections: [
                 section("Interview", [
                     ("Status", DisplayFormat.enumLabel(interview.status)),
-                    ("Created", DisplayFormat.date(interview.createdAt)),
-                    ("Ended", DisplayFormat.date(interview.endedAt)),
+                    ("Created", formattedDate(interview.createdAt)),
+                    ("Ended", formattedDate(interview.endedAt)),
                     ("Thumbs up", interview.thumbsUp.map(String.init))
                 ]),
                 textSection("Notes", notes ?? interview.notes),
@@ -148,7 +181,7 @@ enum MarkdownExport {
     // MARK: - Saving
 
     @MainActor
-    static func save(_ markdown: String, suggestedName: String) {
+    static func save(_ markdown: @escaping @Sendable () -> String, suggestedName: String) {
         FileExport.save(
             markdown,
             suggestedName: "\(suggestedName).md",
@@ -161,11 +194,11 @@ enum MarkdownExport {
 /// A toolbar button that exports a Markdown report (#50).
 struct MarkdownExportButton: View {
     let suggestedName: String
-    let markdown: () -> String
+    let markdown: @Sendable () -> String
 
     var body: some View {
         Button {
-            MarkdownExport.save(markdown(), suggestedName: suggestedName)
+            MarkdownExport.save(markdown, suggestedName: suggestedName)
         } label: {
             Label("Export as Markdown…", systemImage: "doc.plaintext")
         }

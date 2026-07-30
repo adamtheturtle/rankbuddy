@@ -214,7 +214,7 @@ struct CandidateDetailView: View {
             printReport(CandidateReport(candidate: candidate), jobTitle: "Candidate: \(title)")
         }
         commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Candidate as Markdown…") {
-            MarkdownExport.save(MarkdownExport.candidate(candidate), suggestedName: title)
+            MarkdownExport.save({ MarkdownExport.candidate(candidate) }, suggestedName: title)
         }
     }
 

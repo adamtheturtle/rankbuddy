@@ -28,13 +28,13 @@ enum CSVExport {
     }
 
     /// Builds a CSV document from a header and rows.
-    static func document(header: [String], rows: [[String]]) -> String {
+    nonisolated static func document(header: [String], rows: [[String]]) -> String {
         ([header] + rows).map(row).joined(separator: "\n")
     }
 
     // MARK: - Per-collection documents
 
-    static func candidates(_ candidates: [TestCandidate]) -> String {
+    nonisolated static func candidates(_ candidates: [TestCandidate]) -> String {
         document(
             header: ["Name", "Email", "Score", "Percentage", "Attempt", "Pipeline",
                      "Integrity", "Plagiarism", "Started", "Ended", "Tags"],
@@ -51,7 +51,7 @@ enum CSVExport {
         )
     }
 
-    static func tests(_ tests: [Test]) -> String {
+    nonisolated static func tests(_ tests: [Test]) -> String {
         document(
             header: ["Name", "State", "Unique ID", "Duration (minutes)", "Cutoff",
                      "Starts", "Ends", "Created", "Languages", "Tags"],
@@ -66,7 +66,7 @@ enum CSVExport {
         )
     }
 
-    static func questions(_ questions: [Question]) -> String {
+    nonisolated static func questions(_ questions: [Question]) -> String {
         document(
             header: ["Name", "Type", "Unique ID", "Status", "Max score",
                      "Duration (minutes)", "Languages", "Skills"],
@@ -80,7 +80,7 @@ enum CSVExport {
         )
     }
 
-    static func interviews(_ interviews: [Interview]) -> String {
+    nonisolated static func interviews(_ interviews: [Interview]) -> String {
         document(
             header: ["Title", "Status", "Created", "Ended", "Thumbs up"],
             rows: interviews.map {
@@ -94,7 +94,7 @@ enum CSVExport {
 
     /// Presents the save panel and writes `csv` to the chosen file. No-op if cancelled.
     @MainActor
-    static func save(_ csv: String, suggestedName: String) {
+    static func save(_ csv: @escaping @Sendable () -> String, suggestedName: String) {
         FileExport.save(
             csv,
             suggestedName: "\(suggestedName).csv",

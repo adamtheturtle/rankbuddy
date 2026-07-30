@@ -16,7 +16,7 @@ import HackerRankKit
 /// table is worth confirming against a live account (the same API-contract unknown as #3).
 extension TestCandidate {
     /// A label for the `status` (attempt) code, or `nil` for transient/unknown states.
-    var attemptStatusLabel: String? {
+    nonisolated var attemptStatusLabel: String? {
         switch status {
         case -1: "Invited"
         case 0: "In progress"
@@ -28,18 +28,18 @@ extension TestCandidate {
 
     /// Whether any proctoring signal is present and non-zero, so the detail view can show a
     /// Proctoring section only when there is something to report (#14).
-    var hasProctoringSignals: Bool {
+    nonisolated var hasProctoringSignals: Bool {
         (outOfWindowEvents ?? 0) > 0 || (outOfWindowDuration ?? 0) > 0 || (editorPasteCount ?? 0) > 0
     }
 
     /// The most decision-relevant status for a compact summary: the pipeline state when
     /// set, otherwise the attempt state. `nil` when neither has a known label.
-    var listStatusLabel: String? {
+    nonisolated var listStatusLabel: String? {
         pipelineStatusLabel ?? attemptStatusLabel
     }
 
     /// A label for the `ats_state` (pipeline) code, or `nil` when unset/unknown.
-    var pipelineStatusLabel: String? {
+    nonisolated var pipelineStatusLabel: String? {
         switch atsState {
         case 1: "Test completed: evaluation required"
         case 2: "Test completed: qualified"

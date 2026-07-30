@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 enum FileExport {
     @MainActor
     static func save(
-        _ content: String,
+        _ content: @escaping @Sendable () -> String,
         suggestedName: String,
         allowedContentTypes: [UTType],
         failureTitle: String
@@ -30,19 +30,31 @@ enum FileExport {
         panel.beginSheetModal(for: window) { response in
             guard response == .OK, let url = panel.url else { return }
 
-            Task { @MainActor in write(content, to: url, failureTitle: failureTitle) }
+            write(content, to: url, failureTitle: failureTitle)
         }
     }
 
     @MainActor
-    private static func write(_ content: String, to url: URL, failureTitle: String) {
-        do {
-            try content.write(to: url, atomically: true, encoding: .utf8)
-        } catch {
+    private static func write(
+        _ content: @escaping @Sendable () -> String,
+        to url: URL,
+        failureTitle: String
+    ) {
+        Task {
+            let error = await Task.detached { () -> (any Error)? in
+                do {
+                    try content().write(to: url, atomically: true, encoding: .utf8)
+                    return nil
+                } catch {
+                    return error
+                }
+            }.value
+            guard let error else { return }
+
             let alert = NSAlert(error: error)
             alert.messageText = failureTitle
             if let window = NSApp.keyWindow ?? NSApp.mainWindow {
-                alert.beginSheetModal(for: window)
+                alert.beginSheetModal(for: window) { _ in }
             } else {
                 alert.runModal()
             }
