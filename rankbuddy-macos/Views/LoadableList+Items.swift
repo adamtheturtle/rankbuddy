@@ -98,17 +98,23 @@ extension LoadableList {
         try? await Task.sleep(for: .milliseconds(350))
         guard !Task.isCancelled else { return }
 
+        let generation = UUID()
+        loadGeneration = generation
         detailItem = nil
         selection = []
         pagesLoaded = 1
         do {
             let page = try await loadCurrentPage(nil)
+            guard generation == loadGeneration, !Task.isCancelled else { return }
+
             items = page.items
             nextCursor = page.next
             totalCount = page.totalCount
             phase = .loaded
             await autoLoadServerSearchResults()
         } catch {
+            guard generation == loadGeneration, !Task.isCancelled else { return }
+
             if items.isEmpty { phase = .failed(message(for: error)) }
         }
     }

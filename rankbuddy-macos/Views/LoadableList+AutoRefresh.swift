@@ -49,13 +49,17 @@ extension LoadableList {
     /// Re-fetches the first page in place, without the loading spinner. A transient failure
     /// keeps the items already shown; the next tick retries.
     func quietRefresh() async {
+        let generation = loadGeneration
         let page: Page<Item>
         do {
             page = try await loadPage(nil)
         } catch {
+            guard generation == loadGeneration else { return }
+
             backgroundRefreshError = message(for: error)
             return
         }
+        guard generation == loadGeneration else { return }
 
         items = page.items
         backgroundRefreshError = nil
