@@ -9,12 +9,35 @@ import MCPKit
 
 /// One recorded MCP tool call (#52).
 nonisolated struct MCPActivityEntry: Codable, Identifiable, Hashable {
+    let eventID: UUID
     let timestamp: String
     let tool: String
     let detail: String
 
-    var id: String {
-        "\(timestamp)|\(tool)|\(detail)"
+    var id: UUID {
+        eventID
+    }
+
+    init(timestamp: String, tool: String, detail: String, eventID: UUID = UUID()) {
+        self.eventID = eventID
+        self.timestamp = timestamp
+        self.tool = tool
+        self.detail = detail
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case eventID = "event_id"
+        case timestamp
+        case tool
+        case detail
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        eventID = try container.decodeIfPresent(UUID.self, forKey: .eventID) ?? UUID()
+        timestamp = try container.decode(String.self, forKey: .timestamp)
+        tool = try container.decode(String.self, forKey: .tool)
+        detail = try container.decode(String.self, forKey: .detail)
     }
 }
 
@@ -75,17 +98,18 @@ nonisolated enum MCPActivityLog {
     }
 
     static func boundedEntry(timestamp: String, tool: String, detail: String) -> MCPActivityEntry {
+        let eventID = UUID()
         var tool = normalizedSummary(tool, maxCharacters: maxToolCharacters)
         var detail = normalizedSummary(detail, maxCharacters: maxDetailCharacters)
-        var entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail)
+        var entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail, eventID: eventID)
 
         while encodedSize(of: entry) > maxEncodedEntryBytes, !detail.isEmpty {
             detail = String(detail.prefix(detail.count / 2))
-            entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail)
+            entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail, eventID: eventID)
         }
         while encodedSize(of: entry) > maxEncodedEntryBytes, !tool.isEmpty {
             tool = String(tool.prefix(tool.count / 2))
-            entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail)
+            entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail, eventID: eventID)
         }
         return entry
     }

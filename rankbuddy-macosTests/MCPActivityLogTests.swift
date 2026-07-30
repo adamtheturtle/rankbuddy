@@ -27,6 +27,20 @@ struct MCPActivityLogTests {
         let entries = MCPActivityLog.parse(jsonl)
         #expect(entries.count == 2)
         #expect(entries.first?.tool == "list_tests")
+        #expect(entries[0].id != entries[1].id)
+    }
+
+    @Test func `identical calls have unique persisted event identities`() throws {
+        let timestamp = "2026-07-30T10:00:00Z"
+        let first = MCPActivityLog.boundedEntry(timestamp: timestamp, tool: "list_tests", detail: "")
+        let second = MCPActivityLog.boundedEntry(timestamp: timestamp, tool: "list_tests", detail: "")
+
+        #expect(first.id != second.id)
+        let restored = try JSONDecoder().decode(
+            MCPActivityEntry.self,
+            from: JSONEncoder().encode(first)
+        )
+        #expect(restored.id == first.id)
     }
 
     @Test func `recorded calls read back newest-first`() {
