@@ -130,10 +130,13 @@ extension AccountStore {
             onRemoved: { account in
                 Task { await RankBuddySpotlightIndex.remove(accountID: account.id) }
             },
-            // A changed token/base URL may point at a different backend, so drop the cached
-            // first pages (memory and disk) that could otherwise show another org's rows (#102).
+            // A changed token/base URL may point at a different backend, so drop every
+            // account-scoped artifact that could otherwise show the previous org's data.
             onRekeyed: { account in
-                Task { await ListPageCache.clear(accountID: account.id) }
+                Task {
+                    await ListPageCache.clear(accountID: account.id)
+                    await RankBuddySpotlightIndex.remove(accountID: account.id)
+                }
             },
             logger: logger
         )

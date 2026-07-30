@@ -179,7 +179,8 @@ enum RankBuddySpotlightIndex {
         try? await CSSearchableIndex(name: name).deleteAllSearchableItems()
     }
 
-    /// Removes only one deleted account's donated items, preserving every surviving tenant.
+    /// Removes one account's donated items after deletion or re-keying, preserving every other
+    /// tenant in the named index.
     static func remove(accountID: UUID) async {
         try? await CSSearchableIndex(name: name)
             .deleteSearchableItems(withDomainIdentifiers: [accountID.uuidString])
