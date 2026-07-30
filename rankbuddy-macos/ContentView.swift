@@ -238,7 +238,7 @@ struct ContentView: View {
 
     /// Persists a drag-reorder of the current account's favourites.
     private func moveFavorites(from source: IndexSet, to destination: Int) {
-        guard let accountID = store.currentAccount?.id.uuidString else { return }
+        guard !store.isMergedView, let accountID = store.currentAccount?.id.uuidString else { return }
 
         favorites.replace(
             with: FavoritesReorder.apply(

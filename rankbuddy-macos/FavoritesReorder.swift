@@ -9,17 +9,19 @@ import SwiftUI
 /// favourites while leaving every other account's order untouched. Kept apart from the view so
 /// the index maths is unit-testable.
 enum FavoritesReorder {
-    /// Applies a drag-reorder (`from`/`to` are offsets within the account's own favourites) and
-    /// returns the full favourites list with that account's slice reordered.
+    /// Applies a drag-reorder whose offsets use the newest-first sidebar order, then maps that
+    /// order back into the oldest-first stored array without moving other accounts' slots.
     static func apply(
         all: [FavoriteRef],
         accountID: String,
         from source: IndexSet,
         to destination: Int
     ) -> [FavoriteRef] {
-        var account = all.filter { $0.accountID == accountID }
-        account.move(fromOffsets: source, toOffset: destination)
-        let others = all.filter { $0.accountID != accountID }
-        return others + account
+        var displayed = Array(all.filter { $0.accountID == accountID }.reversed())
+        displayed.move(fromOffsets: source, toOffset: destination)
+        var reordered = Array(displayed.reversed()).makeIterator()
+        return all.map { favorite in
+            favorite.accountID == accountID ? (reordered.next() ?? favorite) : favorite
+        }
     }
 }

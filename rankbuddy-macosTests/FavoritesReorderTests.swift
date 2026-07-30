@@ -16,9 +16,10 @@ struct FavoritesReorderTests {
 
     @Test func `reordering moves within the account and leaves it well-formed`() {
         let all = [ref("a", account: "A"), ref("b", account: "A"), ref("c", account: "A")]
-        // Move the last item to the front.
-        let result = FavoritesReorder.apply(all: all, accountID: "A", from: [2], to: 0)
+        // Display order is c, b, a. Move the displayed first item to the end.
+        let result = FavoritesReorder.apply(all: all, accountID: "A", from: [0], to: 3)
         #expect(result.map(\.itemID) == ["c", "a", "b"])
+        #expect(result.reversed().map(\.itemID) == ["b", "a", "c"])
     }
 
     @Test func `other accounts' favourites are preserved`() {
@@ -26,9 +27,9 @@ struct FavoritesReorderTests {
             ref("a", account: "A"), ref("b", account: "A"),
             ref("x", account: "B")
         ]
-        let result = FavoritesReorder.apply(all: all, accountID: "A", from: [1], to: 0)
-        // B's favourite still present; A's slice reordered.
-        #expect(result.contains { $0.itemID == "x" && $0.accountID == "B" })
+        let result = FavoritesReorder.apply(all: all, accountID: "A", from: [0], to: 2)
+        // B's favourite remains in its original storage slot; A's displayed slice is reordered.
+        #expect(result[2].itemID == "x")
         let accountA = result.filter { $0.accountID == "A" }.map(\.itemID)
         #expect(accountA == ["b", "a"])
     }
