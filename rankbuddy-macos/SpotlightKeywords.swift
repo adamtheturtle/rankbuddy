@@ -99,7 +99,10 @@ enum SpotlightKeywordEnricher {
     /// Entity ids enriched (or attempted) this process, so repeated suggestion requests don't
     /// re-run the model over items already covered.
     private static var enrichedIDs: Set<String> = []
-    /// Guards against overlapping passes when the system asks for suggestions in quick succession.
+    /// New requests coalesce here while a model generation is in flight. Keying by entity id
+    /// keeps repeated suggestion batches from duplicating expensive work.
+    private static var pendingByID: [String: EnrichableEntity] = [:]
+    /// Guards the single queue consumer when the system asks for suggestions in quick succession.
     private static var isEnriching = false
 
     private static let logger = Logger(subsystem: "com.adamdangoor.rankbuddy", category: "spotlight")
@@ -108,7 +111,7 @@ enum SpotlightKeywordEnricher {
     /// them. Re-indexing reuses each entity's id, so it updates the existing Spotlight item in
     /// place rather than adding a duplicate.
     static func enrich(_ enrichables: [EnrichableEntity]) async {
-        guard isAvailable, !isEnriching else { return }
+        guard isAvailable else { return }
 
         let pending = enrichables.filter { !$0.keywordSource.isEmpty && !enrichedIDs.contains($0.entity.id) }
         guard !pending.isEmpty else { return }
@@ -123,14 +126,19 @@ enum SpotlightKeywordEnricher {
                 """
             )
         }
+        for enrichable in bounded {
+            pendingByID[enrichable.entity.id] = enrichable
+        }
+        guard !isEnriching else { return }
 
         isEnriching = true
         defer { isEnriching = false }
 
         let index = CSSearchableIndex(name: RankBuddySpotlightIndex.name)
-        for enrichable in bounded {
+        while let (id, enrichable) = pendingByID.first {
+            pendingByID[id] = nil
             // Record the attempt up front so a no-keyword or failed item isn't retried forever.
-            enrichedIDs.insert(enrichable.entity.id)
+            enrichedIDs.insert(id)
             let keywords = await SpotlightKeywordGenerator.keywords(from: enrichable.keywordSource)
             guard !keywords.isEmpty else { continue }
 
