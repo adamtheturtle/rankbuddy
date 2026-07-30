@@ -434,6 +434,7 @@ struct InlineEditableText: View {
                 .font(.callout)
                 .frame(minHeight: 90)
                 .focused($isFocused)
+                .disabled(isSaving)
                 .padding(6)
                 .background(.background, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .overlay(
@@ -446,6 +447,7 @@ struct InlineEditableText: View {
                     draft = text
                     isEditing = false
                 }
+                .disabled(isSaving)
                 Button {
                     Task { await saveDraft() }
                 } label: {
