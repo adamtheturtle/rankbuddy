@@ -642,8 +642,11 @@ extension RankBuddyToolProvider {
 
         let allowedInviteRoles = ["recruiter", "interviewer", "developer"]
         let inviteAs = Self.normalizedOptionalString(stringArgument(arguments, "invite_as"))?.lowercased()
+        let rawName = stringArgument(arguments, "name")
+        let name = Self.normalizedOptionalString(rawName)
         let recruiterCap = intArgument(arguments, "recruiter_cap")
         let developerCap = intArgument(arguments, "developer_cap")
+        guard rawName == nil || name != nil else { return errorResult("`name` must not be empty.") }
         guard inviteAs.map(allowedInviteRoles.contains) ?? true else {
             return errorResult("`invite_as` must be recruiter, interviewer, or developer.")
         }
@@ -659,7 +662,7 @@ extension RankBuddyToolProvider {
             let updated = try await HackerRankClient(account: resolved).updateTeam(
                 id: teamID,
                 options: TeamUpdateOptions(
-                    name: stringArgument(arguments, "name"),
+                    name: name,
                     recruiterCap: recruiterCap,
                     developerCap: developerCap,
                     inviteAs: inviteAs,
