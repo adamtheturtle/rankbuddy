@@ -35,6 +35,21 @@ struct RecentActivityTests {
         #expect(!archived.isIncludedInRecentSection(activeOnly: true))
     }
 
+    @Test func `menu row identity includes account collection and backend ID`() {
+        let accountA = UUID()
+        let accountB = UUID()
+        let test = item("shared", .tests)
+        let question = item("shared", .questions)
+        let firstTestRow = RecentMenuRow(item: test, accountID: accountA)
+        let secondTestRow = RecentMenuRow(item: test, accountID: accountA)
+
+        #expect(firstTestRow.id !=
+            RecentMenuRow(item: question, accountID: accountA).id)
+        #expect(firstTestRow.id !=
+            RecentMenuRow(item: test, accountID: accountB).id)
+        #expect(firstTestRow.id == secondTestRow.id)
+    }
+
     @Test func `records and reads back per collection`() {
         let store = store(#function)
         let account = UUID()

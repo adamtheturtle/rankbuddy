@@ -80,6 +80,24 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
     }
 }
 
+/// Supplies SwiftUI with an identity that remains unique when backend IDs are reused between
+/// collections or accounts.
+nonisolated struct RecentMenuRow: Identifiable {
+    struct Identity: Hashable {
+        let accountID: UUID
+        let collection: FavoriteCollection
+        let itemID: String
+    }
+
+    let item: RecentItem
+    let id: Identity
+
+    init(item: RecentItem, accountID: UUID) {
+        self.item = item
+        id = Identity(accountID: accountID, collection: item.collection, itemID: item.id)
+    }
+}
+
 /// Caches the most-recently-listed items per account/collection on disk (#23), via buddy-kit's
 /// `DiskCache`. The main lists record their first page as they load; the menu bar reads the
 /// cache (no extra fetch). The cache lives in Application Support, so it's shared in-process

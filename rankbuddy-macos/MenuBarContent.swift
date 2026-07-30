@@ -225,7 +225,11 @@ struct MenuBarContent: View {
         account: Account,
         icon: @escaping (RecentItem) -> String
     ) -> some View {
-        ForEach(items.prefix(displayedRecentCount)) { item in
+        let rows = items.prefix(displayedRecentCount).map {
+            RecentMenuRow(item: $0, accountID: account.id)
+        }
+        ForEach(rows) { row in
+            let item = row.item
             Button {
                 RankBuddyDeepLink.open(
                     collection: item.collection,
