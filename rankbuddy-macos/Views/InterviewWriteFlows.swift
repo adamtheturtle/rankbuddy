@@ -34,6 +34,25 @@ nonisolated enum PadTitleValidation {
     }
 }
 
+nonisolated enum InterviewScheduleValidation {
+    static let maxTitleLength = 255
+    static let maxEmailLength = 320
+    static let maxNotesLength = 10000
+
+    static func textIssue(title: String, candidateEmail: String?, notes: String?) -> String? {
+        if title.count > maxTitleLength {
+            return "Title can be at most \(maxTitleLength) characters."
+        }
+        if let candidateEmail, candidateEmail.count > maxEmailLength {
+            return "Candidate email can be at most \(maxEmailLength) characters."
+        }
+        if let notes, notes.count > maxNotesLength {
+            return "Notes can be at most \(maxNotesLength.formatted()) characters."
+        }
+        return nil
+    }
+}
+
 /// A sheet that creates an instant collaborative Pad interview (`POST /interviews`,
 /// #60) — a write flow. Refreshes the list on success.
 struct NewPadSheet: View {
@@ -130,7 +149,15 @@ struct ScheduleInterviewSheet: View {
         guard !trimmedTitle.isEmpty else { return false }
 
         let email = candidateEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        return email.isEmpty || EmailValidation.isLikelyValid(email)
+        return (email.isEmpty || EmailValidation.isLikelyValid(email)) && textValidationIssue == nil
+    }
+
+    private var textValidationIssue: String? {
+        InterviewScheduleValidation.textIssue(
+            title: trimmedTitle,
+            candidateEmail: candidateEmail.trimmingCharacters(in: .whitespacesAndNewlines),
+            notes: notes
+        )
     }
 
     var body: some View {
@@ -144,6 +171,10 @@ struct ScheduleInterviewSheet: View {
                     DatePicker("Starts", selection: $date)
                     TextField("Notes (optional)", text: $notes, axis: .vertical)
                         .lineLimit(2 ... 4)
+                } footer: {
+                    if let textValidationIssue {
+                        Text(textValidationIssue).foregroundStyle(.red)
+                    }
                 }
 
                 if let errorMessage {

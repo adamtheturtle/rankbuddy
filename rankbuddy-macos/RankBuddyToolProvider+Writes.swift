@@ -985,8 +985,17 @@ extension RankBuddyToolProvider {
 
         let candidateEmail = stringArgument(arguments, "candidate_email")?
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        let notes = stringArgument(arguments, "notes")
         guard candidateEmail.map({ $0.isEmpty || EmailValidation.isLikelyValid($0) }) ?? true else {
             return errorResult("`candidate_email` must be a valid email address.")
+        }
+
+        if let issue = InterviewScheduleValidation.textIssue(
+            title: title,
+            candidateEmail: candidateEmail,
+            notes: notes
+        ) {
+            return errorResult(issue)
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
@@ -995,7 +1004,7 @@ extension RankBuddyToolProvider {
                 title: title,
                 from: from,
                 candidateEmail: candidateEmail.flatMap { $0.isEmpty ? nil : $0 },
-                notes: stringArgument(arguments, "notes")
+                notes: notes
             )
             let createdID = Self.validatedCreatedID(created.id)
             let createdURL = created.url.flatMap(URL.remoteWebURL(from:))?.absoluteString

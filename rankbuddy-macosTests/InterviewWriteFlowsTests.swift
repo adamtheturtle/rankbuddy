@@ -20,6 +20,19 @@ struct InterviewWriteFlowsTests {
             == PadTitleValidation.maxLength)
     }
 
+    @Test func `scheduled interview text respects payload limits`() {
+        #expect(InterviewScheduleValidation.textIssue(
+            title: String(repeating: "x", count: 256),
+            candidateEmail: nil,
+            notes: nil
+        )?.contains("Title") == true)
+        #expect(InterviewScheduleValidation.textIssue(
+            title: "Pairing",
+            candidateEmail: nil,
+            notes: String(repeating: "x", count: 10001)
+        )?.contains("Notes") == true)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
