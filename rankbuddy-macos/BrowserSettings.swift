@@ -112,10 +112,14 @@ enum BrowserSettings {
     }
 
     /// Opens `url` honouring the preferences: in the chosen browser (falling back to the system
-    /// default), bringing it to the front unless background opening is on.
+    /// default), bringing it to the front unless background opening is on. Non-web schemes use
+    /// their normal system handler and never inherit the browser preference.
     @MainActor
     static func open(_ url: URL, defaults: UserDefaults = .standard) {
-        guard isOpenableWebURL(url) else { return }
+        guard isOpenableWebURL(url) else {
+            NSWorkspace.shared.open(url)
+            return
+        }
 
         let config = NSWorkspace.OpenConfiguration()
         config.activates = !defaults.bool(forKey: backgroundKey)

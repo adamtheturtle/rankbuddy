@@ -45,6 +45,7 @@ struct BrowserSettingsTests {
         #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "file:///etc/passwd"))))
         #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "rankbuddy://tests/123"))))
         #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "ftp://example.com/report"))))
+        #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "mailto:feedback@example.com"))))
     }
 
     @Test func `hostless web URLs are refused`() throws {
