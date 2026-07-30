@@ -24,6 +24,14 @@
         "identifier" : "662C2C542FEC525200FE99C0",
         "name" : "rankbuddy-macosTests"
       }
+    },
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:rankbuddy-macos.xcodeproj",
+        "identifier" : "770000000000000000000005",
+        "name" : "rankbuddy-macosUITests"
+      }
     }
   ],
   "version" : 1

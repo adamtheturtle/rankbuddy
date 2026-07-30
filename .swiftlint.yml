@@ -158,12 +158,12 @@ analyzer_rules:
 
 # The Xcode-style file header (PadBuddy parity, #80): a blank comment, the file
 # name, the target name, a blank comment. `SWIFTLINT_CURRENT_FILENAME` is replaced
-# per file; the optional `Tests` matches the test target's files.
+# per file; the optional test suffix matches unit and UI test target files.
 file_header:
   required_pattern: |
     \/\/
     \/\/  SWIFTLINT_CURRENT_FILENAME
-    \/\/  rankbuddy-macos(Tests)?
+    \/\/  rankbuddy-macos((UI)?Tests)?
     \/\/
 
 # Project-specific gates.
