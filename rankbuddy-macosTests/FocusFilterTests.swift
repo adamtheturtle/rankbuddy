@@ -82,4 +82,28 @@ struct FocusFilterTests {
         #expect(store.showAllAccounts == true)
         #expect(store.currentAccountID == work.id)
     }
+
+    @Test(arguments: [UUID().uuidString, "not-a-uuid"])
+    func `an invalid active target does not turn an existing focus off`(_ invalidID: String) {
+        let work = Account(label: "Work", token: "w")
+        let personal = Account(label: "Personal", token: "p")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [work, personal])
+        store.showAllAccounts = true
+        store.currentAccountID = work.id
+        let defaults = freshDefaults()
+
+        ScopeToAccountFocusFilter.apply(
+            accountID: personal.id.uuidString,
+            store: store,
+            defaults: defaults
+        )
+        ScopeToAccountFocusFilter.apply(accountID: invalidID, store: store, defaults: defaults)
+
+        #expect(store.showAllAccounts == false)
+        #expect(store.currentAccountID == personal.id)
+
+        ScopeToAccountFocusFilter.apply(accountID: nil, store: store, defaults: defaults)
+        #expect(store.showAllAccounts == true)
+        #expect(store.currentAccountID == work.id)
+    }
 }

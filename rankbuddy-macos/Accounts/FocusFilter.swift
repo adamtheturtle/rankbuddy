@@ -115,14 +115,20 @@ struct ScopeToAccountFocusFilter: SetFocusFilterIntent {
     }
 
     /// Applies the Focus scope to `store`, or restores the pre-Focus selection when `accountID`
-    /// is nil or unknown (Focus off). The pre-Focus selection is snapshotted in `defaults` on the
+    /// is nil (Focus off). Unknown active targets are ignored. The selection is snapshotted on the
     /// first scoping, so a Focus-to-Focus switch (A -> B with no "off" between) still restores the
     /// original selection at the end. Split out of `perform()` so the snapshot/restore logic is
     /// unit-testable without the AppIntents runtime (#96).
     @MainActor
     static func apply(accountID: String?, store: AccountStore, defaults: UserDefaults) {
-        if let accountID, let uuid = UUID(uuidString: accountID),
-           store.accounts.contains(where: { $0.id == uuid }) {
+        if let accountID {
+            guard
+                let uuid = UUID(uuidString: accountID),
+                store.accounts.contains(where: { $0.id == uuid })
+            else {
+                return
+            }
+
             // Entering a Focus-scoped state: snapshot the pre-Focus selection once, so a
             // later Focus switch (account A -> account B with no "off" between) keeps the
             // original snapshot to restore at the end.
