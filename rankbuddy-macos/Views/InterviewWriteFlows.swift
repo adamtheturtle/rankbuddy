@@ -160,12 +160,16 @@ struct ScheduleInterviewSheet: View {
         title.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var normalizedCandidateEmail: String? {
+        let trimmed = candidateEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
     /// The form is valid with a title and, if a candidate email was entered, a plausible one.
     private var isValid: Bool {
         guard !trimmedTitle.isEmpty else { return false }
 
-        let email = candidateEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (email.isEmpty || EmailValidation.isLikelyValid(email))
+        return (normalizedCandidateEmail.map(EmailValidation.isLikelyValid) ?? true)
             && textValidationIssue == nil
             && InterviewScheduleValidation.dateIssue(start: date) == nil
     }
@@ -173,7 +177,7 @@ struct ScheduleInterviewSheet: View {
     private var textValidationIssue: String? {
         InterviewScheduleValidation.textIssue(
             title: trimmedTitle,
-            candidateEmail: candidateEmail.trimmingCharacters(in: .whitespacesAndNewlines),
+            candidateEmail: normalizedCandidateEmail,
             notes: notes
         )
     }
@@ -242,7 +246,7 @@ struct ScheduleInterviewSheet: View {
             try await HackerRankClient(account: account).scheduleInterview(
                 title: trimmedTitle,
                 from: date,
-                candidateEmail: candidateEmail,
+                candidateEmail: normalizedCandidateEmail,
                 notes: notes
             )
             onScheduled()
