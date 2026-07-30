@@ -58,6 +58,13 @@ network traffic.
 
   Configuration lives in `.swiftformat`, `.swiftlint.yml`, and `.periphery.yml`.
 
+- **Release type-check budget:** Release builds pass
+  `-warn-long-expression-type-checking=250` and
+  `-warn-long-function-bodies=500` to the Swift compiler. Because Release treats warnings
+  as errors, expressions taking more than 250 ms or function bodies taking more than
+  500 ms to type-check fail the build. Keep these thresholds in the project-level Release
+  configuration so they cover every Swift target and the scheduled CI Release build.
+
 The HackerRank API contract RankBuddy relies on is documented in
 [`docs/hackerrank-api.md`](docs/hackerrank-api.md); dependency notes are in
 [`docs/dependencies.md`](docs/dependencies.md).
