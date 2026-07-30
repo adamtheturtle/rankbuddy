@@ -44,4 +44,14 @@ struct TestDetailTests {
         let detail = try await makeClient().test(id: "t1")
         #expect(detail.hasAccess)
     }
+
+    @Test func `detail request identity includes account and test`() {
+        let accountA = UUID()
+        let accountB = UUID()
+        let original = TestDetailRequestIdentity(accountID: accountA, testID: "t1")
+
+        #expect(original != TestDetailRequestIdentity(accountID: accountB, testID: "t1"))
+        #expect(original != TestDetailRequestIdentity(accountID: accountA, testID: "t2"))
+        #expect(original == TestDetailRequestIdentity(accountID: accountA, testID: "t1"))
+    }
 }

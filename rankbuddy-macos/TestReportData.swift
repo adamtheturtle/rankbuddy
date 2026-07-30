@@ -6,6 +6,11 @@
 import Foundation
 import HackerRankKit
 
+nonisolated struct TestDetailRequestIdentity: Hashable {
+    let accountID: UUID
+    let testID: String
+}
+
 /// A stable snapshot of everything loaded by the test detail screen for printing and export.
 nonisolated struct TestReportData {
     let test: Test

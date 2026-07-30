@@ -34,6 +34,10 @@ struct TestDetailView: View {
         detailTest ?? test
     }
 
+    private var requestIdentity: TestDetailRequestIdentity {
+        TestDetailRequestIdentity(accountID: account.id, testID: test.id)
+    }
+
     private var reportData: TestReportData {
         TestReportData(
             test: displayedTest,
@@ -148,7 +152,7 @@ struct TestDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayedTest.name)
-        .task(id: displayedTest.id) { await loadDetail() }
+        .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onChange(of: scenePhase) { _, phase in
@@ -299,7 +303,7 @@ struct TestDetailView: View {
 
     /// Fetches the richer test detail on selection (#105). Best-effort, and re-hides the master
     /// password for each test.
-    private func loadDetail() async {
+    private func loadDetail(for identity: TestDetailRequestIdentity) async {
         detail = nil
         detailTest = nil
         inviters = []
@@ -309,10 +313,12 @@ struct TestDetailView: View {
         async let loadedDetail = try? client.test(id: test.id)
         async let loadedInviters = try? client.testInviters(testID: test.id)
         async let loadedMetadata = try? metadataClient.test(id: test.id)
+        let loaded = await (loadedDetail, loadedInviters, loadedMetadata)
+        guard !Task.isCancelled, identity == requestIdentity else { return }
 
-        detail = await loadedDetail
-        detailTest = await (loadedMetadata).flatMap(\.self)?.applying(to: test)
-        inviters = await (loadedInviters)?.items ?? []
+        detail = loaded.0
+        inviters = loaded.1?.items ?? []
+        detailTest = loaded.2?.applying(to: test)
     }
 
     private func beginDelete() {
