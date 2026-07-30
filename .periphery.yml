@@ -1,4 +1,4 @@
-# Periphery configuration — advisory dead-code detection.
+# Periphery configuration — release-blocking dead-code detection.
 #
 # Periphery finds unused Swift code (types, functions, properties, enum cases,
 # protocol conformances) across the whole project, catching symbols orphaned
@@ -6,9 +6,9 @@
 # per-file analysis can't see.
 #
 # Run locally with:  periphery scan
-# It is wired into CI as a NON-BLOCKING job (see .github/workflows/ci.yml) so a
-# noisy report never reds the build — promote it to blocking once it's proven
-# clean. Periphery builds a full index, so it's slower than the lint gate.
+# It is wired into nightly/manual CI as a required job (see
+# .github/workflows/ci.yml). Periphery builds a full index, so it stays off the
+# per-push lane and remains slower than the lint gate.
 
 project: rankbuddy-macos.xcodeproj
 

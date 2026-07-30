@@ -333,17 +333,15 @@ jobs:
           if-no-files-found: ignore
 
   # Dead-code detection (#21). Periphery compiles the app, so it stays on the
-  # nightly/manual macOS lane like the build job. Advisory for now
-  # (continue-on-error): the repo keeps a clean Periphery baseline locally, and #21
-  # promotes this to a required gate once it has proven stable in CI. The pinned
-  # version matches the local Periphery so CI and local results agree.
+  # nightly/manual macOS lane like the build job. This is release-blocking: the
+  # repository has a clean strict baseline, and unexplained production dead code
+  # must be fixed or explicitly documented in the repository configuration.
   dead-code:
-    name: Dead code (advisory)
+    name: Dead code
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: swift-lint
     runs-on: macos-26
     timeout-minutes: 25
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v7
