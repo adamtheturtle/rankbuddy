@@ -104,6 +104,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify iCloud key-value entitlement
+        run: |
+          set -euo pipefail
+          grep -A1 -F '<key>com.apple.developer.ubiquity-kvstore-identifier</key>' \
+            rankbuddy-macos/rankbuddy-macos.entitlements \
+            | grep -Fq '<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>'
+
       # The full Swift image ships git but not the unzip/curl this job uses to
       # fetch and unpack the pinned release binaries.
       - name: Install fetch tools
