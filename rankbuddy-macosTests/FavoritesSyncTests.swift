@@ -39,7 +39,10 @@ struct FavoritesSyncTests {
 
         /// Simulates another device writing the value, then delivering the external change.
         func remoteWrite(_ refs: [FavoriteRef]) {
-            storage[FavoritesSyncCoordinator.key] = try? JSONEncoder().encode(refs)
+            storage[FavoritesSyncCoordinator.key] = try? JSONEncoder().encode(FavoritesSyncPayload(
+                favorites: refs,
+                modifiedAt: Date()
+            ))
             onExternalChange?()
         }
 
@@ -54,7 +57,10 @@ struct FavoritesSyncTests {
         }
 
         func becomeAvailable(with refs: [FavoriteRef]) {
-            storage[FavoritesSyncCoordinator.key] = try? JSONEncoder().encode(refs)
+            storage[FavoritesSyncCoordinator.key] = try? JSONEncoder().encode(FavoritesSyncPayload(
+                favorites: refs,
+                modifiedAt: Date()
+            ))
             isAvailable = true
             onAvailabilityChange?()
         }
@@ -120,8 +126,8 @@ struct FavoritesSyncTests {
 
             #expect(favorites.favorites.map(\.itemID) == ["keep"])
             let repaired = store.data(forKey: FavoritesSyncCoordinator.key)
-                .flatMap { try? JSONDecoder().decode([FavoriteRef].self, from: $0) }
-            #expect(repaired?.map(\.itemID) == ["keep"])
+                .flatMap { try? JSONDecoder().decode(FavoritesSyncPayload.self, from: $0) }
+            #expect(repaired?.favorites.map(\.itemID) == ["keep"])
             #expect(store.writes == writesBefore + 1)
         }
     }
@@ -171,8 +177,8 @@ struct FavoritesSyncTests {
             store.remoteWriteMalformed()
 
             let repaired = store.data(forKey: FavoritesSyncCoordinator.key)
-                .flatMap { try? JSONDecoder().decode([FavoriteRef].self, from: $0) }
-            #expect(repaired?.map(\.itemID) == ["local"])
+                .flatMap { try? JSONDecoder().decode(FavoritesSyncPayload.self, from: $0) }
+            #expect(repaired?.favorites.map(\.itemID) == ["local"])
             #expect(store.writes == writesBefore + 1)
         }
     }
@@ -183,8 +189,8 @@ struct FavoritesSyncTests {
         withCoordinator(favorites, store) { _ in
             favorites.toggle(ref("t1"))
             let data = store.data(forKey: FavoritesSyncCoordinator.key)
-            let decoded = try? JSONDecoder().decode([FavoriteRef].self, from: data ?? Data())
-            #expect(decoded?.map(\.itemID) == ["t1"])
+            let decoded = try? JSONDecoder().decode(FavoritesSyncPayload.self, from: data ?? Data())
+            #expect(decoded?.favorites.map(\.itemID) == ["t1"])
         }
     }
 
@@ -216,9 +222,29 @@ struct FavoritesSyncTests {
     @Test func `start adopts an existing remote value`() {
         let favorites = FavoritesStore(defaults: defaults(#function), isTesting: true)
         let store = FakeStore()
-        store.setData(try? JSONEncoder().encode([ref("seed")]), forKey: FavoritesSyncCoordinator.key)
+        store.setData(try? JSONEncoder().encode(FavoritesSyncPayload(
+            favorites: [ref("seed")],
+            modifiedAt: Date()
+        )), forKey: FavoritesSyncCoordinator.key)
         withCoordinator(favorites, store) { _ in
             #expect(favorites.favorites.map(\.itemID) == ["seed"])
+        }
+    }
+
+    @Test func `startup preserves a newer local snapshot`() {
+        let favorites = FavoritesStore(defaults: defaults(#function), isTesting: true)
+        favorites.toggle(ref("local"))
+        let store = FakeStore()
+        store.setData(try? JSONEncoder().encode(FavoritesSyncPayload(
+            favorites: [ref("remote")],
+            modifiedAt: .distantPast
+        )), forKey: FavoritesSyncCoordinator.key)
+
+        withCoordinator(favorites, store) { _ in
+            #expect(favorites.favorites.map(\.itemID) == ["local"])
+            let pushed = store.data(forKey: FavoritesSyncCoordinator.key)
+                .flatMap { try? JSONDecoder().decode(FavoritesSyncPayload.self, from: $0) }
+            #expect(pushed?.favorites.map(\.itemID) == ["local"])
         }
     }
 }

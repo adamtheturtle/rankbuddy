@@ -7,6 +7,11 @@ import BuddyAppKit
 import Foundation
 import os
 
+nonisolated struct FavoritesSyncPayload: Codable {
+    let favorites: [FavoriteRef]
+    let modifiedAt: Date
+}
+
 /// A minimal key-value sync backend, abstracted so the favourites sync logic is testable
 /// without iCloud (#22). The app implementation adapts buddy-kit's `CloudSyncStore`.
 @MainActor
@@ -150,16 +155,19 @@ final class FavoritesSyncCoordinator {
 
     private func externalChange() {
         availabilityChanged()
-        if isActive { adoptRemote() }
+        if isActive { adoptRemote(isExternalChange: true) }
     }
 
     /// Adopts the remote favourites wholesale (last-writer-wins), guarded so it doesn't echo
     /// back out as a local change.
-    func adoptRemote() {
+    func adoptRemote(isExternalChange: Bool = false) {
         let remote: [FavoriteRef]
+        let remoteModifiedAt: Date
         var needsRemoteRepair = false
         if let data = store.data(forKey: Self.key) {
-            guard let decoded = try? JSONDecoder().decode([FavoriteRef].self, from: data) else {
+            let payload = try? JSONDecoder().decode(FavoritesSyncPayload.self, from: data)
+            let legacy = try? JSONDecoder().decode([FavoriteRef].self, from: data)
+            guard let decoded = payload?.favorites ?? legacy else {
                 Self.logger.error("Replacing malformed remote favourites with local state")
                 pushLocal()
                 return
@@ -167,15 +175,25 @@ final class FavoritesSyncCoordinator {
 
             let validIDs = validAccountIDs()
             remote = decoded.filter { validIDs.contains($0.accountID) }
+            remoteModifiedAt = payload?.modifiedAt ?? .distantPast
             needsRemoteRepair = remote != decoded
         } else {
             remote = []
+            remoteModifiedAt = isExternalChange ? Date() : .distantPast
         }
 
+        if favorites.modifiedAt > remoteModifiedAt {
+            pushLocal()
+            return
+        }
         isAdopting = true
         defer { isAdopting = false }
-        favorites.replace(with: remote)
-        if needsRemoteRepair, let data = try? JSONEncoder().encode(remote) {
+        favorites.adopt(remote, modifiedAt: remoteModifiedAt)
+        if needsRemoteRepair,
+           let data = try? JSONEncoder().encode(FavoritesSyncPayload(
+               favorites: remote,
+               modifiedAt: remoteModifiedAt
+           )) {
             store.setData(data, forKey: Self.key)
             store.synchronize()
         }
@@ -185,7 +203,10 @@ final class FavoritesSyncCoordinator {
     /// a remote one or the store is unavailable.
     func pushLocal() {
         guard !isAdopting, store.isAvailable,
-              let data = try? JSONEncoder().encode(favorites.favorites)
+              let data = try? JSONEncoder().encode(FavoritesSyncPayload(
+                  favorites: favorites.favorites,
+                  modifiedAt: favorites.modifiedAt
+              ))
         else { return }
 
         store.setData(data, forKey: Self.key)

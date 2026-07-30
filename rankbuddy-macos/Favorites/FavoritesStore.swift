@@ -62,11 +62,13 @@ nonisolated struct FavoriteRef: Codable, Hashable, Identifiable {
 final class FavoritesStore {
     static let storageKey = "rankbuddy.favorites"
     static let recoveryKey = "rankbuddy.favorites.unreadable-backup"
+    static let modifiedAtKey = "rankbuddy.favorites.modifiedAt"
     private let defaults: UserDefaults
 
     /// The favourites in insertion order (oldest first); display surfaces reverse to show
     /// the most-recently-added first.
     private(set) var favorites: [FavoriteRef]
+    private(set) var modifiedAt: Date
     private(set) var hasUnreadableData = false
     var showsRecoveryAlert = false
 
@@ -80,6 +82,7 @@ final class FavoritesStore {
     ///     demo mode and tests don't pick up (or pollute) real favourites.
     init(defaults: UserDefaults = .standard, isTesting: Bool = false) {
         self.defaults = defaults
+        modifiedAt = defaults.object(forKey: Self.modifiedAtKey) as? Date ?? .distantPast
         if isTesting {
             favorites = []
         } else if let data = defaults.data(forKey: Self.storageKey),
@@ -199,6 +202,17 @@ final class FavoritesStore {
         registerUndo(previous, undoManager: undoManager, actionName: actionName)
     }
 
+    /// Adopts a versioned remote snapshot without giving it a new local modification date.
+    func adopt(_ refs: [FavoriteRef], modifiedAt remoteDate: Date) {
+        guard !hasUnreadableData else { return }
+
+        let normalized = Self.normalized(refs)
+        guard normalized != favorites || remoteDate != modifiedAt else { return }
+
+        favorites = normalized
+        persist(modifiedAt: remoteDate)
+    }
+
     /// Keeps the last occurrence of each identity, matching the store's newest-wins ordering.
     private static func normalized(_ refs: [FavoriteRef]) -> [FavoriteRef] {
         var seen = Set<String>()
@@ -215,11 +229,13 @@ final class FavoritesStore {
         undoManager.setActionName(actionName)
     }
 
-    private func persist() {
+    private func persist(modifiedAt date: Date = Date()) {
         guard !hasUnreadableData else { return }
         guard let data = try? JSONEncoder().encode(favorites) else { return }
 
+        modifiedAt = date
         defaults.set(data, forKey: Self.storageKey)
+        defaults.set(date, forKey: Self.modifiedAtKey)
         onChange?()
     }
 
