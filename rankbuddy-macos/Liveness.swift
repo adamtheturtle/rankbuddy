@@ -184,20 +184,16 @@ enum LivenessProbe {
     }
 }
 
-/// Keeps the Dock badge's scheduled-interview count fresh on a timer, independent of any
-/// window. Normal use already refetches when a list loads; this closes the gap where the app
-/// is left running with no window open while interviews change server-side.
+/// Keeps the Dock badge's scheduled-interview count fresh independently of any window.
 @MainActor
 final class LivenessMonitor {
     static let shared = LivenessMonitor()
     private var loop: Task<Void, Never>?
     private var scheduledByAccount: [UUID: Int] = [:]
+    private var sweepGeneration = 0
     private init() {}
 
-    /// Starts the sweep loop (idempotent). Runs one sweep immediately, then re-reads the
-    /// configured cadence before each subsequent sweep, so a changed interval (or toggled
-    /// opt-in) takes effect without restarting the timer. Tests can pin the cadence via
-    /// `interval`.
+    /// Starts the sweep loop idempotently; tests can pin the cadence via `interval`.
     func start(store: AccountStore, every interval: Duration? = nil) {
         guard loop == nil else { return }
 
@@ -216,7 +212,6 @@ final class LivenessMonitor {
         }
     }
 
-    /// Cancels the current wait so a changed cadence takes effect immediately.
     func restart(store: AccountStore) {
         loop?.cancel()
         loop = nil
@@ -227,6 +222,8 @@ final class LivenessMonitor {
     /// count of scheduled ones (#68); when disabled (or with no usable account in scope) clear
     /// the badge. New-interview notifications stay per-account.
     func sweep(store: AccountStore) async {
+        sweepGeneration += 1
+        let generation = sweepGeneration
         guard UserDefaults.standard.bool(forKey: LivenessSettings.backgroundUpdatesKey) else {
             scheduledByAccount.removeAll()
             DockBadge.set(count: 0)
@@ -251,7 +248,10 @@ final class LivenessMonitor {
                 return LivenessProbe.Result(accountID: account.id, interviews: interviews)
             },
             onResult: { [weak self] (result: LivenessProbe.Result) in
-                guard let self else { return }
+                guard let self,
+                      sweepGeneration == generation,
+                      UserDefaults.standard.bool(forKey: LivenessSettings.backgroundUpdatesKey)
+                else { return }
 
                 scheduledByAccount[result.accountID] = LivenessDigest.scheduledCount(result.interviews)
                 notifyIfNeeded(result.interviews, accountID: result.accountID)
