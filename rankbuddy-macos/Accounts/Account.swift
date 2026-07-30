@@ -104,13 +104,12 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         return Self(label: "Demo (bad token)", token: badKeyDemoToken, id: id)
     }
 
-    /// The parsed base URL override: a non-empty HTTP(S) URL with a host.
+    /// The parsed base URL override: a non-empty HTTPS URL with a host.
     var parsedBaseURLOverride: URL? {
         let trimmed = baseURLOverride?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !trimmed.isEmpty,
               let url = URL(string: trimmed),
-              let scheme = url.scheme?.lowercased(),
-              scheme == "http" || scheme == "https",
+              url.scheme?.lowercased() == "https",
               let host = url.host,
               !host.isEmpty,
               url.user == nil,

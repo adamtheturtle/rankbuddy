@@ -81,6 +81,7 @@ struct AccountStoreTests {
             "htps://hackerrank.internal",
             "hackerrank.internal",
             "ftp://hackerrank.internal",
+            "http://hackerrank.internal",
             "https://",
             "https://user@hackerrank.internal",
             "https://hackerrank.internal?region=eu",
@@ -113,7 +114,6 @@ struct AccountStoreTests {
         for differentServer in [
             "https://other.example",
             "https://hackerrank.example:8443",
-            "http://hackerrank.example",
             "https://hackerrank.example/api"
         ] {
             #expect(Account(label: "A", token: "t", baseURLOverride: differentServer).serverIdentity != base)
