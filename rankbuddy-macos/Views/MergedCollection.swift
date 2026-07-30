@@ -4,6 +4,8 @@
 //
 
 import BuddyDesignSystem
+import Foundation
+import HackerRankKit
 import SwiftUI
 
 /// An item paired with the account it came from, for the multi-account merged lists (#17).
@@ -31,6 +33,10 @@ extension AccountScoped: Codable where Item: Codable {}
 
 /// Loads the first page of a collection from several accounts and merges the results (#17).
 enum MergedLoader {
+    private nonisolated struct Cursor: Codable {
+        let byAccountID: [String: String]
+    }
+
     // swiftlint:disable function_body_length
     /// Fetches each account's first page, tagging every item with its account. Accounts whose
     /// fetch fails are skipped so one failing account never discards the others' results
@@ -97,6 +103,71 @@ enum MergedLoader {
             throw firstError
         }
         return scoped
+    }
+
+    /// Loads one page from every account that still has data, encoding the independent backend
+    /// cursors into one opaque cursor that `LoadableList` can pass back on its next request.
+    nonisolated static func page<Item: Identifiable & Hashable & Sendable>(
+        accounts: [Account],
+        cursor: String?,
+        fetch: @escaping @Sendable (Account, String?) async throws -> Page<Item>
+    ) async throws -> Page<AccountScoped<Item>> {
+        let saved = try decodedCursor(cursor)
+        let active = accounts.enumerated().filter { _, account in
+            cursor == nil || saved[account.id.uuidString] != nil
+        }
+        guard !active.isEmpty else { return Page(items: [], next: nil) }
+
+        let results = await withTaskGroup(
+            of: (Int, Account, Result<Page<Item>, any Error>).self,
+            returning: [(Int, Account, Result<Page<Item>, any Error>)].self
+        ) { group in
+            for (index, account) in active {
+                group.addTask {
+                    do {
+                        return try await (index, account, .success(fetch(account, saved[account.id.uuidString])))
+                    } catch {
+                        return (index, account, .failure(error))
+                    }
+                }
+            }
+            return await group.reduce(into: []) { $0.append($1) }
+        }
+
+        var items: [AccountScoped<Item>] = []
+        var nextByAccount: [String: String] = [:]
+        var firstError: (any Error)?
+        var anySuccess = false
+        for (_, account, result) in results.sorted(by: { $0.0 < $1.0 }) {
+            switch result {
+            case let .success(page):
+                anySuccess = true
+                items += page.items.map { AccountScoped(account: account, item: $0) }
+                if let next = page.next {
+                    nextByAccount[account.id.uuidString] = next
+                }
+
+            case let .failure(error):
+                firstError = firstError ?? error
+            }
+        }
+        if !anySuccess, let firstError {
+            throw firstError
+        }
+
+        return try Page(items: items, next: encodedCursor(nextByAccount))
+    }
+
+    private nonisolated static func decodedCursor(_ value: String?) throws -> [String: String] {
+        guard let value, let data = Data(base64Encoded: value) else { return [:] }
+
+        return try JSONDecoder().decode(Cursor.self, from: data).byAccountID
+    }
+
+    private nonisolated static func encodedCursor(_ values: [String: String]) throws -> String? {
+        guard !values.isEmpty else { return nil }
+
+        return try JSONEncoder().encode(Cursor(byAccountID: values)).base64EncodedString()
     }
     // swiftlint:enable function_body_length
 }

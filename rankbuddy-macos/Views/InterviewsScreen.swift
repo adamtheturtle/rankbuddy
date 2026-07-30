@@ -165,11 +165,10 @@ struct InterviewsScreen: View {
     }
 
     /// Loads one merged page of interviews across every configured account (#17).
-    private func loadMergedInterviews(_: String?) async throws -> Page<AccountScoped<Interview>> {
-        let items = try await MergedLoader.firstPages(accounts: store.accounts) {
-            try await HackerRankClient(account: $0).interviewsPage().items
+    private func loadMergedInterviews(_ cursor: String?) async throws -> Page<AccountScoped<Interview>> {
+        try await MergedLoader.page(accounts: store.accounts, cursor: cursor) {
+            try await HackerRankClient(account: $0).interviewsPage(after: $1)
         }
-        return Page(items: items, next: nil)
     }
 
     /// Interviews merged across every configured account (#17).

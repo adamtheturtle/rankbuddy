@@ -63,4 +63,21 @@ struct MergedLoaderTests {
         #expect(merged.count == 2)
         #expect(Set(merged.map(\.id)).count == 2)
     }
+
+    @Test func `merged pages preserve independent account cursors`() async throws {
+        let accounts = [account("A"), account("B")]
+        let first = try await MergedLoader.page(accounts: accounts, cursor: nil) { account, cursor in
+            #expect(cursor == nil)
+            return Page(items: [Item(id: "\(account.label)-1")], next: "\(account.label)-next")
+        }
+        let second = try await MergedLoader.page(accounts: accounts, cursor: first.next) { account, cursor in
+            #expect(cursor == "\(account.label)-next")
+            return Page(items: [Item(id: "\(account.label)-2")], next: nil)
+        }
+
+        #expect(first.items.map(\.item.id) == ["A-1", "B-1"])
+        #expect(first.next != nil)
+        #expect(second.items.map(\.item.id) == ["A-2", "B-2"])
+        #expect(second.next == nil)
+    }
 }
