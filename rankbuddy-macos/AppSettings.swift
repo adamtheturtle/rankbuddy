@@ -83,7 +83,7 @@ enum GeneralSettings {
 }
 
 /// Menu-bar preferences shared by the Settings stepper and `MenuBarContent`.
-enum MenuBarPreferences {
+nonisolated enum MenuBarPreferences {
     /// The `@AppStorage` key for how many recent items the menu bar lists.
     static let recentCountKey = "rb.menuBarRecentCount"
     /// The default (and historical) recent-item count.

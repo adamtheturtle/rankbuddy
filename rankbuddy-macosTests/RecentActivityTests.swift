@@ -25,6 +25,10 @@ struct RecentActivityTests {
         RecentItem(collection: collection, id: id, title: id.uppercased(), subtitle: nil)
     }
 
+    @Test func `default retention can satisfy the maximum menu count from one collection`() {
+        #expect(RecentActivityStore.perCollectionLimit >= MenuBarPreferences.maxRecentCount)
+    }
+
     @Test func `active items appear in only the selected menu section`() {
         let active = RecentItem(collection: .tests, id: "active", title: "Active", subtitle: "active")
         let archived = RecentItem(collection: .tests, id: "archived", title: "Archived", subtitle: "archived")

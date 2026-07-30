@@ -106,8 +106,8 @@ nonisolated struct RecentMenuRow: Identifiable {
 nonisolated struct RecentActivityStore {
     static let shared = Self()
 
-    /// How many items per collection to keep.
-    static let perCollectionLimit = 8
+    /// Retain enough from any one collection to satisfy the menu's largest selectable count.
+    static let perCollectionLimit = MenuBarPreferences.maxRecentCount
 
     private let cache: DiskCache
     private let limit: Int
