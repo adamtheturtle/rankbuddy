@@ -282,6 +282,7 @@ struct EditableToggleRow: View {
                     .labelsHidden()
                     .toggleStyle(.switch)
                     .controlSize(.small)
+                    .disabled(isSaving)
                     .onChange(of: draft) { _, new in
                         guard appeared else { return }
 
