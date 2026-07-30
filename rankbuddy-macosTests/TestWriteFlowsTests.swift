@@ -27,6 +27,21 @@ struct TestWriteFlowsTests {
         #expect(TestNameValidation.canSubmit("New Test", currentName: nil))
     }
 
+    @Test func `assessment schedule accepts an ordered ISO window`() {
+        #expect(TestScheduleValidation.error(
+            startTime: "2026-08-01T09:00:00Z",
+            endTime: "2026-08-02T09:00:00Z"
+        ) == nil)
+    }
+
+    @Test func `assessment schedule rejects malformed and reversed windows`() {
+        #expect(TestScheduleValidation.error(startTime: "tomorrow", endTime: "") != nil)
+        #expect(TestScheduleValidation.error(
+            startTime: "2026-08-02T09:00:00Z",
+            endTime: "2026-08-01T09:00:00Z"
+        ) != nil)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
@@ -39,6 +54,22 @@ struct TestWriteFlowsTests {
     @Test func `renaming a test decodes the created record`() async throws {
         let updated = try await makeClient().updateTest(testID: "t1", name: "  Renamed Screen  ")
         #expect(updated.id == "t-created")
+    }
+
+    @Test func `creating and updating tests accepts richer options`() async throws {
+        let options = TestWriteOptions(
+            duration: 90,
+            cutoffScore: 70,
+            instructions: "Complete every question.",
+            startTime: "2026-08-01T09:00:00Z",
+            endTime: "2026-08-02T09:00:00Z",
+            languages: ["swift"],
+            tags: ["backend"],
+            shuffleQuestions: true,
+            enableProctoring: true
+        )
+        #expect(try await makeClient().createTest(name: "Backend", options: options).id == "t-created")
+        #expect(try await makeClient().updateTest(testID: "t1", name: "Backend", options: options).id == "t-created")
     }
 
     @Test func `deleting a test succeeds against the demo without throwing`() async throws {

@@ -130,10 +130,15 @@ extension RankBuddyToolProvider {
         guard TestNameValidation.isValid(name) else {
             return errorResult("`name` can be at most \(TestNameValidation.maxLength) characters.")
         }
+
+        if let error = testWriteValidationError(arguments) { return errorResult(error) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let created = try await HackerRankClient(account: resolved).createTest(name: name)
+            let created = try await HackerRankClient(account: resolved).createTest(
+                name: name,
+                options: testWriteOptions(arguments)
+            )
             guard let createdID = Self.validatedCreatedID(created.id) else {
                 return errorResult("HackerRank created the test but returned no test ID.")
             }
@@ -242,6 +247,39 @@ extension RankBuddyToolProvider {
         return keys.contains { arguments?[$0] != nil }
     }
 
+    private func testWriteValidationError(_ arguments: [String: Value]?) -> String? {
+        if let duration = intArgument(arguments, "duration"), duration <= 0 {
+            return "`duration` must be greater than zero."
+        }
+        if let cutoffScore = intArgument(arguments, "cutoff_score"), cutoffScore < 0 {
+            return "`cutoff_score` must be zero or greater."
+        }
+        if hasInvalidStringArrayElements(arguments, "languages") {
+            return "`languages` must contain only non-empty strings."
+        }
+        if hasInvalidStringArrayElements(arguments, "tags") {
+            return "`tags` must contain only non-empty strings."
+        }
+        return TestScheduleValidation.error(
+            startTime: stringArgument(arguments, "start_time") ?? "",
+            endTime: stringArgument(arguments, "end_time") ?? ""
+        )
+    }
+
+    private func testWriteOptions(_ arguments: [String: Value]?) -> TestWriteOptions {
+        TestWriteOptions(
+            duration: intArgument(arguments, "duration"),
+            cutoffScore: intArgument(arguments, "cutoff_score"),
+            instructions: stringArgument(arguments, "instructions"),
+            startTime: stringArgument(arguments, "start_time"),
+            endTime: stringArgument(arguments, "end_time"),
+            languages: stringArrayArgument(arguments, "languages"),
+            tags: stringArrayArgument(arguments, "tags"),
+            shuffleQuestions: boolArgument(arguments, "shuffle_questions"),
+            enableProctoring: boolArgument(arguments, "enable_proctoring")
+        )
+    }
+
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -254,10 +292,16 @@ extension RankBuddyToolProvider {
         guard TestNameValidation.isValid(name) else {
             return errorResult("`name` must contain 1 to \(TestNameValidation.maxLength) characters.")
         }
+
+        if let error = testWriteValidationError(arguments) { return errorResult(error) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let updated = try await HackerRankClient(account: resolved).updateTest(testID: testID, name: name)
+            let updated = try await HackerRankClient(account: resolved).updateTest(
+                testID: testID,
+                name: name,
+                options: testWriteOptions(arguments)
+            )
             return jsonResult([
                 "account": resolved.label,
                 "updated_test": ["id": updated.id ?? testID, "name": updated.name ?? name]
@@ -1264,14 +1308,34 @@ extension RankBuddyToolProvider {
                 ]
             ]
         }
+        func testProperties(nameDescription: String, account: [String: Any]) -> [String: Any] {
+            [
+                "name": string(nameDescription, minLength: 1),
+                "duration": integer("Assessment duration in minutes.", minimum: 1),
+                "cutoff_score": integer("Passing score threshold.", minimum: 0),
+                "instructions": string("Candidate-facing instructions."),
+                "start_time": dateTime("ISO-8601 assessment window start."),
+                "end_time": dateTime("ISO-8601 assessment window end."),
+                "languages": [
+                    "type": "array", "items": ["type": "string", "minLength": 1],
+                    "description": "Allowed programming languages."
+                ],
+                "tags": [
+                    "type": "array", "items": ["type": "string", "minLength": 1],
+                    "description": "Assessment tags."
+                ],
+                "shuffle_questions": boolean("Shuffle question order."),
+                "enable_proctoring": boolean("Enable proctoring."),
+                "account": account
+            ]
+        }
         return [
-            write("create_test", "Create a HackerRank test.",
-                  properties: ["name": string("The test's name.", minLength: 1), "account": account],
+            write("create_test", "Create a HackerRank test with optional assessment settings.",
+                  properties: testProperties(nameDescription: "The test's name.", account: account),
                   required: ["name"]),
-            write("update_test", "Rename a test.",
-                  properties: ["test_id": string("The test's id.", minLength: 1),
-                               "name": string("The new name.", minLength: 1),
-                               "account": account],
+            write("update_test", "Update a HackerRank test and its assessment settings.",
+                  properties: testProperties(nameDescription: "The test's name.", account: account)
+                      .merging(["test_id": string("The test's id.", minLength: 1)]) { current, _ in current },
                   required: ["test_id", "name"]),
             write("archive_test", "Archive a test.",
                   properties: ["test_id": string("The test's id."), "account": account],

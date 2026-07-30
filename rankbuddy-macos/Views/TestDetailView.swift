@@ -19,6 +19,7 @@ struct TestDetailView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AppCommandContext.self) private var commandContext
     @State private var titleEditRequest = 0
+    @State private var editorPresented = false
     @State private var archivePresented = false
     @State private var archiveError: String?
     @State private var renameError: String?
@@ -205,12 +206,13 @@ struct TestDetailView: View {
                 noun: "test"
             )
             ToolbarItem(id: "edit") {
-                Button {
-                    titleEditRequest += 1
+                Menu {
+                    Button("Rename…") { titleEditRequest += 1 }
+                    Button("Edit Assessment…") { editorPresented = true }
                 } label: {
                     Label("Edit", systemImage: "pencil")
                 }
-                .help("Rename this test")
+                .help("Rename or edit this test")
             }
             ToolbarItem(id: "archive") {
                 Button {
@@ -247,6 +249,12 @@ struct TestDetailView: View {
                 }
             }
             .defaultCustomization(.hidden)
+        }
+        .sheet(isPresented: $editorPresented) {
+            TestEditorSheet(account: account, mode: .edit(displayedTest)) {
+                onChanged()
+                Task { await loadDetail(for: requestIdentity) }
+            }
         }
         .confirmationDialog(
             "Archive “\(displayedTest.name)”?",

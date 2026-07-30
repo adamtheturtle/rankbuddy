@@ -748,6 +748,27 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `writes reject invalid assessment settings`() async {
+        let badDuration = await writeProvider().callTool(
+            "create_test",
+            arguments: ["name": .string("Screen"), "duration": .int(0)]
+        )
+        let badWindow = await writeProvider().callTool(
+            "update_test",
+            arguments: [
+                "test_id": .string("test-1"),
+                "name": .string("Screen"),
+                "start_time": .string("2026-08-02T09:00:00Z"),
+                "end_time": .string("2026-08-01T09:00:00Z")
+            ]
+        )
+
+        #expect(badDuration.isError == true)
+        #expect(text(badDuration).contains("duration"))
+        #expect(badWindow.isError == true)
+        #expect(text(badWindow).contains("End time"))
+    }
+
     @Test func `invite_candidate rejects a blank test id`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
