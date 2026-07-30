@@ -41,9 +41,6 @@ enum CandidateBrief {
             facts.append(plagiarism ? "Plagiarism: flagged" : "Plagiarism: clear")
         }
         facts.append(contentsOf: proctoringFacts(for: candidate))
-        if let feedback = candidate.feedback, !feedback.isEmpty {
-            facts.append("Reviewer feedback: \(feedback)")
-        }
         return facts
     }
 
