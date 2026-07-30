@@ -213,7 +213,17 @@ enum RankBuddyDeepLink {
     }
 
     @MainActor
-    static func open(collection: FavoriteCollection, accountID: String, itemID: String) {
+    static func open(
+        collection: FavoriteCollection,
+        accountID: String,
+        itemID: String,
+        store: AccountStore = SharedAccountStore.resolve()
+    ) {
+        if let encodedID = UUID(uuidString: accountID),
+           store.accounts.contains(where: { $0.id == encodedID }) {
+            store.showAllAccounts = false
+            store.currentAccountID = encodedID
+        }
         UserDefaults.standard.set(itemID, forKey: selectionKey(collection: collection, accountID: accountID))
         UserDefaults.standard.set(collection.section.rawValue, forKey: "selectedSection")
         // Poke the router so a list that is *already on screen* (e.g. clicking a favourite for the

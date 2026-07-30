@@ -61,6 +61,23 @@ struct RankBuddyEntitiesTests {
         #expect(UserDefaults.standard.string(forKey: "selectedSection") == "tests")
     }
 
+    @Test func `opening an entity selects its encoded account`() {
+        let first = Account(label: "First", token: "t1")
+        let target = Account(label: "Target", token: "t2")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [first, target])
+        store.showAllAccounts = true
+
+        RankBuddyDeepLink.open(
+            collection: .questions,
+            accountID: target.id.uuidString,
+            itemID: "q1",
+            store: store
+        )
+
+        #expect(!store.showAllAccounts)
+        #expect(store.currentAccountID == target.id)
+    }
+
     @Test func `the selection key matches the deep-link router request`() {
         // The router lets an already-on-screen list reveal a same-section favourite without a
         // reload (#122). Its request key must equal the key the list restores from, or no list
