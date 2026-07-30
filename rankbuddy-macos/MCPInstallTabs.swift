@@ -11,12 +11,14 @@ import SwiftUI
 
 struct MCPInstallTabs: View {
     /// The command an MCP client runs to launch RankBuddy as a stdio server (its own executable).
-    let command: String
+    let command: String?
     @State private var client: MCPClient = .claudeDesktop
     @State private var installRevision = 0
 
     private var needsRepair: Bool {
         _ = installRevision
+        guard let command else { return false }
+
         return MCPClientInstall.needsRepair(client, currentCommand: command)
     }
 
@@ -29,9 +31,17 @@ struct MCPInstallTabs: View {
         .pickerStyle(.segmented)
         .labelsHidden()
 
-        Text("Adds RankBuddy to \(client.displayName). \(client.restartHint)")
-            .font(.callout)
-            .foregroundStyle(.secondary)
+        if command == nil {
+            Label(
+                "RankBuddy can’t locate its executable, so assistant configuration is unavailable.",
+                systemImage: "exclamationmark.triangle"
+            )
+            .foregroundStyle(.red)
+        } else {
+            Text("Adds RankBuddy to \(client.displayName). \(client.restartHint)")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
 
         if needsRepair {
             Label(
@@ -43,6 +53,8 @@ struct MCPInstallTabs: View {
         }
 
         Button {
+            guard let command else { return }
+
             MCPClientInstall.install(client, command: command)
             installRevision += 1
         } label: {
@@ -51,6 +63,7 @@ struct MCPInstallTabs: View {
                 systemImage: needsRepair ? "wrench.and.screwdriver" : "wand.and.stars"
             )
         }
+        .disabled(command == nil)
 
         Text(LocalizedStringKey(client.troubleshootingHint))
             .font(.callout)
@@ -64,31 +77,36 @@ struct MCPInstallTabs: View {
 
     @ViewBuilder
     private var manualInstructions: some View {
-        let snippet = client.manualConfigText(command: command)
-        Text("Add the `rankbuddy` server to this file. Create it with the text below if it doesn't exist, " +
-            "otherwise add just the `rankbuddy` block to what's already there:")
-            .font(.callout)
-            .foregroundStyle(.secondary)
+        if let command {
+            let snippet = client.manualConfigText(command: command)
+            Text("Add the `rankbuddy` server to this file. Create it with the text below if it doesn't exist, " +
+                "otherwise add just the `rankbuddy` block to what's already there:")
+                .font(.callout)
+                .foregroundStyle(.secondary)
 
-        Text(client.configPath)
-            .font(.system(.caption, design: .monospaced))
-            .textSelection(.enabled)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(client.configPath)
+                .font(.system(.caption, design: .monospaced))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-        Text(snippet)
-            .font(.system(.callout, design: .monospaced))
-            .textSelection(.enabled)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(8)
-            .background(
-                Color(nsColor: .textBackgroundColor),
-                in: RoundedRectangle(cornerRadius: 6, style: .continuous)
-            )
+            Text(snippet)
+                .font(.system(.callout, design: .monospaced))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(8)
+                .background(
+                    Color(nsColor: .textBackgroundColor),
+                    in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+                )
 
-        Button {
-            Clipboard.copy(snippet)
-        } label: {
-            Label("Copy", systemImage: "doc.on.doc")
+            Button {
+                Clipboard.copy(snippet)
+            } label: {
+                Label("Copy", systemImage: "doc.on.doc")
+            }
+        } else {
+            Text("Manual configuration is unavailable because no executable command can be generated.")
+                .foregroundStyle(.secondary)
         }
     }
 }

@@ -11,7 +11,10 @@ import Testing
 @MainActor
 struct MCPSetupTests {
     @Test func `the config is valid JSON with the server's launch command`() throws {
-        let json = MCPSetup.clientConfigJSON(command: "/path/to/RankBuddy", serverName: "rankbuddy")
+        let json = try #require(MCPSetup.clientConfigJSON(
+            command: "/path/to/RankBuddy",
+            serverName: "rankbuddy"
+        ))
         let object = try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any]
         let servers = try #require(object?["mcpServers"] as? [String: Any])
         let server = try #require(servers["rankbuddy"] as? [String: Any])
@@ -20,11 +23,18 @@ struct MCPSetupTests {
     }
 
     @Test func `the server name is configurable`() throws {
-        let json = MCPSetup.clientConfigJSON(command: "/x", serverName: "hr")
+        let json = try #require(MCPSetup.clientConfigJSON(command: "/x", serverName: "hr"))
         let object = try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any]
         let servers = try #require(object?["mcpServers"] as? [String: Any])
         #expect(servers["hr"] != nil)
         #expect(servers["rankbuddy"] == nil)
+    }
+
+    @Test func `missing or blank executable paths cannot generate configuration`() {
+        #expect(MCPSetup.resolvedCommand(executablePath: nil) == nil)
+        #expect(MCPSetup.resolvedCommand(executablePath: " \n ") == nil)
+        #expect(MCPSetup.clientConfigJSON(command: nil) == nil)
+        #expect(MCPSetup.clientConfigJSON(command: "") == nil)
     }
 
     @Test func `the MCP server is opt-in: disabled by default, on once the key is set`() throws {

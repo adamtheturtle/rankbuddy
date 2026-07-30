@@ -27,6 +27,11 @@ enum MCPClientInstall {
 
     @MainActor
     static func install(_ client: MCPClient, command: String) {
+        guard let command = MCPSetup.resolvedCommand(executablePath: command) else {
+            showAlert(.warning, "Couldn’t Configure \(client.displayName)", "RankBuddy’s executable is unavailable.")
+            return
+        }
+
         let spec = spec(for: client)
         guard let folder = grantFolderAccess(
             preferred: spec.preferred,
