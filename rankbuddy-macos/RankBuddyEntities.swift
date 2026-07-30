@@ -94,6 +94,8 @@ struct RankBuddyObjectEntity: IndexedEntity {
 
 /// Locates `RankBuddyObjectEntity` instances for Spotlight/Shortcuts.
 struct RankBuddyObjectEntityQuery: EntityQuery {
+    static let pageCap = 20
+
     private static let logger = Logger(
         subsystem: "com.adamdangoor.rankbuddy",
         category: "spotlight"
@@ -152,6 +154,24 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         }
     }
 
+    static func pagedItems<Item: Sendable>(
+        pageCap: Int = Self.pageCap,
+        loadPage: (String?) async throws -> Page<Item>
+    ) async throws -> [Item] {
+        var items: [Item] = []
+        var cursor: String?
+        var pagesLoaded = 0
+
+        repeat {
+            let page = try await loadPage(cursor)
+            items.append(contentsOf: page.items)
+            cursor = page.next
+            pagesLoaded += 1
+        } while cursor != nil && pagesLoaded < pageCap
+
+        return items
+    }
+
     @MainActor
     static func currentAccountSnapshot() async throws -> AccountSnapshot? {
         guard let account = SharedAccountStore.resolve().currentAccount else { return nil }
@@ -173,7 +193,7 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         let client = HackerRankClient(account: account)
         let accountID = account.id.uuidString
         async let tests = collect("tests") {
-            try await client.testsPage().items.map { test in
+            try await pagedItems(loadPage: { try await client.testsPage(after: $0) }).map { test in
                 EnrichableEntity(
                     entity: RankBuddyObjectEntity(
                         collection: .tests, accountID: accountID, itemID: test.id, title: test.name
@@ -183,7 +203,7 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
             }
         }
         async let questions = collect("questions") {
-            try await client.questionsPage().items.map { question in
+            try await pagedItems(loadPage: { try await client.questionsPage(after: $0) }).map { question in
                 EnrichableEntity(
                     entity: RankBuddyObjectEntity(
                         collection: .questions, accountID: accountID, itemID: question.id, title: question.name
@@ -193,7 +213,7 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
             }
         }
         async let interviews = collect("interviews") {
-            try await client.interviewsPage().items.map { interview in
+            try await pagedItems(loadPage: { try await client.interviewsPage(after: $0) }).map { interview in
                 EnrichableEntity(
                     entity: RankBuddyObjectEntity(
                         collection: .interviews,

@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import HackerRankKit
 @testable import rankbuddy_macos
 import Testing
 
@@ -46,6 +47,16 @@ struct RankBuddyEntitiesTests {
         #expect(entities.first?.collection == .questions)
         #expect(entities.first?.accountID == "acc1")
         #expect(entities.first?.itemID == "q42")
+    }
+
+    @Test func `spotlight discovery follows cursors to its bound`() async throws {
+        let items = try await RankBuddyObjectEntityQuery.pagedItems(pageCap: 2) { cursor in
+            cursor == nil
+                ? Page(items: [1], next: "page-2")
+                : Page(items: [2], next: "page-3")
+        }
+
+        #expect(items == [1, 2])
     }
 
     @Test func `opening an entity writes the section's restoration key`() {
