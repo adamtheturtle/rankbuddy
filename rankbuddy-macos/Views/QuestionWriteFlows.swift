@@ -85,7 +85,7 @@ struct NewQuestionSheet: View {
             return
         }
         guard QuestionCreationValidation.isValidMaxScoreText(maxScore) else {
-            errorMessage = "Max score must be a number."
+            errorMessage = "Max score must be a finite number."
             return
         }
 

@@ -31,10 +31,11 @@ nonisolated enum QuestionCreationValidation {
 
     static func isValidMaxScoreText(_ text: String) -> Bool {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return normalized.isEmpty || Double(normalized) != nil
+        return normalized.isEmpty || Double(normalized).map(\.isFinite) == true
     }
 
     static func maxScore(from text: String) -> Double? {
-        Double(text.trimmingCharacters(in: .whitespacesAndNewlines))
+        let value = Double(text.trimmingCharacters(in: .whitespacesAndNewlines))
+        return value?.isFinite == true ? value : nil
     }
 }

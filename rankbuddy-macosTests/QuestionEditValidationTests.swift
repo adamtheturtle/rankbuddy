@@ -37,6 +37,8 @@ struct QuestionEditValidationTests {
         #expect(QuestionCreationValidation.isValidMaxScoreText(""))
         #expect(QuestionCreationValidation.isValidMaxScoreText(" 10.5\n"))
         #expect(!QuestionCreationValidation.isValidMaxScoreText("ten"))
+        #expect(!QuestionCreationValidation.isValidMaxScoreText("nan"))
+        #expect(!QuestionCreationValidation.isValidMaxScoreText("inf"))
         #expect(QuestionCreationValidation.maxScore(from: " 10.5\n") == 10.5)
     }
 
