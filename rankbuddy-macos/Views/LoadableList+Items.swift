@@ -124,11 +124,18 @@ extension LoadableList {
         detailItem = nil
         selection = []
         pagesLoaded = 1
+        let refreshesCanonicalFirstPage = !isServerSearching
+        let requestCacheKey = refreshesCanonicalFirstPage ? cacheKey : nil
         do {
             let page = try await loadCurrentPage(nil)
             guard generation == loadGeneration, !Task.isCancelled else { return }
 
             items = page.items
+            if refreshesCanonicalFirstPage {
+                onItemsLoaded(page.items)
+                await cacheFirstPage(page, for: requestCacheKey)
+                guard generation == loadGeneration, !Task.isCancelled else { return }
+            }
             nextCursor = page.next
             totalCount = page.totalCount
             phase = .loaded
