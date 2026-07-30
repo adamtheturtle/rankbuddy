@@ -646,6 +646,8 @@ extension RankBuddyToolProvider {
         let name = Self.normalizedOptionalString(rawName)
         let recruiterCap = intArgument(arguments, "recruiter_cap")
         let developerCap = intArgument(arguments, "developer_cap")
+        let locations = stringArrayArgument(arguments, "locations")
+        let departments = stringArrayArgument(arguments, "departments")
         guard rawName == nil || name != nil else { return errorResult("`name` must not be empty.") }
         guard inviteAs.map(allowedInviteRoles.contains) ?? true else {
             return errorResult("`invite_as` must be recruiter, interviewer, or developer.")
@@ -655,6 +657,11 @@ extension RankBuddyToolProvider {
         }
         guard developerCap.map({ $0 >= 0 }) ?? true else {
             return errorResult("`developer_cap` must be zero or greater.")
+        }
+        guard name != nil || recruiterCap != nil || developerCap != nil || inviteAs != nil ||
+            locations != nil || departments != nil
+        else {
+            return errorResult("At least one team field must be provided.")
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
@@ -666,8 +673,8 @@ extension RankBuddyToolProvider {
                     recruiterCap: recruiterCap,
                     developerCap: developerCap,
                     inviteAs: inviteAs,
-                    locations: stringArrayArgument(arguments, "locations"),
-                    departments: stringArrayArgument(arguments, "departments")
+                    locations: locations,
+                    departments: departments
                 )
             )
             return jsonResult([

@@ -661,6 +661,14 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("name"))
     }
 
+    @Test func `update_team requires at least one changed field`() async {
+        let result = await writeProvider().callTool(
+            "update_team", arguments: ["team_id": .string("team-1")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("At least one"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
