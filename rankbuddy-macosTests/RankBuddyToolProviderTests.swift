@@ -284,6 +284,8 @@ struct RankBuddyToolProviderTests {
         #expect(promptText.contains("has_more"))
         #expect(promptText.contains("next_cursor"))
         #expect(promptText.contains("all pages"))
+        #expect(promptText.contains("do not infer pass/fail"))
+        #expect(!promptText.contains("who passed"))
     }
 
     @Test func `the triage prompt requires a test id`() async {
