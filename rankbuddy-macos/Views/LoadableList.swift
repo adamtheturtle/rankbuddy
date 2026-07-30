@@ -350,7 +350,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             CompactStateView(
                 title: "Loading \(title)",
                 systemImage: "arrow.triangle.2.circlepath",
-                message: "Fetching the latest rows for the current account.",
+                message: "Getting the latest data for the current account.",
                 isLoading: true
             )
 

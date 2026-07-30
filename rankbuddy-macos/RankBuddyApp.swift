@@ -152,7 +152,12 @@ struct RankBuddyApp: App {
     private var menuBarInserted: Binding<Bool> {
         Binding(
             get: { presence.showsMenuBarIcon },
-            set: { presence = presence.settingMenuBarInserted($0) }
+            set: {
+                let updatedPresence = presence.settingMenuBarInserted($0)
+                if updatedPresence != presence {
+                    presence = updatedPresence
+                }
+            }
         )
     }
 

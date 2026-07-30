@@ -81,14 +81,12 @@ struct ContentView: View {
                 }
                 detailView(for: selection)
             }
-            // Re-probe whenever the active account changes, so switching to a revoked
-            // account flags it without waiting for the periodic check (#40).
-            .task(id: store.currentAccountID) { await health.check(store: store) }
             // Warm every section's first page in the background so the first visit to a tab is
-            // instant rather than a spinner (#102). Single-account only — merged lists don't cache.
+            // instant rather than a spinner (#102). Skip the visible section because its list is
+            // already loading it. Single-account only — merged lists don't cache.
             .task(id: store.currentAccountID) {
                 if let account = store.currentAccount, !store.isMergedView {
-                    await SectionPrefetch.warm(account: account)
+                    await SectionPrefetch.warm(account: account, excluding: selection)
                 }
             }
         }
@@ -96,6 +94,12 @@ struct ContentView: View {
         // dangling palette/navigation entries (#25).
         .onAppear {
             favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
+        }
+        // Presenting a sheet synchronously from the root view's first `onAppear` can re-enter
+        // AppKit's sheet-ordering pass and leave the main thread in a layout loop. Defer the
+        // release-notes decision until SwiftUI has completed that initial update.
+        .task {
+            await Task.yield()
             showWhatsNew = WhatsNew.shouldShow(
                 currentVersion: WhatsNew.currentVersion,
                 currentBuild: WhatsNew.currentBuild,
@@ -106,9 +110,14 @@ struct ContentView: View {
             favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
         }
         // Current-account badge scope must follow account switches immediately instead of
-        // retaining the preceding account's count until the next background interval.
+        // retaining the preceding account's count until the next background interval. Re-probe
+        // token health here too; startup already performs its own initial probe.
         .onChange(of: store.currentAccountID) {
-            Task { await LivenessMonitor.shared.sweep(store: store) }
+            Task {
+                async let liveness: Void = LivenessMonitor.shared.sweep(store: store)
+                async let accountHealth: Void = health.check(store: store)
+                _ = await (liveness, accountHealth)
+            }
         }
         // Continue a Handoff / Spotlight / Siri activity by routing to the item via the same
         // deep-link path favourites and the open intent use (#98).

@@ -15,18 +15,29 @@ import HackerRankKit
 /// one after another to stay polite to the API rather than firing five requests at once.
 @MainActor
 enum SectionPrefetch {
-    /// Loads and caches the first page of every section for `account`, skipping any already cached.
-    static func warm(account: Account) async {
+    /// Loads and caches each background section's first page, skipping the visible section and
+    /// any page already cached.
+    static func warm(account: Account, excluding visibleSection: SidebarSection) async {
         let client = HackerRankClient(account: account)
         let id = account.id
 
         // Keys mirror each screen's `restorationKey` ("selection.<section>.<account.id>") and must
         // stay in sync, or a prefetched page lands under a key the screen never reads.
-        await warmOne(key: "selection.tests.\(id)") { try await client.testsPage() }
-        await warmOne(key: "selection.questions.\(id)") { try await client.questionsPage() }
-        await warmOne(key: "selection.interviews.\(id)") { try await client.interviewsPage() }
-        await warmOne(key: "selection.users.\(id)") { try await client.usersPage() }
-        await warmOne(key: "selection.teams.\(id)") { try await client.teamsPage() }
+        if visibleSection != .tests {
+            await warmOne(key: "selection.tests.\(id)") { try await client.testsPage() }
+        }
+        if visibleSection != .questions {
+            await warmOne(key: "selection.questions.\(id)") { try await client.questionsPage() }
+        }
+        if visibleSection != .interviews {
+            await warmOne(key: "selection.interviews.\(id)") { try await client.interviewsPage() }
+        }
+        if visibleSection != .people {
+            await warmOne(key: "selection.users.\(id)") { try await client.usersPage() }
+        }
+        if visibleSection != .teams {
+            await warmOne(key: "selection.teams.\(id)") { try await client.teamsPage() }
+        }
     }
 
     /// Fetches and caches one section's first page, unless it's already cached.
