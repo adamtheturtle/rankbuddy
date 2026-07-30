@@ -104,13 +104,12 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
     }
 
     func suggestedEntities() async throws -> [RankBuddyObjectEntity] {
-        guard let snapshot = try await Self.currentAccountSnapshot() else { return [] }
-
-        let enrichables = snapshot.enrichables
+        let snapshots = try await Self.allAccountSnapshots()
+        let enrichables = snapshots.flatMap(\.enrichables)
         let entities = enrichables.map(\.entity)
-        // Replace this account's domain after a complete fetch so removed backend objects do
-        // not survive as stale Spotlight results.
-        try? await RankBuddySpotlightIndex.replaceCurrentAccount(with: entities)
+        // Replace the complete configured-account snapshot so switching accounts and backend
+        // deletions cannot leave stale results.
+        try? await RankBuddySpotlightIndex.replaceAll(with: entities)
         // On-device keyword enrichment (#92): additive, gated on model availability, re-indexing
         // the same ids with topical keywords. The source text is already in hand from the fetch
         // above (no extra network). Detached so a slow generation never delays the suggestions
@@ -157,6 +156,20 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
     static func currentAccountSnapshot() async throws -> AccountSnapshot? {
         guard let account = SharedAccountStore.resolve().currentAccount else { return nil }
 
+        return await snapshot(for: account)
+    }
+
+    @MainActor
+    static func allAccountSnapshots() async throws -> [AccountSnapshot] {
+        var snapshots: [AccountSnapshot] = []
+        for account in SharedAccountStore.resolve().accounts {
+            await snapshots.append(snapshot(for: account))
+        }
+        return snapshots
+    }
+
+    @MainActor
+    private static func snapshot(for account: Account) async -> AccountSnapshot {
         let client = HackerRankClient(account: account)
         let accountID = account.id.uuidString
         async let tests = collect("tests") {
@@ -207,9 +220,8 @@ enum RankBuddySpotlightIndex {
     /// The `CSSearchableIndex` name holding RankBuddy's donated items.
     static let name = "RankBuddyObjects"
 
-    /// Reconciles the current-account-only index after a complete refresh. Clearing first also
-    /// evicts the previously selected account after an account switch.
-    static func replaceCurrentAccount(with entities: [RankBuddyObjectEntity]) async throws {
+    /// Reconciles the complete configured-account index after a refresh.
+    static func replaceAll(with entities: [RankBuddyObjectEntity]) async throws {
         let index = CSSearchableIndex(name: name)
         try await index.deleteAllSearchableItems()
         try await index.indexAppEntities(entities)
@@ -218,7 +230,7 @@ enum RankBuddySpotlightIndex {
     /// Removes every donated item from Spotlight. Called when an account is deleted so that a
     /// removed account's items can't linger in system search (#24: indexed content is removed
     /// when an account is deleted). The index repopulates with the current account the next time
-    /// the system requests suggestions, so only the current account is ever indexed.
+    /// the system requests suggestions.
     static func clear() async {
         try? await CSSearchableIndex(name: name).deleteAllSearchableItems()
     }
