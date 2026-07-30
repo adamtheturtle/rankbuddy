@@ -9,6 +9,12 @@ import HackerRankKit
 import MCP
 import MCPKit
 
+private struct InterviewTemplateWriteBody: Encodable {
+    let name: String?
+    let title: String?
+    let description: String?
+}
+
 // Write dispatch stays centralized so tool schemas and handlers remain aligned.
 // swiftlint:disable file_length
 
@@ -21,6 +27,7 @@ extension RankBuddyToolProvider {
         "create_user", "update_user", "lock_user",
         "create_team", "update_team", "delete_team", "add_team_member_by_user_id",
         "create_ats_codepair_invite", "create_ats_codescreen_invite",
+        "create_interview_template", "update_interview_template", "delete_interview_template",
         "add_team_member", "remove_team_member", "create_pad", "schedule_interview", "delete_interview",
         "create_question", "update_question", "delete_question", "delete_testcase", "delete_all_testcases"
     ]
@@ -76,6 +83,9 @@ extension RankBuddyToolProvider {
         case "delete_interview": await deleteInterviewTool(arguments, account: account)
         case "create_ats_codepair_invite": await createATSCodePairInviteTool(arguments, account: account)
         case "create_ats_codescreen_invite": await createATSCodeScreenInviteTool(arguments, account: account)
+        case "create_interview_template": await createInterviewTemplateTool(arguments, account: account)
+        case "update_interview_template": await updateInterviewTemplateTool(arguments, account: account)
+        case "delete_interview_template": await deleteInterviewTemplateTool(arguments, account: account)
         default: nil
         }
     }
@@ -1149,6 +1159,99 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
+    private func createInterviewTemplateTool(
+        _ arguments: [String: Value]?,
+        account: String?
+    ) async -> CallTool.Result {
+        guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
+        guard let name = Self.normalizedOptionalString(rawName) else {
+            return errorResult("`name` must not be empty.")
+        }
+        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+
+        do {
+            let template = try await HackerRankClient(account: resolved).createInterviewTemplate(
+                body: InterviewTemplateWriteBody(
+                    name: name,
+                    title: Self.normalizedOptionalString(stringArgument(arguments, "title")),
+                    description: Self.normalizedOptionalString(stringArgument(arguments, "description"))
+                )
+            )
+            return interviewTemplateResult(template, account: resolved.label)
+        } catch {
+            return errorResult("Couldn't create interview template: \(error.localizedDescription)")
+        }
+    }
+
+    @MainActor
+    private func updateInterviewTemplateTool(
+        _ arguments: [String: Value]?,
+        account: String?
+    ) async -> CallTool.Result {
+        guard let templateID = intArgument(arguments, "template_id") else {
+            return missingArgument("template_id")
+        }
+        guard templateID > 0 else { return errorResult("`template_id` must be greater than zero.") }
+
+        let name = Self.normalizedOptionalString(stringArgument(arguments, "name"))
+        let title = Self.normalizedOptionalString(stringArgument(arguments, "title"))
+        let description = Self.normalizedOptionalString(stringArgument(arguments, "description"))
+        guard name != nil || title != nil || description != nil else {
+            return errorResult("At least one of `name`, `title`, or `description` must be provided.")
+        }
+        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+
+        do {
+            let template = try await HackerRankClient(account: resolved).updateInterviewTemplate(
+                id: templateID,
+                body: InterviewTemplateWriteBody(name: name, title: title, description: description)
+            )
+            return interviewTemplateResult(template, account: resolved.label)
+        } catch {
+            return errorResult("Couldn't update interview template: \(error.localizedDescription)")
+        }
+    }
+
+    @MainActor
+    private func deleteInterviewTemplateTool(
+        _ arguments: [String: Value]?,
+        account: String?
+    ) async -> CallTool.Result {
+        guard let templateID = intArgument(arguments, "template_id") else {
+            return missingArgument("template_id")
+        }
+        guard templateID > 0 else { return errorResult("`template_id` must be greater than zero.") }
+        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+
+        do {
+            _ = try await HackerRankClient(account: resolved).deleteInterviewTemplate(id: templateID)
+            return jsonResult([
+                "account": resolved.label,
+                "deleted_interview_template_id": templateID,
+                "deleted": true
+            ])
+        } catch {
+            return errorResult("Couldn't delete interview template: \(error.localizedDescription)")
+        }
+    }
+
+    private func interviewTemplateResult(_ template: InterviewTemplate, account: String) -> CallTool.Result {
+        guard let id = template.id, id > 0 else {
+            return errorResult("HackerRank saved the interview template but returned no usable ID.")
+        }
+
+        return jsonResult([
+            "account": account,
+            "template": [
+                "id": id,
+                "name": template.name ?? "",
+                "title": template.title ?? "",
+                "description": template.description ?? ""
+            ] as [String: Any]
+        ])
+    }
+
+    @MainActor
     private func createATSCodePairInviteTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawTitle = stringArgument(arguments, "title") else { return missingArgument("title") }
         guard let rawRequisitionID = stringArgument(arguments, "requisition_id") else {
@@ -1551,6 +1654,29 @@ extension RankBuddyToolProvider {
             write("delete_interview", "Delete an interview.",
                   properties: ["interview_id": string("The interview's id."), "account": account],
                   required: ["interview_id"], destructive: true),
+            write("create_interview_template", "Create a native HackerRank interview template.",
+                  properties: [
+                      "name": string("The template's name.", minLength: 1),
+                      "title": string("Default interview title."),
+                      "description": string("Default interview description."),
+                      "account": account
+                  ],
+                  required: ["name"]),
+            write("update_interview_template", "Update a native HackerRank interview template.",
+                  properties: [
+                      "template_id": integer("The template id.", minimum: 1),
+                      "name": string("The template's name."),
+                      "title": string("Default interview title."),
+                      "description": string("Default interview description."),
+                      "account": account
+                  ],
+                  required: ["template_id"]),
+            write("delete_interview_template", "Delete a native HackerRank interview template.",
+                  properties: [
+                      "template_id": integer("The template id.", minimum: 1),
+                      "account": account
+                  ],
+                  required: ["template_id"], destructive: true),
             write("create_ats_codepair_invite", "Create an ATS-backed interview invite.",
                   properties: [
                       "title": string("The invite title."),

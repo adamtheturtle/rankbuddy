@@ -5,6 +5,7 @@
 
 import BuddyAppKit
 import Foundation
+import HackerRankKit
 import MCP
 import MCPKit
 @testable import rankbuddy_macos
@@ -955,6 +956,47 @@ struct RankBuddyToolProviderTests {
             #expect(result.isError == true)
             #expect(text(result).contains(key))
         }
+    }
+
+    @Test func `interview template writes require write opt in`() async {
+        for name in ["create_interview_template", "update_interview_template", "delete_interview_template"] {
+            let result = await provider().callTool(name, arguments: nil)
+            #expect(result.isError == true)
+            #expect(text(result).contains("Unknown tool"))
+        }
+    }
+
+    @Test func `create_interview_template rejects a blank name`() async {
+        let result = await writeProvider().callTool(
+            "create_interview_template",
+            arguments: ["name": .string(" \n")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("name"))
+    }
+
+    @Test func `update_interview_template requires a positive id and a change`() async {
+        let invalidID = await writeProvider().callTool(
+            "update_interview_template",
+            arguments: ["template_id": .int(0), "name": .string("Pairing")]
+        )
+        let noChange = await writeProvider().callTool(
+            "update_interview_template",
+            arguments: ["template_id": .int(1)]
+        )
+        #expect(invalidID.isError == true)
+        #expect(text(invalidID).contains("greater than zero"))
+        #expect(noChange.isError == true)
+        #expect(text(noChange).contains("At least one"))
+    }
+
+    @Test func `delete_interview_template requires a positive id`() async {
+        let result = await writeProvider().callTool(
+            "delete_interview_template",
+            arguments: ["template_id": .int(-1)]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("greater than zero"))
     }
 
     @Test func `delete_interview rejects a blank target id`() async {
