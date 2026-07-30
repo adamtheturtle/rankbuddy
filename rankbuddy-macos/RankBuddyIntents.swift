@@ -73,6 +73,36 @@ struct OpenRankBuddyIntent: AppIntent {
     }
 }
 
+/// Clears stale list snapshots and refreshes the privacy-filtered Spotlight/App Entity index.
+/// This gives Shortcuts a useful read-oriented refresh action without exposing credentials or
+/// write access to HackerRank (#24).
+struct RefreshRankBuddyDataIntent: AppIntent {
+    static let title: LocalizedStringResource = "Refresh RankBuddy Data"
+    static let description = IntentDescription("Refreshes RankBuddy's cached lists and searchable items.")
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        _ = try await RankBuddyDataRefresh.refresh {
+            try await RankBuddyObjectEntityQuery().suggestedEntities()
+        }
+        return .result()
+    }
+}
+
+@MainActor
+enum RankBuddyDataRefresh {
+    /// Invalidates local list snapshots before refetching. The operation is injectable so the
+    /// cache contract and error propagation can be tested without live HackerRank credentials.
+    @discardableResult
+    static func refresh(
+        fetchEntities: @MainActor () async throws -> [RankBuddyObjectEntity]
+    ) async throws -> Int {
+        await ListPageCache.clear()
+        let entities = try await fetchEntities()
+        return entities.count
+    }
+}
+
 /// Exposes the intents to Spotlight and the Shortcuts app with spoken phrases. The phrases
 /// reference the `RankBuddySectionOption` parameter, which is a finite `AppEnum`, so the
 /// system can enumerate a phrase per section.
@@ -94,6 +124,14 @@ struct RankBuddyShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Open RankBuddy",
             systemImageName: "checklist"
+        )
+        AppShortcut(
+            intent: RefreshRankBuddyDataIntent(),
+            phrases: [
+                "Refresh \(.applicationName)"
+            ],
+            shortTitle: "Refresh RankBuddy",
+            systemImageName: "arrow.clockwise"
         )
     }
 }

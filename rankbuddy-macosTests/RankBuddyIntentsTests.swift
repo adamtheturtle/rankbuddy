@@ -55,4 +55,25 @@ struct RankBuddyIntentsTests {
         #expect(stored == "questions")
         #expect(SidebarSection(rawValue: stored) == .questions)
     }
+
+    @Test func `refresh invalidates list snapshots before fetching entities`() async throws {
+        let key = "selection.tests.intent-refresh"
+        await ListPageCache.store(items: ["stale"], cursor: "next", totalCount: 1, for: key)
+        var cacheWasEmptyDuringFetch = false
+
+        let count = try await RankBuddyDataRefresh.refresh {
+            cacheWasEmptyDuringFetch = await ListPageCache.cached([String].self, for: key) == nil
+            return [
+                RankBuddyObjectEntity(
+                    collection: .tests,
+                    accountID: "account",
+                    itemID: "test",
+                    title: "Test"
+                )
+            ]
+        }
+
+        #expect(cacheWasEmptyDuringFetch)
+        #expect(count == 1)
+    }
 }
