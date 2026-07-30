@@ -43,7 +43,11 @@ struct AccountsSettingsView: View {
             Button("Remove", role: .destructive) { removePendingAccount() }
             Button("Cancel", role: .cancel) { accountPendingRemoval = nil }
         } message: {
-            Text("Remove \(accountPendingRemoval?.label ?? "this account") from RankBuddy?")
+            Text(
+                "Remove \(accountPendingRemoval?.label ?? "this account") from RankBuddy? " +
+                    "Its saved credentials, recent activity, and other local account data will be deleted. " +
+                    "This does not delete data from HackerRank."
+            )
         }
         .alert("Discard Unsaved Changes?", isPresented: discardAlertPresented) {
             Button("Discard Changes", role: .destructive) { performPendingEditorTransition() }
