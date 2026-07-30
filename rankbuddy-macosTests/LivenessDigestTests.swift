@@ -100,6 +100,21 @@ struct LivenessDigestTests {
         #expect(LivenessSettings.intervalMinutes(raw: 10) == 10)
     }
 
+    @Test func `clearing seen interviews removes only the selected account history`() throws {
+        let suite = "liveness-seen-\(#function)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let accountA = UUID()
+        let accountB = UUID()
+        defaults.set(Data("a".utf8), forKey: LivenessSettings.seenKey(accountA))
+        defaults.set(Data("b".utf8), forKey: LivenessSettings.seenKey(accountB))
+
+        LivenessSettings.clearSeen(accountID: accountA, defaults: defaults)
+
+        #expect(defaults.object(forKey: LivenessSettings.seenKey(accountA)) == nil)
+        #expect(defaults.data(forKey: LivenessSettings.seenKey(accountB)) == Data("b".utf8))
+    }
+
     @MainActor
     @Test func `the dock badge scope picks the right accounts and always excludes the demo`() {
         let real = Account(label: "Work", token: "tok-1")

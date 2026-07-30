@@ -129,12 +129,14 @@ extension AccountStore {
             // Purge only the deleted account's cached artifacts, preserving other tenants.
             onRemoved: { account in
                 RecentActivityStore.shared.clear(account: account.id)
+                LivenessSettings.clearSeen(accountID: account.id)
                 Task { await RankBuddySpotlightIndex.remove(accountID: account.id) }
             },
             // A changed token/base URL may point at a different backend, so drop every
             // account-scoped artifact that could otherwise show the previous org's data.
             onRekeyed: { account in
                 RecentActivityStore.shared.clear(account: account.id)
+                LivenessSettings.clearSeen(accountID: account.id)
                 Task {
                     await ListPageCache.clear(accountID: account.id)
                     await RankBuddySpotlightIndex.remove(accountID: account.id)
