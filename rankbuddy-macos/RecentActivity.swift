@@ -17,6 +17,7 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
     var subtitle: String?
     var startTime: String?
     var endTime: String?
+    var lastSeenAt: Date?
 
     init(
         collection: FavoriteCollection,
@@ -24,7 +25,8 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
         title: String,
         subtitle: String?,
         startTime: String? = nil,
-        endTime: String? = nil
+        endTime: String? = nil,
+        lastSeenAt: Date? = Date()
     ) {
         self.collection = collection
         self.id = id
@@ -32,6 +34,7 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
         self.subtitle = subtitle
         self.startTime = startTime
         self.endTime = endTime
+        self.lastSeenAt = lastSeenAt
     }
 
     /// Whether this item counts as "active or upcoming" for the menu-bar filter (#67): an
@@ -115,7 +118,9 @@ nonisolated struct RecentActivityStore {
 
     /// All cached recent items for an account, across the top-level collections.
     func recentAll(account: UUID) -> [RecentItem] {
-        FavoriteCollection.allCases.flatMap { recent($0, account: account) }
+        FavoriteCollection.allCases
+            .flatMap { recent($0, account: account) }
+            .sorted { ($0.lastSeenAt ?? .distantPast) > ($1.lastSeenAt ?? .distantPast) }
     }
 
     /// Removes every recent-activity snapshot belonging to an account.

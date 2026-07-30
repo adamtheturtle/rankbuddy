@@ -69,6 +69,26 @@ struct RecentActivityTests {
         #expect(Set(store.recentAll(account: account).map(\.id)) == ["t1", "q1", "i1"])
     }
 
+    @Test func `recentAll orders activity across collections`() {
+        let store = store(#function)
+        let account = UUID()
+        let older = Date(timeIntervalSince1970: 100)
+        let newer = Date(timeIntervalSince1970: 200)
+        store.record(
+            [RecentItem(collection: .tests, id: "test", title: "Test", subtitle: nil, lastSeenAt: older)],
+            for: .tests,
+            account: account
+        )
+        store.record(
+            [RecentItem(collection: .interviews, id: "interview", title: "Interview",
+                        subtitle: nil, lastSeenAt: newer)],
+            for: .interviews,
+            account: account
+        )
+
+        #expect(store.recentAll(account: account).map(\.id) == ["interview", "test"])
+    }
+
     @Test func `is scoped by account`() {
         let store = store(#function)
         let accountA = UUID()
