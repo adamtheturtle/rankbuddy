@@ -96,9 +96,16 @@ nonisolated struct RecentActivityStore {
         self.limit = limit
     }
 
-    /// Records the most-recently-listed items for a collection (keeping at most `limit`).
+    /// Merges newly observed items into the collection's MRU history. An empty snapshot carries
+    /// no activity signal, so it never erases previously observed items.
     func record(_ items: [RecentItem], for collection: FavoriteCollection, account: UUID) {
-        cache.save(Array(items.prefix(limit)), kind: collection.rawValue, account: account)
+        guard !items.isEmpty else { return }
+
+        var seen = Set(items.map(\.id))
+        let retained = recent(collection, account: account).filter {
+            seen.insert($0.id).inserted
+        }
+        cache.save(Array((items + retained).prefix(limit)), kind: collection.rawValue, account: account)
     }
 
     /// The cached recent items for one collection.

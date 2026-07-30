@@ -40,6 +40,26 @@ struct RecentActivityTests {
         #expect(store.recent(.tests, account: account).map(\.id) == ["a", "b"])
     }
 
+    @Test func `an empty first page preserves recent history`() {
+        let store = store(#function)
+        let account = UUID()
+        store.record([item("t1"), item("t2")], for: .tests, account: account)
+
+        store.record([], for: .tests, account: account)
+
+        #expect(store.recent(.tests, account: account).map(\.id) == ["t1", "t2"])
+    }
+
+    @Test func `newly observed items move ahead of retained history`() {
+        let store = store(#function, limit: 3)
+        let account = UUID()
+        store.record([item("a"), item("b"), item("c")], for: .tests, account: account)
+
+        store.record([item("d"), item("b")], for: .tests, account: account)
+
+        #expect(store.recent(.tests, account: account).map(\.id) == ["d", "b", "a"])
+    }
+
     @Test func `recentAll spans the collections`() {
         let store = store(#function)
         let account = UUID()
