@@ -156,6 +156,43 @@ struct HackerRankClientTests {
         #expect(page.items.contains { $0.fullName == "Ada Lovelace" })
     }
 
+    @Test func `single candidate fixture remains distinct from its collection`() async throws {
+        let candidate = try await makeClient().candidate(testID: "t1", candidateID: "c1")
+
+        #expect(candidate.id == "c1")
+        #expect(candidate.fullName == "Ada Lovelace")
+        #expect(candidate.reportURL?.hasSuffix("/c1/report") == true)
+        #expect(candidate.tags == ["shortlist", "single-read"])
+    }
+
+    @Test func `single user fixture carries richer account fields`() async throws {
+        let user = try await makeClient().user(id: "u1")
+
+        #expect(user.id == "u1")
+        #expect(user.firstName == "Rhea")
+        #expect(user.teams == ["tm1", "tm2"])
+        #expect(user.companyAdmin == true)
+        #expect(user.teamAdmin == true)
+    }
+
+    @Test func `single team fixture carries richer organisation fields`() async throws {
+        let team = try await makeClient().team(id: "tm1")
+
+        #expect(team.id == "tm1")
+        #expect(team.name == "Backend Hiring")
+        #expect(team.developerCount == 12)
+        #expect(team.locations == ["London", "Berlin"])
+        #expect(team.departments == ["Engineering", "Platform"])
+    }
+
+    @Test func `inviters fixture decodes as a paged resource`() async throws {
+        let page = try await makeClient().testInviters(testID: "t1")
+
+        #expect(page.items.map(\.id) == ["u1", "u2"])
+        #expect(page.items.map(\.email) == ["rhea@example.com", "ian@example.com"])
+        #expect(page.next == nil)
+    }
+
     // MARK: - Token validation
 
     @Test func `validating an empty token fails before any request`() async {
