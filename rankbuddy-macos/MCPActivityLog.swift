@@ -60,7 +60,10 @@ nonisolated enum MCPActivityLog {
 
     /// The most recent entries, newest first, capped at `limit`.
     static func entries(limit: Int = maxEntries, from url: URL = fileURL) -> [MCPActivityEntry] {
-        Array(store(for: url).load().suffix(limit).reversed())
+        let store = store(for: url)
+        let entries = Array(store.load().suffix(limit).reversed())
+        store.trim()
+        return entries
     }
 
     /// Clears the log.

@@ -44,4 +44,17 @@ struct MCPActivityLogTests {
         MCPActivityLog.clear(url)
         #expect(MCPActivityLog.entries(from: url).isEmpty)
     }
+
+    @Test func `reading trims the physical log to its advertised bound`() throws {
+        let url = tempURL()
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        for index in 0 ..< MCPActivityLog.maxEntries + 5 {
+            MCPActivityLog.record(tool: "tool-\(index)", detail: "", to: url)
+        }
+
+        #expect(MCPActivityLog.entries(from: url).count == MCPActivityLog.maxEntries)
+        let contents = try String(contentsOf: url, encoding: .utf8)
+        #expect(contents.split(separator: "\n").count == MCPActivityLog.maxEntries)
+    }
 }
