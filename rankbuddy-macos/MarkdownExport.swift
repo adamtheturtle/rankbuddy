@@ -52,6 +52,12 @@ enum MarkdownExport {
                 with: "",
                 options: .regularExpression
             )
+            .replacingOccurrences(of: "(?i)<br\\s*/?>", with: "\n", options: .regularExpression)
+            .replacingOccurrences(
+                of: "(?i)</(?:p|div|li|h[1-6]|tr)\\s*>",
+                with: "\n",
+                options: .regularExpression
+            )
             .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
         let decoded = decodeHTMLEntitiesOnce(text)
             .trimmingCharacters(in: .whitespacesAndNewlines)
