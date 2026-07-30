@@ -209,6 +209,10 @@ struct RankBuddyToolProviderTests {
 
         let rendered = try await provider().getPrompt("triage_candidates", arguments: ["test_id": "t1"])
         #expect(!rendered.messages.isEmpty)
+        let promptText = String(describing: rendered.messages)
+        #expect(promptText.contains("has_more"))
+        #expect(promptText.contains("next_cursor"))
+        #expect(promptText.contains("all pages"))
     }
 
     @Test func `the triage prompt requires a test id`() async {

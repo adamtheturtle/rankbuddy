@@ -45,7 +45,11 @@ extension RankBuddyToolProvider {
             readOnly("list_teams", "List the organisation's teams with member counts (first page).",
                      properties: ["account": account]),
             readOnly("list_candidates", "List the candidates for a test.",
-                     properties: ["test_id": ["type": "string", "description": "The test's id."], "account": account],
+                     properties: [
+                         "test_id": ["type": "string", "description": "The test's id."],
+                         "cursor": string("Opaque next_cursor from the preceding page."),
+                         "account": account
+                     ],
                      required: ["test_id"]),
             readOnly("candidate_report_pdf", "Fetch a candidate report PDF URL.",
                      properties: [

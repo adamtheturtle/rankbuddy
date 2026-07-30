@@ -119,7 +119,11 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         case "list_candidates":
             guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
 
-            return await listCandidates(testID: testID, account: account)
+            return await listCandidates(
+                testID: testID,
+                cursor: stringArgument(arguments, "cursor"),
+                account: account
+            )
 
         case "candidate_report_pdf":
             guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -244,11 +248,14 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     }
 
     @MainActor
-    private func listCandidates(testID: String, account: String?) async -> CallTool.Result {
+    private func listCandidates(testID: String, cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let page = try await HackerRankClient(account: resolved).candidatesPage(testID: testID)
+            let page = try await HackerRankClient(account: resolved).candidatesPage(
+                testID: testID,
+                after: cursor
+            )
             let items = page.items.map { candidate in
                 [
                     "id": candidate.id, "email": candidate.email, "name": candidate.fullName ?? "",
@@ -257,7 +264,8 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             }
             return jsonResult([
                 "account": resolved.label, "test_id": testID, "candidates": items,
-                "count": items.count, "has_more": page.next != nil
+                "count": items.count, "has_more": page.next != nil,
+                "next_cursor": page.next ?? ""
             ])
         } catch {
             return errorResult("Couldn't list candidates: \(error.localizedDescription)")
@@ -540,9 +548,11 @@ extension RankBuddyToolProvider {
         case "triage_candidates":
             let testID = try requiredPromptArgument(arguments, "test_id")
             let message = """
-            Review the candidates for HackerRank test \(testID). Call the `list_candidates` tool \
-            with test_id="\(testID)", then summarise who passed the cutoff, flag any integrity or \
-            plagiarism concerns, and recommend next steps for each promising candidate.
+            Review every candidate for HackerRank test \(testID). Call `list_candidates` with \
+            test_id="\(testID)". While its `has_more` field is true, call it again with the same \
+            test_id and `cursor` set to the preceding `next_cursor`. Do not summarise until all \
+            pages are loaded. Then report who passed the cutoff, flag integrity or plagiarism \
+            concerns, and recommend next steps for each promising candidate.
             """
             return GetPrompt.Result(
                 description: "Candidate triage for a test.",
