@@ -84,7 +84,11 @@ final class FavoritesStore {
             favorites = []
         } else if let data = defaults.data(forKey: Self.storageKey),
                   let decoded = try? JSONDecoder().decode([FavoriteRef].self, from: data) {
-            favorites = decoded
+            let normalized = Self.normalized(decoded)
+            favorites = normalized
+            if normalized != decoded, let repaired = try? JSONEncoder().encode(normalized) {
+                defaults.set(repaired, forKey: Self.storageKey)
+            }
         } else if let data = defaults.data(forKey: Self.storageKey) {
             favorites = []
             hasUnreadableData = true
@@ -167,12 +171,20 @@ final class FavoritesStore {
     ) {
         guard !hasUnreadableData else { return }
 
+        let normalized = Self.normalized(refs)
         let previous = favorites
-        guard refs != previous else { return }
+        guard normalized != previous else { return }
 
-        favorites = refs
+        favorites = normalized
         persist()
         registerUndo(previous, undoManager: undoManager, actionName: actionName)
+    }
+
+    /// Keeps the last occurrence of each identity, matching the store's newest-wins ordering.
+    private static func normalized(_ refs: [FavoriteRef]) -> [FavoriteRef] {
+        var seen = Set<String>()
+        let newestUnique = refs.reversed().filter { seen.insert($0.id).inserted }
+        return Array(newestUnique.reversed())
     }
 
     private func registerUndo(_ previous: [FavoriteRef], undoManager: UndoManager?, actionName: String) {

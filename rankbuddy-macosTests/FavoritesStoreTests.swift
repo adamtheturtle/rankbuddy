@@ -47,6 +47,35 @@ struct FavoritesStoreTests {
         #expect(store.favorites.isEmpty)
     }
 
+    @Test func `replace deduplicates identities and keeps the newest record`() {
+        let store = FavoritesStore(defaults: makeDefaults(#function))
+
+        store.replace(with: [
+            ref("acc1", .tests, "t1", "Old title"),
+            ref("acc1", .questions, "q1", "Question"),
+            ref("acc1", .tests, "t1", "New title")
+        ])
+
+        #expect(store.favorites.count == 2)
+        #expect(store.favorites.first(where: { $0.itemID == "t1" })?.title == "New title")
+    }
+
+    @Test func `loading persisted favourites repairs duplicate identities`() throws {
+        let defaults = makeDefaults(#function)
+        let encoded = try JSONEncoder().encode([
+            ref("acc1", .tests, "t1", "Old title"),
+            ref("acc1", .tests, "t1", "New title")
+        ])
+        defaults.set(encoded, forKey: FavoritesStore.storageKey)
+
+        let store = FavoritesStore(defaults: defaults)
+
+        #expect(store.favorites.map(\.title) == ["New title"])
+        let repairedData = try #require(defaults.data(forKey: FavoritesStore.storageKey))
+        let repaired = try JSONDecoder().decode([FavoriteRef].self, from: repairedData)
+        #expect(repaired.map(\.title) == ["New title"])
+    }
+
     @Test func `favourites are scoped by account and collection`() {
         let store = FavoritesStore(defaults: makeDefaults(#function))
         store.toggle(ref("acc1", .tests, "t1", "T1"))
