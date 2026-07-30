@@ -254,6 +254,50 @@ struct HackerRankClientTests {
         #expect(page.next == nil)
     }
 
+    @Test func `interview template fixtures cover collection and detail routes`() async throws {
+        let client = makeClient()
+        let page = try await client.interviewTemplatesPage()
+        let detail = try await client.interviewTemplate(id: 101)
+
+        #expect(page.items.compactMap(\.id) == [101, 102])
+        #expect(detail.id == 101)
+        #expect(detail.name == "Backend Pairing")
+        #expect(detail.description == "Live backend interview")
+    }
+
+    @Test func `invite template fixtures cover collection and detail routes`() async throws {
+        let client = makeClient()
+        let page = try await client.inviteTemplatesPage()
+        let detail = try await client.inviteTemplate(id: "tpl-1")
+
+        #expect(page.items.compactMap(\.id) == ["tpl-1", "tpl-2"])
+        #expect(detail.id == "tpl-1")
+        #expect(detail.subject == "Your HackerRank invite")
+        #expect(detail.access == "company")
+    }
+
+    @Test func `SCIM fixtures cover user collection and detail routes`() async throws {
+        let client = makeClient()
+        let page = try await client.scimUsers()
+        let detail = try await client.scimUser(id: "scim-u1")
+
+        #expect(page.resources.compactMap(\.id) == ["scim-u1"])
+        #expect(page.totalResults == 1)
+        #expect(detail.userName == "rhea@example.com")
+        #expect(detail.companyAdmin == true)
+    }
+
+    @Test func `SCIM fixtures cover group collection and detail routes`() async throws {
+        let client = makeClient()
+        let page = try await client.scimGroups()
+        let detail = try await client.scimGroup(id: "scim-g1")
+
+        #expect(page.resources.compactMap(\.id) == ["scim-g1"])
+        #expect(page.totalResults == 1)
+        #expect(detail.displayName == "Backend Hiring")
+        #expect(detail.members?.count == 1)
+    }
+
     // MARK: - Token validation
 
     @Test func `validating an empty token fails before any request`() async {
