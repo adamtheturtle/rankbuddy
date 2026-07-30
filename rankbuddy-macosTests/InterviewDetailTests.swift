@@ -81,4 +81,14 @@ struct InterviewDetailTests {
         #expect(!InterviewDetailView.isValidSchedule(start: start, end: start))
         #expect(!InterviewDetailView.isValidSchedule(start: start, end: start.addingTimeInterval(-1)))
     }
+
+    @Test func `detail request identity includes account and interview`() {
+        let accountA = UUID()
+        let accountB = UUID()
+        let original = InterviewDetailRequestIdentity(accountID: accountA, interviewID: "i1")
+
+        #expect(original != InterviewDetailRequestIdentity(accountID: accountB, interviewID: "i1"))
+        #expect(original != InterviewDetailRequestIdentity(accountID: accountA, interviewID: "i2"))
+        #expect(original == InterviewDetailRequestIdentity(accountID: accountA, interviewID: "i1"))
+    }
 }

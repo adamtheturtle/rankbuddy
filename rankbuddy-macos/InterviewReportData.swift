@@ -3,7 +3,13 @@
 //  rankbuddy-macos
 //
 
+import Foundation
 import HackerRankKit
+
+nonisolated struct InterviewDetailRequestIdentity: Hashable {
+    let accountID: UUID?
+    let interviewID: String
+}
 
 /// Everything currently displayed by an interview inspector, captured for print and export.
 nonisolated struct InterviewReportData {

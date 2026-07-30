@@ -7,7 +7,7 @@ import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 
-// swiftlint:disable type_body_length
+// swiftlint:disable file_length type_body_length
 struct InterviewDetailView: View {
     let interview: Interview
     var onChanged: () -> Void = {}
@@ -41,6 +41,13 @@ struct InterviewDetailView: View {
 
     private var displayScheduledTo: String? {
         editedScheduledTo ?? detail?.scheduledTo
+    }
+
+    private var requestIdentity: InterviewDetailRequestIdentity {
+        InterviewDetailRequestIdentity(
+            accountID: store.isMergedView ? nil : store.currentAccount?.id,
+            interviewID: interview.id
+        )
     }
 
     private var reportData: InterviewReportData {
@@ -177,7 +184,7 @@ struct InterviewDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayTitle)
-        .task(id: interview.id) { await loadDetail() }
+        .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onDisappear { commandContext.clearDetailActions(owner: commandOwner) }
@@ -300,7 +307,7 @@ struct InterviewDetailView: View {
     /// Fetches the richer detail and transcript for the selected interview (#103). Both are
     /// best-effort: failures leave the base list-row detail intact. Skipped in the merged view,
     /// where a single owning account isn't known, so the wrong account is never queried.
-    private func loadDetail() async {
+    private func loadDetail(for identity: InterviewDetailRequestIdentity) async {
         detail = nil
         transcript = nil
         guard !store.isMergedView, let account = store.currentAccount else { return }
@@ -308,8 +315,11 @@ struct InterviewDetailView: View {
         let client = HackerRankClient(account: account)
         async let fetchedDetail = try? client.interview(id: interview.id)
         async let fetchedTranscript = try? client.interviewTranscript(id: interview.id)
-        detail = await fetchedDetail
-        transcript = await fetchedTranscript
+        let loaded = await (fetchedDetail, fetchedTranscript)
+        guard !Task.isCancelled, identity == requestIdentity else { return }
+
+        detail = loaded.0
+        transcript = loaded.1
     }
 
     private func deleteInterview() async {
