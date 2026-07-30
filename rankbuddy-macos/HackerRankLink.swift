@@ -52,6 +52,10 @@ struct OpenLinkSheet: View {
         input.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var canOpen: Bool {
+        !trimmed.isEmpty && store.currentAccount != nil
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Open by URL or ID").font(.headline)
@@ -67,12 +71,24 @@ struct OpenLinkSheet: View {
             .pickerStyle(.segmented)
             .help("Used when you paste a bare ID rather than a full URL")
 
+            if store.currentAccount == nil {
+                Label(
+                    store.accounts.isEmpty
+                        ? "Add an account in Settings before opening HackerRank links."
+                        : "Select an account before opening this link.",
+                    systemImage: "person.crop.circle.badge.exclamationmark"
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            }
+
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
                 Button("Open") { open() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(trimmed.isEmpty)
+                    .disabled(!canOpen)
+                    .help(canOpen ? "Open in RankBuddy" : "Select an account and enter a URL or ID")
             }
         }
         .padding(20)
