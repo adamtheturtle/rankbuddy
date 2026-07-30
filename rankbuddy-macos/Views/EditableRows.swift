@@ -324,6 +324,7 @@ struct EditableDateRow: View {
             HStack(spacing: 6) {
                 DatePicker(label, selection: $draft)
                     .labelsHidden()
+                    .disabled(isSaving)
                     .onChange(of: draft) { _, new in
                         guard draft != .distantPast else { return }
 
