@@ -19,7 +19,7 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
     case candidate(TestCandidate)
     case question(Question, accountID: UUID?)
     case interview(Interview)
-    case user(User, accountID: UUID?)
+    case user(userID: String, userName: String, accountID: UUID?)
     case team(teamID: String, teamName: String, accountID: UUID?)
     case teamMembers(teamID: String, teamName: String, accountID: UUID?)
     case testCandidates(testID: String, testName: String, accountID: UUID?)
@@ -31,7 +31,7 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
         case let .candidate(candidate): candidate.fullName ?? candidate.email
         case let .question(question, _): question.name
         case let .interview(interview): interview.title ?? "Interview \(interview.id)"
-        case let .user(user, _): user.displayName
+        case let .user(_, userName, _): userName
         case let .team(_, teamName, _): teamName
         case let .teamMembers(_, teamName, _): "\(teamName) Members"
         case let .testCandidates(_, testName, _): "\(testName) Candidates"
@@ -56,6 +56,10 @@ nonisolated enum DetailWindowAccountResolution {
 }
 
 nonisolated extension DetailWindowValue {
+    static func userWindow(_ user: User, accountID: UUID?) -> Self {
+        .user(userID: user.id, userName: user.displayName, accountID: accountID)
+    }
+
     static func teamWindow(_ team: Team, accountID: UUID?) -> Self {
         .team(teamID: team.id, teamName: team.name, accountID: accountID)
     }
@@ -105,8 +109,12 @@ struct DetailWindowContent: View {
         case let .interview(interview):
             InterviewDetailView(interview: interview)
 
-        case let .user(user, accountID):
-            PersonDetailView(user: user, account: resolvedAccount(accountID))
+        case let .user(userID, _, accountID):
+            if let account = resolvedAccount(accountID) {
+                StandaloneUserDetailView(userID: userID, account: account)
+            } else {
+                NoAccountView()
+            }
 
         case let .team(teamID, _, accountID):
             if let account = resolvedAccount(accountID) {
@@ -138,6 +146,49 @@ struct DetailWindowContent: View {
     /// or the current account only when the value never carried an explicit account.
     private func resolvedAccount(_ id: UUID?) -> Account? {
         DetailWindowAccountResolution.resolve(id: id, accounts: store.accounts, current: store.currentAccount)
+    }
+}
+
+/// Reloads a standalone organisation user from its persisted identity so role, status, and
+/// permissions reflect HackerRank when a window is opened or restored.
+private struct StandaloneUserDetailView: View {
+    let userID: String
+    let account: Account
+
+    @State private var user: User?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Group {
+            if let user {
+                PersonDetailView(user: user, account: account) {
+                    Task { await load() }
+                }
+            } else if let errorMessage {
+                ContentUnavailableView {
+                    Label("Couldn’t Load User", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(errorMessage)
+                } actions: {
+                    Button("Try Again") { Task { await load() } }
+                }
+            } else {
+                ProgressView("Loading user…")
+            }
+        }
+        .task(id: userID) { await load() }
+    }
+
+    private func load() async {
+        errorMessage = nil
+        do {
+            user = try await HackerRankClient(account: account).user(id: userID)
+        } catch {
+            guard !Task.isCancelled else { return }
+
+            user = nil
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 }
 

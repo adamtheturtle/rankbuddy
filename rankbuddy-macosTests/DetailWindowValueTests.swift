@@ -42,21 +42,25 @@ struct DetailWindowValueTests {
         )?.id == current.id)
     }
 
-    @Test func `standalone user preserves its originating account`() throws {
-        let user = try JSONDecoder().decode(
-            User.self,
-            from: Data(#"{"id":"u1","email":"person@example.com"}"#.utf8)
-        )
+    @Test func `standalone user persists identity and originating account`() throws {
         let accountID = UUID()
-        let data = try JSONEncoder().encode(DetailWindowValue.user(user, accountID: accountID))
+        let value = DetailWindowValue.user(
+            userID: "u1",
+            userName: "Ada Lovelace",
+            accountID: accountID
+        )
+        let data = try JSONEncoder().encode(value)
         let restored = try JSONDecoder().decode(DetailWindowValue.self, from: data)
 
-        guard case let .user(_, restoredAccountID) = restored else {
+        guard case let .user(userID, userName, restoredAccountID) = restored else {
             Issue.record("expected a user detail value")
             return
         }
 
+        #expect(userID == "u1")
+        #expect(userName == "Ada Lovelace")
         #expect(restoredAccountID == accountID)
+        #expect(try #require(String(data: data, encoding: .utf8)).contains("email") == false)
     }
 
     @Test func `standalone team persists identity instead of a stale snapshot`() throws {

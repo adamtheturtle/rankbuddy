@@ -58,12 +58,15 @@ extension PeopleScreen {
                     copyLabel: "Copy Email",
                     copyText: scoped.item.email,
                     openInWindow: {
-                        openWindow(value: DetailWindowValue.user(scoped.item, accountID: scoped.account.id))
+                        openWindow(value: DetailWindowValue.userWindow(
+                            scoped.item,
+                            accountID: scoped.account.id
+                        ))
                     }
                 )
             },
             openInWindow: {
-                openWindow(value: DetailWindowValue.user($0.item, accountID: $0.account.id))
+                openWindow(value: DetailWindowValue.userWindow($0.item, accountID: $0.account.id))
             },
             rowTransfer: { scoped in
                 RowTransfer(title: scoped.item.displayName, subtitle: scoped.account.label, fields: [

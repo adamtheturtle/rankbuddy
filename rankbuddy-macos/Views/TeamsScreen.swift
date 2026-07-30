@@ -159,7 +159,7 @@ struct TeamMembersList: View {
                 }
             ],
             contextMenu: { memberMenuItems(for: $0) },
-            openInWindow: { openWindow(value: DetailWindowValue.user($0, accountID: account.id)) },
+            openInWindow: { openWindow(value: DetailWindowValue.userWindow($0, accountID: account.id)) },
             accessoryToolbar: { AnyView(addButton) },
             reloadToken: reloadToken,
             rowTransfer: { user in
@@ -210,7 +210,9 @@ struct TeamMembersList: View {
         var items = rowMenuItems(
             copyLabel: "Copy Email",
             copyText: member.email,
-            openInWindow: { openWindow(value: DetailWindowValue.user(member, accountID: account.id)) }
+            openInWindow: {
+                openWindow(value: DetailWindowValue.userWindow(member, accountID: account.id))
+            }
         )
         items.append(.separator)
         let isRemoving = removingMemberIDs.contains(member.id)
