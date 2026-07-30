@@ -237,7 +237,7 @@ enum SearchInterpreter {
         dateRangeOptions: [String]
     ) -> Interpretation {
         var facetSelections: [String: Set<String>] = [:]
-        let facetsByID = Dictionary(uniqueKeysWithValues: facets.map { ($0.id, $0) })
+        let facetsByID = uniquelyIdentifiedFacets(facets)
         var facetValueWords: Set<String> = []
         for (facetID, value) in parseFilters(reply.filters) {
             guard let facet = facetsByID[facetID],
@@ -254,6 +254,22 @@ enum SearchInterpreter {
 
         let groundedQuery = groundText(reply.keywords, facetValueWords: facetValueWords)
         return Interpretation(query: groundedQuery, dateRange: dateRange, facets: facetSelections)
+    }
+
+    /// Keeps only unambiguous facet IDs. Every descriptor sharing a duplicate ID is rejected so
+    /// grounding never depends on declaration order and malformed configuration cannot trap.
+    static func uniquelyIdentifiedFacets(_ facets: [FacetDescriptor]) -> [String: FacetDescriptor] {
+        var result: [String: FacetDescriptor] = [:]
+        var duplicates: Set<String> = []
+        for facet in facets where !duplicates.contains(facet.id) {
+            if result[facet.id] == nil {
+                result[facet.id] = facet
+            } else {
+                result[facet.id] = nil
+                duplicates.insert(facet.id)
+            }
+        }
+        return result
     }
 
     /// Parses the model's `filters` block ("facetId=value" lines) into pairs, tolerating commas,

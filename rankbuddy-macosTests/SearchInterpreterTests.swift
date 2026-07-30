@@ -162,4 +162,21 @@ struct SearchInterpreterTests {
         // "all" and "questions" are stop-words; status/date unsupported by the query.
         #expect(result.isEmpty)
     }
+
+    @Test func `ground safely rejects every facet with a duplicate id`() {
+        let duplicate = SearchInterpreter.FacetDescriptor(
+            id: "language", label: "Other Language", options: ["rust"]
+        )
+        let reply = SearchInterpreter.ParsedReply(filters: "language=python\nstatus=Active")
+        let result = SearchInterpreter.ground(
+            reply,
+            query: "active python",
+            facets: [languageFacet, duplicate, statusFacet],
+            dateRangeSupported: false,
+            dateRangeOptions: []
+        )
+
+        #expect(result.facets["language"] == nil)
+        #expect(result.facets["status"] == ["Active"])
+    }
 }
