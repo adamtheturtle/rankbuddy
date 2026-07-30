@@ -46,7 +46,16 @@ enum RankBuddyUserActivity {
         collection: FavoriteCollection,
         itemID: String
     ) -> URL? {
-        URL(string: "/x/\(collection.rawValue)/\(itemID)", relativeTo: base)?.absoluteURL
+        var allowed = CharacterSet.urlPathAllowed
+        allowed.remove(charactersIn: "/?#%")
+        guard var components = URLComponents(url: base, resolvingAgainstBaseURL: true),
+              let encodedItemID = itemID.addingPercentEncoding(withAllowedCharacters: allowed)
+        else { return nil }
+
+        components.percentEncodedPath = "/x/\(collection.rawValue)/\(encodedItemID)"
+        components.query = nil
+        components.fragment = nil
+        return components.url
     }
 
     /// Populates an activity to advertise the given item. The activity is eligible for Handoff

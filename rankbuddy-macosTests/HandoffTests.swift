@@ -22,6 +22,22 @@ struct HandoffTests {
         #expect(url?.absoluteString == "https://example.hackerrank.com/x/tests/t9")
     }
 
+    @Test func `web url encodes an item id as one path component`() {
+        let url = RankBuddyUserActivity.webURL(
+            base: base,
+            collection: .questions,
+            itemID: "folder/id?draft#part%done"
+        )
+
+        #expect(
+            url?.absoluteString
+                == "https://www.hackerrank.com/x/questions/folder%2Fid%3Fdraft%23part%25done"
+        )
+        #expect(url?.pathComponents.suffix(2) == ["questions", "folder/id?draft#part%done"])
+        #expect(url?.query == nil)
+        #expect(url?.fragment == nil)
+    }
+
     @Test func `configure marks the activity eligible and carries the routing info`() {
         let activity = NSUserActivity(activityType: RankBuddyUserActivity.activityType)
         let webURL = RankBuddyUserActivity.webURL(base: base, collection: .tests, itemID: "t1")
