@@ -34,12 +34,16 @@ struct CandidateBriefTests {
 
     @Test func `the brief never includes the candidate's name or email`() throws {
         let candidate = try candidate(#"""
-        {"id":"c1","email":"ada@example.com","full_name":"Ada Lovelace","score":92.0,"status":7}
+        {"id":"c1","email":"ada@example.com","full_name":"Ada Lovelace","score":92.0,"status":7,
+         "feedback":"Contact Grace Hopper at grace@example.com or +44 20 7946 0958."}
         """#)
 
         let joined = CandidateBrief.facts(for: candidate).joined(separator: "\n")
         #expect(!joined.contains("ada@example.com"))
         #expect(!joined.contains("Ada Lovelace"))
+        #expect(!joined.contains("Grace Hopper"))
+        #expect(!joined.contains("grace@example.com"))
+        #expect(!joined.contains("7946 0958"))
     }
 
     @Test func `reviewer feedback cannot inject model instructions`() throws {

@@ -13,8 +13,8 @@ import SwiftUI
 ///
 /// Pure, deterministic, and unit-tested: it turns the fields RankBuddy already shows on a
 /// candidate into a list of neutral signal statements. Deliberately excludes the candidate's
-/// name and email — the summary is about performance, not identity — so even though generation
-/// is on-device, no identifying detail is ever put in the prompt.
+/// name, email, and free-form reviewer feedback — the summary is about allowlisted performance
+/// signals, not identity — so arbitrary identifying detail is never put in the prompt.
 enum CandidateBrief {
     /// The neutral signal statements for a candidate, in reading order. Empty when there is
     /// nothing substantive to summarise (e.g. an invited-but-not-attempted candidate).
