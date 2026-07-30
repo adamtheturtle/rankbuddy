@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import AppKit
 import SwiftUI
 
 /// The Browser settings tab (#63), split out so `SettingsView.swift` stays under the
@@ -29,10 +30,25 @@ extension SettingsView {
             }
         }
         .formStyle(.grouped)
-        .onAppear {
-            BrowserSettings.invalidateInstalledBrowsers()
-            installedBrowsers = BrowserSettings.installedBrowsers()
+        .onAppear { refreshInstalledBrowsers() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshInstalledBrowsers()
         }
+        .onReceive(
+            NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didLaunchApplicationNotification)
+        ) { _ in
+            refreshInstalledBrowsers()
+        }
+        .onReceive(
+            NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didTerminateApplicationNotification)
+        ) { _ in
+            refreshInstalledBrowsers()
+        }
+    }
+
+    private func refreshInstalledBrowsers() {
+        BrowserSettings.invalidateInstalledBrowsers()
+        installedBrowsers = BrowserSettings.installedBrowsers()
     }
 
     /// The first picker row: "System Default (Safari)" when the default resolves, else just
