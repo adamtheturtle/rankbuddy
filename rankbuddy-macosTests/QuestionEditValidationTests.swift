@@ -33,6 +33,13 @@ struct QuestionEditValidationTests {
         #expect(QuestionCreationValidation.duration(from: " 30\n") == 30)
     }
 
+    @Test func `question creation max score rejects non-numeric text`() {
+        #expect(QuestionCreationValidation.isValidMaxScoreText(""))
+        #expect(QuestionCreationValidation.isValidMaxScoreText(" 10.5\n"))
+        #expect(!QuestionCreationValidation.isValidMaxScoreText("ten"))
+        #expect(QuestionCreationValidation.maxScore(from: " 10.5\n") == 10.5)
+    }
+
     @Test func `comma-separated values deduplicate without losing first spelling`() {
         #expect(splitList("swift, Swift, SWIFT, résumé, resume") == ["swift", "résumé"])
         #expect(splitList(" , ") == nil)

@@ -84,6 +84,10 @@ struct NewQuestionSheet: View {
             errorMessage = "Recommended duration must be a whole number of zero or more minutes."
             return
         }
+        guard QuestionCreationValidation.isValidMaxScoreText(maxScore) else {
+            errorMessage = "Max score must be a number."
+            return
+        }
 
         isSending = true
         errorMessage = nil
@@ -97,7 +101,7 @@ struct NewQuestionSheet: View {
                     problemStatement: nonBlank(problemStatement),
                     recommendedDuration: QuestionCreationValidation.duration(from: duration),
                     tags: splitList(tags),
-                    maxScore: Double(maxScore.trimmingCharacters(in: .whitespaces))
+                    maxScore: QuestionCreationValidation.maxScore(from: maxScore)
                 )
             )
             onCreated()

@@ -28,4 +28,13 @@ nonisolated enum QuestionCreationValidation {
     static func duration(from text: String) -> Int? {
         Int(text.trimmingCharacters(in: .whitespacesAndNewlines))
     }
+
+    static func isValidMaxScoreText(_ text: String) -> Bool {
+        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.isEmpty || Double(normalized) != nil
+    }
+
+    static func maxScore(from text: String) -> Double? {
+        Double(text.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
 }
