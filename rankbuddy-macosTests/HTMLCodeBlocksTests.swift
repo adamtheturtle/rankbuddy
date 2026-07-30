@@ -33,6 +33,14 @@ struct HTMLCodeBlocksTests {
         #expect(HTMLCodeBlocks.decodeEntities("&amp;lt;") == "&lt;")
     }
 
+    @Test func `decimal hex and non-ASCII numeric entities decode`() {
+        #expect(HTMLCodeBlocks.decodeEntities("&#60;tag&#x3E; &#x1F680; &#955;") == "<tag> 🚀 λ")
+    }
+
+    @Test func `invalid numeric entities remain literal`() {
+        #expect(HTMLCodeBlocks.decodeEntities("&#xD800; &#1114112; &#nope;") == "&#xD800; &#1114112; &#nope;")
+    }
+
     @Test func `br and block tags inside code become newlines`() {
         let html = "<pre>line one<br>line two</pre>"
         #expect(HTMLCodeBlocks.segments(html) == [.code(languageHint: nil, code: "line one\nline two")])

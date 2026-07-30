@@ -184,14 +184,44 @@ nonisolated enum HTMLCodeBlocks {
 
     /// Decodes the HTML entities that appear in escaped source code.
     static func decodeEntities(_ string: String) -> String {
-        var result = string
-        let replacements = [
-            ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&#39;", "'"), ("&apos;", "'"),
-            ("&nbsp;", " "), ("&#x27;", "'"), ("&#x2F;", "/"), ("&#47;", "/"), ("&amp;", "&")
+        let named = [
+            "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "nbsp": " ", "amp": "&"
         ]
-        for (entity, character) in replacements {
-            result = result.replacingOccurrences(of: entity, with: character)
+        var result = ""
+        var index = string.startIndex
+        while index < string.endIndex {
+            guard string[index] == "&",
+                  let semicolon = string[index...].firstIndex(of: ";")
+            else {
+                result.append(string[index])
+                string.formIndex(after: &index)
+                continue
+            }
+
+            let bodyStart = string.index(after: index)
+            let body = String(string[bodyStart ..< semicolon])
+            if let decoded = named[body] ?? numericEntity(body) {
+                result.append(contentsOf: decoded)
+                index = string.index(after: semicolon)
+            } else {
+                result.append("&")
+                index = bodyStart
+            }
         }
         return result
+    }
+
+    private static func numericEntity(_ body: String) -> String? {
+        guard body.first == "#" else { return nil }
+
+        let digits = body.dropFirst()
+        let isHex = digits.first == "x" || digits.first == "X"
+        let number = isHex ? digits.dropFirst() : digits[...]
+        guard !number.isEmpty,
+              let value = UInt32(number, radix: isHex ? 16 : 10),
+              let scalar = UnicodeScalar(value)
+        else { return nil }
+
+        return String(Character(scalar))
     }
 }
