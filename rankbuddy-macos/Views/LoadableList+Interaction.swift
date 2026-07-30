@@ -216,6 +216,16 @@ extension LoadableList {
         persistSelection()
     }
 
+    /// Filtering must not leave commands or a detail pane targeting a row hidden from the result.
+    func reconcileSelectionWithVisibleItems() {
+        let visibleIDs = Set(visibleItems.map(\.id))
+        selection.formIntersection(visibleIDs)
+        guard let detailItem, !visibleIDs.contains(detailItem.id) else { return }
+
+        self.detailItem = nil
+        persistSelection()
+    }
+
     /// Persists the current top row as the free-scroll anchor for restoration (#19). Load-more
     /// is driven separately by `onReachEnd` (the bottom of the viewport), not from here.
     func persistScrollAnchor(_ topID: Item.ID?) {

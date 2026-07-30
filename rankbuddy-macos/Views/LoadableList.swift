@@ -300,6 +300,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 .onChange(of: selectedFacets) {
                     ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))
                 }
+                .onChange(of: clientFilterToken) {
+                    reconcileSelectionWithVisibleItems()
+                }
                 // Selecting a row (single-click) drives the detail pane and persists it (#53/#19).
                 .onChange(of: selection) {
                     syncDetail()
