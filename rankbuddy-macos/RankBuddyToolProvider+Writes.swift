@@ -489,7 +489,10 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func updateUserTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let userID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
+        guard let rawUserID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
+        guard let userID = Self.normalizedOptionalString(rawUserID) else {
+            return errorResult("`user_id` must not be empty.")
+        }
         guard Self.hasUserUpdate(arguments) else {
             return errorResult("At least one user field must be provided.")
         }
