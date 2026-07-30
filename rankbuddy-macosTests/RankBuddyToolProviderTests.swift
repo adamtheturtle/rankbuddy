@@ -1160,6 +1160,18 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("ISO-8601"))
     }
 
+    @Test func `schedule_interview accepts fractional seconds`() async {
+        let result = await writeProvider().callTool(
+            "schedule_interview",
+            arguments: [
+                "title": .string("Pairing"),
+                "from": .string("2099-07-01T14:00:00.123Z")
+            ]
+        )
+
+        #expect(result.isError != true)
+    }
+
     @Test func `schedule_interview rejects a blank title`() async {
         let result = await writeProvider().callTool(
             "schedule_interview",

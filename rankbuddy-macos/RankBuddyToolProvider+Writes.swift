@@ -1041,7 +1041,7 @@ extension RankBuddyToolProvider {
         guard let title = Self.normalizedOptionalString(rawTitle) else {
             return errorResult("`title` must not be empty.")
         }
-        guard let from = ISO8601DateFormatter().date(from: fromText) else {
+        guard let from = DisplayFormat.parseDate(fromText) else {
             return errorResult("`from` must be an ISO-8601 timestamp, e.g. 2026-07-01T14:00:00Z.")
         }
         guard from > Date() else {
