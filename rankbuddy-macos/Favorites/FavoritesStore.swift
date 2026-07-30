@@ -141,6 +141,11 @@ final class FavoritesStore {
         favorites.filter { $0.accountID == accountID }.reversed()
     }
 
+    /// All favourites belonging to the selected account scope, most-recently-added first.
+    func favorites(accountIDs: Set<String>) -> [FavoriteRef] {
+        favorites.filter { accountIDs.contains($0.accountID) }.reversed()
+    }
+
     /// Drops every favourite whose account is no longer configured, so a removed account
     /// leaves no dangling navigation entries (#25). No-op when nothing changes.
     func prune(toAccountIDs ids: Set<String>) {

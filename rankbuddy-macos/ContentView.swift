@@ -138,8 +138,11 @@ struct ContentView: View {
         }
     }
 
-    /// The current account's favourites, shown as a sidebar section (#41).
+    /// Favourites in the selected account scope, shown as a sidebar section (#41).
     private var accountFavorites: [FavoriteRef] {
+        if store.isMergedView {
+            return favorites.favorites(accountIDs: Set(store.accounts.map(\.id).map(\.uuidString)))
+        }
         guard let accountID = store.currentAccount?.id.uuidString else { return [] }
 
         return favorites.favorites(accountID: accountID)
@@ -155,8 +158,21 @@ struct ContentView: View {
     /// itself a drop target, so dropping a dragged list row anywhere over the section pins it (#89).
     private func favoriteRow(_ ref: FavoriteRef) -> some View {
         Button { openFavorite(ref) } label: {
-            Label(ref.title, systemImage: ref.collection.systemImage)
+            Label {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(ref.title)
+                    if store.isMergedView, let account = store.accounts.first(where: {
+                        $0.id.uuidString == ref.accountID
+                    }) {
+                        Text(account.label)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 .lineLimit(1)
+            } icon: {
+                Image(systemName: ref.collection.systemImage)
+            }
         }
         .buttonStyle(.plain)
         .contextMenu {

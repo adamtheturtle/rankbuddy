@@ -59,6 +59,19 @@ struct FavoritesStoreTests {
         #expect(!store.isFavorite(collection: .tests, accountID: "acc2", itemID: "t1"))
     }
 
+    @Test func `favourites can be read across an account scope`() {
+        let store = FavoritesStore(defaults: makeDefaults(#function))
+        store.replace(with: [
+            ref("acc1", .tests, "t1", "One"),
+            ref("removed", .tests, "t2", "Removed"),
+            ref("acc2", .questions, "q1", "Two")
+        ])
+
+        let scoped = store.favorites(accountIDs: ["acc1", "acc2"])
+
+        #expect(scoped.map(\.itemID) == ["q1", "t1"])
+    }
+
     @Test func `most recently added favourite comes first`() {
         let store = FavoritesStore(defaults: makeDefaults(#function))
         store.toggle(ref("acc1", .tests, "t1", "First"))
