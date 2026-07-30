@@ -52,7 +52,7 @@ extension LoadableList {
         let generation = loadGeneration
         let page: Page<Item>
         do {
-            page = try await loadPage(nil)
+            page = try await loadCurrentPage(nil)
         } catch {
             guard generation == loadGeneration else { return }
 
@@ -63,10 +63,12 @@ extension LoadableList {
 
         items = page.items
         backgroundRefreshError = nil
-        onItemsLoaded(page.items)
+        if !isServerSearching {
+            onItemsLoaded(page.items)
+        }
         nextCursor = page.next
         totalCount = page.totalCount
-        await cacheFirstPage(page, for: cacheKey)
+        await cacheFirstPage(page, for: isServerSearching ? nil : cacheKey)
         // Refresh the detail from the replacement row, or atomically clear both detail and
         // selection if the item disappeared elsewhere.
         reconcilePreservedSelection(in: items)
