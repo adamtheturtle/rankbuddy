@@ -26,6 +26,19 @@ struct EnrichableEntity {
     let keywordSource: String
 }
 
+nonisolated enum SpotlightEnrichmentRetry {
+    static let maximumAttempts = 3
+
+    static func nextEligibleDate(after attempts: Int, now: Date) -> Date {
+        let exponent = max(0, min(attempts - 1, maximumAttempts - 1))
+        return now.addingTimeInterval(30 * pow(2, Double(exponent)))
+    }
+
+    static func canAttempt(attempts: Int, nextEligibleDate: Date, now: Date) -> Bool {
+        attempts < maximumAttempts && now >= nextEligibleDate
+    }
+}
+
 /// Builds the on-device text a RankBuddy object's Spotlight keywords are generated from (#92).
 ///
 /// Pure and deterministic (unit-tested): it assembles the list fields RankBuddy *already*
@@ -96,9 +109,11 @@ enum SpotlightKeywordEnricher {
     /// dropped remainder is logged rather than silently skipped.
     private static let maxEnrichmentsPerPass = 50
 
-    /// Entity ids enriched (or attempted) this process, so repeated suggestion requests don't
+    /// Entity ids successfully indexed this process, so repeated suggestion requests don't
     /// re-run the model over items already covered.
     private static var enrichedIDs: Set<String> = []
+    private static var inFlightIDs: Set<String> = []
+    private static var failures: [String: (attempts: Int, nextEligibleDate: Date)] = [:]
     /// New requests coalesce here while a model generation is in flight. Keying by entity id
     /// keeps repeated suggestion batches from duplicating expensive work.
     private static var pendingByID: [String: EnrichableEntity] = [:]
@@ -113,7 +128,8 @@ enum SpotlightKeywordEnricher {
     static func enrich(_ enrichables: [EnrichableEntity]) async {
         guard isAvailable else { return }
 
-        let pending = enrichables.filter { !$0.keywordSource.isEmpty && !enrichedIDs.contains($0.entity.id) }
+        let now = Date()
+        let pending = enrichables.filter { shouldQueue($0, now: now) }
         guard !pending.isEmpty else { return }
 
         let bounded = Array(pending.prefix(maxEnrichmentsPerPass))
@@ -137,14 +153,46 @@ enum SpotlightKeywordEnricher {
         let index = CSSearchableIndex(name: RankBuddySpotlightIndex.name)
         while let (id, enrichable) = pendingByID.first {
             pendingByID[id] = nil
-            // Record the attempt up front so a no-keyword or failed item isn't retried forever.
-            enrichedIDs.insert(id)
+            inFlightIDs.insert(id)
             let keywords = await SpotlightKeywordGenerator.keywords(from: enrichable.keywordSource)
-            guard !keywords.isEmpty else { continue }
+            guard !keywords.isEmpty else {
+                inFlightIDs.remove(id)
+                recordFailure(for: id)
+                continue
+            }
 
             var entity = enrichable.entity
             entity.keywords = keywords
-            try? await index.indexAppEntities([entity])
+            do {
+                try await index.indexAppEntities([entity])
+                enrichedIDs.insert(id)
+                failures[id] = nil
+            } catch {
+                recordFailure(for: id)
+            }
+            inFlightIDs.remove(id)
         }
+    }
+
+    private static func shouldQueue(_ enrichable: EnrichableEntity, now: Date) -> Bool {
+        let id = enrichable.entity.id
+        guard !enrichable.keywordSource.isEmpty, !enrichedIDs.contains(id), !inFlightIDs.contains(id) else {
+            return false
+        }
+        guard let failure = failures[id] else { return true }
+
+        return SpotlightEnrichmentRetry.canAttempt(
+            attempts: failure.attempts,
+            nextEligibleDate: failure.nextEligibleDate,
+            now: now
+        )
+    }
+
+    private static func recordFailure(for id: String) {
+        let attempts = (failures[id]?.attempts ?? 0) + 1
+        failures[id] = (
+            attempts,
+            SpotlightEnrichmentRetry.nextEligibleDate(after: attempts, now: Date())
+        )
     }
 }

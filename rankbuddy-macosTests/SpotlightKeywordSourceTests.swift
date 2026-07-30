@@ -85,4 +85,16 @@ struct SpotlightKeywordSourceTests {
         """#)
         #expect(SpotlightKeywordSource.text(for: titleOnly) == nil)
     }
+
+    @Test func `enrichment retries use bounded exponential backoff`() {
+        let now = Date(timeIntervalSince1970: 1000)
+        let first = SpotlightEnrichmentRetry.nextEligibleDate(after: 1, now: now)
+        let second = SpotlightEnrichmentRetry.nextEligibleDate(after: 2, now: now)
+
+        #expect(first == now.addingTimeInterval(30))
+        #expect(second == now.addingTimeInterval(60))
+        #expect(!SpotlightEnrichmentRetry.canAttempt(attempts: 1, nextEligibleDate: first, now: now))
+        #expect(SpotlightEnrichmentRetry.canAttempt(attempts: 1, nextEligibleDate: first, now: first))
+        #expect(!SpotlightEnrichmentRetry.canAttempt(attempts: 3, nextEligibleDate: now, now: now))
+    }
 }
