@@ -26,6 +26,10 @@ extension URL {
 /// In-app browsing isn't offered: RankBuddy has no embedded web view, so every external link
 /// opens in a real browser; this just decides which one and whether it steals focus.
 enum BrowserSettings {
+    private struct BrowserOpenError: LocalizedError {
+        let errorDescription: String?
+    }
+
     /// `@AppStorage` key: the chosen browser's bundle id, or empty/absent for the system default.
     static let defaultBrowserKey = "rb.defaultBrowserBundleID"
     /// `@AppStorage` key: whether links open without bringing the browser to the front.
@@ -117,21 +121,58 @@ enum BrowserSettings {
     @MainActor
     static func open(_ url: URL, defaults: UserDefaults = .standard) {
         guard isOpenableWebURL(url) else {
-            NSWorkspace.shared.open(url)
+            if !NSWorkspace.shared.open(url) {
+                presentOpenFailure(url: url, error: nil, canRetryWithDefault: false)
+            }
             return
         }
 
         let config = NSWorkspace.OpenConfiguration()
         config.activates = !defaults.bool(forKey: backgroundKey)
 
-        let appURL = validatedBrowserBundleID(defaults: defaults)
+        let preferredAppURL = validatedBrowserBundleID(defaults: defaults)
             .flatMap(NSWorkspace.shared.urlForApplication(withBundleIdentifier:))
-            ?? NSWorkspace.shared.urlForApplication(toOpen: url)
+        let appURL = preferredAppURL ?? NSWorkspace.shared.urlForApplication(toOpen: url)
 
         if let appURL {
-            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: config)
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: config) { application, error in
+                guard application == nil || error != nil else { return }
+
+                Task { @MainActor in
+                    presentOpenFailure(
+                        url: url,
+                        error: error,
+                        canRetryWithDefault: preferredAppURL != nil
+                    )
+                }
+            }
+        } else if !NSWorkspace.shared.open(url) {
+            presentOpenFailure(url: url, error: nil, canRetryWithDefault: false)
+        }
+    }
+
+    @MainActor
+    private static func presentOpenFailure(
+        url: URL,
+        error: Error?,
+        canRetryWithDefault: Bool
+    ) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Couldn’t Open Link"
+        let reason = error?.localizedDescription
+            ?? BrowserOpenError(errorDescription: "No application accepted the URL.").localizedDescription
+        alert.informativeText = "\(url.absoluteString)\n\n\(reason)"
+        if canRetryWithDefault {
+            alert.addButton(withTitle: "Try System Default")
+            alert.addButton(withTitle: "Cancel")
+            if alert.runModal() == .alertFirstButtonReturn,
+               !NSWorkspace.shared.open(url) {
+                presentOpenFailure(url: url, error: nil, canRetryWithDefault: false)
+            }
         } else {
-            NSWorkspace.shared.open(url)
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
         }
     }
 }
