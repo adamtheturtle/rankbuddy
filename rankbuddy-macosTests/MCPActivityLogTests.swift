@@ -3,6 +3,7 @@
 //  rankbuddy-macosTests
 //
 
+import Dispatch
 import Foundation
 @testable import rankbuddy_macos
 import Testing
@@ -60,5 +61,21 @@ struct MCPActivityLogTests {
         #expect(MCPActivityLog.entries(from: url).count == MCPActivityLog.maxEntries)
         let contents = try String(contentsOf: url, encoding: .utf8)
         #expect(contents.split(separator: "\n").count == MCPActivityLog.maxEntries)
+    }
+
+    @Test func `concurrent recorders do not lose entries`() throws {
+        let url = tempURL()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let count = 100
+
+        DispatchQueue.concurrentPerform(iterations: count) { index in
+            MCPActivityLog.record(tool: "tool-\(index)", detail: "detail-\(index)", to: url)
+        }
+
+        let entries = MCPActivityLog.entries(from: url)
+        #expect(entries.count == count)
+        #expect(Set(entries.map(\.tool)).count == count)
+        let contents = try String(contentsOf: url, encoding: .utf8)
+        #expect(contents.split(separator: "\n").count == count)
     }
 }

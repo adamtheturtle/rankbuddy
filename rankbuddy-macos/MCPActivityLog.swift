@@ -49,7 +49,7 @@ nonisolated enum MCPActivityLog {
     /// Appends a tool call to the log. Called from the `--mcp` subprocess.
     static func record(tool: String, detail: String, to url: URL = fileURL) {
         let stamp = ISO8601DateFormatter().string(from: Date())
-        _ = withLock(for: url, mode: LOCK_SH) {
+        _ = withLock(for: url, mode: LOCK_EX) {
             store(for: url).append(MCPActivityEntry(timestamp: stamp, tool: tool, detail: detail))
         }
     }
@@ -63,7 +63,7 @@ nonisolated enum MCPActivityLog {
 
     /// The most recent entries, newest first, capped at `limit`.
     static func entries(limit: Int = maxEntries, from url: URL = fileURL) -> [MCPActivityEntry] {
-        withLock(for: url, mode: LOCK_SH) {
+        withLock(for: url, mode: LOCK_EX) {
             let store = store(for: url)
             let entries = Array(store.load().suffix(limit).reversed())
             store.trim()
@@ -72,7 +72,7 @@ nonisolated enum MCPActivityLog {
     }
 
     /// Clears the log at an exclusive generation boundary. An append that finishes before this
-    /// lock is removed; one that acquires its shared lock afterwards writes the new generation.
+    /// lock is removed; one that acquires its lock afterwards writes the new generation.
     static func clear(_ url: URL = fileURL) {
         _ = withLock(for: url, mode: LOCK_EX) {
             store(for: url).clear()
