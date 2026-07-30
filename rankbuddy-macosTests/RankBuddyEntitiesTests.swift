@@ -3,6 +3,8 @@
 //  rankbuddy-macosTests
 //
 
+import BuddyAppKit
+import CoreSpotlight
 import Foundation
 import HackerRankKit
 @testable import rankbuddy_macos

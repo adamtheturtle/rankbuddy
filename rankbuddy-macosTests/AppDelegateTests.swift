@@ -25,9 +25,14 @@ struct AppDelegateTests {
     @Test func `dock items use the registered main window presenter`() {
         var presentations = 0
         let delegate = AppDelegate(showMainWindow: { presentations += 1 })
-        let item = delegate.applicationDockMenu(.shared)?.items.first
+        guard let item = delegate.applicationDockMenu(.shared)?.items.first,
+              let action = item.action
+        else {
+            Issue.record("Expected an actionable Dock menu item")
+            return
+        }
 
-        item?.performClick(nil)
+        NSApp.sendAction(action, to: item.target, from: item)
 
         #expect(presentations == 1)
     }

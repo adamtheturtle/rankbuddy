@@ -6,6 +6,7 @@
 @testable import rankbuddy_macos
 import Testing
 
+@MainActor
 struct QuestionEditValidationTests {
     @Test func `max score rejects non-finite numbers`() {
         #expect(QuestionEditValidation.maxScore(from: "10.5") == 10.5)

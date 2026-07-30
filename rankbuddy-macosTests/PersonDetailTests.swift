@@ -7,6 +7,7 @@ import Foundation
 @testable import rankbuddy_macos
 import Testing
 
+@MainActor
 struct PersonDetailTests {
     @Test func `only active users remain lockable`() {
         #expect(UserLockAvailability.canLock(status: "active", activated: true))
