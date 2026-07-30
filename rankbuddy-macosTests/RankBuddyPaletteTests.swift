@@ -5,6 +5,7 @@
 
 import BuddyAppKit
 import CommandPaletteKit
+import HackerRankKit
 @testable import rankbuddy_macos
 import SwiftUI
 import Testing
@@ -138,5 +139,17 @@ struct RankBuddyPaletteTests {
             selection: makeBinding(SectionBox())
         )
         #expect(!results.contains { $0.id.hasPrefix("favorite.") })
+    }
+
+    @Test func `palette discovery follows cursors to its bound`() async throws {
+        let items = try await RankBuddyPalette.discoverItems(pageCap: 3) { cursor in
+            switch cursor {
+            case nil: Page(items: [1], next: "page-2")
+            case "page-2": Page(items: [2], next: "page-3")
+            default: Page(items: [3], next: "page-4")
+            }
+        }
+
+        #expect(items == [1, 2, 3])
     }
 }

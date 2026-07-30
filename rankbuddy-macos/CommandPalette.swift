@@ -21,6 +21,27 @@ final class PaletteModel {
 /// shared `CommandPaletteKit` package renders, ranks, and navigates. Only `CommandPaletteKit`
 /// and RankBuddy's own models are used — no CoderPad/PadBuddy types.
 enum RankBuddyPalette {
+    /// Bounds eager palette discovery while still covering far more than one API page.
+    static let discoveryPageCap = 20
+
+    static func discoverItems<Item: Sendable>(
+        pageCap: Int = discoveryPageCap,
+        loadPage: (String?) async throws -> Page<Item>
+    ) async throws -> [Item] {
+        var items: [Item] = []
+        var cursor: String?
+        var pagesLoaded = 0
+
+        repeat {
+            let page = try await loadPage(cursor)
+            items.append(contentsOf: page.items)
+            cursor = page.next
+            pagesLoaded += 1
+        } while cursor != nil && pagesLoaded < pageCap
+
+        return items
+    }
+
     /// Candidates available without a network round-trip: the sidebar sections, the
     /// configured accounts, and app commands. Section and command rows show on the empty
     /// query; accounts are search-only so they don't crowd the default list.
@@ -113,10 +134,12 @@ enum RankBuddyPalette {
         selection: Binding<SidebarSection>
     ) async -> [PaletteResult] {
         guard let account = store.currentAccount,
-              let page = try? await HackerRankClient(account: account).testsPage()
+              let tests = try? await discoverItems(
+                  loadPage: { try await HackerRankClient(account: account).testsPage(after: $0) }
+              )
         else { return [] }
 
-        return page.items.map { test in
+        return tests.map { test in
             PaletteResult(
                 id: "test.\(test.id)",
                 title: test.name,
