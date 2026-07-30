@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import Foundation
 import HackerRankKit
 import SwiftUI
 
@@ -30,6 +31,20 @@ enum CandidateInviteValidation {
 
     static func isValid(additionalTime: Int?) -> Bool {
         additionalTime.map(additionalTimeRange.contains) ?? true
+    }
+
+    static func validityOrderIssue(validFrom: String?, validUntil: String?) -> String? {
+        guard
+            let validFrom,
+            let validUntil,
+            let start = parsedTimestamp(validFrom),
+            let end = parsedTimestamp(validUntil),
+            end <= start
+        else {
+            return nil
+        }
+
+        return "Valid until must be later than Valid from."
     }
 
     static func normalizedFullName(_ value: String) -> String? {
@@ -71,6 +86,15 @@ enum CandidateInviteValidation {
             return "ATS requisition ID can be at most \(maxIdentifierLength) characters."
         }
         return nil
+    }
+
+    private static func parsedTimestamp(_ value: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        if let date = formatter.date(from: value) {
+            return date
+        }
+        formatter.formatOptions.insert(.withFractionalSeconds)
+        return formatter.date(from: value)
     }
 }
 
@@ -124,7 +148,18 @@ struct InviteCandidateSheet: View {
     }
 
     private var canInvite: Bool {
-        isEmailValid && evaluatorEmailValid && additionalTimeValid && textValidationIssue == nil
+        isEmailValid
+            && evaluatorEmailValid
+            && additionalTimeValid
+            && validityOrderIssue == nil
+            && textValidationIssue == nil
+    }
+
+    private var validityOrderIssue: String? {
+        CandidateInviteValidation.validityOrderIssue(
+            validFrom: trimmed(validFrom),
+            validUntil: trimmed(validUntil)
+        )
     }
 
     private var textValidationIssue: String? {
@@ -176,6 +211,9 @@ struct InviteCandidateSheet: View {
                 } footer: {
                     if !additionalTimeValid {
                         Text("Additional time must be a whole number from 0 to 1,440 minutes.")
+                            .foregroundStyle(.red)
+                    } else if let validityOrderIssue {
+                        Text(validityOrderIssue)
                             .foregroundStyle(.red)
                     } else if !evaluatorEmailValid {
                         Text("Evaluator email must look like an email address.")

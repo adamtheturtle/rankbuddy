@@ -86,4 +86,23 @@ struct InviteCandidateTests {
         #expect(!CandidateInviteValidation.isValid(additionalTime: 1441))
         #expect(!CandidateInviteValidation.isValid(additionalTime: Int.max))
     }
+
+    @Test func `invitation validity window must move forward`() {
+        #expect(CandidateInviteValidation.validityOrderIssue(
+            validFrom: "2026-08-01T10:00:00Z",
+            validUntil: "2026-08-01T11:00:00Z"
+        ) == nil)
+        #expect(CandidateInviteValidation.validityOrderIssue(
+            validFrom: "2026-08-01T10:00:00.500Z",
+            validUntil: "2026-08-01T10:00:00.500Z"
+        ) != nil)
+        #expect(CandidateInviteValidation.validityOrderIssue(
+            validFrom: "2026-08-01T10:00:00Z",
+            validUntil: "2026-08-01T09:59:59Z"
+        ) != nil)
+        #expect(CandidateInviteValidation.validityOrderIssue(
+            validFrom: "not-yet-validated",
+            validUntil: "also-not-yet-validated"
+        ) == nil)
+    }
 }
