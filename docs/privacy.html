@@ -29,7 +29,23 @@
     </ul>
 
     <h2>Your data, your control</h2>
-    <p>Removing an account from RankBuddy deletes its stored token from the Keychain. Uninstalling the app removes its local preferences.</p>
+    <p>Removing an account in RankBuddy removes that account and token from RankBuddy's current Keychain account list. Moving the RankBuddy app to the Trash does <strong>not</strong> automatically erase its other data.</p>
+    <p>After the app is removed, the following may remain:</p>
+    <ul>
+      <li>preferences, cached API responses, and the local MCP activity log in RankBuddy's sandbox container;</li>
+      <li>RankBuddy account or recovery items in the macOS Keychain;</li>
+      <li>favourites synchronized through iCloud key-value storage; and</li>
+      <li>RankBuddy MCP entries that you installed in another application's configuration.</li>
+    </ul>
+    <p>For a complete removal:</p>
+    <ol>
+      <li>While RankBuddy is still installed, remove its accounts in Account Settings and remove all favourites so those changes can synchronize to iCloud.</li>
+      <li>Quit RankBuddy and remove the app.</li>
+      <li>Delete only RankBuddy's container at <code>~/Library/Containers/com.adamdangoor.rankbuddy</code>. If present, also delete <code>~/Library/Preferences/com.adamdangoor.rankbuddy.plist</code>.</li>
+      <li>Open Keychain Access, search for <code>com.adamdangoor.rankbuddy</code>, inspect the results, and delete the RankBuddy items.</li>
+      <li>Remove the RankBuddy MCP server entry from each MCP client where you installed it.</li>
+    </ol>
+    <p>Deleting these locations is permanent. Check each path and Keychain item carefully before removal; do not delete the surrounding Library, Containers, Preferences, or Keychain contents.</p>
 
     <h2>Contact</h2>
     <p>Questions about privacy can be raised on the project's issue tracker.</p>
