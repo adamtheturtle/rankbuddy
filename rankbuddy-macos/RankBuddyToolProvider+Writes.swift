@@ -677,8 +677,11 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func addTeamMemberTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
+        guard let rawTeamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
         guard let rawEmail = stringArgument(arguments, "email") else { return missingArgument("email") }
+        guard let teamID = Self.normalizedOptionalString(rawTeamID) else {
+            return errorResult("`team_id` must not be empty.")
+        }
 
         let email = rawEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         guard EmailValidation.isLikelyValid(email) else {
