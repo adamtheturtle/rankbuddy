@@ -11,9 +11,15 @@ import Foundation
 /// user gets immediate feedback. The HackerRank API is the real authority on whether an
 /// address is acceptable — this never tries to fully implement RFC 5322.
 enum EmailValidation {
+    private static let localCharacters = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!#$%&'*+-/=?^_`{|}~"
+    )
+    private static let domainCharacters = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-"
+    )
+
     /// Whether `raw` looks like a plausible email: after trimming, exactly one `@`, a
-    /// non-empty local part, and a domain that contains a dot but neither starts nor ends
-    /// with one (so `a@b`, `a@b.`, and `a@.b` are rejected, while `a@b.com` passes).
+    /// conservatively valid local part, and a dotted DNS-style domain.
     static func isLikelyValid(_ raw: String) -> Bool {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         let parts = trimmed.split(separator: "@", omittingEmptySubsequences: false)
@@ -21,6 +27,20 @@ enum EmailValidation {
 
         let local = parts[0]
         let domain = parts[1]
-        return !local.isEmpty && domain.contains(".") && !domain.hasPrefix(".") && !domain.hasSuffix(".")
+        guard
+            !local.isEmpty,
+            local.unicodeScalars.allSatisfy(localCharacters.contains),
+            !local.hasPrefix("."),
+            !local.hasSuffix("."),
+            !local.contains(".."),
+            domain.unicodeScalars.allSatisfy(domainCharacters.contains)
+        else {
+            return false
+        }
+
+        let labels = domain.split(separator: ".", omittingEmptySubsequences: false)
+        return labels.count >= 2 && labels.allSatisfy {
+            !$0.isEmpty && !$0.hasPrefix("-") && !$0.hasSuffix("-")
+        }
     }
 }

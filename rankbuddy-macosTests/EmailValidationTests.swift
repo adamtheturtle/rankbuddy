@@ -31,7 +31,16 @@ struct EmailValidationTests {
         "ada@trailing.",
         "ada@.leading",
         "two@@example.com",
-        "ada@example@com"
+        "ada@example@com",
+        "a b@example.com",
+        "a@exa mple.com",
+        "a\u{0000}b@example.com",
+        "a\nb@example.com",
+        ".ada@example.com",
+        "ada.@example.com",
+        "ada..lovelace@example.com",
+        "ada@-example.com",
+        "ada@example-.com"
     ])
     func `malformed addresses are rejected`(_ email: String) {
         #expect(!EmailValidation.isLikelyValid(email))
