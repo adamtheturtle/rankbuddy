@@ -22,4 +22,23 @@ struct ServicesProviderTests {
         // A bare id can't be typed without the chooser, so the Service ignores it.
         #expect(ServicesProvider.target(for: "bare-id", currentAccountID: "ACC") == nil)
     }
+
+    @Test func `service resolution explains every rejected input`() {
+        #expect(ServicesProvider.resolve(
+            text: nil,
+            currentAccountID: "ACC"
+        ) == .failure(.missingText))
+        #expect(ServicesProvider.resolve(
+            text: " \n ",
+            currentAccountID: "ACC"
+        ) == .failure(.missingText))
+        #expect(ServicesProvider.resolve(
+            text: "https://www.hackerrank.com/x/tests/t1",
+            currentAccountID: nil
+        ) == .failure(.missingAccount))
+        #expect(ServicesProvider.resolve(
+            text: "not a HackerRank URL",
+            currentAccountID: "ACC"
+        ) == .failure(.unsupportedURL))
+    }
 }
