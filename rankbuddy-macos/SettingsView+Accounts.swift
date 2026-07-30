@@ -11,6 +11,7 @@ import SwiftUI
 /// account's editor is shown inline in the detail pane rather than in a modal sheet.
 struct AccountsSettingsView: View {
     @Environment(AccountStore.self) private var store
+    @State private var recovery = AccountDataRecovery.shared
 
     /// The account selected in the sidebar, or `nil` when composing a new one / nothing selected.
     @State private var selectedID: Account.ID?
@@ -57,7 +58,11 @@ struct AccountsSettingsView: View {
         }
         .overlay {
             if store.accounts.isEmpty {
-                ContentUnavailableView("No Accounts", systemImage: "person.crop.circle.badge.plus")
+                if recovery.issue != nil {
+                    ContentUnavailableView("Account Data Unreadable", systemImage: "key.viewfinder")
+                } else {
+                    ContentUnavailableView("No Accounts", systemImage: "person.crop.circle.badge.plus")
+                }
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -90,6 +95,7 @@ struct AccountsSettingsView: View {
             }
             .help("Add an account")
             .accessibilityLabel("Add account")
+            .disabled(recovery.issue?.replacementAllowed == false)
 
             Divider().frame(height: 16)
 
@@ -114,7 +120,9 @@ struct AccountsSettingsView: View {
     // MARK: Detail
 
     @ViewBuilder private var detail: some View {
-        if addingNew {
+        if let issue = recovery.issue, !addingNew {
+            recoveryDetail(issue)
+        } else if addingNew {
             AccountEditor(existing: nil, embedded: true) { savedID in
                 addingNew = false
                 if let savedID { selectedID = savedID }
@@ -130,6 +138,29 @@ struct AccountsSettingsView: View {
             }
         } else {
             emptyDetail
+        }
+    }
+
+    private func recoveryDetail(_ issue: AccountDataRecovery.Issue) -> some View {
+        ContentUnavailableView {
+            Label("Saved Accounts Need Recovery", systemImage: "externaldrive.badge.exclamationmark")
+        } description: {
+            if issue.replacementAllowed {
+                Text("The saved account JSON could not be decoded. RankBuddy retained the original " +
+                    "payload in the Keychain before allowing replacement. Add the accounts again " +
+                    "when ready; existing token data remains available in the recovery copy.")
+            } else {
+                Text("The saved account JSON could not be decoded, and its recovery copy could not " +
+                    "be written to the Keychain. Adding accounts is disabled to avoid overwriting it.")
+            }
+        } actions: {
+            if issue.replacementAllowed {
+                Button("Add Account…") {
+                    addingNew = true
+                    selectedID = nil
+                }
+                .buttonStyle(.borderedProminent)
+            }
         }
     }
 

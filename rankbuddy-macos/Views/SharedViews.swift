@@ -218,45 +218,6 @@ struct RowDateLabel: View {
     }
 }
 
-/// Shown when a section needs an account but none is configured. On first run (no accounts
-/// at all) it's a small onboarding surface explaining what RankBuddy needs, with a one-click
-/// demo so the app can be explored before connecting a real token.
-struct NoAccountView: View {
-    @Environment(AccountStore.self) private var store
-
-    var body: some View {
-        if store.accounts.isEmpty {
-            ContentUnavailableView {
-                Label("Welcome to RankBuddy", systemImage: "doc.text.magnifyingglass")
-            } description: {
-                Text("RankBuddy connects to HackerRank for Work with a personal access token, " +
-                    "then keeps your tests, candidates, questions, and interviews a click away. " +
-                    "Add an account to get started, or explore the demo first.")
-            } actions: {
-                SettingsLink {
-                    Text("Add Account…")
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button("Add Demo Account") { store.add(.demo) }
-
-                GetTokenLink()
-            }
-        } else {
-            ContentUnavailableView {
-                Label("No account selected", systemImage: "person.crop.circle.badge.questionmark")
-            } description: {
-                Text("Choose one of your saved accounts in Settings.")
-            } actions: {
-                SettingsLink {
-                    Text("Open Settings")
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-    }
-}
-
 /// Compact native list/detail state used for loading, empty, no-results, no-selection, and
 /// failure surfaces without oversized marketing-style placeholders.
 struct CompactStateView: View {

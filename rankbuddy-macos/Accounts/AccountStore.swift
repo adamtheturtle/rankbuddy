@@ -5,10 +5,73 @@
 
 import BuddyAppKit
 import Foundation
+import Observation
 import os
 
 /// The concrete multi-account store for RankBuddy.
 typealias AccountStore = KeychainAccountStore<Account>
+
+/// Records a persisted-account decoding failure without discarding the source payload.
+///
+/// `KeychainAccountStore` deliberately accepts a nonthrowing decoder, so RankBuddy performs
+/// recovery in its adapter: the corrupt snapshot is copied to another Keychain item before the
+/// store is allowed to replace `accounts`. The last backup key is retained in defaults solely so
+/// the same payload can reuse its backup on the next launch.
+@Observable
+@MainActor
+final class AccountDataRecovery {
+    struct Issue {
+        let backupKey: String?
+        let decodingError: String
+
+        var replacementAllowed: Bool {
+            backupKey != nil
+        }
+    }
+
+    static let shared = AccountDataRecovery()
+    static let backupDefaultsKey = "rankbuddy.accountsRecoveryBackupKey"
+
+    private(set) var issue: Issue?
+
+    func decode(_ data: Data, keychain: KeychainStore) -> [Account] {
+        do {
+            let accounts = try JSONDecoder().decode([Account].self, from: data)
+            issue = nil
+            return accounts
+        } catch {
+            issue = Issue(
+                backupKey: backup(data, keychain: keychain),
+                decodingError: error.localizedDescription
+            )
+            return []
+        }
+    }
+
+    func encode(_ accounts: [Account]) -> Data? {
+        guard issue?.replacementAllowed != false else { return nil }
+        guard let data = try? JSONEncoder().encode(accounts) else { return nil }
+
+        // A replacement is safe once the original payload has a recovery copy. Clearing the
+        // presentation state lets the newly added account become usable without a relaunch.
+        issue = nil
+        return data
+    }
+
+    private func backup(_ data: Data, keychain: KeychainStore) -> String? {
+        let defaults = UserDefaults.standard
+        if let existingKey = defaults.string(forKey: Self.backupDefaultsKey),
+           keychain.readData(account: existingKey) == data {
+            return existingKey
+        }
+
+        let key = "accounts-recovery-\(UUID().uuidString)"
+        guard keychain.write(data, account: key) else { return nil }
+
+        defaults.set(key, forKey: Self.backupDefaultsKey)
+        return key
+    }
+}
 
 extension AccountStore {
     /// Where the current account's id is persisted. Shared so out-of-store callers (the macOS
@@ -56,8 +119,8 @@ extension AccountStore {
             accountsKey: "accounts",
             currentIDDefaultsKey: currentIDDefaultsKey,
             showAllAccountsDefaultsKey: "rankbuddy.showAllAccounts",
-            encode: { accounts in try? JSONEncoder().encode(accounts) },
-            decode: { data in (try? JSONDecoder().decode([Account].self, from: data)) ?? [] },
+            encode: { accounts in AccountDataRecovery.shared.encode(accounts) },
+            decode: { data in AccountDataRecovery.shared.decode(data, keychain: keychain) },
             isTestingMode: isTesting,
             seedForTesting: { seed },
             migrateIfEmpty: { nil },
