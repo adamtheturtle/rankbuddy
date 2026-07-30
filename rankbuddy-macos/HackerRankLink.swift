@@ -10,6 +10,7 @@ import SwiftUI
 /// Parsing + UI for "Open by URL / ID" (#42) — paste a HackerRank URL (or a bare id) and jump
 /// straight to the matching test, question, or interview. Mirrors PadBuddy's "Open Pad by URL".
 enum HackerRankLink {
+    static let defaultAllowedHosts: Set<String> = ["hackerrank.com", "www.hackerrank.com"]
     private static let collections: [String: FavoriteCollection] = [
         "tests": .tests, "questions": .questions, "interviews": .interviews
     ]
@@ -18,9 +19,20 @@ enum HackerRankLink {
     /// segment and taking the segment after it (e.g. `.../tests/abc123/...` → `(.tests, "abc123")`).
     /// Returns `nil` when no known collection segment is present (e.g. a bare id), so the caller
     /// can fall back to a user-chosen type.
-    static func parse(_ input: String) -> (collection: FavoriteCollection, id: String)? {
+    static func parse(
+        _ input: String,
+        allowedHosts: Set<String> = defaultAllowedHosts
+    ) -> (collection: FavoriteCollection, id: String)? {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        let path = URLComponents(string: trimmed)?.path ?? trimmed
+        let components = URLComponents(string: trimmed)
+        if let host = components?.host?.lowercased() {
+            let scheme = components?.scheme?.lowercased()
+            let hosts = Set(allowedHosts.map { $0.lowercased() })
+            guard scheme == "https" || scheme == "http", hosts.contains(host) else {
+                return nil
+            }
+        }
+        let path = components?.path ?? trimmed
         let segments = path.split(separator: "/").map(String.init)
 
         for (index, segment) in segments.enumerated() {
@@ -60,7 +72,7 @@ struct OpenLinkSheet: View {
     }
 
     private var canOpen: Bool {
-        !trimmed.isEmpty && resolvedAccountID != nil
+        resolvedTarget != nil
     }
 
     private var resolvedAccountID: UUID? {
@@ -69,6 +81,28 @@ struct OpenLinkSheet: View {
             selected: selectedAccountID,
             current: store.currentAccount?.id
         )
+    }
+
+    private var resolvedAccount: Account? {
+        guard let resolvedAccountID else { return nil }
+
+        return store.accounts.first { $0.id == resolvedAccountID }
+    }
+
+    private var resolvedTarget: (collection: FavoriteCollection, id: String)? {
+        guard !trimmed.isEmpty, let account = resolvedAccount else { return nil }
+
+        var allowedHosts = HackerRankLink.defaultAllowedHosts
+        if let host = account.baseURL.host {
+            allowedHosts.insert(host)
+        }
+        if let parsed = HackerRankLink.parse(trimmed, allowedHosts: allowedHosts) {
+            return parsed
+        }
+        // A hosted URL that failed parsing must not be reinterpreted as a bare opaque id.
+        guard URLComponents(string: trimmed)?.host == nil else { return nil }
+
+        return (collection, trimmed)
     }
 
     var body: some View {
@@ -104,6 +138,13 @@ struct OpenLinkSheet: View {
                 )
                 .font(.callout)
                 .foregroundStyle(.secondary)
+            } else if !trimmed.isEmpty, resolvedTarget == nil {
+                Label(
+                    "Enter a URL from the selected account’s HackerRank host, or enter a bare item ID.",
+                    systemImage: "link.badge.plus"
+                )
+                .font(.callout)
+                .foregroundStyle(.red)
             }
 
             HStack {
@@ -120,10 +161,13 @@ struct OpenLinkSheet: View {
     }
 
     private func open() {
-        guard !trimmed.isEmpty, let accountID = resolvedAccountID?.uuidString else { return }
+        guard let account = resolvedAccount, let target = resolvedTarget else { return }
 
-        let target = HackerRankLink.parse(trimmed) ?? (collection: collection, id: trimmed)
-        RankBuddyDeepLink.open(collection: target.collection, accountID: accountID, itemID: target.id)
+        RankBuddyDeepLink.open(
+            collection: target.collection,
+            accountID: account.id.uuidString,
+            itemID: target.id
+        )
         dismiss()
         AppActivator.bringToFront()
     }
