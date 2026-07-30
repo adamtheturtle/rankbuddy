@@ -12,6 +12,10 @@ as its monotonically increasing build number.
 - `ASC_KEY`: base64-encoded App Store Connect API `.p8` key.
 - `ASC_KEY_ID`: the API key ID.
 - `ASC_ISSUER_ID`: the App Store Connect issuer UUID.
+- `SPARKLE_PRIVATE_ED_KEY`: private EdDSA key exported by Sparkle's
+  `generate_keys -x`; used only to sign update enclosures.
+- `SPARKLE_PUBLIC_ED_KEY`: matching public EdDSA key. The workflow injects it
+  into the tagged Release build as `SUPublicEDKey`.
 
 The workflow deliberately supports only API-key notarization. Do not add Apple
 ID/app-specific-password fallback credentials.
@@ -49,3 +53,8 @@ scripts/package-and-notarize.sh \
 The packaging script signs nested Sparkle code before the app, expands Xcode
 entitlement placeholders, signs the DMG, requires an accepted notarization result,
 staples it, then runs `codesign`, `stapler`, and Gatekeeper validation.
+
+After notarization, `scripts/generate-appcast.sh` downloads the pinned Sparkle
+tools, signs the DMG enclosure, and publishes `appcast.xml` beside the DMG. Tagged
+Release builds read the stable
+`releases/latest/download/appcast.xml` URL; ordinary Debug builds remain updater-free.

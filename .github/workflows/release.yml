@@ -35,13 +35,18 @@ jobs:
           ASC_KEY: ${{ secrets.ASC_KEY }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
+          SPARKLE_PUBLIC_ED_KEY: ${{ secrets.SPARKLE_PUBLIC_ED_KEY }}
         run: |
           set -euo pipefail
-          for name in CERTIFICATE CERTIFICATE_PASSWORD ASC_KEY ASC_KEY_ID ASC_ISSUER_ID; do
+          for name in CERTIFICATE CERTIFICATE_PASSWORD ASC_KEY ASC_KEY_ID ASC_ISSUER_ID \
+            SPARKLE_PRIVATE_ED_KEY SPARKLE_PUBLIC_ED_KEY; do
             test -n "${!name}" || { echo "::error::$name is required"; exit 1; }
           done
 
       - name: Build Release app
+        env:
+          SPARKLE_PUBLIC_ED_KEY: ${{ secrets.SPARKLE_PUBLIC_ED_KEY }}
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
@@ -55,6 +60,8 @@ jobs:
             -derivedDataPath DerivedData-Release \
             MARKETING_VERSION="$version" \
             CURRENT_PROJECT_VERSION="$build" \
+            INFOPLIST_KEY_SUFeedURL="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/appcast.xml" \
+            INFOPLIST_KEY_SUPublicEDKey="$SPARKLE_PUBLIC_ED_KEY" \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
@@ -87,11 +94,17 @@ jobs:
       - name: Generate release notes
         run: scripts/release-notes.sh > RELEASE_NOTES.md
 
+      - name: Generate signed Sparkle appcast
+        env:
+          SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
+        run: scripts/generate-appcast.sh "$GITHUB_REF_NAME"
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
             "rankbuddy-${GITHUB_REF_NAME}.dmg" \
+            appcast.xml \
             --title "$GITHUB_REF_NAME" \
             --notes-file RELEASE_NOTES.md
