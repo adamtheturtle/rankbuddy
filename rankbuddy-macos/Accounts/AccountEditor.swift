@@ -47,6 +47,7 @@ struct AccountEditor: View {
     @Environment(AccountStore.self) private var store
     @Environment(AccountHealthMonitor.self) private var health
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     let existing: Account?
     let embedded: Bool
@@ -98,6 +99,11 @@ struct AccountEditor: View {
             }
             .onChange(of: token) { _, _ in credentialsChanged() }
             .onChange(of: baseURLOverride) { _, _ in credentialsChanged() }
+            .onChange(of: scenePhase) { _, phase in
+                if phase != .active {
+                    isTokenRevealed = false
+                }
+            }
             .onDisappear { cancelOutstandingWork() }
     }
 
@@ -360,10 +366,11 @@ struct AccountEditor: View {
             isTokenRevealed = false
         } else {
             Task {
-                isTokenRevealed = await BiometricGate.authenticateForReveal(
+                let authenticated = await BiometricGate.authenticateForReveal(
                     settingEnabled: UserDefaults.standard.bool(forKey: BiometricAuth.revealSettingKey),
                     reason: "reveal your token"
                 )
+                isTokenRevealed = authenticated && scenePhase == .active
             }
         }
     }
