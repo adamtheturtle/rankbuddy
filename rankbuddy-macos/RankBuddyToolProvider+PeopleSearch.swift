@@ -90,12 +90,7 @@ extension RankBuddyToolProvider {
         do {
             let page = try await HackerRankClient(account: resolved)
                 .searchCandidates(testID: testID, query: query, after: cursor)
-            let items = page.items.map { candidate in
-                [
-                    "id": candidate.id, "email": candidate.email, "name": candidate.fullName ?? "",
-                    "score": candidate.score ?? 0, "status": candidate.listStatusLabel ?? ""
-                ]
-            }
+            let items = page.items.map(Self.candidatePayload)
             return jsonResult([
                 "account": resolved.label, "test_id": testID, "query": query, "matches": items,
                 "count": items.count, "has_more": page.next != nil,

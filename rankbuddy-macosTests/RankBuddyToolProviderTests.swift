@@ -141,6 +141,17 @@ struct RankBuddyToolProviderTests {
         #expect(!body.contains("\"count\""))
     }
 
+    @Test func `candidate payload preserves an unavailable score`() throws {
+        let candidate = try JSONDecoder().decode(
+            TestCandidate.self,
+            from: Data(#"{"id":"c1","email":"ada@example.com"}"#.utf8)
+        )
+        let payload = RankBuddyToolProvider.candidatePayload(candidate)
+
+        #expect(payload["score"] is NSNull)
+        #expect(payload["score_available"] as? Bool == false)
+    }
+
     @Test func `an unknown tool is an error`() async {
         #expect(!RankBuddyToolProvider.isKnownTool("delete_everything"))
         let result = await provider().callTool("delete_everything", arguments: nil)

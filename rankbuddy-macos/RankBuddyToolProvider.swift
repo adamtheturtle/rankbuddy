@@ -347,6 +347,17 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return metadata
     }
 
+    nonisolated static func candidatePayload(_ candidate: TestCandidate) -> [String: Any] {
+        [
+            "id": candidate.id,
+            "email": candidate.email,
+            "name": candidate.fullName ?? "",
+            "score": candidate.score.map { $0 as Any } ?? NSNull(),
+            "score_available": candidate.score != nil,
+            "status": candidate.listStatusLabel ?? ""
+        ]
+    }
+
     @MainActor
     private func listTests(account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
@@ -401,12 +412,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
                 testID: testID,
                 after: cursor
             )
-            let items = page.items.map { candidate in
-                [
-                    "id": candidate.id, "email": candidate.email, "name": candidate.fullName ?? "",
-                    "score": candidate.score ?? 0, "status": candidate.listStatusLabel ?? ""
-                ]
-            }
+            let items = page.items.map(Self.candidatePayload)
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "test_id": testID, "candidates": items,
                 "next_cursor": page.next ?? ""
