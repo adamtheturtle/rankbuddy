@@ -566,6 +566,9 @@ extension RankBuddyToolProvider {
     private func createQuestionTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let name = stringArgument(arguments, "name") else { return missingArgument("name") }
         guard let type = stringArgument(arguments, "type") else { return missingArgument("type") }
+        guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
+            return errorResult("`max_score` must be a finite number of zero or greater.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -586,6 +589,9 @@ extension RankBuddyToolProvider {
     @MainActor
     private func updateQuestionTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let questionID = stringArgument(arguments, "question_id") else { return missingArgument("question_id") }
+        guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
+            return errorResult("`max_score` must be a finite number of zero or greater.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -1227,7 +1233,10 @@ extension RankBuddyToolProvider {
                       "recommended_duration": integer("Recommended duration in minutes."),
                       "tags": ["type": "array", "items": ["type": "string"],
                                "description": "Question tags; a comma-separated string is also accepted."],
-                      "max_score": ["type": "number", "description": "Maximum achievable score."],
+                      "max_score": [
+                          "type": "number", "minimum": 0,
+                          "description": "Maximum achievable score."
+                      ],
                       "skills": ["type": "array", "items": ["type": "string"],
                                  "description": "Skills assessed; a comma-separated string is also accepted."],
                       "account": account
@@ -1245,7 +1254,10 @@ extension RankBuddyToolProvider {
                       "recommended_duration": integer("Recommended duration in minutes."),
                       "tags": ["type": "array", "items": ["type": "string"],
                                "description": "Question tags; a comma-separated string is also accepted."],
-                      "max_score": ["type": "number", "description": "Maximum achievable score."],
+                      "max_score": [
+                          "type": "number", "minimum": 0,
+                          "description": "Maximum achievable score."
+                      ],
                       "skills": ["type": "array", "items": ["type": "string"],
                                  "description": "Skills assessed; a comma-separated string is also accepted."],
                       "account": account
