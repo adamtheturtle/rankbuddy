@@ -144,26 +144,42 @@ nonisolated enum HTMLCodeBlocks {
     /// its line structure.
     static func stripTags(_ html: String) -> String {
         var result = ""
-        var insideTag = false
-        var tagBuffer = ""
-
-        for char in html {
-            if char == "<" {
-                insideTag = true
-                tagBuffer = ""
-            } else if char == ">" {
-                insideTag = false
-                let tag = tagBuffer.lowercased()
-                if tag.hasPrefix("br") || tag == "/div" || tag == "/p" {
-                    result.append("\n")
-                }
-            } else if insideTag {
-                tagBuffer.append(char)
-            } else {
-                result.append(char)
+        var index = html.startIndex
+        while index < html.endIndex {
+            guard html[index] == "<" else {
+                result.append(html[index])
+                html.formIndex(after: &index)
+                continue
             }
+
+            let contentStart = html.index(after: index)
+            guard contentStart < html.endIndex, isTagOpening(in: html, at: contentStart) else {
+                result.append("<")
+                index = contentStart
+                continue
+            }
+            guard let close = html[contentStart...].firstIndex(of: ">") else {
+                result.append(contentsOf: html[index...])
+                break
+            }
+
+            let tag = html[contentStart ..< close].lowercased()
+            if tag.hasPrefix("br") || tag == "/div" || tag == "/p" {
+                result.append("\n")
+            }
+            index = html.index(after: close)
         }
         return result
+    }
+
+    private static func isTagOpening(in html: String, at index: String.Index) -> Bool {
+        if html[index].isLetter || html[index] == "!" || html[index] == "?" {
+            return true
+        }
+        guard html[index] == "/" else { return false }
+
+        let nameStart = html.index(after: index)
+        return nameStart < html.endIndex && html[nameStart].isLetter
     }
 
     /// Decodes the HTML entities that appear in escaped source code.

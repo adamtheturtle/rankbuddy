@@ -38,6 +38,11 @@ struct HTMLCodeBlocksTests {
         #expect(HTMLCodeBlocks.segments(html) == [.code(languageHint: nil, code: "line one\nline two")])
     }
 
+    @Test func `literal less than signs do not erase code`() {
+        #expect(HTMLCodeBlocks.stripTags("if x < y {\nreturn x > 0") == "if x < y {\nreturn x > 0")
+        #expect(HTMLCodeBlocks.stripTags("value <unfinished") == "value <unfinished")
+    }
+
     @Test func `language hint reads from a lang attribute on pre`() {
         let hint = HTMLCodeBlocks.languageHint(openTag: "<pre lang=\"swift\">", inner: "code")
         #expect(hint == "swift")
