@@ -174,6 +174,9 @@ struct AccountEditor: View {
                         TextField("", text: $label, prompt: Text(defaultLabel))
                             .textFieldStyle(.roundedBorder)
                             .accessibilityLabel("Description")
+                            .onChange(of: label) { _, value in
+                                label = Account.limitedLabel(value)
+                            }
                         if duplicateLabelMessage() != nil {
                             Text("Use a unique description so this account is distinguishable in selectors.")
                                 .font(.caption)

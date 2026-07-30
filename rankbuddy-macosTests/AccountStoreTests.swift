@@ -30,6 +30,20 @@ struct AccountStoreTests {
         #expect(!Account.labelsConflict(" ", ""))
     }
 
+    @Test func `account descriptions are bounded when created and decoded`() throws {
+        let oversized = String(repeating: "A", count: Account.maximumLabelLength + 20)
+        #expect(Account(label: oversized, token: "t").label.count == Account.maximumLabelLength)
+
+        let source = Account(label: "short", token: "t")
+        var object = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(source)) as? [String: Any])
+        object["label"] = oversized
+        let decoded = try JSONDecoder().decode(
+            Account.self,
+            from: JSONSerialization.data(withJSONObject: object)
+        )
+        #expect(decoded.label.count == Account.maximumLabelLength)
+    }
+
     // MARK: - Account model
 
     @Test func `baseURL falls back to the default when no override is set`() {

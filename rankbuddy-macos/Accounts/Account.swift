@@ -24,6 +24,7 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     let id: UUID
     /// A user-facing label for the account (e.g. "Work", "EU org").
     var label: String
+    static let maximumLabelLength = 100
     /// The HackerRank personal access token. Stored in the Keychain by the account store.
     var token: String
     /// An optional base-URL override for regional HackerRank endpoints.
@@ -48,6 +49,10 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         let left = lhs.trimmingCharacters(in: .whitespacesAndNewlines)
         let right = rhs.trimmingCharacters(in: .whitespacesAndNewlines)
         return !left.isEmpty && left.localizedCaseInsensitiveCompare(right) == .orderedSame
+    }
+
+    static func limitedLabel(_ label: String) -> String {
+        String(label.prefix(maximumLabelLength))
     }
 
     /// The reserved token that marks the in-process demo account (mirrors PadBuddy's
@@ -160,12 +165,38 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         id: UUID = UUID()
     ) {
         self.id = id
-        self.label = label
+        self.label = Self.limitedLabel(label)
         self.token = token
         self.baseURLOverride = baseURLOverride
         self.userEmail = userEmail
         self.iconSymbol = iconSymbol
         self.tintHex = tintHex
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, label, token, baseURLOverride, userEmail, iconSymbol, tintHex
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        label = try Self.limitedLabel(values.decode(String.self, forKey: .label))
+        token = try values.decode(String.self, forKey: .token)
+        baseURLOverride = try values.decodeIfPresent(String.self, forKey: .baseURLOverride)
+        userEmail = try values.decodeIfPresent(String.self, forKey: .userEmail)
+        iconSymbol = try values.decodeIfPresent(String.self, forKey: .iconSymbol)
+        tintHex = try values.decodeIfPresent(String.self, forKey: .tintHex)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(id, forKey: .id)
+        try values.encode(Self.limitedLabel(label), forKey: .label)
+        try values.encode(token, forKey: .token)
+        try values.encodeIfPresent(baseURLOverride, forKey: .baseURLOverride)
+        try values.encodeIfPresent(userEmail, forKey: .userEmail)
+        try values.encodeIfPresent(iconSymbol, forKey: .iconSymbol)
+        try values.encodeIfPresent(tintHex, forKey: .tintHex)
     }
 
     /// A changed token or base URL points at potentially different data, so the store
