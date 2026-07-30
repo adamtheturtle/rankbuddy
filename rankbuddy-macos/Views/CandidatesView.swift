@@ -46,8 +46,13 @@ struct CandidatesList: View {
                     ($0.fullName ?? $0.email).localizedStandardCompare($1.fullName ?? $1.email) == .orderedAscending
                 },
                 SortOption("Attempted", systemImage: "clock", kind: .date,
-                           isMissing: { $0.attemptEndTime == nil }, by: {
-                               ($0.attemptEndTime ?? "") > ($1.attemptEndTime ?? "")
+                           isMissing: { DisplayFormat.parseDate($0.attemptEndTime) == nil }, by: {
+                               guard
+                                   let lhs = DisplayFormat.parseDate($0.attemptEndTime),
+                                   let rhs = DisplayFormat.parseDate($1.attemptEndTime)
+                               else { return false }
+
+                               return lhs > rhs
                            }),
                 // Higher ATS codes are further along the pipeline; unset/unknown sort last.
                 SortOption("Status", systemImage: "circle.fill", kind: .amount,

@@ -56,6 +56,13 @@ struct FormattingTests {
         #expect(DisplayFormat.date("2026-06-22T04:10:51+0000") != nil)
     }
 
+    @Test func `parsed dates compare chronological instants across representations`() throws {
+        let earlier = try #require(DisplayFormat.parseDate("2026-05-01T10:30:00.500+02:00"))
+        let later = try #require(DisplayFormat.parseDate("2026-05-01T09:00:01Z"))
+
+        #expect(later > earlier)
+    }
+
     @Test func `date falls back to the raw string when unparseable`() {
         #expect(DisplayFormat.date("not a date") == "not a date")
     }
