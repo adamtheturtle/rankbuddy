@@ -27,4 +27,18 @@ struct DetailWindowValueTests {
         #expect(try DetailWindowValue.test(test(name: "Backend Screen"), accountID: nil).windowTitle
             == "Backend Screen")
     }
+
+    @Test func `removed explicit account does not fall back to current account`() {
+        let current = Account(label: "Current", token: "token")
+        #expect(DetailWindowAccountResolution.resolve(
+            id: UUID(),
+            accounts: [current],
+            current: current
+        ) == nil)
+        #expect(DetailWindowAccountResolution.resolve(
+            id: nil,
+            accounts: [current],
+            current: current
+        )?.id == current.id)
+    }
 }

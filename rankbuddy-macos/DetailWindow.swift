@@ -47,6 +47,14 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
     }
 }
 
+nonisolated enum DetailWindowAccountResolution {
+    static func resolve(id: UUID?, accounts: [Account], current: Account?) -> Account? {
+        guard let id else { return current }
+
+        return accounts.first { $0.id == id }
+    }
+}
+
 /// Renders the detail for a `DetailWindowValue` in a standalone window (#49).
 struct DetailWindowContent: View {
     let value: DetailWindowValue?
@@ -117,8 +125,8 @@ struct DetailWindowContent: View {
     }
 
     /// The account a detail should target: the named originating account (merged rows, #17),
-    /// or the current account when the value carries none or that account was since removed.
+    /// or the current account only when the value never carried an explicit account.
     private func resolvedAccount(_ id: UUID?) -> Account? {
-        id.flatMap { id in store.accounts.first { $0.id == id } } ?? store.currentAccount
+        DetailWindowAccountResolution.resolve(id: id, accounts: store.accounts, current: store.currentAccount)
     }
 }
