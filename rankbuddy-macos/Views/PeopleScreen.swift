@@ -293,8 +293,8 @@ struct CreateUserSheet: View {
         .task { await loadTeams() }
     }
 
-    /// Loads the organisation's teams for the required team picker, following the cursor
-    /// so orgs with more than one page are fully listed (bounded to stay snappy).
+    /// Loads the organisation's complete team collection for the required picker. Cursor-cycle
+    /// and empty-page validation stop malformed pagination without silently truncating large orgs.
     private func loadTeams() async {
         guard !isLoadingTeams else { return }
 
@@ -320,7 +320,7 @@ struct CreateUserSheet: View {
                     itemCount: page.items.count,
                     seen: &seenCursors
                 )
-            } while cursor != nil && loaded.count < 1000
+            } while cursor != nil
             teams = loaded
             if teams.isEmpty {
                 teamsError = "No teams found. HackerRank requires a team to create a user."
