@@ -627,9 +627,13 @@ extension RankBuddyToolProvider {
 
         do {
             let created = try await HackerRankClient(account: resolved).createTeam(name: name)
+            guard let teamID = Self.validatedCreatedID(created.id) else {
+                return errorResult("HackerRank created the team but returned no team ID.")
+            }
+
             return jsonResult([
                 "account": resolved.label,
-                "created_team": ["id": created.id ?? "", "name": created.name ?? name]
+                "created_team": ["id": teamID, "name": created.name ?? name]
             ])
         } catch {
             return errorResult("Couldn't create team: \(error.localizedDescription)")
