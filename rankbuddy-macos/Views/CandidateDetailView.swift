@@ -28,6 +28,8 @@ struct CandidateDetailView: View {
 
     @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: TestCandidate?
+    @State private var detailError: String?
+    @State private var isDetailLoading = false
     @State private var editError: String?
     @State private var isFetchingPDF = false
     @State private var commandOwner = UUID()
@@ -58,6 +60,8 @@ struct CandidateDetailView: View {
                 badges: candidate.inspectorBadges,
                 onRename: renameAction
             )
+
+            detailLoadStatus
 
             Section("Properties") {
                 OptionalRow("Email", candidate.email)
@@ -163,6 +167,22 @@ struct CandidateDetailView: View {
         }
     }
 
+    @ViewBuilder private var detailLoadStatus: some View {
+        if isDetailLoading {
+            Section {
+                ProgressView("Loading candidate details…")
+            }
+        } else if let detailError {
+            Section {
+                Label(detailError, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.red)
+                Button("Retry Details") {
+                    Task { await loadDetail(for: requestIdentity) }
+                }
+            }
+        }
+    }
+
     private var editErrorPresented: Binding<Bool> {
         Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
     }
@@ -235,16 +255,29 @@ struct CandidateDetailView: View {
 
     private func loadDetail(for identity: CandidateDetailRequestIdentity) async {
         detail = nil
+        detailError = nil
         registerDetailCommands()
         guard let testID, let account else { return }
 
-        let loaded = try? await HackerRankClient(account: account).candidate(
-            testID: testID,
-            candidateID: candidate.id
-        )
+        isDetailLoading = true
+        let result: Result<TestCandidate, Error>
+        do {
+            result = try await .success(HackerRankClient(account: account).candidate(
+                testID: testID,
+                candidateID: candidate.id
+            ))
+        } catch {
+            result = .failure(error)
+        }
         guard !Task.isCancelled, identity == requestIdentity else { return }
 
-        detail = loaded
+        isDetailLoading = false
+        switch result {
+        case let .success(loaded):
+            detail = loaded
+        case let .failure(error):
+            detailError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
         registerDetailCommands()
     }
 }
