@@ -66,4 +66,11 @@ struct QuestionEditValidationTests {
         #expect(TestcaseValidation.hasContent(["", "1 2", "", "", ""], isSample: false))
         #expect(TestcaseValidation.hasContent(["", "", "", "", ""], isSample: true))
     }
+
+    @Test func `testcase scores reject non-numeric text`() {
+        #expect(TestcaseValidation.isValidScore(""))
+        #expect(TestcaseValidation.isValidScore(" 10\n"))
+        #expect(!TestcaseValidation.isValidScore("ten"))
+        #expect(!TestcaseValidation.isValidScore("1.5"))
+    }
 }

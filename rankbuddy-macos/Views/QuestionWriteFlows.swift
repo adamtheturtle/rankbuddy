@@ -186,6 +186,10 @@ struct AddTestcaseSheet: View {
             errorMessage = "Enter testcase content before adding it."
             return
         }
+        guard TestcaseValidation.isValidScore(score) else {
+            errorMessage = "Score must be a whole number."
+            return
+        }
 
         isSending = true
         errorMessage = nil
@@ -197,7 +201,7 @@ struct AddTestcaseSheet: View {
                     name: nonBlank(name),
                     input: nonBlank(input),
                     output: nonBlank(output),
-                    score: Int(score.trimmingCharacters(in: .whitespaces)),
+                    score: Int(score.trimmingCharacters(in: .whitespacesAndNewlines)),
                     sample: isSample,
                     explanation: nonBlank(explanation)
                 )
@@ -215,6 +219,11 @@ struct AddTestcaseSheet: View {
 nonisolated enum TestcaseValidation {
     static func hasContent(_ values: [String], isSample: Bool) -> Bool {
         values.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } || isSample
+    }
+
+    static func isValidScore(_ score: String) -> Bool {
+        let normalized = score.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.isEmpty || Int(normalized) != nil
     }
 }
 
