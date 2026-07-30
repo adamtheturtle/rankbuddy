@@ -10,6 +10,7 @@ import SwiftUI
 // swiftlint:disable file_length type_body_length
 struct InterviewDetailView: View {
     let interview: Interview
+    let account: Account?
     var onChanged: () -> Void = {}
     @Environment(AccountStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -26,6 +27,12 @@ struct InterviewDetailView: View {
     @State private var editedScheduledFrom: String?
     @State private var editedScheduledTo: String?
     @State private var commandOwner = UUID()
+
+    init(interview: Interview, account: Account? = nil, onChanged: @escaping () -> Void = {}) {
+        self.interview = interview
+        self.account = account
+        self.onChanged = onChanged
+    }
 
     private var displayTitle: String {
         editedTitle ?? interview.title ?? "Interview \(interview.id)"
@@ -192,6 +199,7 @@ struct InterviewDetailView: View {
             collection: .interviews,
             itemID: interview.id,
             title: displayTitle,
+            account: account,
             webURL: URL.remoteWebURL(from: interview.url)
         )
         .toolbar(id: "interviewDetail") {

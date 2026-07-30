@@ -193,7 +193,12 @@ struct TestDetailView: View {
             passwordRevealed = false
             commandContext.clearDetailActions(owner: commandOwner)
         }
-        .advertisesItemActivity(collection: .tests, itemID: displayedTest.id, title: displayedTest.name)
+        .advertisesItemActivity(
+            collection: .tests,
+            itemID: displayedTest.id,
+            title: displayedTest.name,
+            account: account
+        )
         .toolbar(id: "testDetail") {
             DetailLinkToolbarContent(
                 url: RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: displayedTest.id),

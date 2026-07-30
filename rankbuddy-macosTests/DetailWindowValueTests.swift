@@ -93,4 +93,24 @@ struct DetailWindowValueTests {
         #expect(!encoded.contains("score"))
         #expect(!encoded.contains("feedback"))
     }
+
+    @Test func `standalone interview preserves its originating account`() throws {
+        let interview = try JSONDecoder().decode(
+            Interview.self,
+            from: Data(#"{"id":"i1","title":"Pairing","status":"scheduled"}"#.utf8)
+        )
+        let accountID = UUID()
+        let value = DetailWindowValue.interview(interview, accountID: accountID)
+        let restored = try JSONDecoder().decode(
+            DetailWindowValue.self,
+            from: JSONEncoder().encode(value)
+        )
+
+        guard case let .interview(_, restoredAccountID) = restored else {
+            Issue.record("expected an interview detail value")
+            return
+        }
+
+        #expect(restoredAccountID == accountID)
+    }
 }

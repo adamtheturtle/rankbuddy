@@ -204,7 +204,12 @@ struct QuestionDetailView: View {
             answerRevealed = false
             commandContext.clearDetailActions(owner: commandOwner)
         }
-        .advertisesItemActivity(collection: .questions, itemID: question.id, title: displayed.name)
+        .advertisesItemActivity(
+            collection: .questions,
+            itemID: question.id,
+            title: displayed.name,
+            account: owningAccount
+        )
         // Share and Open stay in the bar; Print and Markdown export are off the bar by default but
         // one Customize Toolbar away.
         .toolbar(id: "questionDetail") {

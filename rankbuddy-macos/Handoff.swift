@@ -148,6 +148,7 @@ enum RankBuddyUserActivity {
 /// declare its own item.
 private struct ItemUserActivityModifier: ViewModifier {
     @Environment(AccountStore.self) private var store
+    let account: Account?
     let collection: FavoriteCollection
     let itemID: String
     let title: String
@@ -156,16 +157,17 @@ private struct ItemUserActivityModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content.userActivity(RankBuddyUserActivity.activityType) { activity in
-            guard let account = store.currentAccount else { return }
+            let resolvedAccount = account ?? (store.isMergedView ? nil : store.currentAccount)
+            guard let resolvedAccount else { return }
 
             RankBuddyUserActivity.configure(
                 activity,
                 ref: RankBuddyUserActivity.ItemRef(
-                    collection: collection, accountID: account.id.uuidString, itemID: itemID
+                    collection: collection, accountID: resolvedAccount.id.uuidString, itemID: itemID
                 ),
                 title: title,
                 webURL: webURL ?? RankBuddyUserActivity.webURL(
-                    base: account.baseURL, collection: collection, itemID: itemID
+                    base: resolvedAccount.baseURL, collection: collection, itemID: itemID
                 )
             )
         }
@@ -178,10 +180,11 @@ extension View {
         collection: FavoriteCollection,
         itemID: String,
         title: String,
+        account: Account? = nil,
         webURL: URL? = nil
     ) -> some View {
         modifier(ItemUserActivityModifier(
-            collection: collection, itemID: itemID, title: title, webURL: webURL
+            account: account, collection: collection, itemID: itemID, title: title, webURL: webURL
         ))
     }
 }

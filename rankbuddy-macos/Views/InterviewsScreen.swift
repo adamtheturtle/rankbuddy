@@ -70,10 +70,12 @@ struct InterviewsScreen: View {
                             title: title,
                             undoManager: undoManager
                         ),
-                        openInWindow: { openWindow(value: DetailWindowValue.interview(interview)) }
+                        openInWindow: {
+                            openWindow(value: DetailWindowValue.interview(interview, accountID: account.id))
+                        }
                     )
                 },
-                openInWindow: { openWindow(value: DetailWindowValue.interview($0)) },
+                openInWindow: { openWindow(value: DetailWindowValue.interview($0, accountID: account.id)) },
                 onOpen: { interview in
                     RecentActivityStore.shared.record(
                         [RecentItem(
@@ -105,7 +107,7 @@ struct InterviewsScreen: View {
                 rowTransfer: interviewTransfer,
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { InterviewRow(interview: $0) },
-                detail: { InterviewDetailView(interview: $0) { reloadToken += 1 } }
+                detail: { InterviewDetailView(interview: $0, account: account) { reloadToken += 1 } }
             )
             .sheet(isPresented: $padPresented) {
                 NewPadSheet(account: account) { reloadToken += 1 }
@@ -192,10 +194,14 @@ struct InterviewsScreen: View {
                     copyLabel: "Copy Title",
                     copyText: scoped.item.title ?? "Interview \(scoped.item.id)",
                     link: scoped.item.url,
-                    openInWindow: { openWindow(value: DetailWindowValue.interview(scoped.item)) }
+                    openInWindow: {
+                        openWindow(value: DetailWindowValue.interview(scoped.item, accountID: scoped.account.id))
+                    }
                 )
             },
-            openInWindow: { openWindow(value: DetailWindowValue.interview($0.item)) },
+            openInWindow: {
+                openWindow(value: DetailWindowValue.interview($0.item, accountID: $0.account.id))
+            },
             rowTransfer: mergedInterviewTransfer,
             rowDate: { DisplayFormat.parseDate($0.item.createdAt) },
             row: {
@@ -205,7 +211,7 @@ struct InterviewsScreen: View {
                     account: $0.account
                 )
             },
-            detail: { InterviewDetailView(interview: $0.item) }
+            detail: { InterviewDetailView(interview: $0.item, account: $0.account) }
         )
     }
 }

@@ -18,7 +18,7 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
     case test(Test, accountID: UUID?)
     case candidate(testID: String, candidateID: String, accountID: UUID?)
     case question(Question, accountID: UUID?)
-    case interview(Interview)
+    case interview(Interview, accountID: UUID?)
     case user(userID: String, userName: String, accountID: UUID?)
     case team(teamID: String, teamName: String, accountID: UUID?)
     case teamMembers(teamID: String, teamName: String, accountID: UUID?)
@@ -30,7 +30,7 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
         case let .test(test, _): test.name
         case .candidate: "Candidate"
         case let .question(question, _): question.name
-        case let .interview(interview): interview.title ?? "Interview \(interview.id)"
+        case let .interview(interview, _): interview.title ?? "Interview \(interview.id)"
         case let .user(_, userName, _): userName
         case let .team(_, teamName, _): teamName
         case let .teamMembers(_, teamName, _): "\(teamName) Members"
@@ -118,8 +118,8 @@ struct DetailWindowContent: View {
                 NoAccountView()
             }
 
-        case let .interview(interview):
-            InterviewDetailView(interview: interview)
+        case let .interview(interview, accountID):
+            InterviewDetailView(interview: interview, account: resolvedAccount(accountID))
 
         case let .user(userID, _, accountID):
             if let account = resolvedAccount(accountID) {
