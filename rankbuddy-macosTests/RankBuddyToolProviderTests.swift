@@ -219,14 +219,18 @@ struct RankBuddyToolProviderTests {
 
     @Test func `bounded search tools advertise and validate continuation cursors`() async throws {
         let tools = await provider().tools()
-        for name in ["search_tests", "search_questions", "search_interviews"] {
+        for name in ["search_tests", "search_questions", "search_interviews", "search_candidates"] {
             let tool = try #require(tools.first { $0.name == name })
             let schema = String(describing: tool.inputSchema)
             #expect(schema.contains("cursor"))
 
+            var arguments: [String: Value] = ["query": .string("anything"), "cursor": .string(" \n ")]
+            if name == "search_candidates" {
+                arguments["test_id"] = .string("t1")
+            }
             let result = await provider().callTool(
                 name,
-                arguments: ["query": .string("anything"), "cursor": .string(" \n ")]
+                arguments: arguments
             )
             #expect(result.isError == true)
             #expect(text(result).contains("cursor"))
@@ -309,6 +313,7 @@ struct RankBuddyToolProviderTests {
         #expect(result.isError != true)
         #expect(body.contains("Ada Lovelace"))
         #expect(body.contains("\"test_id\" : \"t1\""))
+        #expect(body.contains("\"next_cursor\""))
     }
 
     @Test func `search_candidates requires a test_id`() async {

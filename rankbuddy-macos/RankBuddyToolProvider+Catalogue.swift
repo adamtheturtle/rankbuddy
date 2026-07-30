@@ -90,7 +90,7 @@ extension RankBuddyToolProvider {
             readOnly("search_candidates", "Search a test's candidates by name or email (server-side).",
                      properties: [
                          "test_id": ["type": "string", "description": "The test's id."],
-                         "query": query, "account": account
+                         "query": query, "cursor": searchCursor, "account": account
                      ],
                      required: ["test_id", "query"])
         ]
