@@ -142,4 +142,19 @@ struct SavedSearchStoreTests {
                 .dateRange == "today"
         )
     }
+
+    @Test func `duplicate persisted IDs are repaired and saved`() throws {
+        let defaults = try #require(UserDefaults(suiteName: "saved-search-\(#function)"))
+        defaults.removePersistentDomain(forName: "saved-search-\(#function)")
+        let duplicateID = UUID()
+        let searches = [
+            SavedSearch(name: "One", query: "one", dateRange: nil, id: duplicateID),
+            SavedSearch(name: "Two", query: "two", dateRange: nil, id: duplicateID)
+        ]
+        SavedSearchStore.save(searches, restorationKey: "tests.acc", defaults: defaults)
+
+        let repaired = SavedSearchStore.load(restorationKey: "tests.acc", defaults: defaults)
+        #expect(Set(repaired.map(\.id)).count == 2)
+        #expect(SavedSearchStore.load(restorationKey: "tests.acc", defaults: defaults) == repaired)
+    }
 }

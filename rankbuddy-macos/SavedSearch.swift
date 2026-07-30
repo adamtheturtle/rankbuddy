@@ -106,7 +106,7 @@ enum SavedSearchStore {
         guard let data = defaults.data(forKey: defaultsKey(for: restorationKey)) else { return [] }
 
         if let searches = try? JSONDecoder().decode([SavedSearch].self, from: data) {
-            return searches
+            return repairingDuplicateIDs(searches, restorationKey: restorationKey, defaults: defaults)
         }
 
         // Keep the exact unreadable payload before recovering valid records independently. A
@@ -118,12 +118,13 @@ enum SavedSearchStore {
 
         guard let records = try? JSONSerialization.jsonObject(with: data) as? [Any] else { return [] }
 
-        return records.compactMap { record in
+        let recovered: [SavedSearch] = records.compactMap { record in
             guard JSONSerialization.isValidJSONObject(record),
                   let recordData = try? JSONSerialization.data(withJSONObject: record) else { return nil }
 
             return try? JSONDecoder().decode(SavedSearch.self, from: recordData)
         }
+        return repairingDuplicateIDs(recovered, restorationKey: restorationKey, defaults: defaults)
     }
 
     /// Persists the saved searches for a list, removing the key entirely when empty.
@@ -135,5 +136,31 @@ enum SavedSearchStore {
         }
 
         defaults.set(data, forKey: key)
+    }
+
+    private static func repairingDuplicateIDs(
+        _ searches: [SavedSearch],
+        restorationKey: String,
+        defaults: UserDefaults
+    ) -> [SavedSearch] {
+        var seen = Set<UUID>()
+        var changed = false
+        let repaired = searches.map { search in
+            guard seen.insert(search.id).inserted else {
+                changed = true
+                return SavedSearch(
+                    name: search.name,
+                    query: search.query,
+                    dateRange: search.dateRange,
+                    facets: search.facets
+                )
+            }
+
+            return search
+        }
+        if changed {
+            save(repaired, restorationKey: restorationKey, defaults: defaults)
+        }
+        return repaired
     }
 }
