@@ -156,7 +156,18 @@ enum MCPClientInstall {
         try coordinatedWrite(to: targetURL) { coordinatedURL in
             let original = try existingData(at: coordinatedURL)
             var root = try existingJSON(data: original)
-            var servers = root["mcpServers"] as? [String: Any] ?? [:]
+            var servers: [String: Any]
+            if let existingServers = root["mcpServers"] {
+                guard let object = existingServers as? [String: Any] else {
+                    throw ConfigVerificationError(
+                        errorDescription: "The existing “mcpServers” value isn’t a JSON object. No file was changed."
+                    )
+                }
+
+                servers = object
+            } else {
+                servers = [:]
+            }
             let alreadyPresent = servers[serverName] != nil
             if alreadyPresent, !shouldReplace(client) { return }
 
