@@ -140,9 +140,10 @@ struct CandidateReport: View {
 
 /// A printable test report: configuration, sections, tags, and instructions.
 struct TestReport: View {
-    let test: Test
+    let data: TestReportData
 
     var body: some View {
+        let test = data.test
         ReportDocument(title: test.name, subtitle: "HackerRank Test Report") {
             PrintSection(title: "Test") {
                 ReportFieldList(fields: reportFields([
@@ -154,9 +155,41 @@ struct TestReport: View {
                     ("Starts", DisplayFormat.date(test.startTime)),
                     ("Ends", DisplayFormat.date(test.endTime)),
                     ("Created", DisplayFormat.date(test.createdAt)),
+                    ("Library", DisplayFormat.list(test.libraryFilterValues)),
+                    ("Role", DisplayFormat.list(test.roleFilterValues)),
+                    ("Skills", DisplayFormat.list(test.skillFilterValues)),
+                    ("Type", DisplayFormat.list(test.typeFilterValues)),
                     ("Languages", DisplayFormat.languages(test.languages)),
-                    ("Proctoring", test.enableProctoring == true ? "Enabled" : nil)
+                    ("Proctoring", test.enableProctoring.map { $0 ? "Enabled" : "Disabled" }),
+                    ("Shuffle questions", DisplayFormat.boolean(test.shuffleQuestions)),
+                    ("Starred", DisplayFormat.boolean(test.starred)),
+                    ("Locked", DisplayFormat.boolean(test.locked)),
+                    ("Draft", DisplayFormat.boolean(test.draft)),
+                    ("MCQ correct score", data.mcqCorrectScore.map { $0.formatted() }),
+                    ("MCQ incorrect score", data.mcqIncorrectScore.map { $0.formatted() })
                 ]))
+            }
+
+            let accessFields = reportFields([
+                ("Short login URL", data.shortLoginURL),
+                ("Public login URL", data.publicLoginURL),
+                ("Access password", data.accessPassword)
+            ])
+            if !accessFields.isEmpty {
+                PrintSection(title: "Access") {
+                    ReportFieldList(fields: accessFields)
+                }
+            }
+
+            if !data.inviters.isEmpty {
+                PrintSection(title: "Inviters") {
+                    ReportFieldList(fields: reportFields(data.inviters.map {
+                        (
+                            $0.displayName,
+                            [$0.email, $0.role].compactMap(\.self).filter { !$0.isEmpty }.joined(separator: " — ")
+                        )
+                    }))
+                }
             }
 
             if let sections = test.sections, !sections.isEmpty {

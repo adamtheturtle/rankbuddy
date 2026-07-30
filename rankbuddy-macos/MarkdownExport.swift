@@ -150,14 +150,40 @@ enum MarkdownExport {
     }
 
     nonisolated static func test(_ test: Test) -> String {
-        document(title: test.name, subtitle: "HackerRank Test Report", sections: [
+        self.test(TestReportData(test: test))
+    }
+
+    nonisolated static func test(_ report: TestReportData) -> String {
+        let test = report.test
+        return document(title: test.name, subtitle: "HackerRank Test Report", sections: [
             section("Test", [
                 ("State", DisplayFormat.enumLabel(test.state)), ("Unique ID", test.uniqueID),
                 ("Duration", test.duration.map { "\($0) min" }),
                 ("Cutoff", test.cutoffScore.map(String.init)),
+                ("Questions", test.questions.map { "\($0.count)" }),
                 ("Starts", formattedDate(test.startTime)), ("Ends", formattedDate(test.endTime)),
-                ("Languages", formattedLanguages(test.languages))
+                ("Created", formattedDate(test.createdAt)),
+                ("Library", formattedList(test.library.map { [$0] })),
+                ("Role", formattedList(test.role.map { [$0] })),
+                ("Skills", formattedList(test.skills)),
+                ("Type", formattedList(test.type.map { [$0] })),
+                ("Languages", formattedLanguages(test.languages)),
+                ("Proctoring", test.enableProctoring.map { $0 ? "Enabled" : "Disabled" }),
+                ("Shuffle questions", test.shuffleQuestions.map { $0 ? "Yes" : "No" }),
+                ("Starred", test.starred.map { $0 ? "Yes" : "No" }),
+                ("Locked", test.locked.map { $0 ? "Yes" : "No" }),
+                ("Draft", test.draft.map { $0 ? "Yes" : "No" }),
+                ("MCQ correct score", report.mcqCorrectScore.map { $0.formatted() }),
+                ("MCQ incorrect score", report.mcqIncorrectScore.map { $0.formatted() })
             ]),
+            section("Access", [
+                ("Short login URL", report.shortLoginURL),
+                ("Public login URL", report.publicLoginURL),
+                ("Access password", report.accessPassword)
+            ]),
+            section("Inviters", report.inviters.map {
+                ($0.displayName, [$0.email, $0.role].compactMap(\.self).filter { !$0.isEmpty }.joined(separator: " — "))
+            }),
             textSection("Tags", test.tags.flatMap { $0.isEmpty ? nil : $0.joined(separator: ", ") }),
             textSection("Instructions", test.instructions.map(plainText(fromHTML:)))
         ])

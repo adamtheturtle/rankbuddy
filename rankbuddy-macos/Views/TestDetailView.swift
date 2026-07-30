@@ -7,12 +7,6 @@ import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 
-// Read-only detail for a single test, plus opt-in edit/delete affordances (#57). The
-// destructive delete is confirmed (naming the test) and pops back to the list on success.
-//
-// Beyond the list row's fields, it fetches the richer single-test read on selection (#105) and
-// merges the candidate login links, the (sensitive) master password — gated behind an explicit
-// reveal — and MCQ scoring. Detail fetch failures leave the list-row data intact.
 // swiftlint:disable:next type_body_length
 struct TestDetailView: View {
     let test: Test
@@ -38,6 +32,15 @@ struct TestDetailView: View {
 
     private var displayedTest: Test {
         detailTest ?? test
+    }
+
+    private var reportData: TestReportData {
+        TestReportData(
+            test: displayedTest,
+            detail: detail,
+            inviters: inviters,
+            includeAccessPassword: passwordRevealed
+        )
     }
 
     var body: some View {
@@ -158,8 +161,6 @@ struct TestDetailView: View {
             commandContext.clearDetailActions(owner: commandOwner)
         }
         .advertisesItemActivity(collection: .tests, itemID: displayedTest.id, title: displayedTest.name)
-        // Share and Open (the test on HackerRank) lead the bar like PadBuddy; Edit and Delete
-        // follow; Print and Markdown export are off by default but one Customize Toolbar away.
         .toolbar(id: "testDetail") {
             DetailLinkToolbarContent(
                 url: RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: displayedTest.id),
@@ -197,13 +198,13 @@ struct TestDetailView: View {
             }
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Test: \(displayedTest.name)") {
-                    TestReport(test: displayedTest)
+                    TestReport(data: reportData)
                 }
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                let snapshot = displayedTest
-                MarkdownExportButton(suggestedName: snapshot.name) {
+                let snapshot = reportData
+                MarkdownExportButton(suggestedName: snapshot.test.name) {
                     MarkdownExport.test(snapshot)
                 }
             }
@@ -246,7 +247,6 @@ struct TestDetailView: View {
         }
     }
 
-    /// Candidate login links and the (sensitive) shared access password, gated behind a reveal.
     private func accessSection(detail: TestDetail) -> some View {
         Section("Access") {
             if let short = detail.shortLoginURL, let url = URL.remoteWebURL(from: short) {
@@ -288,11 +288,11 @@ struct TestDetailView: View {
         commandContext.registerDetailActions(
             owner: commandOwner,
             print: AppCommandContext.Action(title: "Print Test…") {
-                printReport(TestReport(test: displayedTest), jobTitle: "Test: \(displayedTest.name)")
+                printReport(TestReport(data: reportData), jobTitle: "Test: \(displayedTest.name)")
             },
             exportMarkdown: AppCommandContext.Action(title: "Export Test as Markdown…") {
-                let test = displayedTest
-                MarkdownExport.save({ MarkdownExport.test(test) }, suggestedName: test.name)
+                let snapshot = reportData
+                MarkdownExport.save({ MarkdownExport.test(snapshot) }, suggestedName: snapshot.test.name)
             }
         )
     }
@@ -361,23 +361,6 @@ struct TestDetailView: View {
         } catch {
             return false
         }
-    }
-}
-
-private extension TestInviter {
-    var displayName: String {
-        let fullName = [firstName, lastName]
-            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
-
-        if !fullName.isEmpty {
-            return fullName
-        }
-        if !email.isEmpty {
-            return email
-        }
-        return id
     }
 }
 

@@ -94,4 +94,33 @@ struct MarkdownExportTests {
         #expect(markdown.contains("## Notes\nNew notes"))
         #expect(!markdown.contains("Old notes"))
     }
+
+    @Test func `export includes loaded detail and inviters without an unrevealed password`() throws {
+        let test = try JSONDecoder().decode(
+            Test.self,
+            from: Data(#"{"id":"t1","name":"Swift","questions":["q1"],"library":"Backend"}"#.utf8)
+        )
+        let detail = try JSONDecoder().decode(
+            TestDetail.self,
+            from: Data(
+                #"{"short_login_url":"https://hr.test/s","master_password":"secret","mcq_correct_score":4}"#.utf8
+            )
+        )
+        let inviter = TestInviter(id: "u1", email: "ada@example.com", firstName: "Ada", role: "Owner")
+
+        let hidden = MarkdownExport.test(TestReportData(test: test, detail: detail, inviters: [inviter]))
+        let revealed = MarkdownExport.test(TestReportData(
+            test: test,
+            detail: detail,
+            inviters: [inviter],
+            includeAccessPassword: true
+        ))
+
+        #expect(hidden.contains("- **Questions:** 1"))
+        #expect(hidden.contains("- **MCQ correct score:** 4"))
+        #expect(hidden.contains("- **Short login URL:** https://hr.test/s"))
+        #expect(hidden.contains("- **Ada:** ada@example.com — Owner"))
+        #expect(!hidden.contains("secret"))
+        #expect(revealed.contains("- **Access password:** secret"))
+    }
 }
