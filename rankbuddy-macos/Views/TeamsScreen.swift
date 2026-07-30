@@ -134,6 +134,7 @@ struct TeamMembersList: View {
     @Environment(\.openWindow) private var openWindow
     @State private var addPresented = false
     @State private var memberPendingRemoval: User?
+    @State private var removingMemberIDs: Set<String> = []
     @State private var removalError: String?
     @State private var reloadToken = 0
 
@@ -178,8 +179,9 @@ struct TeamMembersList: View {
             presenting: memberPendingRemoval
         ) { member in
             Button("Remove \(member.displayName)", role: .destructive) {
-                Task { await remove(member) }
+                beginRemoval(member)
             }
+            .disabled(removingMemberIDs.contains(member.id))
             Button("Cancel", role: .cancel) {}
         } message: { member in
             Text("This removes \(member.displayName) from the team on HackerRank.")
@@ -207,7 +209,11 @@ struct TeamMembersList: View {
             openInWindow: { openWindow(value: DetailWindowValue.user(member, accountID: account.id)) }
         )
         items.append(.separator)
-        items.append(.button(title: "Remove from Team…") { memberPendingRemoval = member })
+        let isRemoving = removingMemberIDs.contains(member.id)
+        items.append(.button(
+            title: isRemoving ? "Removing…" : "Remove from Team…",
+            isEnabled: !isRemoving
+        ) { memberPendingRemoval = member })
         return items
     }
 
@@ -219,7 +225,14 @@ struct TeamMembersList: View {
         Binding(get: { removalError != nil }, set: { if !$0 { removalError = nil } })
     }
 
+    private func beginRemoval(_ member: User) {
+        guard removingMemberIDs.insert(member.id).inserted else { return }
+
+        Task { await remove(member) }
+    }
+
     private func remove(_ member: User) async {
+        defer { removingMemberIDs.remove(member.id) }
         do {
             try await HackerRankClient(account: account).removeTeamMember(teamID: teamID, userID: member.id)
             reloadToken += 1
