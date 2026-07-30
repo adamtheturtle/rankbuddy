@@ -72,8 +72,8 @@ enum AppPresence: String, CaseIterable, Identifiable {
     /// false when macOS rejects the activation-policy transition.
     @MainActor
     func applyDockVisibility(
-        currentPolicy: () -> NSApplication.ActivationPolicy = { NSApp.activationPolicy() },
-        setPolicy: (NSApplication.ActivationPolicy) -> Bool = { NSApp.setActivationPolicy($0) },
+        currentPolicy: () -> NSApplication.ActivationPolicy = { NSApplication.shared.activationPolicy() },
+        setPolicy: (NSApplication.ActivationPolicy) -> Bool = { NSApplication.shared.setActivationPolicy($0) },
         activate: () -> Void = { AppActivator.bringToFront() }
     ) -> Bool {
         guard currentPolicy() != activationPolicy else { return true }
