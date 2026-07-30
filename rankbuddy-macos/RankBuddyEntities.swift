@@ -98,12 +98,13 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
     }
 
     func suggestedEntities() async throws -> [RankBuddyObjectEntity] {
-        let enrichables = try await Self.currentAccountEnrichables()
+        guard let snapshot = try await Self.currentAccountSnapshot() else { return [] }
+
+        let enrichables = snapshot.enrichables
         let entities = enrichables.map(\.entity)
-        // Best-effort: donate to a named Spotlight index whenever the system asks for
-        // suggestions, so the same fetch also keeps Spotlight current — no extra network and
-        // no launch-time work. Only the non-sensitive display metadata is indexed (#24).
-        try? await CSSearchableIndex(name: RankBuddySpotlightIndex.name).indexAppEntities(entities)
+        // Replace this account's domain after a complete fetch so removed backend objects do
+        // not survive as stale Spotlight results.
+        try? await RankBuddySpotlightIndex.replace(entities, accountID: snapshot.accountID)
         // On-device keyword enrichment (#92): additive, gated on model availability, re-indexing
         // the same ids with topical keywords. The source text is already in hand from the fetch
         // above (no extra network). Detached so a slow generation never delays the suggestions
@@ -125,7 +126,17 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
     /// adds no network work over the plain entity fetch.
     @MainActor
     static func currentAccountEnrichables() async throws -> [EnrichableEntity] {
-        guard let account = AccountStore.rankBuddy().currentAccount else { return [] }
+        try await currentAccountSnapshot()?.enrichables ?? []
+    }
+
+    struct AccountSnapshot {
+        let accountID: String
+        let enrichables: [EnrichableEntity]
+    }
+
+    @MainActor
+    static func currentAccountSnapshot() async throws -> AccountSnapshot? {
+        guard let account = SharedAccountStore.resolve().currentAccount else { return nil }
 
         let client = HackerRankClient(account: account)
         let accountID = account.id.uuidString
@@ -161,7 +172,7 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
                 keywordSource: SpotlightKeywordSource.text(for: interview) ?? ""
             )
         }
-        return enrichables
+        return AccountSnapshot(accountID: accountID, enrichables: enrichables)
     }
 }
 
@@ -170,6 +181,14 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
 enum RankBuddySpotlightIndex {
     /// The `CSSearchableIndex` name holding RankBuddy's donated items.
     static let name = "RankBuddyObjects"
+
+    /// Reconciles one account after a complete refresh, removing objects no longer returned by
+    /// the backend before donating the fresh snapshot.
+    static func replace(_ entities: [RankBuddyObjectEntity], accountID: String) async throws {
+        let index = CSSearchableIndex(name: name)
+        try await index.deleteSearchableItems(withDomainIdentifiers: [accountID])
+        try await index.indexAppEntities(entities)
+    }
 
     /// Removes every donated item from Spotlight. Called when an account is deleted so that a
     /// removed account's items can't linger in system search (#24: indexed content is removed
