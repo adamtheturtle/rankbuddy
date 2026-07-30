@@ -220,6 +220,14 @@ extension RankBuddyToolProvider {
         }
     }
 
+    nonisolated static func hasQuestionUpdate(_ arguments: [String: Value]?) -> Bool {
+        let keys = [
+            "name", "type", "status", "languages", "problem_statement",
+            "recommended_duration", "tags", "max_score", "skills"
+        ]
+        return keys.contains { arguments?[$0] != nil }
+    }
+
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -594,6 +602,9 @@ extension RankBuddyToolProvider {
     @MainActor
     private func updateQuestionTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let questionID = stringArgument(arguments, "question_id") else { return missingArgument("question_id") }
+        guard Self.hasQuestionUpdate(arguments) else {
+            return errorResult("At least one question field must be provided.")
+        }
 
         let rawType = stringArgument(arguments, "type")
         let type = Self.normalizedOptionalString(rawType)?.lowercased()

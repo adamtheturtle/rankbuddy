@@ -750,6 +750,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("type"))
     }
 
+    @Test func `update_question requires at least one changed field`() async {
+        let result = await writeProvider().callTool(
+            "update_question", arguments: ["question_id": .string("question-1")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("At least one"))
+        #expect(RankBuddyToolProvider.hasQuestionUpdate(["max_score": .int(0)]))
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",
