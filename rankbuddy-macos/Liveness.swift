@@ -370,6 +370,7 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
     ) {
         let target = RankBuddyUserActivity.target(userInfo: response.notification.request.content.userInfo)
         Task { @MainActor in
+            MainWindowPresenter.shared.show()
             if let target {
                 let store = SharedAccountStore.resolve()
                 if let accountID = UUID(uuidString: target.accountID),
@@ -385,7 +386,6 @@ final class LivenessNotifier: NSObject, UNUserNotificationCenterDelegate {
             } else {
                 UserDefaults.standard.set(SidebarSection.interviews.rawValue, forKey: "selectedSection")
             }
-            AppActivator.bringToFront()
         }
         completionHandler()
     }

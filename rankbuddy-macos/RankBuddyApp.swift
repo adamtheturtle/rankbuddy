@@ -73,6 +73,7 @@ struct RankBuddyApp: App {
                 .environment(favorites)
                 .environment(health)
                 .environment(\.openURL, browserOpenURLAction)
+                .background(MainWindowRegistration())
                 .task {
                     favoritesSync?.start()
                     NetworkMonitor.shared.start()
