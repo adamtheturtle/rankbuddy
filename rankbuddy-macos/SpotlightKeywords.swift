@@ -35,13 +35,13 @@ struct EnrichableEntity {
 /// enough beyond the title to be worth a model call.
 enum SpotlightKeywordSource {
     static func text(for test: Test) -> String? {
-        var parts = ["Name: \(test.name)"]
+        var parts = ["Name: \(visibleText(test.name))"]
         var hasSubstance = false
-        if let tags = test.tags, !tags.isEmpty {
+        if let tags = cleaned(test.tags), !tags.isEmpty {
             parts.append("Tags: \(tags.joined(separator: ", "))")
             hasSubstance = true
         }
-        if let languages = test.languages, !languages.isEmpty {
+        if let languages = cleaned(test.languages), !languages.isEmpty {
             parts.append("Languages: \(languages.joined(separator: ", "))")
             hasSubstance = true
         }
@@ -49,17 +49,17 @@ enum SpotlightKeywordSource {
     }
 
     static func text(for question: Question) -> String? {
-        var parts = ["Title: \(question.name)"]
+        var parts = ["Title: \(visibleText(question.name))"]
         var hasSubstance = false
-        if let tags = question.tags, !tags.isEmpty {
+        if let tags = cleaned(question.tags), !tags.isEmpty {
             parts.append("Tags: \(tags.joined(separator: ", "))")
             hasSubstance = true
         }
-        if let skills = question.skills, !skills.isEmpty {
+        if let skills = cleaned(question.skills), !skills.isEmpty {
             parts.append("Skills: \(skills.joined(separator: ", "))")
             hasSubstance = true
         }
-        if let languages = question.languages, !languages.isEmpty {
+        if let languages = cleaned(question.languages), !languages.isEmpty {
             parts.append("Languages: \(languages.joined(separator: ", "))")
             hasSubstance = true
         }
@@ -68,6 +68,16 @@ enum SpotlightKeywordSource {
 
     static func text(for _: Interview) -> String? {
         nil
+    }
+
+    private static func cleaned(_ values: [String]?) -> [String]? {
+        values?.map(visibleText).filter { !$0.isEmpty }
+    }
+
+    private static func visibleText(_ value: String) -> String {
+        MarkdownExport.plainText(fromHTML: value)
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
     }
 }
 

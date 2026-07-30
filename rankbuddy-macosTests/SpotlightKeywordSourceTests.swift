@@ -37,6 +37,21 @@ struct SpotlightKeywordSourceTests {
         #expect(SpotlightKeywordSource.text(for: question) == nil)
     }
 
+    @Test func `a brief contains only normalized visible metadata text`() throws {
+        let question = try decode(Question.self, #"""
+        {"id":"q3","type":"code","name":"<b>Two&nbsp; Sum</b>",
+         "tags":["<i>arrays</i>","<script>ignore me</script>"],
+         "skills":["Problem\n   Solving"]}
+        """#)
+
+        let source = try #require(SpotlightKeywordSource.text(for: question))
+        #expect(source.contains("Title: Two Sum"))
+        #expect(source.contains("Tags: arrays"))
+        #expect(source.contains("Skills: Problem Solving"))
+        #expect(!source.contains("<"))
+        #expect(!source.contains("ignore me"))
+    }
+
     @Test func `a test brief excludes private instructions`() throws {
         let test = try decode(HackerRankKit.Test.self, #"""
         {"id":"t1","name":"Backend Screen","tags":["sql","api"],"languages":["go"],
