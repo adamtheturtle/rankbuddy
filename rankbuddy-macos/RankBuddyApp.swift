@@ -34,7 +34,7 @@ struct RankBuddyApp: App {
     /// Explains a rejected activation-policy transition after restoring the prior safe presence.
     @State private var presenceError: String?
     /// Re-checks the current account's token so a mid-session revocation surfaces a banner (#40).
-    @State private var health = AccountHealthMonitor()
+    @State private var health: AccountHealthMonitor
 
     init() {
         // Demo mode (RANKBUDDY_DEMO=1) seeds the in-memory demo account; its `isMock` flag
@@ -53,14 +53,16 @@ struct RankBuddyApp: App {
         _favorites = State(initialValue: favorites)
         // Sync real favourites to iCloud (gated on the capability inside the coordinator);
         // demo mode stays local-only.
-        _favoritesSync = State(
-            initialValue: isDemo
-                ? nil
-                : FavoritesSyncCoordinator(
-                    favorites: favorites,
-                    store: CloudSyncKeyValueStore(key: FavoritesSyncCoordinator.key)
-                )
-        )
+        let favoritesSync = isDemo
+            ? nil
+            : FavoritesSyncCoordinator(
+                favorites: favorites,
+                store: CloudSyncKeyValueStore(key: FavoritesSyncCoordinator.key)
+            )
+        _favoritesSync = State(initialValue: favoritesSync)
+        let health = AccountHealthMonitor()
+        _health = State(initialValue: health)
+        ApplicationStartup.start(favoritesSync: favoritesSync, health: health, store: store)
     }
 
     var body: some Scene {
@@ -75,11 +77,6 @@ struct RankBuddyApp: App {
                 .environment(\.openURL, browserOpenURLAction)
                 .background(MainWindowRegistration())
                 .task {
-                    favoritesSync?.start()
-                    NetworkMonitor.shared.start()
-                    LivenessNotifier.shared.register()
-                    LivenessMonitor.shared.start(store: accountStore)
-                    health.start(store: accountStore)
                     applyPresence(presence)
                 }
                 .onChange(of: presence) { old, new in applyPresence(new, rollback: old) }
