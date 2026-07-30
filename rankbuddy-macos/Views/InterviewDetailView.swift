@@ -27,6 +27,8 @@ struct InterviewDetailView: View {
     /// here rather than waiting for the (possibly cached) list row to refresh.
     @State private var editedTitle: String?
     @State private var editedNotes: String?
+    @State private var editedScheduledFrom: String?
+    @State private var editedScheduledTo: String?
 
     private var displayTitle: String {
         editedTitle ?? interview.title ?? "Interview \(interview.id)"
@@ -34,6 +36,14 @@ struct InterviewDetailView: View {
 
     private var displayNotes: String {
         editedNotes ?? interview.notes ?? ""
+    }
+
+    private var displayScheduledFrom: String? {
+        editedScheduledFrom ?? detail?.scheduledFrom
+    }
+
+    private var displayScheduledTo: String? {
+        editedScheduledTo ?? detail?.scheduledTo
     }
 
     /// Editing needs a single owning account, so the merged view stays read-only.
@@ -59,25 +69,33 @@ struct InterviewDetailView: View {
 
             Section("Properties") {
                 OptionalRow("Status", DisplayFormat.enumLabel(interview.status))
-                scheduledRow(label: "Scheduled start", raw: detail?.scheduledFrom) { newDate in
-                    guard let end = DisplayFormat.parseDate(detail?.scheduledTo),
+                scheduledRow(label: "Scheduled start", raw: displayScheduledFrom) { newDate in
+                    guard let end = DisplayFormat.parseDate(displayScheduledTo),
                           Self.isValidSchedule(start: newDate, end: end)
                     else {
                         editError = "Scheduled start must be before scheduled end."
                         return false
                     }
 
-                    return await update(InterviewUpdateBody(from: Self.iso8601.string(from: newDate)))
+                    let value = Self.iso8601.string(from: newDate)
+                    guard await update(InterviewUpdateBody(from: value)) else { return false }
+
+                    editedScheduledFrom = value
+                    return true
                 }
-                scheduledRow(label: "Scheduled end", raw: detail?.scheduledTo) { newDate in
-                    guard let start = DisplayFormat.parseDate(detail?.scheduledFrom),
+                scheduledRow(label: "Scheduled end", raw: displayScheduledTo) { newDate in
+                    guard let start = DisplayFormat.parseDate(displayScheduledFrom),
                           Self.isValidSchedule(start: start, end: newDate)
                     else {
                         editError = "Scheduled end must be after scheduled start."
                         return false
                     }
 
-                    return await update(InterviewUpdateBody(endsAt: Self.iso8601.string(from: newDate)))
+                    let value = Self.iso8601.string(from: newDate)
+                    guard await update(InterviewUpdateBody(endsAt: value)) else { return false }
+
+                    editedScheduledTo = value
+                    return true
                 }
                 OptionalRow("Created", DisplayFormat.date(interview.createdAt))
                 OptionalRow("Updated", DisplayFormat.date(interview.updatedAt))
@@ -244,7 +262,9 @@ struct InterviewDetailView: View {
 
         do {
             _ = try await HackerRankClient(account: account).updateInterview(id: interview.id, body: body)
-            detail = try? await HackerRankClient(account: account).interview(id: interview.id)
+            if let refreshed = try? await HackerRankClient(account: account).interview(id: interview.id) {
+                detail = refreshed
+            }
             onChanged()
             return true
         } catch {
