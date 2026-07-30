@@ -56,7 +56,7 @@ struct CodeBlock: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal, showsIndicators: true) {
             Group {
                 let key = SyntaxHighlightKey(code: code, language: language)
                 if highlightedKey == key, let highlightedCode {
@@ -70,6 +70,7 @@ struct CodeBlock: View {
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .accessibilityHint("Scroll horizontally to read overflowing code.")
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
         .overlay(alignment: .topTrailing) {
             if let label = languageLabel {
