@@ -33,4 +33,9 @@ struct FavoritePasteboardTests {
     @Test func `decoding rejects data that isn't ours`() {
         #expect(FavoritePasteboard.decode(from: Data("not a favourite".utf8)) == nil)
     }
+
+    @Test func `a raw forged favourite ref is rejected`() throws {
+        let forged = try JSONEncoder().encode(ref())
+        #expect(FavoritePasteboard.decode(from: forged) == nil)
+    }
 }

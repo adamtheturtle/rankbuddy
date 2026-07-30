@@ -196,7 +196,9 @@ struct ContentView: View {
         Task { @MainActor in
             for provider in accepted {
                 guard let data = await loadFavoriteData(provider, identifier: identifier),
-                      let ref = FavoritePasteboard.decode(from: data) else { continue }
+                      let ref = FavoritePasteboard.decode(from: data),
+                      store.accounts.contains(where: { $0.id.uuidString == ref.accountID })
+                else { continue }
 
                 favorites.add(ref, undoManager: undoManager)
             }

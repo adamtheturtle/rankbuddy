@@ -26,10 +26,20 @@ extension UTType {
 /// Encodes/decodes a `FavoriteRef` for the favourite drag pasteboard. Pure and unit-testable:
 /// the round-trip is what carries the dragged item from a list row to the sidebar drop target.
 enum FavoritePasteboard {
+    private nonisolated struct Payload: Codable {
+        let ref: FavoriteRef
+        let sessionNonce: UUID
+    }
+
+    private nonisolated static let sessionNonce = UUID()
+    private nonisolated static let maximumPayloadBytes = 16 * 1024
+
     /// Builds the pasteboard item a draggable list row hands the sidebar, or `nil` when the
     /// ref can't be encoded (which makes the row non-draggable, per FastList's `onRowDrag`).
     nonisolated static func item(for ref: FavoriteRef) -> NSPasteboardItem? {
-        guard let data = try? JSONEncoder().encode(ref) else { return nil }
+        guard let data = try? JSONEncoder().encode(Payload(ref: ref, sessionNonce: sessionNonce)) else {
+            return nil
+        }
 
         let item = NSPasteboardItem()
         item.setData(data, forType: NSPasteboard.PasteboardType(UTType.rankBuddyFavorite.identifier))
@@ -38,7 +48,18 @@ enum FavoritePasteboard {
 
     /// Decodes the `FavoriteRef` a drop delivered, or `nil` if the data isn't ours.
     nonisolated static func decode(from data: Data) -> FavoriteRef? {
-        try? JSONDecoder().decode(FavoriteRef.self, from: data)
+        guard data.count <= maximumPayloadBytes,
+              let payload = try? JSONDecoder().decode(Payload.self, from: data),
+              payload.sessionNonce == sessionNonce,
+              !payload.ref.accountID.isEmpty,
+              !payload.ref.itemID.isEmpty,
+              !payload.ref.title.isEmpty,
+              payload.ref.accountID.count <= 64,
+              payload.ref.itemID.count <= 512,
+              payload.ref.title.count <= 512
+        else { return nil }
+
+        return payload.ref
     }
 }
 
