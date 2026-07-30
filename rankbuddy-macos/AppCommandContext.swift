@@ -16,12 +16,19 @@ final class AppCommandContext {
         let perform: @MainActor () -> Void
     }
 
+    private struct DetailRegistration {
+        let owner: UUID
+        let print: Action
+        let exportMarkdown: Action
+    }
+
     var primaryNew: Action?
     var secondaryNew: Action?
     var exportCSV: Action?
     var exportSelectedCSV: Action?
     var exportMarkdown: Action?
     var print: Action?
+    private var detailRegistrations: [DetailRegistration] = []
     /// Reloads the visible list (⌘R). Mirrors PadBuddy, whose Reload lives on the Go menu so the
     /// toolbar's Refresh button can be hidden from the default toolbar (#101).
     var refresh: Action?
@@ -34,9 +41,34 @@ final class AppCommandContext {
         refresh = nil
     }
 
-    func clearDetailActions() {
-        exportMarkdown = nil
-        print = nil
+    func registerDetailActions(owner: UUID, print: Action, exportMarkdown: Action) {
+        if let index = detailRegistrations.firstIndex(where: { $0.owner == owner }) {
+            detailRegistrations[index] = DetailRegistration(
+                owner: owner,
+                print: print,
+                exportMarkdown: exportMarkdown
+            )
+            if index == detailRegistrations.indices.last {
+                applyTopDetailRegistration()
+            }
+        } else {
+            detailRegistrations.append(DetailRegistration(
+                owner: owner,
+                print: print,
+                exportMarkdown: exportMarkdown
+            ))
+            applyTopDetailRegistration()
+        }
+    }
+
+    func clearDetailActions(owner: UUID) {
+        detailRegistrations.removeAll { $0.owner == owner }
+        applyTopDetailRegistration()
+    }
+
+    private func applyTopDetailRegistration() {
+        exportMarkdown = detailRegistrations.last?.exportMarkdown
+        print = detailRegistrations.last?.print
     }
 }
 

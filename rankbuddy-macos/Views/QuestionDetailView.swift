@@ -59,6 +59,7 @@ struct QuestionDetailView: View {
     @State private var deleteTestcasesPresented = false
     @State private var generateStubsPresented = false
     @State private var customStubPresented = false
+    @State private var commandOwner = UUID()
 
     init(question: Question, account: Account? = nil, onChanged: @escaping () -> Void = {}) {
         self.question = question
@@ -192,7 +193,7 @@ struct QuestionDetailView: View {
         }
         .onDisappear {
             answerRevealed = false
-            commandContext.clearDetailActions()
+            commandContext.clearDetailActions(owner: commandOwner)
         }
         .advertisesItemActivity(collection: .questions, itemID: question.id, title: displayed.name)
         // Share and Open stay in the bar; Print and Markdown export are off the bar by default but
@@ -407,13 +408,16 @@ extension QuestionDetailView {
     }
 
     private func registerDetailCommands() {
-        commandContext.print = AppCommandContext.Action(title: "Print Question…") {
-            printReport(QuestionReport(question: displayed), jobTitle: "Question: \(displayed.name)")
-        }
-        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Question as Markdown…") {
-            let question = displayed
-            MarkdownExport.save({ MarkdownExport.question(question) }, suggestedName: question.name)
-        }
+        commandContext.registerDetailActions(
+            owner: commandOwner,
+            print: AppCommandContext.Action(title: "Print Question…") {
+                printReport(QuestionReport(question: displayed), jobTitle: "Question: \(displayed.name)")
+            },
+            exportMarkdown: AppCommandContext.Action(title: "Export Question as Markdown…") {
+                let question = displayed
+                MarkdownExport.save({ MarkdownExport.question(question) }, suggestedName: question.name)
+            }
+        )
     }
 
     /// Fetches the richer question detail on selection (#105). Best-effort — a failure leaves the

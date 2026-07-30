@@ -30,6 +30,7 @@ struct InterviewDetailView: View {
     @State private var editedNotes: String?
     @State private var editedScheduledFrom: String?
     @State private var editedScheduledTo: String?
+    @State private var commandOwner = UUID()
 
     private var displayTitle: String {
         editedTitle ?? interview.title ?? "Interview \(interview.id)"
@@ -173,7 +174,7 @@ struct InterviewDetailView: View {
         .navigationTitle(displayTitle)
         .task(id: interview.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
-        .onDisappear { commandContext.clearDetailActions() }
+        .onDisappear { commandContext.clearDetailActions(owner: commandOwner) }
         .advertisesItemActivity(
             collection: .interviews,
             itemID: interview.id,
@@ -277,20 +278,23 @@ struct InterviewDetailView: View {
     }
 
     private func registerDetailCommands() {
-        commandContext.print = AppCommandContext.Action(title: "Print Interview…") {
-            printReport(
-                InterviewReport(interview: interview, title: displayTitle, notes: displayNotes),
-                jobTitle: "Interview: \(displayTitle)"
-            )
-        }
-        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Interview as Markdown…") {
-            let title = displayTitle
-            let notes = displayNotes
-            MarkdownExport.save(
-                { MarkdownExport.interview(interview, title: title, notes: notes) },
-                suggestedName: title
-            )
-        }
+        commandContext.registerDetailActions(
+            owner: commandOwner,
+            print: AppCommandContext.Action(title: "Print Interview…") {
+                printReport(
+                    InterviewReport(interview: interview, title: displayTitle, notes: displayNotes),
+                    jobTitle: "Interview: \(displayTitle)"
+                )
+            },
+            exportMarkdown: AppCommandContext.Action(title: "Export Interview as Markdown…") {
+                let title = displayTitle
+                let notes = displayNotes
+                MarkdownExport.save(
+                    { MarkdownExport.interview(interview, title: title, notes: notes) },
+                    suggestedName: title
+                )
+            }
+        )
     }
 
     /// Fetches the richer detail and transcript for the selected interview (#103). Both are
@@ -379,12 +383,8 @@ struct TranscriptMessageRow: View {
 #Preview("Transcript") {
     let json = #"""
     {"messages":[
-      {"messageId":"m1","author":"Ian Interviewer","candidate":false,
-       "timestamp":1746450000,"text":"Welcome! Let's start with a brief warm-up question."},
-      {"messageId":"m2","author":"Ada Lovelace","candidate":true,
-       "timestamp":1746450060,"text":"Sounds good, I'm ready when you are."},
-      {"messageId":"m3","author":"Ian Interviewer","candidate":false,
-       "timestamp":1746450120,"text":"Great. Can you walk me through your approach to the problem?"}
+      {"messageId":"m1","author":"Ian Interviewer","candidate":false,"timestamp":1746450000,
+       "text":"Welcome! Let's start with a brief warm-up question."}
     ]}
     """#
     let transcript = (try? JSONDecoder().decode(InterviewTranscript.self, from: Data(json.utf8)))

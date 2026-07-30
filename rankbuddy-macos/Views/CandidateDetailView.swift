@@ -24,6 +24,7 @@ struct CandidateDetailView: View {
     @State private var detail: TestCandidate?
     @State private var editError: String?
     @State private var isFetchingPDF = false
+    @State private var commandOwner = UUID()
 
     private var displayedCandidate: TestCandidate {
         detail ?? candidate
@@ -112,7 +113,7 @@ struct CandidateDetailView: View {
         .navigationTitle(candidate.fullName ?? candidate.email)
         .task(id: self.candidate.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
-        .onDisappear { commandContext.clearDetailActions() }
+        .onDisappear { commandContext.clearDetailActions(owner: commandOwner) }
         // Print and Markdown export are off the bar by default but one Customize Toolbar away.
         .toolbar(id: "candidateDetail") {
             ToolbarItem(id: "reportPDF") {
@@ -210,12 +211,15 @@ struct CandidateDetailView: View {
     private func registerDetailCommands() {
         let candidate = displayedCandidate
         let title = candidate.fullName ?? candidate.email
-        commandContext.print = AppCommandContext.Action(title: "Print Candidate…") {
-            printReport(CandidateReport(candidate: candidate), jobTitle: "Candidate: \(title)")
-        }
-        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Candidate as Markdown…") {
-            MarkdownExport.save({ MarkdownExport.candidate(candidate) }, suggestedName: title)
-        }
+        commandContext.registerDetailActions(
+            owner: commandOwner,
+            print: AppCommandContext.Action(title: "Print Candidate…") {
+                printReport(CandidateReport(candidate: candidate), jobTitle: "Candidate: \(title)")
+            },
+            exportMarkdown: AppCommandContext.Action(title: "Export Candidate as Markdown…") {
+                MarkdownExport.save({ MarkdownExport.candidate(candidate) }, suggestedName: title)
+            }
+        )
     }
 
     private func loadDetail() async {

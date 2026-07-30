@@ -35,6 +35,7 @@ struct TestDetailView: View {
     @State private var detailTest: Test?
     @State private var inviters: [TestInviter] = []
     @State private var passwordRevealed = false
+    @State private var commandOwner = UUID()
 
     private var displayedTest: Test {
         detailTest ?? test
@@ -154,7 +155,7 @@ struct TestDetailView: View {
         }
         .onDisappear {
             passwordRevealed = false
-            commandContext.clearDetailActions()
+            commandContext.clearDetailActions(owner: commandOwner)
         }
         .advertisesItemActivity(collection: .tests, itemID: displayedTest.id, title: displayedTest.name)
         // Share and Open (the test on HackerRank) lead the bar like PadBuddy; Edit and Delete
@@ -284,13 +285,16 @@ struct TestDetailView: View {
     }
 
     private func registerDetailCommands() {
-        commandContext.print = AppCommandContext.Action(title: "Print Test…") {
-            printReport(TestReport(test: displayedTest), jobTitle: "Test: \(displayedTest.name)")
-        }
-        commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Test as Markdown…") {
-            let test = displayedTest
-            MarkdownExport.save({ MarkdownExport.test(test) }, suggestedName: test.name)
-        }
+        commandContext.registerDetailActions(
+            owner: commandOwner,
+            print: AppCommandContext.Action(title: "Print Test…") {
+                printReport(TestReport(test: displayedTest), jobTitle: "Test: \(displayedTest.name)")
+            },
+            exportMarkdown: AppCommandContext.Action(title: "Export Test as Markdown…") {
+                let test = displayedTest
+                MarkdownExport.save({ MarkdownExport.test(test) }, suggestedName: test.name)
+            }
+        )
     }
 
     /// Fetches the richer test detail on selection (#105). Best-effort, and re-hides the master
