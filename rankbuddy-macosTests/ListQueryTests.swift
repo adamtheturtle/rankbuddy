@@ -39,6 +39,23 @@ struct ListQueryTests {
         #expect(ListQuery.restoredQuery(key: "q", defaults: defaults).isEmpty)
     }
 
+    @Test func `account cleanup removes live filters but preserves other accounts`() {
+        let account = UUID()
+        let other = UUID()
+        let defaults = UserDefaults(suiteName: "listquery.cleanup.\(UUID().uuidString)") ?? .standard
+        for prefix in ["query", "filter", "facets"] {
+            defaults.set("private", forKey: "\(prefix).selection.tests.\(account)")
+            defaults.set("keep", forKey: "\(prefix).selection.tests.\(other)")
+        }
+
+        ListQuery.clear(accountID: account, defaults: defaults)
+
+        #expect(defaults.string(forKey: "query.selection.tests.\(account)") == nil)
+        #expect(defaults.string(forKey: "filter.selection.tests.\(account)") == nil)
+        #expect(defaults.string(forKey: "facets.selection.tests.\(account)") == nil)
+        #expect(defaults.string(forKey: "query.selection.tests.\(other)") == "keep")
+    }
+
     @Test func `a range round-trips and an unknown stored value is ignored`() {
         let defaults = UserDefaults(suiteName: "listquery.tests.\(UUID().uuidString)") ?? .standard
         ListQuery.persistRange("last 7 days", key: "k", defaults: defaults)

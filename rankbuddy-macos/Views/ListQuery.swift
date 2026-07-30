@@ -94,6 +94,16 @@ enum ListQuery {
         restorationKey.map { "query.\($0)" }
     }
 
+    /// Clears persisted live query state for one account without touching other tenants.
+    static func clear(accountID: UUID, defaults: UserDefaults = .standard) {
+        let suffix = ".\(accountID.uuidString)"
+        let prefixes = ["query.", "filter.", "facets."]
+        for key in defaults.dictionaryRepresentation().keys
+            where key.hasSuffix(suffix) && prefixes.contains(where: key.hasPrefix) {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
     static func restoredQuery(key: String?, defaults: UserDefaults = .standard) -> String {
         guard let key else { return "" }
 
