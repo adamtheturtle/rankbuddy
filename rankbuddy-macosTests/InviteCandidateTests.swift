@@ -13,6 +13,27 @@ import Testing
 /// with the canned created-candidate echo, and the bad-token account answers 401.
 @MainActor
 struct InviteCandidateTests {
+    @Test func `invite text options enforce payload limits`() {
+        #expect(CandidateInviteValidation.textIssue(.init(
+            fullName: String(repeating: "x", count: 256),
+            tags: nil,
+            evaluatorEmail: nil,
+            emailSubject: nil,
+            emailMessage: nil,
+            atsCandidateID: nil,
+            atsRequisitionID: nil
+        ))?.contains("Full name") == true)
+        #expect(CandidateInviteValidation.textIssue(.init(
+            fullName: nil,
+            tags: Array(repeating: "tag", count: 51),
+            evaluatorEmail: nil,
+            emailSubject: nil,
+            emailMessage: nil,
+            atsCandidateID: nil,
+            atsRequisitionID: nil
+        ))?.contains("50 tags") == true)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }

@@ -110,6 +110,7 @@ extension RankBuddyToolProvider {
 
     // MARK: - Tests
 
+    // swiftlint:disable function_body_length
     @MainActor
     private func createTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
@@ -293,28 +294,47 @@ extension RankBuddyToolProvider {
             return errorResult("`additional_time` must be a whole number from 0 to 1,440 minutes.")
         }
 
+        let fullName = stringArgument(arguments, "full_name")
+        let tags = stringArrayArgument(arguments, "tags")
+        let evaluatorEmail = stringArgument(arguments, "evaluator_email")
+        let emailSubject = stringArgument(arguments, "email_subject")
+        let emailMessage = stringArgument(arguments, "email_message")
+        let atsCandidateID = stringArgument(arguments, "ats_candidate_id")
+        let atsRequisitionID = stringArgument(arguments, "ats_requisition_id")
+        if let issue = CandidateInviteValidation.textIssue(.init(
+            fullName: fullName,
+            tags: tags,
+            evaluatorEmail: evaluatorEmail,
+            emailSubject: emailSubject,
+            emailMessage: emailMessage,
+            atsCandidateID: atsCandidateID,
+            atsRequisitionID: atsRequisitionID
+        )) {
+            return errorResult(issue)
+        }
+
         do {
             let invited = try await HackerRankClient(account: resolved).inviteCandidate(
                 testID: testID,
                 email: email,
-                fullName: stringArgument(arguments, "full_name"),
+                fullName: fullName,
                 sendEmail: boolArgument(arguments, "send_email") ?? true,
                 options: CandidateInviteOptions(
                     validFrom: stringArgument(arguments, "valid_from"),
                     validUntil: stringArgument(arguments, "valid_until"),
-                    emailSubject: stringArgument(arguments, "email_subject"),
-                    emailMessage: stringArgument(arguments, "email_message"),
+                    emailSubject: emailSubject,
+                    emailMessage: emailMessage,
                     templateID: stringArgument(arguments, "template_id"),
-                    evaluatorEmail: stringArgument(arguments, "evaluator_email"),
+                    evaluatorEmail: evaluatorEmail,
                     finishURL: stringArgument(arguments, "finish_url"),
                     resultURL: stringArgument(arguments, "result_url"),
                     notifyResultUpdate: boolArgument(arguments, "notify_result_update"),
-                    tags: stringArrayArgument(arguments, "tags"),
+                    tags: tags,
                     force: boolArgument(arguments, "force"),
                     allowReattempt: boolArgument(arguments, "allow_reattempt"),
                     additionalTime: additionalTime,
-                    atsCandidateID: stringArgument(arguments, "ats_candidate_id"),
-                    atsRequisitionID: stringArgument(arguments, "ats_requisition_id")
+                    atsCandidateID: atsCandidateID,
+                    atsRequisitionID: atsRequisitionID
                 )
             )
             guard let invitedID = Self.validatedCreatedID(invited.id) else {
@@ -329,6 +349,8 @@ extension RankBuddyToolProvider {
             return errorResult("Couldn't invite candidate: \(error.localizedDescription)")
         }
     }
+
+    // swiftlint:enable function_body_length
 
     @MainActor
     // swiftlint:disable:next function_body_length cyclomatic_complexity

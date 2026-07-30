@@ -8,11 +8,56 @@ import SwiftUI
 
 /// Product/API guardrails shared by the invite sheet and non-UI write surfaces.
 enum CandidateInviteValidation {
+    struct TextFields {
+        var fullName: String?
+        var tags: [String]?
+        var evaluatorEmail: String?
+        var emailSubject: String?
+        var emailMessage: String?
+        var atsCandidateID: String?
+        var atsRequisitionID: String?
+    }
+
     /// One day is a generous accommodation ceiling while preventing accidental pasted magnitudes.
     static let additionalTimeRange = 0 ... 1440
+    static let maxFullNameLength = 255
+    static let maxTagLength = 100
+    static let maxTagCount = 50
+    static let maxEmailLength = 320
+    static let maxIdentifierLength = 255
+    static let maxSubjectLength = 255
+    static let maxMessageLength = 10000
 
     static func isValid(additionalTime: Int?) -> Bool {
         additionalTime.map(additionalTimeRange.contains) ?? true
+    }
+
+    static func textIssue(_ fields: TextFields) -> String? {
+        if let fullName = fields.fullName, fullName.count > maxFullNameLength {
+            return "Full name can be at most \(maxFullNameLength) characters."
+        }
+        if let tags = fields.tags, tags.count > maxTagCount {
+            return "Use at most \(maxTagCount) tags."
+        }
+        if let tag = fields.tags?.first(where: { $0.count > maxTagLength }) {
+            return "Tag “\(tag.prefix(20))” exceeds \(maxTagLength) characters."
+        }
+        if let evaluatorEmail = fields.evaluatorEmail, evaluatorEmail.count > maxEmailLength {
+            return "Evaluator email can be at most \(maxEmailLength) characters."
+        }
+        if let emailSubject = fields.emailSubject, emailSubject.count > maxSubjectLength {
+            return "Email subject can be at most \(maxSubjectLength) characters."
+        }
+        if let emailMessage = fields.emailMessage, emailMessage.count > maxMessageLength {
+            return "Email message can be at most \(maxMessageLength.formatted()) characters."
+        }
+        if let atsCandidateID = fields.atsCandidateID, atsCandidateID.count > maxIdentifierLength {
+            return "ATS candidate ID can be at most \(maxIdentifierLength) characters."
+        }
+        if let atsRequisitionID = fields.atsRequisitionID, atsRequisitionID.count > maxIdentifierLength {
+            return "ATS requisition ID can be at most \(maxIdentifierLength) characters."
+        }
+        return nil
     }
 }
 
@@ -65,7 +110,19 @@ struct InviteCandidateSheet: View {
     }
 
     private var canInvite: Bool {
-        isEmailValid && evaluatorEmailValid && additionalTimeValid
+        isEmailValid && evaluatorEmailValid && additionalTimeValid && textValidationIssue == nil
+    }
+
+    private var textValidationIssue: String? {
+        CandidateInviteValidation.textIssue(.init(
+            fullName: trimmed(fullName),
+            tags: parsedTags(tags),
+            evaluatorEmail: trimmed(evaluatorEmail),
+            emailSubject: trimmed(emailSubject),
+            emailMessage: trimmed(emailMessage),
+            atsCandidateID: trimmed(atsCandidateID),
+            atsRequisitionID: trimmed(atsRequisitionID)
+        ))
     }
 
     var body: some View {
@@ -108,6 +165,9 @@ struct InviteCandidateSheet: View {
                             .foregroundStyle(.red)
                     } else if !evaluatorEmailValid {
                         Text("Evaluator email must look like an email address.")
+                            .foregroundStyle(.red)
+                    } else if let textValidationIssue {
+                        Text(textValidationIssue)
                             .foregroundStyle(.red)
                     }
                 }
