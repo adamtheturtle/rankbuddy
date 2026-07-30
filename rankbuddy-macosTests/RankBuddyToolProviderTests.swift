@@ -219,7 +219,9 @@ struct RankBuddyToolProviderTests {
 
     @Test func `bounded search tools advertise and validate continuation cursors`() async throws {
         let tools = await provider().tools()
-        for name in ["search_tests", "search_questions", "search_interviews", "search_candidates"] {
+        for name in [
+            "search_tests", "search_questions", "search_interviews", "search_users", "search_candidates"
+        ] {
             let tool = try #require(tools.first { $0.name == name })
             let schema = String(describing: tool.inputSchema)
             #expect(schema.contains("cursor"))
@@ -297,6 +299,7 @@ struct RankBuddyToolProviderTests {
         #expect(body.contains("rhea@example.com"))
         #expect(body.contains("\"matches\""))
         #expect(!body.contains("\"count\" : 0"))
+        #expect(body.contains("\"next_cursor\""))
     }
 
     @Test func `search_users requires a query`() async {

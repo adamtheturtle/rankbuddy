@@ -28,7 +28,12 @@ extension RankBuddyToolProvider {
                 return errorResult("`query` must contain non-whitespace text.")
             }
 
-            return await searchUsers(query: query, account: account)
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+
+            return await searchUsers(query: query, cursor: cursor, account: account)
 
         case "search_candidates":
             guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
@@ -55,17 +60,18 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
-    private func searchUsers(query: String, account: String?) async -> CallTool.Result {
+    private func searchUsers(query: String, cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let page = try await HackerRankClient(account: resolved).searchUsers(query: query)
+            let page = try await HackerRankClient(account: resolved).searchUsers(query: query, after: cursor)
             let items = page.items.map {
                 ["id": $0.id, "email": $0.email, "name": $0.displayName, "role": $0.role ?? ""]
             }
             return jsonResult([
                 "account": resolved.label, "query": query, "matches": items,
-                "count": items.count, "has_more": page.next != nil
+                "count": items.count, "has_more": page.next != nil,
+                "next_cursor": page.next ?? NSNull()
             ])
         } catch {
             return errorResult("Couldn't search users: \(error.localizedDescription)")
