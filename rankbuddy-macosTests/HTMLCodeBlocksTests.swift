@@ -53,6 +53,15 @@ struct HTMLCodeBlocksTests {
         #expect(CodeLanguage.detect(hint: "node.js") == .javascript)
     }
 
+    @Test func `metadata attributes are not mistaken for lang`() {
+        #expect(HTMLCodeBlocks.languageHint(openTag: "<pre data-lang=\"python\">", inner: "code") == nil)
+        #expect(HTMLCodeBlocks.languageHint(openTag: "<pre x-lang=\"python\">", inner: "code") == nil)
+        #expect(HTMLCodeBlocks.languageHint(
+            openTag: "<pre data-lang=\"python\" lang = \"swift\">",
+            inner: "code"
+        ) == "swift")
+    }
+
     @Test func `an unterminated pre keeps the remainder as prose`() {
         let html = "<p>Intro</p><pre>broken"
         let segments = HTMLCodeBlocks.segments(html)

@@ -75,41 +75,69 @@ nonisolated enum HTMLCodeBlocks {
 
     private static func hint(in tag: String) -> String? {
         // `class="language-python"` / `class="lang-py"` / `class="python"`, or `lang="python"`.
-        if let marker = tag.range(of: "language-", options: .caseInsensitive)
-            ?? tag.range(of: "lang-", options: .caseInsensitive) {
-            return token(in: tag, after: marker.upperBound)
+        if let classValue = attribute(named: "class", in: tag) {
+            let classes = classValue.split(whereSeparator: \.isWhitespace).map(String.init)
+            for className in classes {
+                if className.lowercased().hasPrefix("language-") {
+                    return String(className.dropFirst("language-".count))
+                }
+                if className.lowercased().hasPrefix("lang-") {
+                    return String(className.dropFirst("lang-".count))
+                }
+            }
+            if let lang = attribute(named: "lang", in: tag) {
+                return lang
+            }
+            return classes.first
         }
-        if let attr = tag.range(of: "lang=", options: .caseInsensitive) {
-            return quotedValue(in: tag, after: attr.upperBound)
-        }
-        if let attr = tag.range(of: "class=", options: .caseInsensitive) {
-            return quotedValue(in: tag, after: attr.upperBound)
+        return attribute(named: "lang", in: tag)
+    }
+
+    /// Reads an attribute only when `name` is its complete name, not a suffix such as
+    /// `data-lang`.
+    private static func attribute(named name: String, in tag: String) -> String? {
+        var searchStart = tag.startIndex
+        while let match = tag.range(
+            of: name,
+            options: [.caseInsensitive],
+            range: searchStart ..< tag.endIndex
+        ) {
+            searchStart = match.upperBound
+            let hasLeadingBoundary = match.lowerBound == tag.startIndex
+                || tag[tag.index(before: match.lowerBound)].isWhitespace
+                || tag[tag.index(before: match.lowerBound)] == "<"
+            guard hasLeadingBoundary else { continue }
+
+            var index = match.upperBound
+            while index < tag.endIndex, tag[index].isWhitespace {
+                tag.formIndex(after: &index)
+            }
+            guard index < tag.endIndex, tag[index] == "=" else { continue }
+
+            tag.formIndex(after: &index)
+            while index < tag.endIndex, tag[index].isWhitespace {
+                tag.formIndex(after: &index)
+            }
+            guard index < tag.endIndex else { return nil }
+
+            let quote: Character? = tag[index] == "\"" || tag[index] == "'" ? tag[index] : nil
+            if quote != nil {
+                tag.formIndex(after: &index)
+            }
+            let valueStart = index
+            while index < tag.endIndex {
+                if let quote, tag[index] == quote {
+                    break
+                }
+                if quote == nil, tag[index].isWhitespace || tag[index] == ">" {
+                    break
+                }
+                tag.formIndex(after: &index)
+            }
+            let value = String(tag[valueStart ..< index])
+            return value.isEmpty ? nil : value
         }
         return nil
-    }
-
-    /// Reads one complete HTML attribute/class token starting at `start`.
-    private static func token(in string: String, after start: String.Index) -> String? {
-        var result = ""
-        var index = start
-        while index < string.endIndex {
-            let char = string[index]
-            if char.isWhitespace || char == "\"" || char == "'" || char == ">" {
-                break
-            }
-            result.append(char)
-            index = string.index(after: index)
-        }
-        return result.isEmpty ? nil : result
-    }
-
-    /// Reads the value of a quoted attribute, skipping an optional opening quote.
-    private static func quotedValue(in string: String, after start: String.Index) -> String? {
-        var index = start
-        if index < string.endIndex, string[index] == "\"" || string[index] == "'" {
-            index = string.index(after: index)
-        }
-        return token(in: string, after: index)
     }
 
     /// Removes HTML tags, turning `<br>` and `</…>` line breaks into newlines so the code keeps
