@@ -56,32 +56,36 @@ struct CodeBlock: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: true) {
-            Group {
-                let key = SyntaxHighlightKey(code: code, language: language)
-                if highlightedKey == key, let highlightedCode {
-                    Text(highlightedCode)
-                } else {
-                    Text(code)
-                        .font(.system(.body, design: .monospaced))
-                }
-            }
-            .textSelection(.enabled)
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .accessibilityHint("Scroll horizontally to read overflowing code.")
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
-        .overlay(alignment: .topTrailing) {
+        VStack(alignment: .leading, spacing: 0) {
             if let label = languageLabel {
-                Text(label)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .accessibilityHidden(true)
+                HStack {
+                    Spacer()
+                    Text(label)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                }
+                .padding(.horizontal, 10)
+                .padding(.top, 6)
             }
+
+            ScrollView(.horizontal, showsIndicators: true) {
+                Group {
+                    let key = SyntaxHighlightKey(code: code, language: language)
+                    if highlightedKey == key, let highlightedCode {
+                        Text(highlightedCode)
+                    } else {
+                        Text(code)
+                            .font(.system(.body, design: .monospaced))
+                    }
+                }
+                .textSelection(.enabled)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .accessibilityHint("Scroll horizontally to read overflowing code.")
         }
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
         .task(id: SyntaxHighlightKey(code: code, language: language)) {
             await prepareHighlight()
         }
