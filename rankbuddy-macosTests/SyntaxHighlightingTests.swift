@@ -82,6 +82,12 @@ struct SyntaxHighlightingTests {
         #expect(text(code, .cFamily, of: .comment) == ["/* a\nb */"])
     }
 
+    @Test func `swift block comments preserve nested comments`() {
+        let code = "let before = 1 /* outer /* inner */ return \"text\" */ let after = 2"
+        #expect(text(code, .swift, of: .comment) == ["/* outer /* inner */ return \"text\" */"])
+        #expect(text(code, .swift, of: .keyword) == ["let", "let"])
+    }
+
     @Test func `sql keywords match case-insensitively`() {
         #expect(text("select From", .sql, of: .keyword).count == 2)
         // Python is case-sensitive, so "Return" is not a keyword.

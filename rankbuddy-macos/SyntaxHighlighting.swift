@@ -198,9 +198,20 @@ nonisolated struct SyntaxHighlighter {
         guard language.hasBlockComments, code[start...].hasPrefix("/*") else { return nil }
 
         var end = code.index(start, offsetBy: 2)
+        var depth = 1
         while end < code.endIndex {
+            if language == .swift, code[end...].hasPrefix("/*") {
+                depth += 1
+                end = code.index(end, offsetBy: 2)
+                continue
+            }
             if code[end...].hasPrefix("*/") {
-                return code.index(end, offsetBy: 2)
+                depth -= 1
+                end = code.index(end, offsetBy: 2)
+                if depth == 0 {
+                    return end
+                }
+                continue
             }
             code.formIndex(after: &end)
         }
