@@ -135,10 +135,20 @@ extension LoadableList {
         guard !isServerSearching, isClientFiltering, nextCursor != nil else { return }
 
         // Debounce: a rapid keystroke/toggle cancels this task (and this sleep) before any load.
-        try? await Task.sleep(for: .milliseconds(350))
+        let filterToken = clientFilterToken
+        do {
+            try await Task.sleep(for: .milliseconds(350))
+        } catch {
+            return
+        }
+        guard !Task.isCancelled, filterToken == clientFilterToken else { return }
 
         isFilterLoading = true
-        defer { isFilterLoading = false }
+        defer {
+            if filterToken == clientFilterToken {
+                isFilterLoading = false
+            }
+        }
         var pagesLoadedThisFilter = 0
         while !Task.isCancelled,
               ListSearchPaging.shouldKeepLoading(
