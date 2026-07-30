@@ -13,6 +13,7 @@ extension LoadableList {
     func reload() async {
         didRestore = false
         loadMoreError = nil
+        loadedCursors = []
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
 
@@ -110,6 +111,16 @@ extension LoadableList {
         defer { isLoadingMore = false }
         do {
             let page = try await loadCurrentPage(cursor)
+            if page.next == cursor || page.next.map(loadedCursors.contains) == true {
+                loadMoreError = "The server repeated an earlier page. Retry to check again."
+                return
+            }
+            if page.items.isEmpty, page.next != nil {
+                loadMoreError = "The server returned an empty page before the end. Retry to check again."
+                return
+            }
+
+            loadedCursors.insert(cursor)
             items.append(contentsOf: page.items)
             nextCursor = page.next
             totalCount = page.totalCount ?? totalCount

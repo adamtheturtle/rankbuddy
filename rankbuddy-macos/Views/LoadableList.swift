@@ -182,6 +182,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @State var totalCount: Int?
     @State var isLoadingMore = false
     @State var loadMoreError: String?
+    @State var loadedCursors: Set<String> = []
     /// How many pages are currently loaded. Auto-refresh only fires on the first page, so it
     /// never yanks a user who has paged deep back to the top (#69).
     @State var pagesLoaded = 1
