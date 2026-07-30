@@ -32,6 +32,8 @@ struct AccountAppearanceTests {
     @Test func `displayIcon falls back to the default when unset`() {
         #expect(Account(label: "A", token: "t").displayIcon == Account.defaultIconSymbol)
         #expect(Account(label: "A", token: "t", iconSymbol: "star").displayIcon == "star")
+        #expect(Account(label: "A", token: "t", iconSymbol: "not.a.real.symbol").displayIcon
+            == Account.defaultIconSymbol)
     }
 
     @Test func `a tint colour is parsed only from a valid hex`() {

@@ -14,7 +14,11 @@ extension Account {
 
     /// The SF Symbol shown for this account, defaulting to a generic person icon.
     var displayIcon: String {
-        iconSymbol ?? Self.defaultIconSymbol
+        guard let iconSymbol,
+              AccountAppearance.icons.contains(where: { $0.symbol == iconSymbol })
+        else { return Self.defaultIconSymbol }
+
+        return iconSymbol
     }
 
     /// The account's tint parsed from `tintHex`, or `nil` to use the app accent colour.
