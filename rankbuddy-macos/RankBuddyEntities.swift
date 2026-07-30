@@ -8,6 +8,7 @@ import BuddyAppKit
 import CoreSpotlight
 import Foundation
 import HackerRankKit
+import OSLog
 
 /// A findable RankBuddy object — a test, question, or interview — exposed to Spotlight and
 /// Shortcuts (#24). One entity type covers the three top-level collections (each carries its
@@ -93,6 +94,11 @@ struct RankBuddyObjectEntity: IndexedEntity {
 
 /// Locates `RankBuddyObjectEntity` instances for Spotlight/Shortcuts.
 struct RankBuddyObjectEntityQuery: EntityQuery {
+    private static let logger = Logger(
+        subsystem: "com.adamdangoor.rankbuddy",
+        category: "spotlight"
+    )
+
     func entities(for identifiers: [String]) async throws -> [RankBuddyObjectEntity] {
         identifiers.compactMap(RankBuddyObjectEntity.init(id:))
     }
@@ -135,43 +141,62 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
     }
 
     @MainActor
+    private static func collect(
+        _ collection: String,
+        operation: @MainActor () async throws -> [EnrichableEntity]
+    ) async -> [EnrichableEntity] {
+        do {
+            return try await operation()
+        } catch {
+            logger.error("Failed to refresh \(collection, privacy: .public): \(error, privacy: .public)")
+            return []
+        }
+    }
+
+    @MainActor
     static func currentAccountSnapshot() async throws -> AccountSnapshot? {
         guard let account = SharedAccountStore.resolve().currentAccount else { return nil }
 
         let client = HackerRankClient(account: account)
         let accountID = account.id.uuidString
-        async let tests = client.testsPage()
-        async let questions = client.questionsPage()
-        async let interviews = client.interviewsPage()
+        async let tests = collect("tests") {
+            try await client.testsPage().items.map { test in
+                EnrichableEntity(
+                    entity: RankBuddyObjectEntity(
+                        collection: .tests, accountID: accountID, itemID: test.id, title: test.name
+                    ),
+                    keywordSource: SpotlightKeywordSource.text(for: test) ?? ""
+                )
+            }
+        }
+        async let questions = collect("questions") {
+            try await client.questionsPage().items.map { question in
+                EnrichableEntity(
+                    entity: RankBuddyObjectEntity(
+                        collection: .questions, accountID: accountID, itemID: question.id, title: question.name
+                    ),
+                    keywordSource: SpotlightKeywordSource.text(for: question) ?? ""
+                )
+            }
+        }
+        async let interviews = collect("interviews") {
+            try await client.interviewsPage().items.map { interview in
+                EnrichableEntity(
+                    entity: RankBuddyObjectEntity(
+                        collection: .interviews,
+                        accountID: accountID,
+                        itemID: interview.id,
+                        title: interview.title ?? "Interview \(interview.id)"
+                    ),
+                    keywordSource: SpotlightKeywordSource.text(for: interview) ?? ""
+                )
+            }
+        }
 
         var enrichables: [EnrichableEntity] = []
-        enrichables += try await tests.items.map { test in
-            EnrichableEntity(
-                entity: RankBuddyObjectEntity(
-                    collection: .tests, accountID: accountID, itemID: test.id, title: test.name
-                ),
-                keywordSource: SpotlightKeywordSource.text(for: test) ?? ""
-            )
-        }
-        enrichables += try await questions.items.map { question in
-            EnrichableEntity(
-                entity: RankBuddyObjectEntity(
-                    collection: .questions, accountID: accountID, itemID: question.id, title: question.name
-                ),
-                keywordSource: SpotlightKeywordSource.text(for: question) ?? ""
-            )
-        }
-        enrichables += try await interviews.items.map { interview in
-            EnrichableEntity(
-                entity: RankBuddyObjectEntity(
-                    collection: .interviews,
-                    accountID: accountID,
-                    itemID: interview.id,
-                    title: interview.title ?? "Interview \(interview.id)"
-                ),
-                keywordSource: SpotlightKeywordSource.text(for: interview) ?? ""
-            )
-        }
+        enrichables += await tests
+        enrichables += await questions
+        enrichables += await interviews
         return AccountSnapshot(accountID: accountID, enrichables: enrichables)
     }
 }
