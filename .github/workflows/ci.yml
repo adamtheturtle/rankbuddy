@@ -41,7 +41,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run actionlint
         # Pin the version for reproducibility; the download script is fetched at
@@ -64,7 +64,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run shellcheck
         run: |
@@ -102,7 +102,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Verify iCloud key-value entitlement
         run: |
@@ -153,7 +153,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run discovered package tests
         run: |
@@ -182,7 +182,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Select Xcode
         run: |
@@ -217,7 +217,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Pin an explicit Xcode rather than the image default, which drifts as Apple
       # ships updates. 26.5 is the newest stable on the macos-26 image.
@@ -246,7 +246,7 @@ jobs:
 
       - name: Upload Full test result
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: full-tests-xcresult
           path: Full.xcresult
@@ -262,7 +262,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Select Xcode
         run: |
@@ -285,7 +285,7 @@ jobs:
 
       - name: Upload Release build result
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-build-xcresult
           path: Release.xcresult
@@ -301,7 +301,7 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Select Xcode
         run: |
@@ -325,7 +325,7 @@ jobs:
 
       - name: Upload TSan test result
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tsan-tests-xcresult
           path: TSan.xcresult
@@ -345,7 +345,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Select Xcode
         run: |
