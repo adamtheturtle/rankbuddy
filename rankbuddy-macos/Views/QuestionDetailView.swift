@@ -42,7 +42,9 @@ struct QuestionDetailView: View {
     let question: Question
     var onChanged: () -> Void = {}
     @Environment(AccountStore.self) private var store
+    @Environment(\.controlActiveState) private var controlActiveState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: QuestionDetail?
     @State private var answerRevealed = false
@@ -167,7 +169,20 @@ struct QuestionDetailView: View {
         .navigationTitle(displayed.name)
         .task(id: question.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
-        .onDisappear { commandContext.clearDetailActions() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active {
+                answerRevealed = false
+            }
+        }
+        .onChange(of: controlActiveState) { _, state in
+            if state != .key {
+                answerRevealed = false
+            }
+        }
+        .onDisappear {
+            answerRevealed = false
+            commandContext.clearDetailActions()
+        }
         .advertisesItemActivity(collection: .questions, itemID: question.id, title: displayed.name)
         // Share and Open stay in the bar; Print and Markdown export are off the bar by default but
         // one Customize Toolbar away.
