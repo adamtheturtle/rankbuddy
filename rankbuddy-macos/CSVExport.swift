@@ -15,11 +15,12 @@ enum CSVExport {
     /// Escapes a single CSV field: wrapped in quotes when it contains a comma, quote, or
     /// newline, with embedded quotes doubled (RFC 4180).
     nonisolated static func field(_ value: String) -> String {
-        guard value.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" }) else {
-            return value
+        let safe = SpreadsheetCell.neutralized(value)
+        guard safe.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" }) else {
+            return safe
         }
 
-        return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+        return "\"\(safe.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 
     /// Joins one row of fields with commas, escaping each.

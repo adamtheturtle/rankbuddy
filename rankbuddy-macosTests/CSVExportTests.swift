@@ -19,6 +19,13 @@ struct CSVExportTests {
         #expect(CSVExport.field("say \"hi\"") == "\"say \"\"hi\"\"\"")
     }
 
+    @Test func `fields neutralize spreadsheet formula sigils`() {
+        #expect(CSVExport.field("=HYPERLINK(\"https://evil\")") == "\"'=HYPERLINK(\"\"https://evil\"\")\"")
+        #expect(CSVExport.field("+1") == "'+1")
+        #expect(CSVExport.field(" -2") == "' -2")
+        #expect(CSVExport.field("@SUM(A1:A2)") == "'@SUM(A1:A2)")
+    }
+
     @Test func `a document is a header row over escaped data rows`() {
         let csv = CSVExport.document(header: ["A", "B"], rows: [["1", "x,y"], ["2", "z"]])
         #expect(csv == "\u{FEFF}A,B\n1,\"x,y\"\n2,z")
