@@ -1,0 +1,1386 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%@." : {
+
+    },
+    "%lld" : {
+
+    },
+    "%lld minutes" : {
+
+    },
+    "%lld ms" : {
+
+    },
+    "%lld question%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld question%2$@"
+          }
+        }
+      }
+    },
+    "1 minute" : {
+
+    },
+    "AI Summary" : {
+
+    },
+    "ATS candidate ID" : {
+
+    },
+    "ATS requisition ID" : {
+
+    },
+    "About RankBuddy" : {
+
+    },
+    "Access" : {
+
+    },
+    "Access password" : {
+
+    },
+    "Account" : {
+
+    },
+    "Account Activity" : {
+
+    },
+    "Account Data Unreadable" : {
+
+    },
+    "Account: %@" : {
+
+    },
+    "Accounts" : {
+
+    },
+    "Active & Upcoming" : {
+
+    },
+    "Add" : {
+
+    },
+    "Add %@ to Favourites" : {
+
+    },
+    "Add Account" : {
+
+    },
+    "Add Account…" : {
+
+    },
+    "Add Demo Account" : {
+
+    },
+    "Add Member" : {
+
+    },
+    "Add Member…" : {
+
+    },
+    "Add Testcase" : {
+
+    },
+    "Add Testcase…" : {
+
+    },
+    "Add a HackerRank account to get started, then select it to edit." : {
+
+    },
+    "Add a member to this team" : {
+
+    },
+    "Add a problem statement" : {
+
+    },
+    "Add account" : {
+
+    },
+    "Add an account" : {
+
+    },
+    "Add an account in Settings before opening HackerRank links." : {
+
+    },
+    "Add an account to see its activity." : {
+
+    },
+    "Add notes" : {
+
+    },
+    "Add to Favourites" : {
+
+    },
+    "Add to your assistant" : {
+
+    },
+    "Additional details" : {
+
+    },
+    "Additional test details couldn’t be loaded." : {
+
+    },
+    "Additional time (minutes)" : {
+
+    },
+    "Additional time must be a whole number from 0 to 1,440 minutes." : {
+
+    },
+    "Adds RankBuddy to %@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Adds RankBuddy to %1$@. %2$@"
+          }
+        }
+      }
+    },
+    "All Accounts" : {
+
+    },
+    "All accounts" : {
+
+    },
+    "Allow the MCP server to make changes" : {
+
+    },
+    "Allowed languages (comma-separated)" : {
+
+    },
+    "An icon and tint to tell this account apart in the switcher and sidebar." : {
+
+    },
+    "Answer" : {
+
+    },
+    "Appearance" : {
+
+    },
+    "Archive" : {
+
+    },
+    "Archive Test" : {
+
+    },
+    "Archive this test" : {
+
+    },
+    "Archive “%@”?" : {
+
+    },
+    "Assessment" : {
+
+    },
+    "Assistant" : {
+
+    },
+    "Auto-refresh lists: %@" : {
+
+    },
+    "Badge counts" : {
+
+    },
+    "Base URL" : {
+
+    },
+    "Browser" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Cancel Invitation" : {
+
+    },
+    "Cancel this invitation?" : {
+
+    },
+    "Candidate email (optional)" : {
+
+    },
+    "Candidate instructions" : {
+
+    },
+    "Changed: %@" : {
+
+    },
+    "Check every" : {
+
+    },
+    "Check for Updates…" : {
+
+    },
+    "Choose a team" : {
+
+    },
+    "Choose an account to create items" : {
+
+    },
+    "Choose one of your saved accounts in Settings." : {
+
+    },
+    "Choose the account that owns this HackerRank item." : {
+
+    },
+    "Choose the owning account" : {
+
+    },
+    "Clear" : {
+
+    },
+    "Clear Activity" : {
+
+    },
+    "Clear Languages" : {
+
+    },
+    "Clear MCP activity?" : {
+
+    },
+    "Clear all filters" : {
+
+    },
+    "Click to rename" : {
+
+    },
+    "Color" : {
+
+    },
+    "Comma-separated" : {
+
+    },
+    "Comma-separated, e.g. python, java" : {
+
+    },
+    "Comma-separated; empty for all" : {
+
+    },
+    "Command Palette…" : {
+
+    },
+    "Connect an assistant to the server and its tool calls show up here." : {
+
+    },
+    "Continue" : {
+
+    },
+    "Copy" : {
+
+    },
+    "Couldn't generate a summary." : {
+
+    },
+    "Couldn’t Change App Visibility" : {
+
+    },
+    "Couldn’t Create Pad" : {
+
+    },
+    "Couldn’t Load Candidate" : {
+
+    },
+    "Couldn’t Load Team" : {
+
+    },
+    "Couldn’t Load User" : {
+
+    },
+    "Couldn’t archive test" : {
+
+    },
+    "Couldn’t change the login item" : {
+
+    },
+    "Couldn’t complete that action" : {
+
+    },
+    "Couldn’t delete interview" : {
+
+    },
+    "Couldn’t delete question" : {
+
+    },
+    "Couldn’t delete team" : {
+
+    },
+    "Couldn’t delete test" : {
+
+    },
+    "Couldn’t load activity" : {
+
+    },
+    "Couldn’t load more activity: %@" : {
+
+    },
+    "Couldn’t lock user" : {
+
+    },
+    "Couldn’t refresh: %@" : {
+
+    },
+    "Couldn’t remove member" : {
+
+    },
+    "Couldn’t rename test" : {
+
+    },
+    "Couldn’t update candidate" : {
+
+    },
+    "Couldn’t update interview" : {
+
+    },
+    "Couldn’t update question" : {
+
+    },
+    "Couldn’t update team" : {
+
+    },
+    "Couldn’t update user" : {
+
+    },
+    "Create" : {
+
+    },
+    "Create User" : {
+
+    },
+    "Create User…" : {
+
+    },
+    "Create a Pad or schedule an interview" : {
+
+    },
+    "Create a question" : {
+
+    },
+    "Create a team" : {
+
+    },
+    "Create a test" : {
+
+    },
+    "Create an organisation user" : {
+
+    },
+    "Create question" : {
+
+    },
+    "Create user" : {
+
+    },
+    "Current" : {
+
+    },
+    "Current account" : {
+
+    },
+    "Cutoff score" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete All Testcases" : {
+
+    },
+    "Delete All Testcases…" : {
+
+    },
+    "Delete Interview" : {
+
+    },
+    "Delete Question" : {
+
+    },
+    "Delete Report" : {
+
+    },
+    "Delete Team" : {
+
+    },
+    "Delete Test" : {
+
+    },
+    "Delete all testcases?" : {
+
+    },
+    "Delete this interview" : {
+
+    },
+    "Delete this question" : {
+
+    },
+    "Delete this report?" : {
+
+    },
+    "Delete this team" : {
+
+    },
+    "Delete this test" : {
+
+    },
+    "Delete “%@”?" : {
+
+    },
+    "Departments" : {
+
+    },
+    "Description" : {
+
+    },
+    "Discard Changes" : {
+
+    },
+    "Discard Unsaved Changes?" : {
+
+    },
+    "Discover More Values…" : {
+
+    },
+    "Download PDF report" : {
+
+    },
+    "Drop to add to Favourites" : {
+
+    },
+    "Duration" : {
+
+    },
+    "Duration (minutes)" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edit %@" : {
+
+    },
+    "Edit Account" : {
+
+    },
+    "Edit Assessment…" : {
+
+    },
+    "Edit Test" : {
+
+    },
+    "Edit languages" : {
+
+    },
+    "Edit title" : {
+
+    },
+    "Email" : {
+
+    },
+    "Email message" : {
+
+    },
+    "Email subject" : {
+
+    },
+    "Email template" : {
+
+    },
+    "Empty" : {
+
+    },
+    "Enable proctoring" : {
+
+    },
+    "Enable the MCP server" : {
+
+    },
+    "Ends (ISO-8601)" : {
+
+    },
+    "Enter a URL from the selected account’s HackerRank host, or enter a bare item ID." : {
+
+    },
+    "Enter a name to create a question" : {
+
+    },
+    "Enter a valid email address, a first name, and a team to create a user" : {
+
+    },
+    "Enter a valid email address, for example name@example.com." : {
+
+    },
+    "Evaluator email" : {
+
+    },
+    "Evaluator email must look like an email address." : {
+
+    },
+    "Expected output" : {
+
+    },
+    "Explanation" : {
+
+    },
+    "Export %@ as CSV" : {
+
+    },
+    "Export CSV…" : {
+
+    },
+    "Export Loaded Rows CSV…" : {
+
+    },
+    "Export as Markdown…" : {
+
+    },
+    "Export as a Markdown file" : {
+
+    },
+    "Export the currently loaded %@ rows as CSV" : {
+
+    },
+    "Export the selected %@ as CSV (#44)" : {
+
+    },
+    "Failed" : {
+
+    },
+    "Favourites" : {
+
+    },
+    "Favourites Couldn’t Be Read" : {
+
+    },
+    "Feedback" : {
+
+    },
+    "Fetch the candidate's report PDF from HackerRank and open it" : {
+
+    },
+    "Filter %@ by date" : {
+
+    },
+    "Filter by %@" : {
+
+    },
+    "First name" : {
+
+    },
+    "Full name (optional)" : {
+
+    },
+    "Function name" : {
+
+    },
+    "General" : {
+
+    },
+    "Generate" : {
+
+    },
+    "Generate Code Stubs" : {
+
+    },
+    "Generate Code Stubs…" : {
+
+    },
+    "Generate a plain-language summary on this device" : {
+
+    },
+    "Get a Token" : {
+
+    },
+    "Go" : {
+
+    },
+    "HackerRank API Documentation" : {
+
+    },
+    "HackerRank writes a starter stub for each language from this signature." : {
+
+    },
+    "Help" : {
+
+    },
+    "Hide Detail Pane" : {
+
+    },
+    "Hide the detail pane" : {
+
+    },
+    "Hide the token" : {
+
+    },
+    "Hide token" : {
+
+    },
+    "Icon" : {
+
+    },
+    "Input" : {
+
+    },
+    "Instructions" : {
+
+    },
+    "Internal notes" : {
+
+    },
+    "Interviews" : {
+
+    },
+    "Invite" : {
+
+    },
+    "Invite Candidate" : {
+
+    },
+    "Invite Candidate…" : {
+
+    },
+    "Invite a candidate to this test" : {
+
+    },
+    "Invite options" : {
+
+    },
+    "Inviters couldn’t be loaded." : {
+
+    },
+    "Item" : {
+
+    },
+    "Keep Invitation" : {
+
+    },
+    "Keep Recovery Copy" : {
+
+    },
+    "Language" : {
+
+    },
+    "Languages" : {
+
+    },
+    "Last name (optional)" : {
+
+    },
+    "Launch at login" : {
+
+    },
+    "Limit RankBuddy to a single HackerRank account while a Focus is on." : {
+
+    },
+    "Links" : {
+
+    },
+    "Load More" : {
+
+    },
+    "Loading candidate details…" : {
+
+    },
+    "Loading candidate…" : {
+
+    },
+    "Loading interview details…" : {
+
+    },
+    "Loading more…" : {
+
+    },
+    "Loading question details…" : {
+
+    },
+    "Loading teams…" : {
+
+    },
+    "Loading team…" : {
+
+    },
+    "Loading transcript…" : {
+
+    },
+    "Loading user…" : {
+
+    },
+    "Loading…" : {
+
+    },
+    "Lock %@" : {
+
+    },
+    "Lock %@?" : {
+
+    },
+    "Lock User" : {
+
+    },
+    "Lock this user's account" : {
+
+    },
+    "Lock user?" : {
+
+    },
+    "MCP Activity" : {
+
+    },
+    "MCP Server" : {
+
+    },
+    "Manage Accounts…" : {
+
+    },
+    "Manual configuration is unavailable because no executable command can be generated." : {
+
+    },
+    "Max score" : {
+
+    },
+    "Menu Bar" : {
+
+    },
+    "Name" : {
+
+    },
+    "New" : {
+
+    },
+    "New Pad" : {
+
+    },
+    "New Pad…" : {
+
+    },
+    "New Question" : {
+
+    },
+    "New Question…" : {
+
+    },
+    "New Team" : {
+
+    },
+    "New Team…" : {
+
+    },
+    "New Test" : {
+
+    },
+    "New Test…" : {
+
+    },
+    "No Account" : {
+
+    },
+    "No Account Selected" : {
+
+    },
+    "No Accounts" : {
+
+    },
+    "No Activity" : {
+
+    },
+    "No MCP activity yet" : {
+
+    },
+    "No Transcript" : {
+
+    },
+    "No account configured" : {
+
+    },
+    "No account selected" : {
+
+    },
+    "No recent changes are recorded for this account." : {
+
+    },
+    "None" : {
+
+    },
+    "Notes" : {
+
+    },
+    "Notes (optional)" : {
+
+    },
+    "Nothing to show" : {
+
+    },
+    "Notify me about new interviews" : {
+
+    },
+    "OK" : {
+
+    },
+    "Offline" : {
+
+    },
+    "Open" : {
+
+    },
+    "Open %@" : {
+
+    },
+    "Open %@ in a new window" : {
+
+    },
+    "Open Account Settings" : {
+
+    },
+    "Open RankBuddy" : {
+
+    },
+    "Open RankBuddy Item" : {
+
+    },
+    "Open RankBuddy automatically when you log in to your Mac." : {
+
+    },
+    "Open RankBuddy to ${section}" : {
+
+    },
+    "Open Section" : {
+
+    },
+    "Open Settings" : {
+
+    },
+    "Open by URL or ID" : {
+
+    },
+    "Open by URL…" : {
+
+    },
+    "Open in RankBuddy" : {
+
+    },
+    "Open links in" : {
+
+    },
+    "Open links in the background" : {
+
+    },
+    "Open report" : {
+
+    },
+    "Open result" : {
+
+    },
+    "Open résumé" : {
+
+    },
+    "Open the %@ in your browser" : {
+
+    },
+    "Open the activity window" : {
+
+    },
+    "Opens RankBuddy to a specific section." : {
+
+    },
+    "Opens a test, question, or interview in RankBuddy." : {
+
+    },
+    "Opens in your browser's signed-in account" : {
+
+    },
+    "Opens in your browser, which may be signed in to a different HackerRank account." : {
+
+    },
+    "Opens the RankBuddy main window." : {
+
+    },
+    "Optional" : {
+
+    },
+    "Options" : {
+
+    },
+    "Order" : {
+
+    },
+    "Override only for regional HackerRank deployments. Leave blank to use the default." : {
+
+    },
+    "Parameters" : {
+
+    },
+    "Participants" : {
+
+    },
+    "Paste a HackerRank URL or an ID" : {
+
+    },
+    "Paste your token" : {
+
+    },
+    "People" : {
+
+    },
+    "Personal access token" : {
+
+    },
+    "Prefer to edit the file yourself?" : {
+
+    },
+    "Print or save as PDF" : {
+
+    },
+    "Print…" : {
+
+    },
+    "Problem statement" : {
+
+    },
+    "Proctoring" : {
+
+    },
+    "Properties" : {
+
+    },
+    "Public login link" : {
+
+    },
+    "Questions" : {
+
+    },
+    "Quit RankBuddy" : {
+
+    },
+    "RankBuddy" : {
+
+    },
+    "RankBuddy Item" : {
+
+    },
+    "RankBuddy Section" : {
+
+    },
+    "RankBuddy can’t locate its executable, so assistant configuration is unavailable." : {
+
+    },
+    "Recent" : {
+
+    },
+    "Recent items in the menu bar" : {
+
+    },
+    "Recent tool calls" : {
+
+    },
+    "Recommended duration (minutes)" : {
+
+    },
+    "Refresh" : {
+
+    },
+    "Refresh Account Activity" : {
+
+    },
+    "Refresh RankBuddy" : {
+
+    },
+    "Refresh RankBuddy Data" : {
+
+    },
+    "Refreshes RankBuddy's cached lists and searchable items." : {
+
+    },
+    "Regenerate" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Remove %@" : {
+
+    },
+    "Remove %@ from Favourites" : {
+
+    },
+    "Remove Account?" : {
+
+    },
+    "Remove account" : {
+
+    },
+    "Remove from Favourites" : {
+
+    },
+    "Remove member?" : {
+
+    },
+    "Remove the selected account" : {
+
+    },
+    "Rename or edit this test" : {
+
+    },
+    "Rename…" : {
+
+    },
+    "Replace" : {
+
+    },
+    "Replace “%@” with the current filters?" : {
+
+    },
+    "Report PDF" : {
+
+    },
+    "Require Touch ID to reveal a token" : {
+
+    },
+    "Requires a HackerRank for Work personal access token." : {
+
+    },
+    "Reset" : {
+
+    },
+    "Reset Favourites" : {
+
+    },
+    "Retry" : {
+
+    },
+    "Retry Details" : {
+
+    },
+    "Retry Teams" : {
+
+    },
+    "Return type" : {
+
+    },
+    "Reveal access password" : {
+
+    },
+    "Reveal answer" : {
+
+    },
+    "Role" : {
+
+    },
+    "Sample (shown to candidates)" : {
+
+    },
+    "Save" : {
+
+    },
+    "Save Changes" : {
+
+    },
+    "Save Search" : {
+
+    },
+    "Save the current filters as a search you can re-apply" : {
+
+    },
+    "Save the current filters so you can re-apply them later." : {
+
+    },
+    "Saved Accounts Need Recovery" : {
+
+    },
+    "Save…" : {
+
+    },
+    "Schedule" : {
+
+    },
+    "Schedule Interview" : {
+
+    },
+    "Schedule Interview…" : {
+
+    },
+    "Scope to Account" : {
+
+    },
+    "Scoped to %@" : {
+
+    },
+    "Score" : {
+
+    },
+    "Score: %@" : {
+
+    },
+    "Scroll horizontally to read overflowing code." : {
+
+    },
+    "Search %@" : {
+
+    },
+    "Search RankBuddy…" : {
+
+    },
+    "Section" : {
+
+    },
+    "Sections" : {
+
+    },
+    "Select an account and enter a URL or ID" : {
+
+    },
+    "Send Feedback…" : {
+
+    },
+    "Send invitation email" : {
+
+    },
+    "Set Custom Code Stub" : {
+
+    },
+    "Set Custom Code Stub…" : {
+
+    },
+    "Settings…" : {
+
+    },
+    "Share" : {
+
+    },
+    "Share %@" : {
+
+    },
+    "Short login link" : {
+
+    },
+    "Show Detail Pane" : {
+
+    },
+    "Show RankBuddy in" : {
+
+    },
+    "Show only active or upcoming items" : {
+
+    },
+    "Show the correct answer" : {
+
+    },
+    "Show the detail pane" : {
+
+    },
+    "Show the test's shared access password" : {
+
+    },
+    "Show the token" : {
+
+    },
+    "Show token" : {
+
+    },
+    "Show upcoming interviews on the Dock icon" : {
+
+    },
+    "Showing activity for" : {
+
+    },
+    "Shuffle questions" : {
+
+    },
+    "Sort" : {
+
+    },
+    "Sort %@" : {
+
+    },
+    "Sort By" : {
+
+    },
+    "Starts" : {
+
+    },
+    "Starts (ISO-8601)" : {
+
+    },
+    "Stub code" : {
+
+    },
+    "Succeeded" : {
+
+    },
+    "Summarise" : {
+
+    },
+    "Summarising on device…" : {
+
+    },
+    "Switch account" : {
+
+    },
+    "Switch accounts" : {
+
+    },
+    "Tag: %@" : {
+
+    },
+    "Tags" : {
+
+    },
+    "Tags (comma-separated)" : {
+
+    },
+    "Team" : {
+
+    },
+    "Team name" : {
+
+    },
+    "Team name can be at most %lld characters." : {
+
+    },
+    "Teams" : {
+
+    },
+    "Test name" : {
+
+    },
+    "Test name can be at most %lld characters." : {
+
+    },
+    "Testcases & code stubs" : {
+
+    },
+    "Tests" : {
+
+    },
+    "Text Changed" : {
+
+    },
+    "The generated text was hidden because it included a hiring recommendation." : {
+
+    },
+    "This account's token was rejected. Update it in Settings." : {
+
+    },
+    "This archives the test on HackerRank." : {
+
+    },
+    "This deletes the interview on HackerRank. This can’t be undone." : {
+
+    },
+    "This deletes the question on HackerRank. This can’t be undone." : {
+
+    },
+    "This deletes the team on HackerRank. This can’t be undone." : {
+
+    },
+    "This interview does not have any transcript messages." : {
+
+    },
+    "This permanently deletes the MCP audit history on this Mac. This can’t be undone." : {
+
+    },
+    "This permanently deletes the test on HackerRank. This can’t be undone." : {
+
+    },
+    "This removes %@ from the team on HackerRank." : {
+
+    },
+    "This removes every testcase from “%@” on HackerRank. This can’t be undone." : {
+
+    },
+    "This user is already locked or inactive" : {
+
+    },
+    "This withdraws %@'s outstanding invite to the test." : {
+
+    },
+    "Title" : {
+
+    },
+    "Title (optional)" : {
+
+    },
+    "Title Changed" : {
+
+    },
+    "Titles can be at most %lld characters." : {
+
+    },
+    "Transcript" : {
+
+    },
+    "Try Again" : {
+
+    },
+    "Type" : {
+
+    },
+    "Use This Account" : {
+
+    },
+    "Use a unique description so this account is distinguishable in selectors." : {
+
+    },
+    "Use the default icon and color." : {
+
+    },
+    "Used when you paste a bare ID rather than a full URL" : {
+
+    },
+    "Valid from (ISO-8601, optional)" : {
+
+    },
+    "Valid until (ISO-8601, optional)" : {
+
+    },
+    "Validate" : {
+
+    },
+    "Validating token..." : {
+
+    },
+    "Welcome to RankBuddy" : {
+
+    },
+    "What it does" : {
+
+    },
+    "What's New in RankBuddy" : {
+
+    },
+    "Your changes to this account have not been saved." : {
+
+    },
+    "e.g. int" : {
+
+    },
+    "e.g. python" : {
+
+    },
+    "name: type pairs, comma-separated, e.g. counts: int[], target: int" : {
+
+    },
+    "…%lld more" : {
+
+    }
+  },
+  "version" : "1.0"
+}
