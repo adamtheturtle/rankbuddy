@@ -231,6 +231,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     @State var isBackgroundRefreshing = false
     /// A non-blocking failure from refreshing already-visible rows.
     @State var backgroundRefreshError: String?
+    /// Suppresses the server-search task's initial empty-token invocation; later transitions back
+    /// to an empty query still reload the canonical first page.
+    @State var hasObservedInitialServerSearchToken = false
     /// The list's saved searches, shown as recall chips in the filter bar (#25). Loaded on appear
     /// and when the account-scoped key changes; mutated as the user saves or deletes one. Internal
     /// so the `LoadableList+FilterBar` extension can drive them, per the repo's split-file rule.

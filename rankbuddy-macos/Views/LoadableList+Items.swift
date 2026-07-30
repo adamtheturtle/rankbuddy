@@ -121,6 +121,11 @@ extension LoadableList {
     func reloadForServerSearch() async {
         guard serverSearch != nil else { return }
 
+        if !hasObservedInitialServerSearchToken {
+            hasObservedInitialServerSearchToken = true
+            guard !trimmedQuery.isEmpty else { return }
+        }
+
         // Debounce: a rapid keystroke cancels this task (and this sleep) before any load.
         try? await Task.sleep(for: .milliseconds(350))
         guard !Task.isCancelled else { return }
