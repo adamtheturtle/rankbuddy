@@ -39,7 +39,6 @@ extension LoadableList {
             phase = .loaded
             // Cached rows are shown immediately; the load below is a background refresh (#102).
             isBackgroundRefreshing = true
-            onFirstPage(cached.items)
             await restoreIfNeeded(items)
         } else if preservesVisibleState {
             // Keep the current rows/detail in place until the server returns the filtered page, so
@@ -73,7 +72,6 @@ extension LoadableList {
             nextCursor = page.next
             totalCount = page.totalCount
             phase = .loaded
-            onFirstPage(page.items)
             await cacheFirstPage(page)
             if preservesVisibleState {
                 reconcilePreservedSelection(in: items)

@@ -74,16 +74,14 @@ struct InterviewsScreen: View {
                     )
                 },
                 openInWindow: { openWindow(value: DetailWindowValue.interview($0)) },
-                onFirstPage: { interviews in
+                onOpen: { interview in
                     RecentActivityStore.shared.record(
-                        interviews.map {
-                            RecentItem(
-                                collection: .interviews,
-                                id: $0.id,
-                                title: $0.title ?? "Interview \($0.id)",
-                                subtitle: DisplayFormat.enumLabel($0.status)
-                            )
-                        },
+                        [RecentItem(
+                            collection: .interviews,
+                            id: interview.id,
+                            title: interview.title ?? "Interview \(interview.id)",
+                            subtitle: DisplayFormat.enumLabel(interview.status)
+                        )],
                         for: .interviews,
                         account: account.id
                     )

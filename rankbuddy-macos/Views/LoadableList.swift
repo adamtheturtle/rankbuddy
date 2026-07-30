@@ -114,9 +114,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// default) leaves double-click / Return driving the in-app detail pane instead — used by the
     /// People/Teams and merged lists, which have no standalone detail window.
     var openInWindow: ((Item) -> Void)?
-    /// Called with the first page's items each time it loads, so callers can cache recent
-    /// activity (#23). Not called for subsequent (load-more) pages.
-    var onFirstPage: ([Item]) -> Void = { _ in }
+    /// Called when an item is opened in the detail pane or a standalone window.
+    var onOpen: (Item) -> Void = { _ in }
     /// Extra leading toolbar content (e.g. a write action like "Invite Candidate", #12).
     /// Defaults to nothing, keeping read-only lists unchanged.
     var accessoryToolbar: () -> AnyView = { AnyView(EmptyView()) }

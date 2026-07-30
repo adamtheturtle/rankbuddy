@@ -74,18 +74,16 @@ struct TestsScreen: View {
                     )
                 },
                 openInWindow: { openWindow(value: DetailWindowValue.test($0, accountID: account.id)) },
-                onFirstPage: { tests in
+                onOpen: { test in
                     RecentActivityStore.shared.record(
-                        tests.map {
-                            RecentItem(
-                                collection: .tests,
-                                id: $0.id,
-                                title: $0.name,
-                                subtitle: DisplayFormat.enumLabel($0.state),
-                                startTime: $0.startTime,
-                                endTime: $0.endTime
-                            )
-                        },
+                        [RecentItem(
+                            collection: .tests,
+                            id: test.id,
+                            title: test.name,
+                            subtitle: DisplayFormat.enumLabel(test.state),
+                            startTime: test.startTime,
+                            endTime: test.endTime
+                        )],
                         for: .tests,
                         account: account.id
                     )

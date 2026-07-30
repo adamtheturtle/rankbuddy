@@ -56,16 +56,14 @@ struct QuestionsScreen: View {
                 openInWindow: {
                     openWindow(value: DetailWindowValue.question($0, accountID: account.id))
                 },
-                onFirstPage: { questions in
+                onOpen: { question in
                     RecentActivityStore.shared.record(
-                        questions.map {
-                            RecentItem(
-                                collection: .questions,
-                                id: $0.id,
-                                title: $0.name,
-                                subtitle: DisplayFormat.enumLabel($0.type)
-                            )
-                        },
+                        [RecentItem(
+                            collection: .questions,
+                            id: question.id,
+                            title: question.name,
+                            subtitle: DisplayFormat.enumLabel(question.type)
+                        )],
                         for: .questions,
                         account: account.id
                     )

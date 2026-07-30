@@ -54,7 +54,6 @@ extension LoadableList {
         items = page.items
         nextCursor = page.next
         totalCount = page.totalCount
-        onFirstPage(page.items)
         await cacheFirstPage(page)
         // Refresh the detail from the replacement row, or atomically clear both detail and
         // selection if the item disappeared elsewhere.

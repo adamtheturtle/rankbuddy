@@ -110,6 +110,7 @@ extension LoadableList {
     func activate(_ item: Item) {
         if let openInWindow {
             selection = [item.id]
+            onOpen(item)
             openInWindow(item)
         } else {
             open(item)
@@ -121,6 +122,7 @@ extension LoadableList {
     func open(_ item: Item) {
         selection = [item.id]
         detailItem = item
+        onOpen(item)
     }
 
     /// Providers for the system Copy command. Multi-selection copies every selected visible row;
@@ -189,6 +191,7 @@ extension LoadableList {
     func syncDetail() {
         if selection.count == 1, let id = selection.first, let item = items.first(where: { $0.id == id }) {
             detailItem = item
+            onOpen(item)
         }
         persistSelection()
     }
