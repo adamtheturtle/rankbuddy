@@ -11,7 +11,10 @@ import Testing
 @MainActor
 struct MCPActivityLogTests {
     private func tempURL() -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("mcp-\(UUID().uuidString).jsonl")
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mcp-\(UUID().uuidString)", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory.appendingPathComponent("activity.jsonl")
     }
 
     @Test func `parsing skips malformed lines`() {
@@ -27,7 +30,7 @@ struct MCPActivityLogTests {
 
     @Test func `recorded calls read back newest-first`() {
         let url = tempURL()
-        defer { try? FileManager.default.removeItem(at: url) }
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
 
         MCPActivityLog.record(tool: "list_tests", detail: "account: Work", to: url)
         MCPActivityLog.record(tool: "search_tests", detail: "query: backend", to: url)
@@ -38,6 +41,7 @@ struct MCPActivityLogTests {
 
     @Test func `clearing removes the log`() {
         let url = tempURL()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         MCPActivityLog.record(tool: "list_tests", detail: "", to: url)
         #expect(!MCPActivityLog.entries(from: url).isEmpty)
 
@@ -47,7 +51,7 @@ struct MCPActivityLogTests {
 
     @Test func `reading trims the physical log to its advertised bound`() throws {
         let url = tempURL()
-        defer { try? FileManager.default.removeItem(at: url) }
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
 
         for index in 0 ..< MCPActivityLog.maxEntries + 5 {
             MCPActivityLog.record(tool: "tool-\(index)", detail: "", to: url)

@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import Darwin
 import Foundation
 import MCPKit
 
@@ -48,7 +49,9 @@ nonisolated enum MCPActivityLog {
     /// Appends a tool call to the log. Called from the `--mcp` subprocess.
     static func record(tool: String, detail: String, to url: URL = fileURL) {
         let stamp = ISO8601DateFormatter().string(from: Date())
-        store(for: url).append(MCPActivityEntry(timestamp: stamp, tool: tool, detail: detail))
+        _ = withLock(for: url, mode: LOCK_SH) {
+            store(for: url).append(MCPActivityEntry(timestamp: stamp, tool: tool, detail: detail))
+        }
     }
 
     /// Parses JSONL log contents into entries, skipping any malformed line. Pure.
@@ -60,14 +63,38 @@ nonisolated enum MCPActivityLog {
 
     /// The most recent entries, newest first, capped at `limit`.
     static func entries(limit: Int = maxEntries, from url: URL = fileURL) -> [MCPActivityEntry] {
-        let store = store(for: url)
-        let entries = Array(store.load().suffix(limit).reversed())
-        store.trim()
-        return entries
+        withLock(for: url, mode: LOCK_SH) {
+            let store = store(for: url)
+            let entries = Array(store.load().suffix(limit).reversed())
+            store.trim()
+            return entries
+        } ?? []
     }
 
-    /// Clears the log.
+    /// Clears the log at an exclusive generation boundary. An append that finishes before this
+    /// lock is removed; one that acquires its shared lock afterwards writes the new generation.
     static func clear(_ url: URL = fileURL) {
-        store(for: url).clear()
+        _ = withLock(for: url, mode: LOCK_EX) {
+            store(for: url).clear()
+        }
+    }
+
+    /// Coordinates the GUI and every `--mcp` subprocess through a sidecar advisory lock. The
+    /// lock file is never removed, so deleting/recreating the JSONL file cannot split lockers
+    /// across different inodes. Failure is closed: no file operation runs without coordination.
+    private static func withLock<Result>(for url: URL, mode: Int32, operation: () -> Result) -> Result? {
+        let directory = url.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let lockURL = url.appendingPathExtension("lock")
+        let descriptor = open(lockURL.path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        guard descriptor >= 0 else { return nil }
+
+        defer {
+            _ = flock(descriptor, LOCK_UN)
+            _ = close(descriptor)
+        }
+        guard flock(descriptor, mode) == 0 else { return nil }
+
+        return operation()
     }
 }
