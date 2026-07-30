@@ -931,7 +931,7 @@ extension RankBuddyToolProvider {
 
         do {
             let created = try await HackerRankClient(account: resolved)
-                .createPad(title: Self.normalizedOptionalString(stringArgument(arguments, "title")))
+                .createPad(title: PadTitleValidation.normalized(stringArgument(arguments, "title")))
             let createdID = Self.validatedCreatedID(created.id)
             let createdURL = created.url.flatMap(URL.remoteWebURL(from:))?.absoluteString
             guard createdID != nil || createdURL != nil else {

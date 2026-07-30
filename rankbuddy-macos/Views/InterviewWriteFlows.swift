@@ -21,6 +21,19 @@ nonisolated func padDestinationURL(rawURL: String?, isMock: Bool) throws -> URL?
     return url
 }
 
+nonisolated enum PadTitleValidation {
+    static let maxLength = 255
+
+    static func normalized(_ title: String?) -> String? {
+        guard let title else { return nil }
+
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        return String(trimmed.prefix(maxLength))
+    }
+}
+
 /// A sheet that creates an instant collaborative Pad interview (`POST /interviews`,
 /// #60) — a write flow. Refreshes the list on success.
 struct NewPadSheet: View {
@@ -38,7 +51,10 @@ struct NewPadSheet: View {
                 Section {
                     TextField("Title (optional)", text: $title)
                 } footer: {
-                    if !account.isMock {
+                    if title.count > PadTitleValidation.maxLength {
+                        Text("Titles can be at most \(PadTitleValidation.maxLength) characters.")
+                            .foregroundStyle(.red)
+                    } else if !account.isMock {
                         Text("Opens in your browser, which may be signed in to a different HackerRank account.")
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -65,6 +81,7 @@ struct NewPadSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Create") { Task { await create() } }
+                            .disabled(title.count > PadTitleValidation.maxLength)
                     }
                 }
             }
@@ -77,7 +94,8 @@ struct NewPadSheet: View {
         errorMessage = nil
         defer { isSending = false }
         do {
-            let created = try await HackerRankClient(account: account).createPad(title: title)
+            let created = try await HackerRankClient(account: account)
+                .createPad(title: PadTitleValidation.normalized(title))
             let destination = try padDestinationURL(rawURL: created.url, isMock: account.isMock)
             onCreated()
             if let destination {

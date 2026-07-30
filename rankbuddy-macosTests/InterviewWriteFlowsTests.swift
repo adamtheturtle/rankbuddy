@@ -13,6 +13,13 @@ import Testing
 /// is acknowledged with the canned interview echo and the bad-token account answers 401.
 @MainActor
 struct InterviewWriteFlowsTests {
+    @Test func `pad titles normalize and respect the API limit`() {
+        #expect(PadTitleValidation.normalized("  Pairing Pad  ") == "Pairing Pad")
+        #expect(PadTitleValidation.normalized(" \n ") == nil)
+        #expect(PadTitleValidation.normalized(String(repeating: "x", count: 300))?.count
+            == PadTitleValidation.maxLength)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
