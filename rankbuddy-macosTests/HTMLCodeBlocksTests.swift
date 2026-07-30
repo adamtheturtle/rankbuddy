@@ -43,6 +43,16 @@ struct HTMLCodeBlocksTests {
         #expect(hint == "swift")
     }
 
+    @Test func `language hints preserve underscores and dots`() {
+        #expect(HTMLCodeBlocks.languageHint(
+            openTag: "<pre>",
+            inner: "<code class=\"language-objective_c extra\">code</code>"
+        ) == "objective_c")
+        #expect(HTMLCodeBlocks.languageHint(openTag: "<pre lang=\"node.js\">", inner: "code") == "node.js")
+        #expect(CodeLanguage.detect(hint: "objective_c") == .cFamily)
+        #expect(CodeLanguage.detect(hint: "node.js") == .javascript)
+    }
+
     @Test func `an unterminated pre keeps the remainder as prose`() {
         let html = "<p>Intro</p><pre>broken"
         let segments = HTMLCodeBlocks.segments(html)

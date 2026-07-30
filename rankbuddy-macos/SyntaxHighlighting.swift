@@ -52,9 +52,10 @@ nonisolated enum CodeLanguage: Hashable {
         switch hint {
         case "swift": return .swift
         case "python", "python3", "py", "py3": return .python
-        case "javascript", "js", "node", "nodejs", "typescript", "ts": return .javascript
+        case "javascript", "js", "node", "nodejs", "node.js", "typescript", "ts": return .javascript
         case "java": return .java
-        case "c", "cpp", "c++", "cplusplus", "objc", "objective-c", "csharp", "c#", "cs": return .cFamily
+        case "c", "cpp", "c++", "cplusplus", "objc", "objective-c", "objective_c",
+             "csharp", "c#", "cs": return .cFamily
         case "ruby", "rb": return .ruby
         case "go", "golang": return .golang
         case "sql", "mysql", "postgres", "postgresql", "tsql", "plsql": return .sql

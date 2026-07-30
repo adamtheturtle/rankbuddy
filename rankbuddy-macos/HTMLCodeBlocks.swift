@@ -88,18 +88,17 @@ nonisolated enum HTMLCodeBlocks {
         return nil
     }
 
-    /// Reads an identifier (letters, digits, `+`, `#`, `-`) starting at `start`.
+    /// Reads one complete HTML attribute/class token starting at `start`.
     private static func token(in string: String, after start: String.Index) -> String? {
         var result = ""
         var index = start
         while index < string.endIndex {
             let char = string[index]
-            if char.isLetter || char.isNumber || char == "+" || char == "#" || char == "-" {
-                result.append(char)
-                index = string.index(after: index)
-            } else {
+            if char.isWhitespace || char == "\"" || char == "'" || char == ">" {
                 break
             }
+            result.append(char)
+            index = string.index(after: index)
         }
         return result.isEmpty ? nil : result
     }
