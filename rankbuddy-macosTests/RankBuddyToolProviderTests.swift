@@ -275,6 +275,21 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("name"))
     }
 
+    @Test func `tool calls reject unknown argument names`() async {
+        let result = await writeProvider().callTool(
+            "invite_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "email": .string("candidate@example.com"),
+                "send_emial": .bool(false)
+            ]
+        )
+
+        #expect(result.isError == true)
+        #expect(text(result).contains("send_emial"))
+        #expect(text(result).contains("Unknown argument"))
+    }
+
     @Test func `created resource IDs must be non-empty`() {
         #expect(RankBuddyToolProvider.validatedCreatedID(nil) == nil)
         #expect(RankBuddyToolProvider.validatedCreatedID(" \n") == nil)

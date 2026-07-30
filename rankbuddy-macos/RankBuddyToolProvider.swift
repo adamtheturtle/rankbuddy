@@ -58,6 +58,10 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             return errorResult("Unknown tool: \(name)")
         }
 
+        if let unknown = Self.unknownArgument(in: arguments, toolName: name) {
+            return errorResult("Unknown argument “\(unknown)” for tool \(name).")
+        }
+
         let account = stringArgument(arguments, "account")
         MCPActivityLog.record(tool: name, detail: Self.callDetail(arguments))
 
@@ -99,6 +103,16 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         (descriptors + writeDescriptors).contains {
             $0["name"] as? String == name
         }
+    }
+
+    static func unknownArgument(in arguments: [String: Value]?, toolName: String) -> String? {
+        guard let arguments else { return nil }
+
+        let descriptor = (descriptors + writeDescriptors).first { $0["name"] as? String == toolName }
+        let schema = descriptor?["inputSchema"] as? [String: Any]
+        let properties = schema?["properties"] as? [String: Any]
+        let allowed = Set(properties?.keys.map(\.self) ?? [])
+        return arguments.keys.sorted().first { !allowed.contains($0) }
     }
 
     /// The tools that need a keyed argument (a test id, or a search query).

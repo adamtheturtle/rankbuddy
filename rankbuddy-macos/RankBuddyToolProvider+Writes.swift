@@ -1200,7 +1200,10 @@ extension RankBuddyToolProvider {
             if destructive { annotations["destructiveHint"] = true }
             return [
                 "name": name, "description": description, "annotations": annotations,
-                "inputSchema": ["type": "object", "properties": properties, "required": required]
+                "inputSchema": [
+                    "type": "object", "properties": properties, "required": required,
+                    "additionalProperties": false
+                ]
             ]
         }
         return [
