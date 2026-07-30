@@ -21,4 +21,14 @@ struct AppDelegateTests {
         let raws = menu?.items.compactMap { $0.representedObject as? String }
         #expect(raws == SidebarSection.allCases.map(\.rawValue))
     }
+
+    @Test func `dock items use the registered main window presenter`() {
+        var presentations = 0
+        let delegate = AppDelegate(showMainWindow: { presentations += 1 })
+        let item = delegate.applicationDockMenu(.shared)?.items.first
+
+        item?.performClick(nil)
+
+        #expect(presentations == 1)
+    }
 }

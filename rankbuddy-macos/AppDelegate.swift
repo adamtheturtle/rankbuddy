@@ -13,6 +13,12 @@ import BuddyAppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The "Open in RankBuddy" Service provider (#46), held so it isn't deallocated.
     private let servicesProvider = ServicesProvider()
+    private let showMainWindow: @MainActor () -> Void
+
+    init(showMainWindow: @escaping @MainActor () -> Void = { MainWindowPresenter.shared.show() }) {
+        self.showMainWindow = showMainWindow
+        super.init()
+    }
 
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.servicesProvider = servicesProvider
@@ -38,7 +44,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let raw = sender.representedObject as? String else { return }
 
         UserDefaults.standard.set(raw, forKey: SidebarSection.defaultsKey)
-        AppActivator.bringToFront()
-        NSApp.windows.first(where: \.canBecomeMain)?.makeKeyAndOrderFront(nil)
+        showMainWindow()
     }
 }
