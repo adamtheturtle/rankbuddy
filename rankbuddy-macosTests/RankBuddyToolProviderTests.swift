@@ -641,6 +641,17 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("invite_as"))
     }
 
+    @Test func `update_team rejects negative seat caps`() async {
+        for key in ["recruiter_cap", "developer_cap"] {
+            let result = await writeProvider().callTool(
+                "update_team",
+                arguments: ["team_id": .string("team-1"), key: .int(-1)]
+            )
+            #expect(result.isError == true)
+            #expect(text(result).contains(key))
+        }
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

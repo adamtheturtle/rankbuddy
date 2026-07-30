@@ -642,8 +642,16 @@ extension RankBuddyToolProvider {
 
         let allowedInviteRoles = ["recruiter", "interviewer", "developer"]
         let inviteAs = Self.normalizedOptionalString(stringArgument(arguments, "invite_as"))?.lowercased()
+        let recruiterCap = intArgument(arguments, "recruiter_cap")
+        let developerCap = intArgument(arguments, "developer_cap")
         guard inviteAs.map(allowedInviteRoles.contains) ?? true else {
             return errorResult("`invite_as` must be recruiter, interviewer, or developer.")
+        }
+        guard recruiterCap.map({ $0 >= 0 }) ?? true else {
+            return errorResult("`recruiter_cap` must be zero or greater.")
+        }
+        guard developerCap.map({ $0 >= 0 }) ?? true else {
+            return errorResult("`developer_cap` must be zero or greater.")
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
@@ -652,8 +660,8 @@ extension RankBuddyToolProvider {
                 id: teamID,
                 options: TeamUpdateOptions(
                     name: stringArgument(arguments, "name"),
-                    recruiterCap: intArgument(arguments, "recruiter_cap"),
-                    developerCap: intArgument(arguments, "developer_cap"),
+                    recruiterCap: recruiterCap,
+                    developerCap: developerCap,
                     inviteAs: inviteAs,
                     locations: stringArrayArgument(arguments, "locations"),
                     departments: stringArrayArgument(arguments, "departments")
@@ -981,8 +989,10 @@ extension RankBuddyToolProvider {
             if let allowedValues { schema["enum"] = allowedValues }
             return schema
         }
-        func integer(_ description: String) -> [String: Any] {
-            ["type": "integer", "description": description]
+        func integer(_ description: String, minimum: Int? = nil) -> [String: Any] {
+            var schema: [String: Any] = ["type": "integer", "description": description]
+            if let minimum { schema["minimum"] = minimum }
+            return schema
         }
         func boolean(_ description: String) -> [String: Any] {
             ["type": "boolean", "description": description]
@@ -1159,8 +1169,8 @@ extension RankBuddyToolProvider {
                   properties: [
                       "team_id": string("The team's id."),
                       "name": string("The team's name."),
-                      "recruiter_cap": integer("Recruiter seat cap."),
-                      "developer_cap": integer("Developer seat cap."),
+                      "recruiter_cap": integer("Recruiter seat cap.", minimum: 0),
+                      "developer_cap": integer("Developer seat cap.", minimum: 0),
                       "invite_as": string(
                           "Default invite role.",
                           allowedValues: ["recruiter", "interviewer", "developer"]
