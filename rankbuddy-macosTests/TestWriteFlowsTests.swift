@@ -20,6 +20,13 @@ struct TestWriteFlowsTests {
         #expect(!TestNameValidation.isValid(String(repeating: "x", count: 256)))
     }
 
+    @Test func `rename submission requires a normalized change`() {
+        #expect(!TestNameValidation.canSubmit(" Backend Screen ", currentName: "Backend Screen"))
+        #expect(!TestNameValidation.canSubmit("   ", currentName: "Backend Screen"))
+        #expect(TestNameValidation.canSubmit("Renamed Screen", currentName: " Backend Screen "))
+        #expect(TestNameValidation.canSubmit("New Test", currentName: nil))
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }

@@ -12,6 +12,17 @@ nonisolated enum TestNameValidation {
     static func isValid(_ name: String) -> Bool {
         !name.isEmpty && name.count <= maxLength
     }
+
+    static func normalized(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func canSubmit(_ name: String, currentName: String?) -> Bool {
+        let normalizedName = normalized(name)
+        guard isValid(normalizedName) else { return false }
+
+        return currentName.map(normalized) != normalizedName
+    }
 }
 
 /// Whether the test editor is creating a new test or renaming an existing one (#57).
@@ -51,7 +62,17 @@ struct TestEditorSheet: View {
     }
 
     private var trimmedName: String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
+        TestNameValidation.normalized(name)
+    }
+
+    private var currentName: String? {
+        guard case let .edit(_, currentName) = mode else { return nil }
+
+        return currentName
+    }
+
+    private var canSave: Bool {
+        TestNameValidation.canSubmit(name, currentName: currentName)
     }
 
     var body: some View {
@@ -90,7 +111,7 @@ struct TestEditorSheet: View {
                         Button(isEditing ? "Save" : "Create") {
                             mutationTask = Task { await save() }
                         }
-                        .disabled(!TestNameValidation.isValid(trimmedName))
+                        .disabled(!canSave)
                     }
                 }
             }
@@ -100,7 +121,7 @@ struct TestEditorSheet: View {
     }
 
     private func save() async {
-        guard TestNameValidation.isValid(trimmedName) else { return }
+        guard canSave else { return }
 
         isSending = true
         errorMessage = nil
