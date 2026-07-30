@@ -96,4 +96,22 @@ enum DiskPageCache {
 
         try? FileManager.default.removeItem(at: directory)
     }
+
+    /// Drops only files whose original restoration key belongs to `accountID`.
+    static func clear(accountID: UUID) {
+        guard let directory,
+              let files = try? FileManager.default.contentsOfDirectory(
+                  at: directory,
+                  includingPropertiesForKeys: nil
+              )
+        else { return }
+
+        for file in files {
+            let encodedKey = file.deletingPathExtension().lastPathComponent
+            guard let key = encodedKey.removingPercentEncoding,
+                  ListPageCache.cacheKey(key, belongsTo: accountID) else { continue }
+
+            try? FileManager.default.removeItem(at: file)
+        }
+    }
 }

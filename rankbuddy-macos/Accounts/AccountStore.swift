@@ -69,7 +69,7 @@ extension AccountStore {
             onRemoved: { _ in Task { await RankBuddySpotlightIndex.clear() } },
             // A changed token/base URL may point at a different backend, so drop the cached
             // first pages (memory and disk) that could otherwise show another org's rows (#102).
-            onRekeyed: { _ in ListPageCache.clear() },
+            onRekeyed: { account in ListPageCache.clear(accountID: account.id) },
             logger: logger
         )
         return AccountStore(config: config)

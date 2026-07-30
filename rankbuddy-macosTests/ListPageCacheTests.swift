@@ -38,6 +38,20 @@ struct ListPageCacheTests {
         #expect(ListPageCache.cached([String].self, for: "k") == nil)
     }
 
+    @Test func `account clear preserves unrelated cache entries`() {
+        let changedID = UUID()
+        let otherID = UUID()
+        let changedKey = "selection.tests.\(changedID)"
+        let otherKey = "selection.tests.\(otherID)"
+        ListPageCache.store(items: ["changed"], cursor: nil, totalCount: nil, for: changedKey)
+        ListPageCache.store(items: ["other"], cursor: nil, totalCount: nil, for: otherKey)
+
+        ListPageCache.clear(accountID: changedID)
+
+        #expect(ListPageCache.cached([String].self, for: changedKey) == nil)
+        #expect(ListPageCache.cached([String].self, for: otherKey)?.items == ["other"])
+    }
+
     @Test func `keys are independent`() {
         ListPageCache.clear()
         ListPageCache.store(items: ["tests"], cursor: nil, totalCount: nil, for: "tests.acc")

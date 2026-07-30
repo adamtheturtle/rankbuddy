@@ -60,4 +60,14 @@ enum ListPageCache {
         storage.removeAll()
         DiskPageCache.clear()
     }
+
+    /// Drops cached pages for one account while preserving every other tenant's snapshots.
+    static func clear(accountID: UUID) {
+        storage = storage.filter { !cacheKey($0.key, belongsTo: accountID) }
+        DiskPageCache.clear(accountID: accountID)
+    }
+
+    nonisolated static func cacheKey(_ key: String, belongsTo accountID: UUID) -> Bool {
+        key.split(separator: ".").last == Substring(accountID.uuidString)
+    }
 }
