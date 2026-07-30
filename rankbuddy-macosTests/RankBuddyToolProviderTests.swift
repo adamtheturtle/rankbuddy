@@ -632,6 +632,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("team_id"))
     }
 
+    @Test func `update_team rejects an unsupported invite role`() async {
+        let result = await writeProvider().callTool(
+            "update_team",
+            arguments: ["team_id": .string("team-1"), "invite_as": .string("superuser")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("invite_as"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

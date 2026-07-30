@@ -639,6 +639,12 @@ extension RankBuddyToolProvider {
     @MainActor
     private func updateTeamTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
+
+        let allowedInviteRoles = ["recruiter", "interviewer", "developer"]
+        let inviteAs = Self.normalizedOptionalString(stringArgument(arguments, "invite_as"))?.lowercased()
+        guard inviteAs.map(allowedInviteRoles.contains) ?? true else {
+            return errorResult("`invite_as` must be recruiter, interviewer, or developer.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -648,7 +654,7 @@ extension RankBuddyToolProvider {
                     name: stringArgument(arguments, "name"),
                     recruiterCap: intArgument(arguments, "recruiter_cap"),
                     developerCap: intArgument(arguments, "developer_cap"),
-                    inviteAs: stringArgument(arguments, "invite_as"),
+                    inviteAs: inviteAs,
                     locations: stringArrayArgument(arguments, "locations"),
                     departments: stringArrayArgument(arguments, "departments")
                 )
@@ -1155,7 +1161,10 @@ extension RankBuddyToolProvider {
                       "name": string("The team's name."),
                       "recruiter_cap": integer("Recruiter seat cap."),
                       "developer_cap": integer("Developer seat cap."),
-                      "invite_as": string("Default invite role."),
+                      "invite_as": string(
+                          "Default invite role.",
+                          allowedValues: ["recruiter", "interviewer", "developer"]
+                      ),
                       "locations": ["type": "array", "items": ["type": "string"],
                                     "description": "Team locations; a comma-separated string is also accepted."],
                       "departments": ["type": "array", "items": ["type": "string"],
