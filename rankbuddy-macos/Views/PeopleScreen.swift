@@ -62,13 +62,13 @@ struct PeopleScreen: View {
                     var items = rowMenuItems(
                         copyLabel: "Copy Email",
                         copyText: user.email,
-                        openInWindow: { openWindow(value: DetailWindowValue.user(user)) }
+                        openInWindow: { openWindow(value: DetailWindowValue.user(user, accountID: account.id)) }
                     )
                     items.append(.separator)
                     items.append(.button(title: "Lock User…") { userPendingLock = user })
                     return items
                 },
-                openInWindow: { openWindow(value: DetailWindowValue.user($0)) },
+                openInWindow: { openWindow(value: DetailWindowValue.user($0, accountID: account.id)) },
                 accessoryToolbar: { AnyView(createButton) },
                 primaryMenuAction: AppCommandContext.Action(title: "Create User…") { createPresented = true },
                 reloadToken: reloadToken,

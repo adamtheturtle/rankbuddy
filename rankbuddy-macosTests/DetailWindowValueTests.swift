@@ -41,4 +41,21 @@ struct DetailWindowValueTests {
             current: current
         )?.id == current.id)
     }
+
+    @Test func `standalone user preserves its originating account`() throws {
+        let user = try JSONDecoder().decode(
+            User.self,
+            from: Data(#"{"id":"u1","email":"person@example.com"}"#.utf8)
+        )
+        let accountID = UUID()
+        let data = try JSONEncoder().encode(DetailWindowValue.user(user, accountID: accountID))
+        let restored = try JSONDecoder().decode(DetailWindowValue.self, from: data)
+
+        guard case let .user(_, restoredAccountID) = restored else {
+            Issue.record("expected a user detail value")
+            return
+        }
+
+        #expect(restoredAccountID == accountID)
+    }
 }
