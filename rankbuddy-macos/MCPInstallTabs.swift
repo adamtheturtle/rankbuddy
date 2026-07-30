@@ -13,6 +13,12 @@ struct MCPInstallTabs: View {
     /// The command an MCP client runs to launch RankBuddy as a stdio server (its own executable).
     let command: String
     @State private var client: MCPClient = .claudeDesktop
+    @State private var installRevision = 0
+
+    private var needsRepair: Bool {
+        _ = installRevision
+        return MCPClientInstall.needsRepair(client, currentCommand: command)
+    }
 
     var body: some View {
         Picker("Assistant", selection: $client) {
@@ -27,10 +33,23 @@ struct MCPInstallTabs: View {
             .font(.callout)
             .foregroundStyle(.secondary)
 
+        if needsRepair {
+            Label(
+                "RankBuddy has moved since this configuration was installed. " +
+                    "Repair it before restarting the assistant.",
+                systemImage: "exclamationmark.triangle"
+            )
+            .foregroundStyle(.orange)
+        }
+
         Button {
             MCPClientInstall.install(client, command: command)
+            installRevision += 1
         } label: {
-            Label("Add to \(client.displayName)", systemImage: "wand.and.stars")
+            Label(
+                "\(needsRepair ? "Repair" : "Add to") \(client.displayName)",
+                systemImage: needsRepair ? "wrench.and.screwdriver" : "wand.and.stars"
+            )
         }
 
         Text(LocalizedStringKey(client.troubleshootingHint))

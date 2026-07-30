@@ -9,6 +9,10 @@ import Testing
 
 @MainActor
 struct MCPClientInstallTests {
+    private func freshDefaults() -> UserDefaults {
+        UserDefaults(suiteName: "mcp-install.tests.\(UUID().uuidString)") ?? .standard
+    }
+
     @Test func `JSON install preserves existing servers and adds rankbuddy`() throws {
         let url = try temporaryFile(named: "mcp.json")
         try "{\"mcpServers\":{\"other\":{\"command\":\"other\",\"args\":[]}}}".write(
@@ -195,6 +199,39 @@ struct MCPClientInstallTests {
         #expect(resolved == preferred)
         #expect(FileManager.default.fileExists(atPath: preferred.path))
         #expect(!FileManager.default.fileExists(atPath: parent.appendingPathComponent("config.toml").path))
+    }
+
+    @Test func `a moved or missing installed executable requires repair`() throws {
+        let defaults = freshDefaults()
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let oldCommand = directory.appendingPathComponent("old-rankbuddy")
+        let currentCommand = directory.appendingPathComponent("RankBuddy")
+        for url in [oldCommand, currentCommand] {
+            _ = FileManager.default.createFile(atPath: url.path, contents: Data())
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
+        }
+
+        MCPClientInstall.recordInstalledCommand(oldCommand.path, for: .codex, defaults: defaults)
+        #expect(MCPClientInstall.needsRepair(
+            .codex,
+            currentCommand: currentCommand.path,
+            defaults: defaults
+        ))
+
+        MCPClientInstall.recordInstalledCommand(currentCommand.path, for: .codex, defaults: defaults)
+        #expect(!MCPClientInstall.needsRepair(
+            .codex,
+            currentCommand: currentCommand.path,
+            defaults: defaults
+        ))
+
+        try FileManager.default.removeItem(at: currentCommand)
+        #expect(MCPClientInstall.needsRepair(
+            .codex,
+            currentCommand: currentCommand.path,
+            defaults: defaults
+        ))
     }
 
     private func temporaryFile(named name: String) throws -> URL {

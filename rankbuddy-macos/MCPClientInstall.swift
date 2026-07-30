@@ -45,6 +45,7 @@ enum MCPClientInstall {
             )
             let url = configFolder.appendingPathComponent(spec.fileName)
             let didUpdate: (String, String) -> Void = { title, message in
+                recordInstalledCommand(command, for: client)
                 Task { @MainActor in showAlert(.informational, title, message) }
             }
             if spec.isTOML {
@@ -67,6 +68,31 @@ enum MCPClientInstall {
         } catch {
             showAlert(.warning, "Couldn't update \(client.displayName)", error.localizedDescription)
         }
+    }
+
+    static func recordInstalledCommand(
+        _ command: String,
+        for client: MCPClient,
+        defaults: UserDefaults = .standard
+    ) {
+        defaults.set(command, forKey: installedCommandKey(for: client))
+    }
+
+    static func needsRepair(
+        _ client: MCPClient,
+        currentCommand: String,
+        defaults: UserDefaults = .standard,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        guard let installed = defaults.string(forKey: installedCommandKey(for: client)) else {
+            return false
+        }
+
+        return installed != currentCommand || !fileManager.isExecutableFile(atPath: installed)
+    }
+
+    private static func installedCommandKey(for client: MCPClient) -> String {
+        "rb.mcpInstalledCommand.\(client.rawValue)"
     }
 
     @MainActor
@@ -208,8 +234,8 @@ enum MCPClientInstall {
         [mcp_servers.\(serverName)]
         command = \(tomlBasicString(command))
         args = ["--mcp"]
-
         """
+            + "\n"
     }
 
     static func replacingCodexServer(in text: String, with block: String) -> String {
