@@ -34,6 +34,13 @@ struct InviteCandidateTests {
         ))?.contains("50 tags") == true)
     }
 
+    @Test func `invite tags preserve first spelling while removing logical duplicates`() {
+        #expect(CandidateInviteValidation.normalizedTags(
+            " backend, Backend,  BACKEND , iOS, ios, "
+        ) == ["backend", "iOS"])
+        #expect(CandidateInviteValidation.normalizedTags(" , ") == nil)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }

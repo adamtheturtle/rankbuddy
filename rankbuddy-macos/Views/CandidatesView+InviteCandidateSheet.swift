@@ -32,6 +32,14 @@ enum CandidateInviteValidation {
         additionalTime.map(additionalTimeRange.contains) ?? true
     }
 
+    static func normalizedTags(_ value: String) -> [String]? {
+        var seen: Set<String> = []
+        let tags = value.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert(ListQuery.normalizedFacetValue($0)).inserted }
+        return tags.isEmpty ? nil : tags
+    }
+
     static func textIssue(_ fields: TextFields) -> String? {
         if let fullName = fields.fullName, fullName.count > maxFullNameLength {
             return "Full name can be at most \(maxFullNameLength) characters."
@@ -117,7 +125,7 @@ struct InviteCandidateSheet: View {
     private var textValidationIssue: String? {
         CandidateInviteValidation.textIssue(.init(
             fullName: trimmed(fullName),
-            tags: parsedTags(tags),
+            tags: CandidateInviteValidation.normalizedTags(tags),
             evaluatorEmail: trimmed(evaluatorEmail),
             emailSubject: trimmed(emailSubject),
             emailMessage: trimmed(emailMessage),
@@ -233,13 +241,6 @@ struct InviteCandidateSheet: View {
         return result.isEmpty ? nil : result
     }
 
-    private func parsedTags(_ value: String) -> [String]? {
-        let result = value.split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        return result.isEmpty ? nil : result
-    }
-
     private func invite() async {
         guard canInvite else { return }
 
@@ -259,7 +260,7 @@ struct InviteCandidateSheet: View {
                     emailMessage: trimmed(emailMessage),
                     templateID: selectedTemplateID,
                     evaluatorEmail: trimmed(evaluatorEmail),
-                    tags: parsedTags(tags),
+                    tags: CandidateInviteValidation.normalizedTags(tags),
                     additionalTime: additionalTimeMinutes,
                     atsCandidateID: trimmed(atsCandidateID),
                     atsRequisitionID: trimmed(atsRequisitionID)
