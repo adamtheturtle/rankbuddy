@@ -58,6 +58,34 @@ private final class TransientThenSuccessURLProtocol: URLProtocol {
     override func stopLoading() {}
 }
 
+/// Holds a request open until its task is cancelled, allowing the client integration
+/// suite to prove cancellation does not enter the transient retry loop.
+private final class HangingURLProtocol: URLProtocol {
+    private static let requestCounter = Mutex(0)
+
+    static func reset() {
+        requestCounter.withLock { $0 = 0 }
+    }
+
+    static var requestCount: Int {
+        requestCounter.withLock { $0 }
+    }
+
+    override static func canInit(with _: URLRequest) -> Bool {
+        true
+    }
+
+    override static func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        Self.requestCounter.withLock { $0 += 1 }
+    }
+
+    override func stopLoading() {}
+}
+
 /// Coverage for `HackerRankClient` itself (#3, #32), driven through the in-process demo
 /// server. Where `MockHackerRankServerTests` fetches and decodes fixtures directly, these
 /// tests exercise the real client end-to-end: the endpoint paths it builds, the
@@ -110,6 +138,39 @@ struct HackerRankClientTests {
 
         #expect(page.items.map(\.id) == ["retried"])
         #expect(TransientThenSuccessURLProtocol.requestCount == 3)
+    }
+
+    @Test func `cancelling a GET does not retry it`() async throws {
+        HangingURLProtocol.reset()
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [HangingURLProtocol.self]
+        let client = HackerRankClient(
+            account: Account(label: "Org", token: "live-token"),
+            session: URLSession(configuration: configuration)
+        )
+        let request = Task {
+            try await client.testsPage()
+        }
+
+        while HangingURLProtocol.requestCount == 0 {
+            await Task.yield()
+        }
+        request.cancel()
+
+        do {
+            _ = try await request.value
+            Issue.record("expected cancellation")
+        } catch let error as HackerRankError {
+            guard case let .network(urlError) = error else {
+                Issue.record("expected a network cancellation, got \(error)")
+                return
+            }
+
+            #expect(urlError.code == .cancelled)
+        } catch {
+            Issue.record("expected HackerRankError, got \(error)")
+        }
+        #expect(HangingURLProtocol.requestCount == 1)
     }
 
     // MARK: - Other collections
