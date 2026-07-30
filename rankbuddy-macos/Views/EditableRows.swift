@@ -242,9 +242,7 @@ struct EditablePickerRow: View {
                 }
                 .labelsHidden()
                 .fixedSize()
-                .onChange(of: draft) { old, new in
-                    guard !old.isEmpty else { return }
-
+                .onChange(of: draft) { _, new in
                     Task { await save(new) }
                 }
                 if isSaving {

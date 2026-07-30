@@ -35,4 +35,11 @@ struct PersonDetailTests {
         #expect(PersonTeamResolution.unseenCursor("next", seen: &seen) == nil)
         #expect(PersonTeamResolution.unseenCursor(nil, seen: &seen) == nil)
     }
+
+    @Test func `missing role remains distinct from recruiter`() {
+        #expect(PersonRoleEditing.selection(for: nil).isEmpty)
+        #expect(PersonRoleEditing.selection(for: "recruiter") == "recruiter")
+        #expect(PersonRoleEditing.options.first?.0.isEmpty == true)
+        #expect(PersonRoleEditing.options.contains { $0.0 == "recruiter" })
+    }
 }
