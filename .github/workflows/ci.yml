@@ -4,8 +4,8 @@ name: CI
 #
 # Cheap gates run on every push/PR (and nightly): they catch workflow, shell, and
 # Swift style regressions on 1x-billed Linux runners before anything reaches main.
-# The expensive macOS build+test lane is nightly/manual only — macOS runners bill
-# at 10x minutes, so a full compile is not paid for on every push.
+# Pull requests also receive one cancellable Debug compile; the expensive full
+# test and Release lanes remain nightly/manual.
 #
 # The app scheme and test plans exist, so scheduled/manual macOS validation runs
 # the Full test plan, a Release build, and an opt-in TSan test lane while retaining
@@ -166,6 +166,34 @@ jobs:
             swift test --package-path "$package_dir"
             echo "::endgroup::"
           done
+
+  pr-build:
+    name: Compile macOS app
+    if: github.event_name == 'pull_request'
+    needs: [swift-lint, swift-package-tests]
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.5.app
+          xcodebuild -version
+
+      - name: Build Debug
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project rankbuddy-macos.xcodeproj \
+            -scheme rankbuddy-macos \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath DerivedData-PR \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
   full-tests:
     name: Full tests
