@@ -174,3 +174,15 @@ and requisition identifiers, so a general-purpose form would expose organisation
 plumbing to users who cannot act on it. MCP clients that already hold that context can opt into
 write access and use the endpoints directly. RankBuddy validates required identifiers and email
 addresses before sending either request.
+
+## SCIM provisioning boundary
+
+HackerRank's SCIM v2 API lives at `https://services.hackerrank.com/scim/v2` and supports
+identity-provider-driven user and group provisioning. RankBuddy intentionally does not connect to
+it. SCIM bearer credentials are organisation-wide provisioning secrets, and create/update/delete
+operations belong in an identity provider or a dedicated administrator automation service rather
+than an interactive desktop client.
+
+RankBuddy continues to use the scoped v3 Users and Teams APIs for user-visible administration.
+Supporting SCIM in the future would require a separate threat model, credential store, audit
+surface, and deployment use case; it must not reuse a user's ordinary HackerRank API token.
