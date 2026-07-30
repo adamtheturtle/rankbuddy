@@ -16,6 +16,7 @@ struct FavoritesSyncTests {
     private final class FakeStore: KeyValueSyncStore {
         var isAvailable: Bool
         var onExternalChange: (() -> Void)?
+        var onAvailabilityChange: (() -> Void)?
         private var storage: [String: Data] = [:]
         private(set) var writes = 0
 
@@ -40,6 +41,12 @@ struct FavoritesSyncTests {
         func remoteWrite(_ refs: [FavoriteRef]) {
             storage[FavoritesSyncCoordinator.key] = try? JSONEncoder().encode(refs)
             onExternalChange?()
+        }
+
+        func becomeAvailable(with refs: [FavoriteRef]) {
+            storage[FavoritesSyncCoordinator.key] = try? JSONEncoder().encode(refs)
+            isAvailable = true
+            onAvailabilityChange?()
         }
     }
 
@@ -125,6 +132,19 @@ struct FavoritesSyncTests {
             // No push when unavailable; local favourites still work.
             #expect(store.data(forKey: FavoritesSyncCoordinator.key) == nil)
             #expect(favorites.isFavorite(collection: .tests, accountID: "acc1", itemID: "t1"))
+        }
+    }
+
+    @Test func `sync activates when the store becomes available later`() {
+        let favorites = FavoritesStore(defaults: defaults(#function), isTesting: true)
+        let store = FakeStore(isAvailable: false)
+        withCoordinator(favorites, store) { coordinator in
+            #expect(!coordinator.isEnabled)
+
+            store.becomeAvailable(with: [ref("remote")])
+
+            #expect(coordinator.isEnabled)
+            #expect(favorites.favorites.map(\.itemID) == ["remote"])
         }
     }
 

@@ -15,6 +15,7 @@ protocol KeyValueSyncStore: AnyObject {
     var isAvailable: Bool { get }
     /// Invoked when the store's value changes externally (another device wrote it).
     var onExternalChange: (() -> Void)? { get set }
+    var onAvailabilityChange: (() -> Void)? { get set }
     func data(forKey key: String) -> Data?
     func setData(_ data: Data?, forKey key: String)
     @discardableResult func synchronize() -> Bool
@@ -29,10 +30,12 @@ protocol KeyValueSyncStore: AnyObject {
 @MainActor
 final class CloudSyncKeyValueStore: KeyValueSyncStore {
     var onExternalChange: (() -> Void)?
+    var onAvailabilityChange: (() -> Void)?
 
     private let cloud = CloudSyncStore.shared
     private let key: String
     private var observer: Task<Void, Never>?
+    private var availabilityObserver: Task<Void, Never>?
 
     init(key: String) {
         self.key = key
@@ -44,10 +47,19 @@ final class CloudSyncKeyValueStore: KeyValueSyncStore {
                 onExternalChange?()
             }
         }
+        availabilityObserver = Task { @MainActor [weak self] in
+            for await _ in NotificationCenter.default.notifications(named: .NSUbiquityIdentityDidChange) {
+                guard let self else { continue }
+
+                cloud.start()
+                onAvailabilityChange?()
+            }
+        }
     }
 
     deinit {
         observer?.cancel()
+        availabilityObserver?.cancel()
     }
 
     var isAvailable: Bool {
@@ -89,6 +101,8 @@ final class FavoritesSyncCoordinator {
     private let favorites: FavoritesStore
     private let store: KeyValueSyncStore
     private var isAdopting = false
+    private var isActive = false
+    private var isStarted = false
 
     init(favorites: FavoritesStore, store: KeyValueSyncStore) {
         self.favorites = favorites
@@ -97,18 +111,35 @@ final class FavoritesSyncCoordinator {
 
     /// Whether sync is active (the backing store is usable).
     var isEnabled: Bool {
-        store.isAvailable
+        isActive
     }
 
-    /// Begins syncing: adopts any existing remote value, then mirrors changes both ways. A
-    /// no-op when the store is unavailable.
+    /// Begins observing immediately and activates now or when iCloud later becomes available.
     func start() {
-        guard store.isAvailable else { return }
+        guard !isStarted else { return }
 
-        adoptRemote()
-        store.onExternalChange = { [weak self] in self?.adoptRemote() }
+        isStarted = true
+        store.onAvailabilityChange = { [weak self] in self?.availabilityChanged() }
+        store.onExternalChange = { [weak self] in self?.externalChange() }
         favorites.onChange = { [weak self] in self?.pushLocal() }
+        availabilityChanged()
+    }
+
+    private func availabilityChanged() {
+        guard store.isAvailable else {
+            isActive = false
+            return
+        }
+        guard !isActive else { return }
+
+        isActive = true
+        adoptRemote()
         store.synchronize()
+    }
+
+    private func externalChange() {
+        availabilityChanged()
+        if isActive { adoptRemote() }
     }
 
     /// Adopts the remote favourites wholesale (last-writer-wins), guarded so it doesn't echo
