@@ -16,6 +16,12 @@ import SwiftUI
 // (picker/toggle), shows a small spinner while the write is in flight, and reverts the
 // draft when the caller reports failure. The caller owns error presentation.
 
+nonisolated enum EditableTextDraft {
+    static func shouldAdoptSource(isFocused: Bool) -> Bool {
+        !isFocused
+    }
+}
+
 /// A label + text field row that commits on submit or focus loss.
 struct EditableTextRow: View {
     let label: String
@@ -85,7 +91,11 @@ struct EditableTextRow: View {
             }
         }
         .onAppear { draft = value }
-        .onChange(of: value) { _, newValue in draft = newValue }
+        .onChange(of: value) { _, newValue in
+            guard EditableTextDraft.shouldAdoptSource(isFocused: isFocused) else { return }
+
+            draft = newValue
+        }
     }
 
     private var fieldPrompt: Text? {

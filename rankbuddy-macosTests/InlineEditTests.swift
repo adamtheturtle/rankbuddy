@@ -8,6 +8,11 @@ import BuddyDesignSystem
 import Testing
 
 struct InlineEditTests {
+    @Test func `focused text rows preserve their local draft`() {
+        #expect(!EditableTextDraft.shouldAdoptSource(isFocused: true))
+        #expect(EditableTextDraft.shouldAdoptSource(isFocused: false))
+    }
+
     @Test func `inline edit button appears before accepting focus or clicks`() {
         #expect(!InlineEditButtonVisibility.shows(isHovered: false, isFocused: false))
         #expect(InlineEditButtonVisibility.shows(isHovered: true, isFocused: false))
