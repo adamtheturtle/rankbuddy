@@ -50,7 +50,11 @@ extension SettingsView {
         Section {
             Toggle("Show upcoming interviews on the Dock icon", isOn: $backgroundUpdates)
                 .onChange(of: backgroundUpdates) { _, enabled in
-                    if enabled { LivenessMonitor.shared.requestBadgeAuthorization() }
+                    if enabled {
+                        LivenessMonitor.shared.requestBadgeAuthorization()
+                    } else {
+                        notifyNewInterviews = false
+                    }
                     Task { await LivenessMonitor.shared.sweep(store: store) }
                 }
 
