@@ -190,6 +190,10 @@ struct AddTestcaseSheet: View {
             errorMessage = "Score must be a whole number of zero or greater."
             return
         }
+        guard TestcaseValidation.isValidSample(isSample, input: input, output: output) else {
+            errorMessage = "A sample testcase must include input or expected output."
+            return
+        }
 
         isSending = true
         errorMessage = nil
@@ -224,6 +228,12 @@ nonisolated enum TestcaseValidation {
     static func isValidScore(_ score: String) -> Bool {
         let normalized = score.trimmingCharacters(in: .whitespacesAndNewlines)
         return normalized.isEmpty || Int(normalized).map { $0 >= 0 } == true
+    }
+
+    static func isValidSample(_ isSample: Bool, input: String, output: String) -> Bool {
+        guard isSample else { return true }
+
+        return [input, output].contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 }
 

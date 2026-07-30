@@ -75,4 +75,10 @@ struct QuestionEditValidationTests {
         #expect(!TestcaseValidation.isValidScore("-1"))
         #expect(TestcaseValidation.isValidScore("0"))
     }
+
+    @Test func `sample testcases require candidate-visible content`() {
+        #expect(TestcaseValidation.isValidSample(false, input: "", output: ""))
+        #expect(!TestcaseValidation.isValidSample(true, input: " \n", output: ""))
+        #expect(TestcaseValidation.isValidSample(true, input: "", output: "42"))
+    }
 }
