@@ -126,13 +126,10 @@ enum LivenessDigest {
     }
 }
 
-/// Concurrent, independently timed account probes for the liveness sweep. The scheduler admits a
-/// bounded number at once and yields each healthy result immediately rather than waiting for the
-/// slowest tenant.
+/// Concurrent, independently timed account probes for the liveness sweep.
 enum LivenessProbe {
     static let concurrencyLimit = 4
     static let timeout: Duration = .seconds(15)
-
     nonisolated struct Result {
         let accountID: UUID
         let interviews: [Interview]
@@ -141,7 +138,9 @@ enum LivenessProbe {
     nonisolated static func interviews(account: Account, timeout: Duration) async -> [Interview]? {
         await withTaskGroup(of: [Interview]?.self) { group in
             group.addTask {
-                try? await HackerRankClient(account: account).interviewsPage().items
+                try? await pagedInterviews(limit: pageLimit) {
+                    try await HackerRankClient(account: account).interviewsPage(after: $0)
+                }
             }
             group.addTask {
                 try? await Task.sleep(for: timeout)

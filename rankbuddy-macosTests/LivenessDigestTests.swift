@@ -170,4 +170,19 @@ struct LivenessDigestTests {
         #expect(await tracker.maximum == 2)
         #expect(Set(received) == Set(0 ..< 8))
     }
+
+    @Test func `liveness probe follows interview cursors`() async throws {
+        let first = try interview(id: "first", status: "completed")
+        let second = try interview(id: "second", status: "scheduled")
+
+        let interviews = try await LivenessProbe.pagedInterviews(limit: 5) { cursor in
+            switch cursor {
+            case nil: Page(items: [first], next: "page-two")
+            case "page-two": Page(items: [second], next: nil)
+            default: Page(items: [], next: nil)
+            }
+        }
+
+        #expect(interviews.map(\.id) == ["first", "second"])
+    }
 }
