@@ -36,6 +36,18 @@ struct RankBuddyEntitiesTests {
         #expect(RankBuddyObjectEntity(id: "nope|acc1|i1", title: "x") == nil)
     }
 
+    @Test func `entity query reconstructs routes without network data`() async throws {
+        let entities = try await RankBuddyObjectEntityQuery().entities(for: [
+            "questions|acc1|q42",
+            "invalid"
+        ])
+
+        #expect(entities.count == 1)
+        #expect(entities.first?.collection == .questions)
+        #expect(entities.first?.accountID == "acc1")
+        #expect(entities.first?.itemID == "q42")
+    }
+
     @Test func `opening an entity writes the section's restoration key`() {
         let key = "selection.tests.acctZ"
         UserDefaults.standard.removeObject(forKey: key)

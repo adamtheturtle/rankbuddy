@@ -57,6 +57,20 @@ struct RankBuddyObjectEntity: IndexedEntity {
         self.init(collection: collection, accountID: String(parts[1]), itemID: String(parts[2]), title: title)
     }
 
+    /// Reconstructs an offline-capable route when Spotlight supplies only the persistent id.
+    init?(id: String) {
+        let parts = id.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
+        guard parts.count == 3,
+              let collection = FavoriteCollection(rawValue: String(parts[0])),
+              !parts[1].isEmpty,
+              !parts[2].isEmpty
+        else { return nil }
+
+        let itemID = String(parts[2])
+        let noun = String(collection.rawValue.dropLast()).capitalized
+        self.init(collection: collection, accountID: String(parts[1]), itemID: itemID, title: "\(noun) \(itemID)")
+    }
+
     var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(
             title: "\(title)",
@@ -76,15 +90,10 @@ struct RankBuddyObjectEntity: IndexedEntity {
     }
 }
 
-/// Locates `RankBuddyObjectEntity` instances for Spotlight/Shortcuts by fetching the current
-/// account's collections (#24). Runs in-process, so it reuses the app's keychain-backed
-/// account and the same client/mock the UI uses; a token-less or offline account simply
-/// yields no entities.
+/// Locates `RankBuddyObjectEntity` instances for Spotlight/Shortcuts.
 struct RankBuddyObjectEntityQuery: EntityQuery {
     func entities(for identifiers: [String]) async throws -> [RankBuddyObjectEntity] {
-        let all = try await Self.currentAccountEntities()
-        let wanted = Set(identifiers)
-        return all.filter { wanted.contains($0.id) }
+        identifiers.compactMap(RankBuddyObjectEntity.init(id:))
     }
 
     func suggestedEntities() async throws -> [RankBuddyObjectEntity] {
