@@ -14,7 +14,7 @@ struct SpotlightKeywordSourceTests {
         try JSONDecoder().decode(type, from: Data(json.utf8))
     }
 
-    @Test func `a question brief carries title, tags, skills, languages, and problem text`() throws {
+    @Test func `a question brief excludes private problem text`() throws {
         let question = try decode(Question.self, #"""
         {"id":"q1","type":"code","name":"Two Sum","tags":["arrays","hashing"],
          "skills":["Problem Solving"],"languages":["python","cpp"],
@@ -26,7 +26,7 @@ struct SpotlightKeywordSourceTests {
         #expect(source.contains("Tags: arrays, hashing"))
         #expect(source.contains("Skills: Problem Solving"))
         #expect(source.contains("Languages: python, cpp"))
-        #expect(source.contains("add up to a target"))
+        #expect(!source.contains("add up to a target"))
     }
 
     @Test func `a question with only a title yields no brief`() throws {
@@ -37,7 +37,7 @@ struct SpotlightKeywordSourceTests {
         #expect(SpotlightKeywordSource.text(for: question) == nil)
     }
 
-    @Test func `a test brief carries name, tags, languages, and condensed instructions`() throws {
+    @Test func `a test brief excludes private instructions`() throws {
         let test = try decode(HackerRankKit.Test.self, #"""
         {"id":"t1","name":"Backend Screen","tags":["sql","api"],"languages":["go"],
          "instructions":"Complete   all\n\nquestions   within the time limit."}
@@ -47,8 +47,7 @@ struct SpotlightKeywordSourceTests {
         #expect(source.contains("Name: Backend Screen"))
         #expect(source.contains("Tags: sql, api"))
         #expect(source.contains("Languages: go"))
-        // Runs of whitespace/newlines collapse to single spaces.
-        #expect(source.contains("Instructions: Complete all questions within the time limit."))
+        #expect(!source.contains("Complete all questions"))
     }
 
     @Test func `a test with only a name yields no brief`() throws {
@@ -59,14 +58,12 @@ struct SpotlightKeywordSourceTests {
         #expect(SpotlightKeywordSource.text(for: test) == nil)
     }
 
-    @Test func `an interview brief needs notes; a title alone yields nothing`() throws {
+    @Test func `interview notes never produce a keyword brief`() throws {
         let withNotes = try decode(Interview.self, #"""
         {"id":"i1","status":"active","url":"https://x","title":"Systems Round",
          "notes":"Assess distributed systems and caching."}
         """#)
-        let source = try #require(SpotlightKeywordSource.text(for: withNotes))
-        #expect(source.contains("Title: Systems Round"))
-        #expect(source.contains("Notes: Assess distributed systems and caching."))
+        #expect(SpotlightKeywordSource.text(for: withNotes) == nil)
 
         let titleOnly = try decode(Interview.self, #"""
         {"id":"i2","status":"active","url":"https://x","title":"Quick Chat"}

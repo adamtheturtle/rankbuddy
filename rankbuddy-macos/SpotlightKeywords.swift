@@ -29,14 +29,11 @@ struct EnrichableEntity {
 /// Builds the on-device text a RankBuddy object's Spotlight keywords are generated from (#92).
 ///
 /// Pure and deterministic (unit-tested): it assembles the list fields RankBuddy *already*
-/// fetched — names, tags, skills, languages, and the problem statement / instructions / notes —
-/// into a compact brief, so enrichment needs no extra network. Returns `nil` when there isn't
+/// fetched — names, tags, skills, and languages — into a compact brief. Free-text problem,
+/// instruction, and interview-note fields are deliberately excluded because they can contain
+/// candidate PII. Returns `nil` when there isn't
 /// enough beyond the title to be worth a model call.
 enum SpotlightKeywordSource {
-    /// The longest slice of free-text body (problem statement, instructions, notes) fed to the
-    /// model; topical keywords don't need the whole thing, and a cap keeps generation bounded.
-    private static let bodyLimit = 1500
-
     static func text(for test: Test) -> String? {
         var parts = ["Name: \(test.name)"]
         var hasSubstance = false
@@ -46,10 +43,6 @@ enum SpotlightKeywordSource {
         }
         if let languages = test.languages, !languages.isEmpty {
             parts.append("Languages: \(languages.joined(separator: ", "))")
-            hasSubstance = true
-        }
-        if let instructions = test.instructions.map(condensed), !instructions.isEmpty {
-            parts.append("Instructions: \(instructions)")
             hasSubstance = true
         }
         return hasSubstance ? parts.joined(separator: "\n") : nil
@@ -70,33 +63,11 @@ enum SpotlightKeywordSource {
             parts.append("Languages: \(languages.joined(separator: ", "))")
             hasSubstance = true
         }
-        if let statement = question.problemStatement.map(condensed), !statement.isEmpty {
-            parts.append("Problem: \(statement)")
-            hasSubstance = true
-        }
         return hasSubstance ? parts.joined(separator: "\n") : nil
     }
 
-    static func text(for interview: Interview) -> String? {
-        // An interview's title alone is already indexed; only its notes add topical signal.
-        guard let notes = interview.notes.map(condensed), !notes.isEmpty else { return nil }
-
-        var parts: [String] = []
-        if let title = interview.title, !title.isEmpty {
-            parts.append("Title: \(title)")
-        }
-        parts.append("Notes: \(notes)")
-        return parts.joined(separator: "\n")
-    }
-
-    /// Trims whitespace, collapses runs of whitespace/markup newlines, and caps the length, so a
-    /// long HTML/Markdown body becomes a compact brief the model can read cheaply.
-    private static func condensed(_ raw: String) -> String {
-        let collapsed = raw
-            .components(separatedBy: .whitespacesAndNewlines)
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
-        return String(collapsed.prefix(bodyLimit))
+    static func text(for _: Interview) -> String? {
+        nil
     }
 }
 
