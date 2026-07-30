@@ -42,4 +42,23 @@ struct DiskPageCacheTests {
         #expect(cached?.items == ["restored"])
         #expect(cached?.cursor == "c")
     }
+
+    @Test func `expired pages are removed instead of restored`() async {
+        await DiskPageCache.clear()
+        let storedAt = Date(timeIntervalSince1970: 1000)
+        await DiskPageCache.store(
+            items: ["stale"],
+            cursor: nil,
+            totalCount: nil,
+            for: "selection.tests.account",
+            now: storedAt
+        )
+
+        let loaded = await DiskPageCache.load(
+            [String].self,
+            for: "selection.tests.account",
+            now: storedAt.addingTimeInterval(60 * 60 + 1)
+        )
+        #expect(loaded == nil)
+    }
 }

@@ -26,11 +26,13 @@ enum DiskPageCache {
         let items: [Item]
         let cursor: String?
         let totalCount: Int?
+        let storedAt: Date
 
-        init(items: [Item], cursor: String?, totalCount: Int?) {
+        init(items: [Item], cursor: String?, totalCount: Int?, storedAt: Date) {
             self.items = items
             self.cursor = cursor
             self.totalCount = totalCount
+            self.storedAt = storedAt
         }
 
         init(from decoder: Decoder) throws {
@@ -38,6 +40,7 @@ enum DiskPageCache {
             items = try container.decode([Item].self, forKey: .items)
             cursor = try container.decodeIfPresent(String.self, forKey: .cursor)
             totalCount = try container.decodeIfPresent(Int.self, forKey: .totalCount)
+            storedAt = try container.decodeIfPresent(Date.self, forKey: .storedAt) ?? .distantPast
         }
     }
 
@@ -63,10 +66,16 @@ enum DiskPageCache {
 
     /// Persists a freshly loaded first page for `key`, replacing any previous file. The cache
     /// actor gives stores and invalidations a clean ordering without blocking the main actor.
-    static func store(items: [some Codable & Sendable], cursor: String?, totalCount: Int?, for key: String) {
+    static func store(
+        items: [some Codable & Sendable],
+        cursor: String?,
+        totalCount: Int?,
+        for key: String,
+        now: Date = Date()
+    ) {
         guard let url = fileURL(for: key),
               let data = try? JSONEncoder().encode(
-                  Payload(items: items, cursor: cursor, totalCount: totalCount)
+                  Payload(items: items, cursor: cursor, totalCount: totalCount, storedAt: now)
               )
         else { return }
 
@@ -78,18 +87,34 @@ enum DiskPageCache {
         try? data.write(to: url, options: .atomic)
     }
 
-    // The persisted first page for `key`, or `nil` when nothing is stored or the file can't be
-    // decoded into `Item` (e.g. the model's shape changed since it was written).
-    // swiftlint:disable:next large_tuple
-    static func load<Item: Codable & Sendable>(_: [Item].Type, for key: String) -> (
+    /// The persisted first page for `key`, or `nil` when nothing is stored or the file can't be
+    /// decoded into `Item` (e.g. the model's shape changed since it was written).
+    static func load<Item: Codable & Sendable>(
+        _: [Item].Type,
+        for key: String,
+        now: Date = Date()
+        // swiftlint:disable:next large_tuple
+    ) -> (
         items: [Item], cursor: String?, totalCount: Int?
     )? {
         guard let url = fileURL(for: key),
               let data = try? Data(contentsOf: url),
               let payload = try? JSONDecoder().decode(Payload<Item>.self, from: data)
         else { return nil }
+        guard now.timeIntervalSince(payload.storedAt) <= maximumAge(for: key) else {
+            try? FileManager.default.removeItem(at: url)
+            return nil
+        }
 
         return (payload.items, payload.cursor, payload.totalCount)
+    }
+
+    /// Fast-moving interview/candidate collections expire sooner than catalogue/admin lists.
+    private static func maximumAge(for key: String) -> TimeInterval {
+        if key.contains(".interviews.") || key.contains(".candidates.") {
+            return 15 * 60
+        }
+        return 60 * 60
     }
 
     /// Drops every persisted page. Used when an account is re-keyed (its rows may now point at a
