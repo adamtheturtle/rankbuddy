@@ -45,6 +45,8 @@ struct SettingsView: View {
     // can read it (#63).
     @State var installedBrowsers: [BrowserSettings.Browser] = []
     @State private var loginItemError: String?
+    @State private var biometricDisableTask: Task<Void, Never>?
+    @State private var biometricDisableGeneration = 0
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -83,6 +85,11 @@ struct SettingsView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(loginItemError ?? "")
+        }
+        .onDisappear {
+            biometricDisableTask?.cancel()
+            biometricDisableTask = nil
+            biometricDisableGeneration &+= 1
         }
     }
 
@@ -205,12 +212,23 @@ private extension SettingsView {
             get: { biometricReveal },
             set: { enabled in
                 if enabled {
+                    biometricDisableTask?.cancel()
+                    biometricDisableTask = nil
+                    biometricDisableGeneration &+= 1
                     biometricReveal = true
                 } else {
-                    Task {
-                        if await BiometricGate.authenticateToDisableGate(
+                    guard biometricDisableTask == nil else { return }
+
+                    biometricDisableGeneration &+= 1
+                    let generation = biometricDisableGeneration
+                    biometricDisableTask = Task {
+                        let authenticated = await BiometricGate.authenticateToDisableGate(
                             reason: "turn off the Touch ID requirement"
-                        ) {
+                        )
+                        guard !Task.isCancelled, biometricDisableGeneration == generation else { return }
+
+                        biometricDisableTask = nil
+                        if authenticated, biometricReveal {
                             biometricReveal = false
                         }
                     }
