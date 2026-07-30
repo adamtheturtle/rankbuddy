@@ -6,6 +6,10 @@
 import AppKit
 import SwiftUI
 
+// The renderer, balanced fragment parser, and their shared cache stay together so the parser's
+// source ranges and rendering cases cannot drift across files.
+// swiftlint:disable file_length
+
 /// Renders an HTML fragment as formatted, selectable text.
 ///
 /// HackerRank returns some text fields — a test's `instructions`, a question's
@@ -151,32 +155,24 @@ nonisolated enum HTMLFragmentSegment: Equatable {
     case orderedList(items: [String], start: Int, step: Int, markerStyle: OrderedListMarkerStyle)
 
     static func segments(from html: String) -> [Self] {
-        let listPattern = #"(?is)<ol\b([^>]*)>(.*?)</ol>"#
-        guard let listExpression = try? NSRegularExpression(pattern: listPattern) else {
-            return [.prose(html)]
-        }
-
         let searchableHTML = maskingIgnoredMarkup(in: html)
         // NSRegularExpression works in terms of NSString ranges, so the bridge is required here.
         // swiftlint:disable:next legacy_objc_type
         let nsHTML = html as NSString
-        // swiftlint:disable:next legacy_objc_type
-        let nsSearchableHTML = searchableHTML as NSString
-        let fullRange = NSRange(location: 0, length: nsSearchableHTML.length)
         var segments: [Self] = []
         var cursor = 0
 
-        for match in listExpression.matches(in: searchableHTML, range: fullRange) {
-            if match.range.location > cursor {
-                let range = NSRange(location: cursor, length: match.range.location - cursor)
+        for element in balancedElements(named: "ol", in: searchableHTML) {
+            if element.full.location > cursor {
+                let range = NSRange(location: cursor, length: element.full.location - cursor)
                 segments.append(.prose(nsHTML.substring(with: range)))
             }
 
-            let attributes = nsHTML.substring(with: match.range(at: 1))
-            let listHTML = nsHTML.substring(with: match.range(at: 2))
+            let attributes = nsHTML.substring(with: element.attributes)
+            let listHTML = nsHTML.substring(with: element.content)
             let items = orderedListItems(from: listHTML)
             if items.isEmpty {
-                segments.append(.prose(nsHTML.substring(with: match.range)))
+                segments.append(.prose(nsHTML.substring(with: element.full)))
             } else {
                 let reversed = hasAttribute("reversed", in: attributes)
                 let explicitStart = integerAttribute("start", in: attributes)
@@ -190,7 +186,7 @@ nonisolated enum HTMLFragmentSegment: Equatable {
                 ))
             }
 
-            cursor = match.range.location + match.range.length
+            cursor = element.full.location + element.full.length
         }
 
         if cursor < nsHTML.length {
@@ -201,16 +197,61 @@ nonisolated enum HTMLFragmentSegment: Equatable {
     }
 
     private static func orderedListItems(from html: String) -> [String] {
-        let itemPattern = #"(?is)<li\b[^>]*>(.*?)</li>"#
-        guard let itemExpression = try? NSRegularExpression(pattern: itemPattern) else { return [] }
-
         // swiftlint:disable:next legacy_objc_type
         let nsHTML = html as NSString
         let searchableHTML = maskingIgnoredMarkup(in: html)
-        let fullRange = NSRange(location: 0, length: nsHTML.length)
-        return itemExpression.matches(in: searchableHTML, range: fullRange).map { match in
-            nsHTML.substring(with: match.range(at: 1))
+        return balancedElements(named: "li", in: searchableHTML).map { element in
+            nsHTML.substring(with: element.content)
         }
+    }
+
+    private struct ElementRanges {
+        let full: NSRange
+        let attributes: NSRange
+        let content: NSRange
+    }
+
+    /// Returns balanced top-level elements of `name`, retaining nested elements inside their
+    /// parent's content range. Ignored markup has already been replaced with equal-length spaces,
+    /// so every range maps directly back to the original HTML.
+    private static func balancedElements(named name: String, in html: String) -> [ElementRanges] {
+        let pattern = #"(?is)</?"# + NSRegularExpression.escapedPattern(for: name) + #"\b[^>]*>"#
+        guard let expression = try? NSRegularExpression(pattern: pattern) else { return [] }
+
+        // swiftlint:disable:next legacy_objc_type
+        let source = html as NSString
+        let matches = expression.matches(in: html, range: NSRange(location: 0, length: source.length))
+        var result: [ElementRanges] = []
+        var depth = 0
+        var opening: NSRange?
+        for match in matches {
+            let token = source.substring(with: match.range)
+            if token.hasPrefix("</") {
+                guard depth > 0 else { continue }
+
+                depth -= 1
+                if depth == 0, let opening {
+                    let contentStart = opening.location + opening.length
+                    result.append(ElementRanges(
+                        full: NSRange(
+                            location: opening.location,
+                            length: match.range.location + match.range.length - opening.location
+                        ),
+                        attributes: attributeRange(tag: name, opening: opening),
+                        content: NSRange(location: contentStart, length: match.range.location - contentStart)
+                    ))
+                }
+            } else if !token.hasSuffix("/>") {
+                if depth == 0 { opening = match.range }
+                depth += 1
+            }
+        }
+        return result
+    }
+
+    private static func attributeRange(tag name: String, opening: NSRange) -> NSRange {
+        let start = opening.location + 1 + name.utf16.count
+        return NSRange(location: start, length: max(0, opening.location + opening.length - start - 1))
     }
 
     private static func hasAttribute(_ name: String, in attributes: String) -> Bool {
@@ -390,3 +431,5 @@ extension AttributedString {
     .formStyle(.grouped)
     .frame(width: 420, height: 320)
 }
+
+// swiftlint:enable file_length

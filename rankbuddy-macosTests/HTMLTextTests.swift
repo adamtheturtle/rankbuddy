@@ -119,4 +119,16 @@ struct HTMLTextTests {
         #expect(OrderedListMarkerStyle.upperRoman.marker(for: 14) == "XIV")
         #expect(OrderedListMarkerStyle.lowerRoman.marker(for: 9) == "ix")
     }
+
+    @Test func `nested ordered lists remain inside their complete parent items`() {
+        let html = "<ol><li>Outer<ol><li>Inner one</li><li>Inner two</li></ol></li><li>Last</li></ol>"
+        #expect(HTMLFragmentSegment.segments(from: html) == [
+            .orderedList(
+                items: ["Outer<ol><li>Inner one</li><li>Inner two</li></ol>", "Last"],
+                start: 1,
+                step: 1,
+                markerStyle: .decimal
+            )
+        ])
+    }
 }
