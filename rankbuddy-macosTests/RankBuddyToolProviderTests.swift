@@ -723,6 +723,24 @@ struct RankBuddyToolProviderTests {
         #expect(text(updated).contains("max_score"))
     }
 
+    @Test func `question writes reject negative recommended durations`() async {
+        let created = await writeProvider().callTool(
+            "create_question",
+            arguments: [
+                "name": .string("Sum"), "type": .string("coding"),
+                "recommended_duration": .int(-1)
+            ]
+        )
+        let updated = await writeProvider().callTool(
+            "update_question",
+            arguments: ["question_id": .string("question-1"), "recommended_duration": .int(-1)]
+        )
+        #expect(created.isError == true)
+        #expect(text(created).contains("recommended_duration"))
+        #expect(updated.isError == true)
+        #expect(text(updated).contains("recommended_duration"))
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",

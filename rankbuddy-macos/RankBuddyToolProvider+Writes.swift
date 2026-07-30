@@ -569,6 +569,9 @@ extension RankBuddyToolProvider {
         guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
             return errorResult("`max_score` must be a finite number of zero or greater.")
         }
+        guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
+            return errorResult("`recommended_duration` must be zero or greater.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -591,6 +594,9 @@ extension RankBuddyToolProvider {
         guard let questionID = stringArgument(arguments, "question_id") else { return missingArgument("question_id") }
         guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
             return errorResult("`max_score` must be a finite number of zero or greater.")
+        }
+        guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
+            return errorResult("`recommended_duration` must be zero or greater.")
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
@@ -1230,7 +1236,7 @@ extension RankBuddyToolProvider {
                       "languages": ["type": "array", "items": ["type": "string"],
                                     "description": "Allowed languages; a comma-separated string is also accepted."],
                       "problem_statement": string("Problem statement, typically Markdown or HTML."),
-                      "recommended_duration": integer("Recommended duration in minutes."),
+                      "recommended_duration": integer("Recommended duration in minutes.", minimum: 0),
                       "tags": ["type": "array", "items": ["type": "string"],
                                "description": "Question tags; a comma-separated string is also accepted."],
                       "max_score": [
@@ -1251,7 +1257,7 @@ extension RankBuddyToolProvider {
                       "languages": ["type": "array", "items": ["type": "string"],
                                     "description": "Allowed languages; a comma-separated string is also accepted."],
                       "problem_statement": string("Problem statement, typically Markdown or HTML."),
-                      "recommended_duration": integer("Recommended duration in minutes."),
+                      "recommended_duration": integer("Recommended duration in minutes.", minimum: 0),
                       "tags": ["type": "array", "items": ["type": "string"],
                                "description": "Question tags; a comma-separated string is also accepted."],
                       "max_score": [
