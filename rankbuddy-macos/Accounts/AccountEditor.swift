@@ -8,6 +8,39 @@ import BuddyDesignSystem
 import HackerRankKit
 import SwiftUI
 
+nonisolated enum AccountScopeProbeResult {
+    case authorized
+    case refused
+    case unavailable
+}
+
+nonisolated enum AccountScopeAssessment {
+    private static let allRefusedWarning = "This token reached HackerRank but was refused for tests, " +
+        "questions, interviews, people, and teams. It may be expired or scoped too narrowly to be useful."
+
+    static func warning(_ results: [(name: String, result: AccountScopeProbeResult)]) -> String? {
+        let refused = results.filter { $0.result == .refused }.map(\.name)
+        let unavailable = results.filter { $0.result == .unavailable }.map(\.name)
+        guard !refused.isEmpty || !unavailable.isEmpty else { return nil }
+
+        if refused.count == results.count {
+            return allRefusedWarning
+        }
+
+        var messages: [String] = []
+        if !refused.isEmpty {
+            messages.append("This token works, but isn't authorized for: \(refused.joined(separator: ", ")).")
+        }
+        if !unavailable.isEmpty {
+            messages.append(
+                "Access couldn't be verified for: \(unavailable.joined(separator: ", ")). " +
+                    "Check your connection and validate again."
+            )
+        }
+        return messages.joined(separator: " ")
+    }
+}
+
 // A flat, Mail-style editor for adding or editing a HackerRank account.
 // swiftlint:disable:next type_body_length
 struct AccountEditor: View {
@@ -385,9 +418,6 @@ struct AccountEditor: View {
 /// Same-file extension so the struct body stays within the lint length budget; `private`
 /// state remains accessible from here.
 private extension AccountEditor {
-    static let allScopesRefusedWarning = "This token reached HackerRank but was refused for tests, " +
-        "questions, interviews, people, and teams. It may be expired or scoped too narrowly to be useful."
-
     struct ValidationFingerprint: Equatable {
         let token: String
         let baseURL: URL
@@ -497,26 +527,21 @@ private extension AccountEditor {
         async let peopleOK = endpointAuthorized { _ = try await client.usersPage() }
         async let teamsOK = endpointAuthorized { _ = try await client.teamsPage() }
 
-        var missing: [String] = []
-        if await testsOK == false { missing.append("Tests") }
-        if await questionsOK == false { missing.append("Questions") }
-        if await interviewsOK == false { missing.append("Interviews") }
-        if await peopleOK == false { missing.append("People") }
-        if await teamsOK == false { missing.append("Teams") }
-        guard !missing.isEmpty else { return nil }
-
-        if missing.count == 5 { return Self.allScopesRefusedWarning }
-
-        return "This token works, but isn't authorized for: \(missing.joined(separator: ", ")). " +
-            "Those sections may be empty."
+        return await AccountScopeAssessment.warning([
+            ("Tests", testsOK),
+            ("Questions", questionsOK),
+            ("Interviews", interviewsOK),
+            ("People", peopleOK),
+            ("Teams", teamsOK)
+        ])
     }
 
-    func endpointAuthorized(_ probe: () async throws -> Void) async -> Bool {
+    func endpointAuthorized(_ probe: () async throws -> Void) async -> AccountScopeProbeResult {
         do {
             try await probe()
-            return true
+            return .authorized
         } catch {
-            return !isUnauthorized(error)
+            return isUnauthorized(error) ? .refused : .unavailable
         }
     }
 

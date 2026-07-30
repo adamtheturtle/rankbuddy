@@ -13,6 +13,17 @@ import Testing
 /// every Keychain/UserDefaults side effect, so they never touch the real login keychain.
 @MainActor
 struct AccountStoreTests {
+    @Test func `scope assessment reports unavailable probes separately`() {
+        let warning = AccountScopeAssessment.warning([
+            ("Tests", .authorized),
+            ("Questions", .refused),
+            ("Teams", .unavailable)
+        ])
+
+        #expect(warning?.contains("isn't authorized for: Questions") == true)
+        #expect(warning?.contains("couldn't be verified for: Teams") == true)
+    }
+
     @Test func `account descriptions conflict after trimming and case normalization`() {
         #expect(Account.labelsConflict(" Work ", "work"))
         #expect(!Account.labelsConflict("Work", "Personal"))
