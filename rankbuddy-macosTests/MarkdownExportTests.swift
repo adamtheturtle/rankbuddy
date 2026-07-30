@@ -33,8 +33,25 @@ struct MarkdownExportTests {
         let markdown = MarkdownExport.section("Candidate\nForged", [("Name", "Ada\n- forged"), ("Bio", oversized)])
 
         #expect(markdown.hasPrefix("## Candidate Forged\n"))
-        #expect(markdown.contains("- **Name:** Ada - forged"))
+        #expect(markdown.contains("- **Name:** Ada \\- forged"))
         #expect(markdown.contains(String(repeating: "x", count: MarkdownExport.Limits.inlineCharacters) + "..."))
+    }
+
+    @Test func `untrusted text cannot inject Markdown structure`() {
+        let markdown = MarkdownExport.document(
+            title: "# [Report](https://example.com)",
+            subtitle: "_unsafe_",
+            sections: [
+                MarkdownExport.section("* Section", [("La**bel", "`code` - [link](x)")]),
+                MarkdownExport.textSection("Notes", "# Heading\n- item\n<script>alert(1)</script>")
+            ]
+        )
+
+        #expect(markdown.contains(#"# \# \[Report\]\(https://example.com\)"#))
+        #expect(markdown.contains(#"_\_unsafe\__"#))
+        #expect(markdown.contains(#"## \* Section"#))
+        #expect(markdown.contains(#"- **La\*\*bel:** \`code\` \- \[link\]\(x\)"#))
+        #expect(markdown.contains("\\# Heading\n\\- item\n\\<script\\>alert\\(1\\)\\</script\\>"))
     }
 
     @Test func `oversized prose and HTML are truncated before export`() {

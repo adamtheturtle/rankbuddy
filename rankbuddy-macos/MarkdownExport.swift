@@ -31,7 +31,7 @@ enum MarkdownExport {
 
         let bounded = boundedText(text, maximumCharacters: Limits.proseCharacters)
         let suffix = bounded.omitted ? "\n\n_Content truncated for export._" : ""
-        return "## \(inlineText(title))\n\(bounded.text)\(suffix)"
+        return "## \(inlineText(title))\n\(escapedMarkdown(bounded.text))\(suffix)"
     }
 
     /// Assembles a document: an `# Title`, an italic subtitle, then the non-empty sections.
@@ -74,7 +74,22 @@ enum MarkdownExport {
             .replacingOccurrences(of: "\r\n", with: " ")
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "\r", with: " ")
-        return normalized + (bounded.omitted ? "..." : "")
+        return escapedMarkdown(normalized) + (bounded.omitted ? "..." : "")
+    }
+
+    /// Escapes API and user-provided text while leaving the report's own Markdown structure
+    /// intact. Escaping everywhere (rather than only at line starts) also prevents values from
+    /// completing emphasis, links, images, code spans, tables, or HTML constructs.
+    nonisolated static func escapedMarkdown(_ text: String) -> String {
+        var escaped = ""
+        escaped.reserveCapacity(text.count)
+        for character in text {
+            if "\\`*_{}[]<>()#+-!|".contains(character) {
+                escaped.append("\\")
+            }
+            escaped.append(character)
+        }
+        return escaped
     }
 
     private nonisolated static func formattedDate(_ value: String?) -> String? {
