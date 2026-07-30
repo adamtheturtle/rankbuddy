@@ -22,7 +22,7 @@ nonisolated enum QuestionEditValidation {
 nonisolated enum QuestionCreationValidation {
     static func isValidDurationText(_ text: String) -> Bool {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return normalized.isEmpty || Int(normalized) != nil
+        return normalized.isEmpty || Int(normalized).map { $0 >= 0 } == true
     }
 
     static func duration(from text: String) -> Int? {

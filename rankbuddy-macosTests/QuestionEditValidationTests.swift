@@ -28,6 +28,8 @@ struct QuestionEditValidationTests {
         #expect(QuestionCreationValidation.isValidDurationText(""))
         #expect(QuestionCreationValidation.isValidDurationText(" 30\n"))
         #expect(!QuestionCreationValidation.isValidDurationText("thirty"))
+        #expect(!QuestionCreationValidation.isValidDurationText("-1"))
+        #expect(QuestionCreationValidation.isValidDurationText("0"))
         #expect(QuestionCreationValidation.duration(from: " 30\n") == 30)
     }
 

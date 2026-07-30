@@ -81,7 +81,7 @@ struct NewQuestionSheet: View {
 
     private func create() async {
         guard QuestionCreationValidation.isValidDurationText(duration) else {
-            errorMessage = "Recommended duration must be a whole number of minutes."
+            errorMessage = "Recommended duration must be a whole number of zero or more minutes."
             return
         }
 
