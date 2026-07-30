@@ -6,6 +6,14 @@
 import HackerRankKit
 import SwiftUI
 
+nonisolated enum TeamNameValidation {
+    static let maxLength = 255
+
+    static func isValid(_ name: String) -> Bool {
+        !name.isEmpty && name.count <= maxLength
+    }
+}
+
 /// A sheet that creates a team (`POST /teams`, #59) — a write flow. Refreshes the list on success.
 struct CreateTeamSheet: View {
     let account: Account
@@ -25,6 +33,11 @@ struct CreateTeamSheet: View {
             Form {
                 Section {
                     TextField("Team name", text: $name)
+                } footer: {
+                    if trimmedName.count > TeamNameValidation.maxLength {
+                        Text("Team name can be at most \(TeamNameValidation.maxLength) characters.")
+                            .foregroundStyle(.red)
+                    }
                 }
 
                 if let errorMessage {
@@ -47,7 +60,7 @@ struct CreateTeamSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Create") { Task { await create() } }
-                            .disabled(trimmedName.isEmpty)
+                            .disabled(!TeamNameValidation.isValid(trimmedName))
                     }
                 }
             }
@@ -56,6 +69,8 @@ struct CreateTeamSheet: View {
     }
 
     private func create() async {
+        guard TeamNameValidation.isValid(trimmedName) else { return }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }

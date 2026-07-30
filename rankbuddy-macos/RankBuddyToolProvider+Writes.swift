@@ -117,6 +117,9 @@ extension RankBuddyToolProvider {
 
         let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return errorResult("`name` must not be empty.") }
+        guard TeamNameValidation.isValid(name) else {
+            return errorResult("`name` can be at most \(TeamNameValidation.maxLength) characters.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {

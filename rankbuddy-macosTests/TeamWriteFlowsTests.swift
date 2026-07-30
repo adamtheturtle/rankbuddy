@@ -13,6 +13,11 @@ import Testing
 /// with the canned echo, a DELETE with a 200, and the bad-token account answers 401.
 @MainActor
 struct TeamWriteFlowsTests {
+    @Test func `team names respect the API limit`() {
+        #expect(TeamNameValidation.isValid("Platform"))
+        #expect(!TeamNameValidation.isValid(String(repeating: "x", count: 256)))
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
