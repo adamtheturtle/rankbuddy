@@ -1,0 +1,169 @@
+name: App Store
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Archive, validate, and upload to App Store Connect
+        type: boolean
+        default: false
+      version:
+        description: Marketing version for an uploaded build
+        type: string
+        default: 1.0.0
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-store-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate Sparkle-free store build
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.5.app
+          xcodebuild -version
+
+      - name: Build unsigned App Store product
+        run: |
+          set -euo pipefail
+          xcodebuild build \
+            -project rankbuddy-macos.xcodeproj \
+            -scheme RankBuddy-AppStore \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath DerivedData-AppStore \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Reject direct-download updater code
+        run: |
+          set -euo pipefail
+          app=DerivedData-AppStore/Build/Products/Release/RankBuddy-AppStore.app
+          test -d "$app"
+          test ! -e "$app/Contents/Frameworks/Sparkle.framework"
+          if nm -gj "$app/Contents/MacOS/RankBuddy-AppStore" \
+            | grep -Eq 'SPU|RankBuddyUpdates|UpdateCheckModel'; then
+            echo "::error::App Store product contains Sparkle/updater symbols"
+            exit 1
+          fi
+
+  upload:
+    name: Archive and upload
+    if: github.event_name == 'workflow_dispatch' && inputs.upload
+    needs: validate
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.5.app
+          xcodebuild -version
+
+      - name: Validate required secrets
+        env:
+          CERTIFICATE: ${{ secrets.APPLE_DISTRIBUTION_CERT_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_CERT_PASSWORD }}
+          PROFILE: ${{ secrets.APP_STORE_PROVISIONING_PROFILE_BASE64 }}
+          PROFILE_NAME: ${{ secrets.APP_STORE_PROVISIONING_PROFILE_NAME }}
+          ASC_KEY: ${{ secrets.ASC_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          for name in CERTIFICATE CERTIFICATE_PASSWORD PROFILE PROFILE_NAME \
+            ASC_KEY ASC_KEY_ID ASC_ISSUER_ID; do
+            test -n "${!name}" || { echo "::error::$name is required"; exit 1; }
+          done
+
+      - name: Import distribution certificate
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466
+        with:
+          p12-file-base64: ${{ secrets.APPLE_DISTRIBUTION_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.APPLE_DISTRIBUTION_CERT_PASSWORD }}
+
+      - name: Install provisioning profile and API key
+        env:
+          PROFILE: ${{ secrets.APP_STORE_PROVISIONING_PROFILE_BASE64 }}
+          ASC_KEY: ${{ secrets.ASC_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          set -euo pipefail
+          profile_dir="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$profile_dir"
+          printf '%s' "$PROFILE" | base64 --decode > "$profile_dir/RankBuddy.provisionprofile"
+          printf '%s' "$ASC_KEY" | base64 --decode > "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          chmod 600 "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+
+      - name: Archive
+        env:
+          PROFILE_NAME: ${{ secrets.APP_STORE_PROVISIONING_PROFILE_NAME }}
+          MARKETING_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          build="$(git rev-list --count HEAD)"
+          scripts/validate-release-version.sh "$MARKETING_VERSION" "$build" "v$MARKETING_VERSION"
+          xcodebuild archive \
+            -project rankbuddy-macos.xcodeproj \
+            -scheme RankBuddy-AppStore \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -archivePath "$RUNNER_TEMP/RankBuddy.xcarchive" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$build" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY='Apple Distribution' \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
+
+      - name: Validate archive has no Sparkle
+        run: |
+          set -euo pipefail
+          app="$RUNNER_TEMP/RankBuddy.xcarchive/Products/Applications/RankBuddy-AppStore.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          test ! -e "$app/Contents/Frameworks/Sparkle.framework"
+          if nm -gj "$app/Contents/MacOS/RankBuddy-AppStore" \
+            | grep -Eq 'SPU|RankBuddyUpdates|UpdateCheckModel'; then
+            echo "::error::Archived App Store product contains Sparkle/updater symbols"
+            exit 1
+          fi
+
+      - name: Upload to App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          PROFILE_NAME: ${{ secrets.APP_STORE_PROVISIONING_PROFILE_NAME }}
+        run: |
+          set -euo pipefail
+          export_options="$RUNNER_TEMP/ExportOptions.plist"
+          /usr/libexec/PlistBuddy -c 'Add :method string app-store-connect' "$export_options"
+          /usr/libexec/PlistBuddy -c 'Add :destination string upload' "$export_options"
+          /usr/libexec/PlistBuddy -c 'Add :signingStyle string manual' "$export_options"
+          /usr/libexec/PlistBuddy -c 'Add :signingCertificate string Apple Distribution' "$export_options"
+          /usr/libexec/PlistBuddy -c 'Add :provisioningProfiles dict' "$export_options"
+          /usr/libexec/PlistBuddy \
+            -c "Add :provisioningProfiles:com.adamdangoor.rankbuddy string $PROFILE_NAME" \
+            "$export_options"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/RankBuddy.xcarchive" \
+            -exportPath "$RUNNER_TEMP/RankBuddy-AppStore" \
+            -exportOptionsPlist "$export_options" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
