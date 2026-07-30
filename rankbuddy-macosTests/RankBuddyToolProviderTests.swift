@@ -759,6 +759,15 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.hasQuestionUpdate(["max_score": .int(0)]))
     }
 
+    @Test func `update_question rejects a blank target id`() async {
+        let result = await writeProvider().callTool(
+            "update_question",
+            arguments: ["question_id": .string(" \n"), "name": .string("Sum")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("question_id"))
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",
