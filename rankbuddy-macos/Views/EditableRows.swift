@@ -352,6 +352,12 @@ struct EditableDateRow: View {
 /// A long-form text block that displays read-only until its hover pencil is clicked, then
 /// becomes a text editor with Save/Cancel — PadBuddy's `InlineEditableText`, ported for
 /// notes and problem statements.
+nonisolated enum InlineEditButtonVisibility {
+    static func shows(isHovered: Bool, isFocused: Bool) -> Bool {
+        isHovered || isFocused
+    }
+}
+
 struct InlineEditableText: View {
     let text: String
     var placeholder: LocalizedStringKey = "Empty"
@@ -364,6 +370,11 @@ struct InlineEditableText: View {
     @State private var isSaving = false
     @State private var isHovered = false
     @FocusState private var isFocused: Bool
+    @FocusState private var isEditButtonFocused: Bool
+
+    private var showsEditButton: Bool {
+        InlineEditButtonVisibility.shows(isHovered: isHovered, isFocused: isEditButtonFocused)
+    }
 
     var body: some View {
         Group {
@@ -401,7 +412,9 @@ struct InlineEditableText: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.borderless)
-            .opacity(isHovered ? 1 : 0)
+            .focused($isEditButtonFocused)
+            .opacity(showsEditButton ? 1 : 0)
+            .allowsHitTesting(showsEditButton)
             .help("Edit")
             .accessibilityLabel("Edit")
         }

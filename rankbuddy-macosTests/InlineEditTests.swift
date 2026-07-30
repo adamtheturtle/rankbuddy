@@ -8,6 +8,12 @@ import BuddyDesignSystem
 import Testing
 
 struct InlineEditTests {
+    @Test func `inline edit button appears before accepting focus or clicks`() {
+        #expect(!InlineEditButtonVisibility.shows(isHovered: false, isFocused: false))
+        #expect(InlineEditButtonVisibility.shows(isHovered: true, isFocused: false))
+        #expect(InlineEditButtonVisibility.shows(isHovered: false, isFocused: true))
+    }
+
     @Test func `a changed value commits trimmed`() {
         #expect(InlineEdit.commitValue(original: "Old", edited: "  New Name  ") == "New Name")
     }
