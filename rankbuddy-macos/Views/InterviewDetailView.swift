@@ -17,6 +17,8 @@ struct InterviewDetailView: View {
     @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: InterviewDetail?
     @State private var transcript: InterviewTranscript?
+    @State private var transcriptError: String?
+    @State private var isTranscriptLoading = false
     @State private var deletePresented = false
     @State private var deleteError: String?
     @State private var editError: String?
@@ -189,13 +191,7 @@ struct InterviewDetailView: View {
                 }
             }
 
-            if let messages = transcript?.messages, !messages.isEmpty {
-                Section("Transcript") {
-                    ForEach(messages) { message in
-                        TranscriptMessageRow(message: message)
-                    }
-                }
-            }
+            transcriptSection
         }
         .formStyle(.grouped)
         .navigationTitle(displayTitle)
@@ -257,6 +253,30 @@ struct InterviewDetailView: View {
     }
 
     private static let iso8601 = ISO8601DateFormatter()
+
+    private var transcriptSection: some View {
+        Section("Transcript") {
+            if isTranscriptLoading {
+                ProgressView("Loading transcript…")
+            } else if let transcriptError {
+                Label(transcriptError, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.red)
+                Button("Retry") {
+                    Task { await loadTranscript(for: requestIdentity) }
+                }
+            } else if let messages = transcript?.messages, !messages.isEmpty {
+                ForEach(messages) { message in
+                    TranscriptMessageRow(message: message)
+                }
+            } else {
+                ContentUnavailableView(
+                    "No Transcript",
+                    systemImage: "text.bubble",
+                    description: Text("This interview does not have any transcript messages.")
+                )
+            }
+        }
+    }
 
     nonisolated static func isValidSchedule(start: Date, end: Date) -> Bool {
         start < end
@@ -326,16 +346,65 @@ struct InterviewDetailView: View {
     private func loadDetail(for identity: InterviewDetailRequestIdentity) async {
         detail = nil
         transcript = nil
-        guard let account = owningAccount else { return }
+        transcriptError = nil
+        isTranscriptLoading = true
+        guard let account = owningAccount else {
+            isTranscriptLoading = false
+            return
+        }
 
         let client = HackerRankClient(account: account)
         async let fetchedDetail = try? client.interview(id: interview.id)
-        async let fetchedTranscript = try? client.interviewTranscript(id: interview.id)
+        async let fetchedTranscript = Self.fetchTranscript(client: client, interviewID: interview.id)
         let loaded = await (fetchedDetail, fetchedTranscript)
         guard !Task.isCancelled, identity == requestIdentity else { return }
 
         detail = loaded.0
-        transcript = loaded.1
+        applyTranscriptResult(loaded.1)
+    }
+
+    private func loadTranscript(for identity: InterviewDetailRequestIdentity) async {
+        transcript = nil
+        transcriptError = nil
+        isTranscriptLoading = true
+        guard let account = owningAccount else {
+            isTranscriptLoading = false
+            return
+        }
+
+        let result = await Self.fetchTranscript(
+            client: HackerRankClient(account: account),
+            interviewID: interview.id
+        )
+        guard !Task.isCancelled, identity == requestIdentity else { return }
+
+        applyTranscriptResult(result)
+    }
+
+    private func applyTranscriptResult(_ result: TranscriptLoadResult) {
+        isTranscriptLoading = false
+        switch result {
+        case let .loaded(value):
+            transcript = value
+        case let .failed(message):
+            transcriptError = message
+        }
+    }
+
+    private enum TranscriptLoadResult {
+        case loaded(InterviewTranscript)
+        case failed(String)
+    }
+
+    private nonisolated static func fetchTranscript(
+        client: HackerRankClient,
+        interviewID: String
+    ) async -> TranscriptLoadResult {
+        do {
+            return try await .loaded(client.interviewTranscript(id: interviewID))
+        } catch {
+            return .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
     }
 
     private func deleteInterview() async {
