@@ -22,4 +22,15 @@ struct ListSortTests {
             items, reversed: true, isMissing: { $0.value == nil }, by: forward
         ).map(\.value) == [1, 2, 3, nil])
     }
+
+    @Test func `option identity survives view reconstruction`() {
+        let first = SortOption<Item>("Value", systemImage: "number", kind: .amount) {
+            ($0.value ?? 0) > ($1.value ?? 0)
+        }
+        let reconstructed = SortOption<Item>("Value", systemImage: "number", kind: .amount) {
+            ($0.value ?? 0) > ($1.value ?? 0)
+        }
+
+        #expect(first.id == reconstructed.id)
+    }
 }

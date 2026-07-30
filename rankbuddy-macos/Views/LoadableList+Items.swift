@@ -187,7 +187,7 @@ extension LoadableList {
         sortReversed = sortReversedDefaultsKey.map(UserDefaults.standard.bool(forKey:)) ?? false
     }
 
-    /// Persists the current sort order by its stable label (the option ids are per-launch).
+    /// Persists the current sort order by its stable label.
     func persistSort() {
         guard let sortDefaultsKey, let sortReversedDefaultsKey,
               let option = sortOptions.first(where: { $0.id == sortSelection }) else { return }

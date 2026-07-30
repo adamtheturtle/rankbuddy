@@ -32,8 +32,12 @@ enum SortFieldKind {
 
 /// A named way to order a list's items, shown in the list's sort menu.
 struct SortOption<Item>: Identifiable {
-    let id = UUID()
     let label: String
+    /// The label is unique within a list and remains stable when SwiftUI reconstructs the view.
+    var id: String {
+        label
+    }
+
     /// The field's icon in the Sort menu, matching PadBuddy's field pickers.
     let systemImage: String
     /// Names the two directions the field can be ordered in.
