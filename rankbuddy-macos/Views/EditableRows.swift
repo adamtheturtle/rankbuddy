@@ -367,8 +367,10 @@ struct InlineEditableText: View {
 
     @State private var isEditing = false
     @State private var draft = ""
+    @State private var originalText = ""
     @State private var isSaving = false
     @State private var isHovered = false
+    @State private var conflictMessage: String?
     @FocusState private var isFocused: Bool
     @FocusState private var isEditButtonFocused: Bool
 
@@ -386,6 +388,11 @@ struct InlineEditableText: View {
         }
         .onHover { isHovered = $0 }
         .animation(.easeInOut(duration: 0.12), value: isHovered)
+        .alert("Text Changed", isPresented: conflictPresented) {
+            Button("OK") { conflictMessage = nil }
+        } message: {
+            Text(conflictMessage ?? "")
+        }
     }
 
     private var display: some View {
@@ -403,6 +410,7 @@ struct InlineEditableText: View {
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             Button {
+                originalText = text
                 draft = text
                 isEditing = true
                 isFocused = true
@@ -434,7 +442,10 @@ struct InlineEditableText: View {
                 )
             HStack(spacing: 8) {
                 Spacer(minLength: 0)
-                Button("Cancel") { isEditing = false }
+                Button("Cancel") {
+                    draft = text
+                    isEditing = false
+                }
                 Button {
                     Task { await saveDraft() }
                 } label: {
@@ -450,12 +461,31 @@ struct InlineEditableText: View {
         }
     }
 
+    private var conflictPresented: Binding<Bool> {
+        Binding(get: { conflictMessage != nil }, set: { if !$0 { conflictMessage = nil } })
+    }
+
     private func saveDraft() async {
+        guard !Self.hasConflict(original: originalText, current: text) else {
+            draft = text
+            isEditing = false
+            isFocused = false
+            conflictMessage = """
+            This text changed while you were editing. Your draft wasn’t saved. Review the current \
+            text and try again.
+            """
+            return
+        }
+
         isSaving = true
         defer { isSaving = false }
         if await commit(draft.trimmingCharacters(in: .whitespacesAndNewlines)) {
             isEditing = false
         }
+    }
+
+    nonisolated static func hasConflict(original: String, current: String) -> Bool {
+        original != current
     }
 }
 

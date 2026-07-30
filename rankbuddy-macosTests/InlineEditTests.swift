@@ -35,4 +35,9 @@ struct InlineEditTests {
         #expect(!CommandEditableTitle.hasConflict(original: "Original", current: "Original"))
         #expect(CommandEditableTitle.hasConflict(original: "Original", current: "Renamed elsewhere"))
     }
+
+    @Test func `inline text detects refreshed server content`() {
+        #expect(!InlineEditableText.hasConflict(original: "Original", current: "Original"))
+        #expect(InlineEditableText.hasConflict(original: "Original", current: "Changed elsewhere"))
+    }
 }
