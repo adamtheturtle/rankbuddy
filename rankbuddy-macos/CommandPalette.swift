@@ -136,7 +136,66 @@ enum RankBuddyPalette {
         }
     }
 
-    /// Every candidate for the current state: the static entries plus the account's tests.
+    @MainActor
+    static func questionCandidates(
+        store: AccountStore,
+        selection: Binding<SidebarSection>
+    ) async -> [PaletteResult] {
+        guard let account = store.currentAccount,
+              let page = try? await HackerRankClient(account: account).questionsPage()
+        else { return [] }
+
+        return page.items.map { question in
+            PaletteResult(
+                id: "question.\(question.id)",
+                title: question.name,
+                subtitle: DisplayFormat.enumLabel(question.type),
+                category: "Question",
+                systemImage: "questionmark.circle",
+                searchText: "\(question.name) \(question.tags?.joined(separator: " ") ?? "") question",
+                showsOnlyWhenSearching: true
+            ) {
+                RankBuddyDeepLink.open(
+                    collection: .questions,
+                    accountID: account.id.uuidString,
+                    itemID: question.id
+                )
+                selection.wrappedValue = .questions
+            }
+        }
+    }
+
+    @MainActor
+    static func interviewCandidates(
+        store: AccountStore,
+        selection: Binding<SidebarSection>
+    ) async -> [PaletteResult] {
+        guard let account = store.currentAccount,
+              let page = try? await HackerRankClient(account: account).interviewsPage()
+        else { return [] }
+
+        return page.items.map { interview in
+            let title = interview.title ?? "Interview \(interview.id)"
+            return PaletteResult(
+                id: "interview.\(interview.id)",
+                title: title,
+                subtitle: DisplayFormat.enumLabel(interview.status),
+                category: "Interview",
+                systemImage: "person.2.wave.2",
+                searchText: "\(title) \(interview.status) interview",
+                showsOnlyWhenSearching: true
+            ) {
+                RankBuddyDeepLink.open(
+                    collection: .interviews,
+                    accountID: account.id.uuidString,
+                    itemID: interview.id
+                )
+                selection.wrappedValue = .interviews
+            }
+        }
+    }
+
+    /// Every candidate for the current state: static entries plus the account's primary objects.
     @MainActor
     static func candidates(
         store: AccountStore,
@@ -151,6 +210,8 @@ enum RankBuddyPalette {
             openSettings: openSettings
         )
         await results.append(contentsOf: testCandidates(store: store, selection: selection))
+        await results.append(contentsOf: questionCandidates(store: store, selection: selection))
+        await results.append(contentsOf: interviewCandidates(store: store, selection: selection))
         return results
     }
 }
