@@ -105,6 +105,11 @@ struct ContentView: View {
         .onChange(of: store.accounts.map(\.id)) {
             favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
         }
+        // Current-account badge scope must follow account switches immediately instead of
+        // retaining the preceding account's count until the next background interval.
+        .onChange(of: store.currentAccountID) {
+            Task { await LivenessMonitor.shared.sweep(store: store) }
+        }
         // Continue a Handoff / Spotlight / Siri activity by routing to the item via the same
         // deep-link path favourites and the open intent use (#98).
         .onContinueUserActivity(RankBuddyUserActivity.activityType) { activity in
