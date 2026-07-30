@@ -41,17 +41,36 @@ enum ListSearchPaging {
     }
 }
 
+/// Collision-safe identity for the task that scans additional pages for client-side filters.
+nonisolated struct ClientFilterToken: Hashable {
+    struct Facet: Hashable {
+        let id: String
+        let values: [String]
+    }
+
+    let query: String
+    let facets: [Facet]
+    let dateRange: String?
+
+    init(query: String, selectedFacets: [String: Set<String>], dateRange: String?) {
+        self.query = query
+        facets = selectedFacets
+            .map { Facet(id: $0.key, values: $0.value.sorted()) }
+            .sorted { $0.id < $1.id }
+        self.dateRange = dateRange
+    }
+}
+
 extension LoadableList {
     /// A change token over every client-side filter, so `.task(id:)` restarts the auto-load when
     /// the search text, facet selection, or (client-side) date range changes.
-    var clientFilterToken: String {
-        let facetSignature = selectedFacets
-            .sorted { $0.key < $1.key }
-            .map { "\($0.key):\($0.value.sorted().joined(separator: ","))" }
-            .joined(separator: ";")
+    var clientFilterToken: ClientFilterToken {
         // The interviews date range is applied server-side, so it isn't part of the client filter.
-        let clientDate = serverDateFiltering ? "" : (dateRange ?? "")
-        return "\(query)|\(facetSignature)|\(clientDate)"
+        ClientFilterToken(
+            query: query,
+            selectedFacets: selectedFacets,
+            dateRange: serverDateFiltering ? nil : dateRange
+        )
     }
 
     /// Whether any client-side narrowing filter is currently active.
