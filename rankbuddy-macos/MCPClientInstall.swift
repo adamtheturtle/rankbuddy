@@ -317,12 +317,22 @@ enum MCPClientInstall {
         fallback: URL?,
         fileManager: FileManager = .default
     ) throws -> URL {
-        guard let preferred,
-              let fallback,
-              granted.standardizedFileURL == fallback.standardizedFileURL,
-              preferred.deletingLastPathComponent().standardizedFileURL == fallback.standardizedFileURL,
-              !fileManager.fileExists(atPath: preferred.path) else {
+        guard let preferred, let fallback else {
+            throw ConfigVerificationError(errorDescription: "RankBuddy couldn't determine the expected config folder.")
+        }
+
+        let grantedPath = granted.resolvingSymlinksInPath().standardizedFileURL
+        let preferredPath = preferred.resolvingSymlinksInPath().standardizedFileURL
+        let fallbackPath = fallback.resolvingSymlinksInPath().standardizedFileURL
+        if grantedPath == preferredPath {
             return granted
+        }
+        guard grantedPath == fallbackPath,
+              preferred.deletingLastPathComponent().resolvingSymlinksInPath().standardizedFileURL == fallbackPath,
+              !fileManager.fileExists(atPath: preferred.path) else {
+            throw ConfigVerificationError(
+                errorDescription: "Select the client’s expected config folder: \(preferred.path). No file was changed."
+            )
         }
 
         try fileManager.createDirectory(at: preferred, withIntermediateDirectories: false)

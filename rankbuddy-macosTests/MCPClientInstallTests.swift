@@ -235,6 +235,23 @@ struct MCPClientInstallTests {
         #expect(!FileManager.default.fileExists(atPath: parent.appendingPathComponent("config.toml").path))
     }
 
+    @Test func `an unrelated granted folder is rejected`() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let preferred = directory.appendingPathComponent(".codex", isDirectory: true)
+        let unrelated = directory.appendingPathComponent("Documents", isDirectory: true)
+        try FileManager.default.createDirectory(at: unrelated, withIntermediateDirectories: false)
+
+        #expect(throws: MCPClientInstall.ConfigVerificationError.self) {
+            try MCPClientInstall.configurationFolder(
+                granted: unrelated,
+                preferred: preferred,
+                fallback: directory
+            )
+        }
+        #expect(!FileManager.default.fileExists(atPath: preferred.path))
+    }
+
     @Test func `a moved or missing installed executable requires repair`() throws {
         let defaults = freshDefaults()
         let directory = try temporaryDirectory()
