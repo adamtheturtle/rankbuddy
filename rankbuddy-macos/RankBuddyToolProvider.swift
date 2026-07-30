@@ -100,7 +100,13 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         switch name {
         case "list_accounts": return await listAccounts()
 
-        case "list_tests": return await listTests(account: account)
+        case "list_tests":
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+
+            return await listTests(cursor: cursor, account: account)
 
         case "list_questions":
             let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
@@ -379,14 +385,15 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     }
 
     @MainActor
-    private func listTests(account: String?) async -> CallTool.Result {
+    private func listTests(cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let page = try await HackerRankClient(account: resolved).testsPage()
+            let page = try await HackerRankClient(account: resolved).testsPage(after: cursor)
             let items = page.items.map { ["id": $0.id, "name": $0.name, "state": $0.state ?? ""] }
             return jsonResult(pageMetadata(page).merging([
-                "account": resolved.label, "tests": items
+                "account": resolved.label, "tests": items,
+                "next_cursor": page.next ?? NSNull()
             ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list tests: \(error.localizedDescription)")

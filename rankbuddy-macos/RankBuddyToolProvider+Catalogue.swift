@@ -43,8 +43,11 @@ extension RankBuddyToolProvider {
         }
         return [
             readOnly("list_accounts", "List the configured RankBuddy accounts (no tokens).", properties: [:]),
-            readOnly("list_tests", "List the current (or named) account's HackerRank tests (first page).",
-                     properties: ["account": account]),
+            readOnly("list_tests", "List one page of the current (or named) account's HackerRank tests.",
+                     properties: [
+                         "cursor": string("Opaque next_cursor from the preceding page."),
+                         "account": account
+                     ]),
             readOnly("list_questions", "List one page of the account's questions.",
                      properties: [
                          "cursor": string("Opaque next_cursor from the preceding page."),

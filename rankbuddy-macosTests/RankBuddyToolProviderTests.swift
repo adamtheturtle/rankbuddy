@@ -123,6 +123,7 @@ struct RankBuddyToolProviderTests {
         #expect(result.isError != true)
         #expect(body.contains("\"tests\""))
         #expect(body.contains("\"account\" : \"Demo\""))
+        #expect(body.contains("\"next_cursor\""))
         // The mock tests fixture is non-empty.
         #expect(!body.contains("\"returned_count\" : 0"))
         #expect(!body.contains("\"count\""))
