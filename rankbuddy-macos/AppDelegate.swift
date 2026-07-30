@@ -10,13 +10,14 @@ import BuddyAppKit
 /// section jumps from its Dock icon; this mirrors that — each item selects a sidebar section
 /// (the same persisted `selectedSection` the menu bar and deep links use) and brings the app
 /// forward.
-@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The "Open in RankBuddy" Service provider (#46), held so it isn't deallocated.
     private let servicesProvider = ServicesProvider()
-    private let showMainWindow: @MainActor () -> Void
+    private let showMainWindow: () -> Void
 
-    init(showMainWindow: @escaping @MainActor () -> Void = { MainWindowPresenter.shared.show() }) {
+    init(showMainWindow: @escaping () -> Void = {
+        MainActor.assumeIsolated { MainWindowPresenter.shared.show() }
+    }) {
         self.showMainWindow = showMainWindow
         super.init()
     }
