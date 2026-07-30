@@ -86,4 +86,14 @@ struct HTMLTextTests {
         #expect(plainText(html).contains("Safe text"))
         #expect(plainText(html).contains("Link text"))
     }
+
+    @Test func `ordered lists ignore comments and scripts`() {
+        let comment = "before<!-- <ol><li>hidden</li></ol> -->after"
+        let script = "<script>const example = '<ol><li>hidden</li></ol>';</script><p>shown</p>"
+        #expect(HTMLFragmentSegment.segments(from: comment) == [.prose(comment)])
+        #expect(HTMLFragmentSegment.segments(from: script) == [.prose(script)])
+        #expect(HTMLFragmentSegment.segments(
+            from: "<ol><li>shown</li><!-- <li>hidden</li> --></ol>"
+        ) == [.orderedList(["shown"])])
+    }
 }

@@ -146,7 +146,7 @@ struct HTMLFragmentText: View {
     }
 }
 
-private nonisolated enum HTMLFragmentSegment {
+nonisolated enum HTMLFragmentSegment: Equatable {
     case prose(String)
     case orderedList([String])
 
@@ -156,14 +156,17 @@ private nonisolated enum HTMLFragmentSegment {
             return [.prose(html)]
         }
 
+        let searchableHTML = maskingIgnoredMarkup(in: html)
         // NSRegularExpression works in terms of NSString ranges, so the bridge is required here.
         // swiftlint:disable:next legacy_objc_type
         let nsHTML = html as NSString
-        let fullRange = NSRange(location: 0, length: nsHTML.length)
+        // swiftlint:disable:next legacy_objc_type
+        let nsSearchableHTML = searchableHTML as NSString
+        let fullRange = NSRange(location: 0, length: nsSearchableHTML.length)
         var segments: [Self] = []
         var cursor = 0
 
-        for match in listExpression.matches(in: html, range: fullRange) {
+        for match in listExpression.matches(in: searchableHTML, range: fullRange) {
             if match.range.location > cursor {
                 let range = NSRange(location: cursor, length: match.range.location - cursor)
                 segments.append(.prose(nsHTML.substring(with: range)))
@@ -193,10 +196,30 @@ private nonisolated enum HTMLFragmentSegment {
 
         // swiftlint:disable:next legacy_objc_type
         let nsHTML = html as NSString
+        let searchableHTML = maskingIgnoredMarkup(in: html)
         let fullRange = NSRange(location: 0, length: nsHTML.length)
-        return itemExpression.matches(in: html, range: fullRange).map { match in
+        return itemExpression.matches(in: searchableHTML, range: fullRange).map { match in
             nsHTML.substring(with: match.range(at: 1))
         }
+    }
+
+    /// Replaces ignored HTML regions with equal-length whitespace so regex match offsets still
+    /// map exactly onto the original source.
+    private static func maskingIgnoredMarkup(in html: String) -> String {
+        let patterns = [#"(?s)<!--.*?-->"#, #"(?is)<(?:script|style)\b[^>]*>.*?</(?:script|style)\s*>"#]
+        let masked = NSMutableString(string: html)
+        for pattern in patterns {
+            guard let expression = try? NSRegularExpression(pattern: pattern) else { continue }
+
+            let fullRange = NSRange(location: 0, length: masked.length)
+            for match in expression.matches(in: masked as String, range: fullRange).reversed() {
+                masked.replaceCharacters(
+                    in: match.range,
+                    with: String(repeating: " ", count: match.range.length)
+                )
+            }
+        }
+        return masked as String
     }
 }
 
