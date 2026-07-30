@@ -57,10 +57,13 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         let startedAt = Date()
         let account = stringArgument(arguments, "account")
         let resolvedAccount = name == "list_accounts" ? nil : await resolveAccount(account)?.label
+        let accountError = await accountResolutionError(account)
         let result: CallTool.Result = if !Self.isKnownTool(name) {
             errorResult("Unknown tool: \(name)")
         } else if let unknown = Self.unknownArgument(in: arguments, toolName: name) {
             errorResult("Unknown argument “\(unknown)” for tool \(name).")
+        } else if let accountError {
+            errorResult(accountError)
         } else {
             await dispatchTool(name, arguments: arguments, account: account)
         }
@@ -312,7 +315,18 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         if let id = UUID(uuidString: identifier) {
             return store.accounts.first { $0.id == id }
         }
-        return store.accounts.first { $0.label == identifier }
+        let matches = store.accounts.filter { $0.label == identifier }
+        return matches.count == 1 ? matches[0] : nil
+    }
+
+    @MainActor
+    private func accountResolutionError(_ identifier: String?) -> String? {
+        guard let identifier, UUID(uuidString: identifier) == nil else { return nil }
+
+        let matches = makeStore().accounts.filter { $0.label == identifier }
+        guard matches.count > 1 else { return nil }
+
+        return "Account label `\(identifier)` is ambiguous. Use an account UUID from `list_accounts`."
     }
 
     // MARK: - List tools

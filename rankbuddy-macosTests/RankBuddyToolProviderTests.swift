@@ -166,6 +166,23 @@ struct RankBuddyToolProviderTests {
         #expect(provider.resolveAccount("Missing") == nil)
     }
 
+    @Test func `duplicate account labels are rejected as ambiguous`() async {
+        let first = Account(label: "Duplicate", token: "one")
+        let second = Account(label: "Duplicate", token: "two")
+        let provider = RankBuddyToolProvider(makeStore: {
+            AccountStore.rankBuddy(isTesting: true, seed: [first, second])
+        })
+
+        #expect(provider.resolveAccount("Duplicate") == nil)
+        let result = await provider.callTool(
+            "list_tests",
+            arguments: ["account": .string("Duplicate")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("ambiguous"))
+        #expect(text(result).contains("UUID"))
+    }
+
     @Test func `write audit summaries identify targets and redact email addresses`() {
         let detail = RankBuddyToolProvider.callDetail(
             tool: "remove_team_member",
