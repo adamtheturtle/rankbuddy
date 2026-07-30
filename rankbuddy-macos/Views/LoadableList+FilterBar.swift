@@ -215,7 +215,8 @@ extension LoadableList {
         )
         guard !name.isEmpty, !search.isEmpty else { return }
 
-        replaceSavedSearches(savedSearches + [search], restorationKey: restorationKey, actionName: "Save Search")
+        let retained = Array((savedSearches + [search]).suffix(SavedSearchStore.maximumCount))
+        replaceSavedSearches(retained, restorationKey: restorationKey, actionName: "Save Search")
     }
 
     private func deleteSavedSearch(_ search: SavedSearch) {

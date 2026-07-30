@@ -33,6 +33,19 @@ struct SavedSearchStoreTests {
         #expect(loaded == searches)
     }
 
+    @Test func `only the most recent saved searches are retained`() {
+        let defaults = makeDefaults()
+        let searches = (0 ... SavedSearchStore.maximumCount).map {
+            SavedSearch(name: "Search \($0)", query: "\($0)", dateRange: nil)
+        }
+        SavedSearchStore.save(searches, restorationKey: "tests.acc", defaults: defaults)
+
+        let loaded = SavedSearchStore.load(restorationKey: "tests.acc", defaults: defaults)
+        #expect(loaded.count == SavedSearchStore.maximumCount)
+        #expect(loaded.first?.name == "Search 1")
+        #expect(loaded.last?.name == "Search \(SavedSearchStore.maximumCount)")
+    }
+
     @Test func `corrupt records preserve raw data and recover valid searches`() throws {
         let defaults = makeDefaults()
         let valid = SavedSearch(name: "Valid", query: "swift", dateRange: nil)

@@ -92,6 +92,9 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
 /// Per-list persistence for saved searches, scoped by the list's restoration key so each
 /// account/collection keeps its own (mirrors how favourites and filters are scoped).
 enum SavedSearchStore {
+    /// Per-list cap. The most recently saved searches are retained when older preferences exceed it.
+    static let maximumCount = 20
+
     /// The `UserDefaults` key backing a list's saved searches.
     static func defaultsKey(for restorationKey: String) -> String {
         "savedsearch.\(restorationKey)"
@@ -106,7 +109,7 @@ enum SavedSearchStore {
         guard let data = defaults.data(forKey: defaultsKey(for: restorationKey)) else { return [] }
 
         if let searches = try? JSONDecoder().decode([SavedSearch].self, from: data) {
-            return repairingDuplicateIDs(searches, restorationKey: restorationKey, defaults: defaults)
+            return validated(searches, restorationKey: restorationKey, defaults: defaults)
         }
 
         // Keep the exact unreadable payload before recovering valid records independently. A
@@ -124,13 +127,14 @@ enum SavedSearchStore {
 
             return try? JSONDecoder().decode(SavedSearch.self, from: recordData)
         }
-        return repairingDuplicateIDs(recovered, restorationKey: restorationKey, defaults: defaults)
+        return validated(recovered, restorationKey: restorationKey, defaults: defaults)
     }
 
     /// Persists the saved searches for a list, removing the key entirely when empty.
     static func save(_ searches: [SavedSearch], restorationKey: String, defaults: UserDefaults = .standard) {
         let key = defaultsKey(for: restorationKey)
-        guard !searches.isEmpty, let data = try? JSONEncoder().encode(searches) else {
+        let limited = Array(searches.suffix(maximumCount))
+        guard !limited.isEmpty, let data = try? JSONEncoder().encode(limited) else {
             defaults.removeObject(forKey: key)
             return
         }
@@ -138,13 +142,13 @@ enum SavedSearchStore {
         defaults.set(data, forKey: key)
     }
 
-    private static func repairingDuplicateIDs(
+    private static func validated(
         _ searches: [SavedSearch],
         restorationKey: String,
         defaults: UserDefaults
     ) -> [SavedSearch] {
         var seen = Set<UUID>()
-        var changed = false
+        var changed = searches.count > maximumCount
         let repaired = searches.map { search in
             guard seen.insert(search.id).inserted else {
                 changed = true
@@ -158,9 +162,10 @@ enum SavedSearchStore {
 
             return search
         }
+        let limited = Array(repaired.suffix(maximumCount))
         if changed {
-            save(repaired, restorationKey: restorationKey, defaults: defaults)
+            save(limited, restorationKey: restorationKey, defaults: defaults)
         }
-        return repaired
+        return limited
     }
 }
