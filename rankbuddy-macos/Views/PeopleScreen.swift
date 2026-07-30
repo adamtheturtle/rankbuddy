@@ -174,6 +174,7 @@ struct CreateUserSheet: View {
     @State private var teams: [Team] = []
     @State private var selectedTeamID: String?
     @State private var teamsError: String?
+    @State private var isLoadingTeams = false
     @State private var isSending = false
     @State private var errorMessage: String?
     @State private var mutationTask: Task<Void, Never>?
@@ -247,6 +248,10 @@ struct CreateUserSheet: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true)
+                        Button("Retry Teams") {
+                            Task { await loadTeams() }
+                        }
+                        .disabled(isLoadingTeams)
                     }
                 }
 
@@ -291,6 +296,10 @@ struct CreateUserSheet: View {
     /// Loads the organisation's teams for the required team picker, following the cursor
     /// so orgs with more than one page are fully listed (bounded to stay snappy).
     private func loadTeams() async {
+        guard !isLoadingTeams else { return }
+
+        isLoadingTeams = true
+        defer { isLoadingTeams = false }
         teamsError = nil
         let client = HackerRankClient(account: account)
         var loaded: [Team] = []
