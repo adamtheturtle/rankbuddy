@@ -10,8 +10,7 @@ import Testing
 
 /// Coverage for the HTML rendering helper behind `HTMLText` (#35): HackerRank delivers
 /// instructions / problem statements as HTML, so `AttributedString.fromHTML` must strip the
-/// markup, decode entities, and degrade gracefully. `@MainActor` because AppKit's HTML
-/// importer is main-thread-only.
+/// markup, decode entities, and degrade gracefully.
 @MainActor
 struct HTMLTextTests {
     private func plainText(_ html: String) -> String {

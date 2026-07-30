@@ -56,7 +56,9 @@ struct HTMLText: View {
         await Task.yield()
         guard !Task.isCancelled else { return }
 
-        let rendered = AttributedString.fromHTML(html)
+        let rendered = await Task.detached(priority: .userInitiated) {
+            AttributedString.fromHTML(html)
+        }.value
         guard !Task.isCancelled else { return }
 
         HTMLRenderCache.store(rendered, for: html)
@@ -133,7 +135,9 @@ struct HTMLFragmentText: View {
         await Task.yield()
         guard !Task.isCancelled else { return }
 
-        let prepared = HTMLFragmentSegment.segments(from: html)
+        let prepared = await Task.detached(priority: .userInitiated) {
+            HTMLFragmentSegment.segments(from: html)
+        }.value
         guard !Task.isCancelled else { return }
 
         HTMLFragmentSegmentCache.store(prepared, for: html)
@@ -142,7 +146,7 @@ struct HTMLFragmentText: View {
     }
 }
 
-private enum HTMLFragmentSegment {
+private nonisolated enum HTMLFragmentSegment {
     case prose(String)
     case orderedList([String])
 
@@ -244,8 +248,7 @@ extension AttributedString {
     /// Falls back to a plain-text attributed string of `html` if it cannot be parsed as
     /// HTML, so the user always sees the content (just without formatting).
     ///
-    /// `@MainActor` because AppKit's HTML importer is only safe to use on the main thread.
-    @MainActor static func fromHTML(_ html: String) -> AttributedString {
+    nonisolated static func fromHTML(_ html: String) -> AttributedString {
         guard let data = html.data(using: .utf8),
               let parsed = try? NSAttributedString(
                   data: data,
@@ -272,7 +275,7 @@ extension AttributedString {
     /// Replaces the importer's hard-coded fonts with the system body font (preserving
     /// bold/italic/monospace traits) and removes explicit colours, so the text inherits the
     /// app's appearance and adapts to light/dark mode.
-    static func normalised(_ attributed: NSAttributedString) -> NSAttributedString {
+    nonisolated static func normalised(_ attributed: NSAttributedString) -> NSAttributedString {
         let result = NSMutableAttributedString(attributedString: attributed)
         let full = NSRange(location: 0, length: result.length)
         let body = NSFont.preferredFont(forTextStyle: .body)

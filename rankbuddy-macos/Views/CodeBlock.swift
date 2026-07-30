@@ -204,7 +204,9 @@ struct HighlightedHTMLText: View {
         await Task.yield()
         guard !Task.isCancelled else { return }
 
-        let prepared = HTMLCodeBlocks.segments(html)
+        let prepared = await Task.detached(priority: .userInitiated) {
+            HTMLCodeBlocks.segments(html)
+        }.value
         guard !Task.isCancelled else { return }
 
         HTMLCodeBlockSegmentCache.store(prepared, for: html)
