@@ -379,6 +379,24 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
 // MARK: - Search
 
+nonisolated struct BoundedSearchProgress<ID: Hashable> {
+    private var seenIDs: Set<ID> = []
+    private var seenCursors: Set<String> = []
+
+    mutating func accept<Item>(
+        _ items: [Item],
+        next: String?,
+        id: (Item) -> ID
+    ) -> (items: [Item], next: String?) {
+        let unique = items.filter { seenIDs.insert(id($0)).inserted }
+        guard !unique.isEmpty, let next, seenCursors.insert(next).inserted else {
+            return (unique, nil)
+        }
+
+        return (unique, next)
+    }
+}
+
 extension RankBuddyToolProvider {
     /// Pages through up to `maxPages` of a collection, returning the items whose `text` contains
     /// the query (case-insensitive). Bounded so a search never drains a huge live collection;
@@ -388,17 +406,20 @@ extension RankBuddyToolProvider {
         query: String,
         maxPages: Int = 5,
         page: @MainActor (_ cursor: String?) async throws -> Page<Item>,
+        id: (Item) -> String,
         text: (Item) -> String
     ) async throws -> SearchHits<Item> {
         var cursor: String?
         var scanned = 0
         var matches: [Item] = []
         var pages = 0
+        var progress = BoundedSearchProgress<String>()
         repeat {
             let result = try await page(cursor)
-            scanned += result.items.count
-            matches += result.items.filter { text($0).localizedCaseInsensitiveContains(query) }
-            cursor = result.next
+            let accepted = progress.accept(result.items, next: result.next, id: id)
+            scanned += accepted.items.count
+            matches += accepted.items.filter { text($0).localizedCaseInsensitiveContains(query) }
+            cursor = accepted.next
             pages += 1
         } while cursor != nil && pages < maxPages
         return SearchHits(matches: matches, scanned: scanned, truncated: cursor != nil)
@@ -413,6 +434,7 @@ extension RankBuddyToolProvider {
             let hits = try await search(
                 query: query,
                 page: { try await client.testsPage(after: $0) },
+                id: \.id,
                 text: { $0.name }
             )
             let items = hits.matches.map { ["id": $0.id, "name": $0.name, "state": $0.state ?? ""] }
@@ -431,6 +453,7 @@ extension RankBuddyToolProvider {
             let hits = try await search(
                 query: query,
                 page: { try await client.questionsPage(after: $0) },
+                id: \.id,
                 text: { $0.name }
             )
             let items = hits.matches.map { ["id": $0.id, "name": $0.name, "type": $0.type] }
@@ -449,6 +472,7 @@ extension RankBuddyToolProvider {
             let hits = try await search(
                 query: query,
                 page: { try await client.interviewsPage(after: $0) },
+                id: \.id,
                 text: { "\($0.title ?? "") \($0.status)" }
             )
             let items = hits.matches.map { ["id": $0.id, "title": $0.title ?? "", "status": $0.status] }

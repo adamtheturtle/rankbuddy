@@ -15,6 +15,17 @@ import Testing
 /// tools dispatch through the in-process mock — no live credentials, deterministic results.
 @MainActor
 struct RankBuddyToolProviderTests {
+    @Test func `bounded search stops cursor cycles and deduplicates ids`() {
+        var progress = BoundedSearchProgress<String>()
+        let first = progress.accept(["one", "two"], next: "next", id: { $0 })
+        let repeated = progress.accept(["one", "two"], next: "next", id: { $0 })
+
+        #expect(first.items == ["one", "two"])
+        #expect(first.next == "next")
+        #expect(repeated.items.isEmpty)
+        #expect(repeated.next == nil)
+    }
+
     private func provider() -> RankBuddyToolProvider {
         RankBuddyToolProvider(makeStore: {
             AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Demo", token: Account.demoToken)])
