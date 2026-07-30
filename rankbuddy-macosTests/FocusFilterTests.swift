@@ -50,6 +50,22 @@ struct FocusFilterTests {
         #expect(store.currentAccountID == work.id)
     }
 
+    @Test func `turning the focus off restores an absent account selection`() {
+        let work = Account(label: "Work", token: "w")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [work])
+        store.showAllAccounts = false
+        store.currentAccountID = nil
+        let defaults = freshDefaults()
+
+        ScopeToAccountFocusFilter.apply(accountID: work.id.uuidString, store: store, defaults: defaults)
+        #expect(store.currentAccountID == work.id)
+
+        ScopeToAccountFocusFilter.apply(accountID: nil, store: store, defaults: defaults)
+
+        #expect(store.showAllAccounts == false)
+        #expect(store.currentAccountID == nil)
+    }
+
     @Test func `a focus-to-focus switch still restores the original pre-focus selection`() {
         let acctA = Account(label: "A", token: "a")
         let acctB = Account(label: "B", token: "b")

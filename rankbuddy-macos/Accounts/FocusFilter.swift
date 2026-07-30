@@ -151,10 +151,13 @@ struct ScopeToAccountFocusFilter: SetFocusFilterIntent {
             // left by a terminated intent/app process is discarded instead of changing selection.
             if defaults.string(forKey: savedSessionKey) == sessionID {
                 let savedShowAll = defaults.bool(forKey: savedShowAllKey)
-                if let savedID = defaults.string(forKey: savedCurrentKey),
-                   let uuid = UUID(uuidString: savedID),
-                   store.accounts.contains(where: { $0.id == uuid }) {
-                    store.currentAccountID = uuid
+                if let savedID = defaults.string(forKey: savedCurrentKey) {
+                    if savedID.isEmpty {
+                        store.currentAccountID = nil
+                    } else if let uuid = UUID(uuidString: savedID),
+                              store.accounts.contains(where: { $0.id == uuid }) {
+                        store.currentAccountID = uuid
+                    }
                 }
                 store.showAllAccounts = savedShowAll
             }
