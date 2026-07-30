@@ -190,14 +190,27 @@ enum MarkdownExport {
     }
 
     nonisolated static func question(_ question: Question) -> String {
-        document(title: question.name, subtitle: "HackerRank Question Report", sections: [
+        self.question(QuestionReportData(question: question))
+    }
+
+    nonisolated static func question(_ report: QuestionReportData) -> String {
+        let question = report.question
+        return document(title: question.name, subtitle: "HackerRank Question Report", sections: [
             section("Question", [
                 ("Type", DisplayFormat.enumLabel(question.type)), ("Unique ID", question.uniqueID),
                 ("Status", DisplayFormat.enumLabel(question.status)),
                 ("Max score", question.maxScore.map { $0.formatted() }),
+                ("Recommended duration", question.recommendedDuration.map { "\($0) minutes" }),
+                ("Created", formattedDate(question.createdAt)),
                 ("Languages", formattedLanguages(question.languages)),
                 ("Skills", formattedList(question.skills))
             ]),
+            section("Options", report.options.indices.map {
+                ("Option \($0 + 1)", report.optionLabel(at: $0))
+            }),
+            textSection("Correct answer", report.correctAnswer),
+            textSection("Internal notes", report.internalNotes.map(plainText(fromHTML:))),
+            textSection("Tags", question.tags.flatMap { $0.isEmpty ? nil : $0.joined(separator: ", ") }),
             textSection("Problem statement", question.problemStatement.map(plainText(fromHTML:)))
         ])
     }

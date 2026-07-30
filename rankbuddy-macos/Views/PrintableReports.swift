@@ -268,9 +268,10 @@ struct InterviewReport: View {
 
 /// A printable question report: configuration, skills, tags, and problem statement.
 struct QuestionReport: View {
-    let question: Question
+    let data: QuestionReportData
 
     var body: some View {
+        let question = data.question
         ReportDocument(title: question.name, subtitle: "HackerRank Question Report") {
             PrintSection(title: "Question") {
                 ReportFieldList(fields: reportFields([
@@ -289,8 +290,24 @@ struct QuestionReport: View {
                 PrintSection(title: "Tags") { Text(tags.joined(separator: ", ")) }
             }
 
+            if !data.options.isEmpty {
+                PrintSection(title: "Options") {
+                    ReportFieldList(fields: reportFields(data.options.indices.map {
+                        ("Option \($0 + 1)", data.optionLabel(at: $0))
+                    }))
+                }
+            }
+
+            if let answer = data.correctAnswer, !answer.isEmpty {
+                PrintSection(title: "Correct answer") { Text(answer) }
+            }
+
             if let statement = question.problemStatement, !statement.isEmpty {
                 PrintSection(title: "Problem statement") { HTMLText(html: statement) }
+            }
+
+            if let notes = data.internalNotes, !notes.isEmpty {
+                PrintSection(title: "Internal notes") { HTMLText(html: notes) }
             }
         }
     }

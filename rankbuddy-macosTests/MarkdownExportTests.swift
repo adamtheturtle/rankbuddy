@@ -149,4 +149,30 @@ struct MarkdownExportTests {
         #expect(!hidden.contains("secret"))
         #expect(revealed.contains("- **Access password:** secret"))
     }
+
+    @Test func `question export includes rich detail while respecting answer reveal`() throws {
+        let question = try JSONDecoder().decode(
+            Question.self,
+            from: Data(#"{"id":"q1","name":"SQL","type":"mcq","status":"active"}"#.utf8)
+        )
+        let detail = try JSONDecoder().decode(
+            QuestionDetail.self,
+            from: Data(
+                #"{"options":["JOIN","SELECT"],"answer":"JOIN","internal_notes":"<p>Use joins.</p>"}"#.utf8
+            )
+        )
+
+        let hidden = MarkdownExport.question(QuestionReportData(question: question, detail: detail))
+        let revealed = MarkdownExport.question(QuestionReportData(
+            question: question,
+            detail: detail,
+            includeCorrectAnswer: true
+        ))
+
+        #expect(hidden.contains("- **Option 1:** JOIN"))
+        #expect(hidden.contains("## Internal notes\nUse joins."))
+        #expect(!hidden.contains("correct"))
+        #expect(revealed.contains("- **Option 1:** JOIN \\(correct\\)"))
+        #expect(revealed.contains("## Correct answer\nJOIN"))
+    }
 }

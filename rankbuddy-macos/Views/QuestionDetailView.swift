@@ -76,6 +76,10 @@ struct QuestionDetailView: View {
         editOverlay.applying(to: detailQuestion ?? question)
     }
 
+    private var reportData: QuestionReportData {
+        QuestionReportData(question: displayed, detail: detail, includeCorrectAnswer: answerRevealed)
+    }
+
     /// Editing needs a single owning account, so the merged view stays read-only.
     private var canEdit: Bool {
         owningAccount != nil
@@ -208,13 +212,13 @@ struct QuestionDetailView: View {
             )
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Question: \(displayed.name)") {
-                    QuestionReport(question: displayed)
+                    QuestionReport(data: reportData)
                 }
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                let snapshot = displayed
-                MarkdownExportButton(suggestedName: snapshot.name) { MarkdownExport.question(snapshot) }
+                let snapshot = reportData
+                MarkdownExportButton(suggestedName: snapshot.question.name) { MarkdownExport.question(snapshot) }
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "delete") {
@@ -412,11 +416,14 @@ extension QuestionDetailView {
         commandContext.registerDetailActions(
             owner: commandOwner,
             print: AppCommandContext.Action(title: "Print Question…") {
-                printReport(QuestionReport(question: displayed), jobTitle: "Question: \(displayed.name)")
+                printReport(QuestionReport(data: reportData), jobTitle: "Question: \(displayed.name)")
             },
             exportMarkdown: AppCommandContext.Action(title: "Export Question as Markdown…") {
-                let question = displayed
-                MarkdownExport.save({ MarkdownExport.question(question) }, suggestedName: question.name)
+                let snapshot = reportData
+                MarkdownExport.save(
+                    { MarkdownExport.question(snapshot) },
+                    suggestedName: snapshot.question.name
+                )
             }
         )
     }
