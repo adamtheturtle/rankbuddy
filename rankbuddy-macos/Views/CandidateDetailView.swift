@@ -12,6 +12,12 @@ nonisolated enum CandidatePDFFetchGate {
     }
 }
 
+nonisolated struct CandidateDetailRequestIdentity: Hashable {
+    let accountID: UUID?
+    let testID: String?
+    let candidateID: String
+}
+
 /// Detail for a single candidate. With a test and account the name renames in place and
 /// the tags save per field via `updateCandidate` (#147); otherwise it stays read-only.
 struct CandidateDetailView: View {
@@ -28,6 +34,10 @@ struct CandidateDetailView: View {
 
     private var displayedCandidate: TestCandidate {
         detail ?? candidate
+    }
+
+    private var requestIdentity: CandidateDetailRequestIdentity {
+        CandidateDetailRequestIdentity(accountID: account?.id, testID: testID, candidateID: candidate.id)
     }
 
     /// The rename hook for the header; `nil` (a static title) without a test and account.
@@ -111,7 +121,7 @@ struct CandidateDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
-        .task(id: self.candidate.id) { await loadDetail() }
+        .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onDisappear { commandContext.clearDetailActions(owner: commandOwner) }
@@ -223,13 +233,18 @@ struct CandidateDetailView: View {
         )
     }
 
-    private func loadDetail() async {
+    private func loadDetail(for identity: CandidateDetailRequestIdentity) async {
+        detail = nil
+        registerDetailCommands()
         guard let testID, let account else { return }
 
-        detail = try? await HackerRankClient(account: account).candidate(
+        let loaded = try? await HackerRankClient(account: account).candidate(
             testID: testID,
             candidateID: candidate.id
         )
+        guard !Task.isCancelled, identity == requestIdentity else { return }
+
+        detail = loaded
         registerDetailCommands()
     }
 }
