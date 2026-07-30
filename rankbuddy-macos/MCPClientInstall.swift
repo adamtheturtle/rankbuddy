@@ -120,7 +120,8 @@ enum MCPClientInstall {
         shouldReplace: (MCPClient) -> Bool,
         didUpdate: (String, String) -> Void = { _, _ in }
     ) throws {
-        var root = try existingJSON(at: url)
+        let targetURL = try resolvedWriteTarget(for: url)
+        var root = try existingJSON(at: targetURL)
         var servers = root["mcpServers"] as? [String: Any] ?? [:]
         let alreadyPresent = servers[serverName] != nil
         if alreadyPresent, !shouldReplace(client) { return }
@@ -129,8 +130,8 @@ enum MCPClientInstall {
         root["mcpServers"] = servers
 
         let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
-        try data.write(to: url, options: .atomic)
-        try verifyJSONConfig(at: url, command: command)
+        try data.write(to: targetURL, options: .atomic)
+        try verifyJSONConfig(at: targetURL, command: command)
 
         let title = alreadyPresent ? "Updated \(client.displayName)" : "Added to \(client.displayName)"
         didUpdate(title, client.restartHint)
@@ -155,25 +156,26 @@ enum MCPClientInstall {
         shouldReplace: (MCPClient) -> Bool,
         didUpdate: (String, String) -> Void = { _, _ in }
     ) throws {
+        let targetURL = try resolvedWriteTarget(for: url)
         var text = ""
-        if FileManager.default.fileExists(atPath: url.path) {
-            text = try String(contentsOf: url, encoding: .utf8)
+        if FileManager.default.fileExists(atPath: targetURL.path) {
+            text = try String(contentsOf: targetURL, encoding: .utf8)
         }
 
         let block = codexServerBlock(command: command)
         switch codexServerDeclaration(in: text) {
         case .notDeclared:
             let merged = text.isEmpty ? block : text + "\n" + block
-            try merged.write(to: url, atomically: true, encoding: .utf8)
-            try verifyCodexConfig(at: url, command: command)
+            try merged.write(to: targetURL, atomically: true, encoding: .utf8)
+            try verifyCodexConfig(at: targetURL, command: command)
             didUpdate("Added to \(client.displayName)", client.restartHint)
 
         case .table:
             guard shouldReplace(client) else { return }
 
             let updated = replacingCodexServer(in: text, with: block)
-            try updated.write(to: url, atomically: true, encoding: .utf8)
-            try verifyCodexConfig(at: url, command: command)
+            try updated.write(to: targetURL, atomically: true, encoding: .utf8)
+            try verifyCodexConfig(at: targetURL, command: command)
             didUpdate("Updated \(client.displayName)", client.restartHint)
 
         case .other:
@@ -181,6 +183,24 @@ enum MCPClientInstall {
                 "config.toml already declares the \"rankbuddy\" server in a style RankBuddy can't safely rewrite. " +
                     "Edit its command in config.toml yourself.")
         }
+    }
+
+    /// Atomic replacement must target a symlink's destination; writing atomically to the link
+    /// pathname itself replaces the link. Dangling/cyclic links fail closed.
+    static func resolvedWriteTarget(for url: URL, fileManager: FileManager = .default) throws -> URL {
+        let attributes = try? fileManager.attributesOfItem(atPath: url.path)
+        guard attributes?[.type] as? FileAttributeType == .typeSymbolicLink else { return url }
+
+        let resolved = url.resolvingSymlinksInPath()
+        guard resolved.standardizedFileURL != url.standardizedFileURL,
+              fileManager.fileExists(atPath: resolved.path)
+        else {
+            throw ConfigVerificationError(
+                errorDescription: "The selected config file is a dangling or cyclic symbolic link."
+            )
+        }
+
+        return resolved
     }
 
     static func codexServerBlock(command: String) -> String {

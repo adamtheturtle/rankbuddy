@@ -98,6 +98,46 @@ struct MCPClientInstallTests {
         #expect(text.contains(#"command = "/tmp/we\"ird/rankbuddy-macos""#))
     }
 
+    @Test func `JSON install preserves a config symlink`() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let target = directory.appendingPathComponent("shared.json")
+        let link = directory.appendingPathComponent("mcp.json")
+        try "{}".write(to: target, atomically: true, encoding: .utf8)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: target)
+
+        try MCPClientInstall.mergeJSONServer(
+            into: link,
+            client: .cursor,
+            command: "rankbuddy",
+            shouldReplace: { _ in true }
+        )
+
+        let attributes = try FileManager.default.attributesOfItem(atPath: link.path)
+        #expect(attributes[.type] as? FileAttributeType == .typeSymbolicLink)
+        try MCPClientInstall.verifyJSONConfig(at: target, command: "rankbuddy")
+    }
+
+    @Test func `codex install preserves a config symlink`() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let target = directory.appendingPathComponent("shared.toml")
+        let link = directory.appendingPathComponent("config.toml")
+        try "".write(to: target, atomically: true, encoding: .utf8)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: target)
+
+        try MCPClientInstall.upsertCodexServer(
+            into: link,
+            client: .codex,
+            command: "rankbuddy",
+            shouldReplace: { _ in true }
+        )
+
+        let attributes = try FileManager.default.attributesOfItem(atPath: link.path)
+        #expect(attributes[.type] as? FileAttributeType == .typeSymbolicLink)
+        try MCPClientInstall.verifyCodexConfig(at: target, command: "rankbuddy")
+    }
+
     @Test func `codex declaration recognizes quoted and dotted forms`() {
         #expect(MCPClientInstall.codexServerDeclaration(in: "[mcp_servers.\"rankbuddy\"]") == .table)
         #expect(MCPClientInstall.codexServerDeclaration(
@@ -158,9 +198,13 @@ struct MCPClientInstallTests {
     }
 
     private func temporaryFile(named name: String) throws -> URL {
+        try temporaryDirectory().appendingPathComponent(name)
+    }
+
+    private func temporaryDirectory() throws -> URL {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        return directory.appendingPathComponent(name)
+        return directory
     }
 }
