@@ -104,7 +104,7 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         let entities = enrichables.map(\.entity)
         // Replace this account's domain after a complete fetch so removed backend objects do
         // not survive as stale Spotlight results.
-        try? await RankBuddySpotlightIndex.replace(entities, accountID: snapshot.accountID)
+        try? await RankBuddySpotlightIndex.replaceCurrentAccount(with: entities)
         // On-device keyword enrichment (#92): additive, gated on model availability, re-indexing
         // the same ids with topical keywords. The source text is already in hand from the fetch
         // above (no extra network). Detached so a slow generation never delays the suggestions
@@ -182,11 +182,11 @@ enum RankBuddySpotlightIndex {
     /// The `CSSearchableIndex` name holding RankBuddy's donated items.
     static let name = "RankBuddyObjects"
 
-    /// Reconciles one account after a complete refresh, removing objects no longer returned by
-    /// the backend before donating the fresh snapshot.
-    static func replace(_ entities: [RankBuddyObjectEntity], accountID: String) async throws {
+    /// Reconciles the current-account-only index after a complete refresh. Clearing first also
+    /// evicts the previously selected account after an account switch.
+    static func replaceCurrentAccount(with entities: [RankBuddyObjectEntity]) async throws {
         let index = CSSearchableIndex(name: name)
-        try await index.deleteSearchableItems(withDomainIdentifiers: [accountID])
+        try await index.deleteAllSearchableItems()
         try await index.indexAppEntities(entities)
     }
 
