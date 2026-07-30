@@ -127,6 +127,7 @@ struct RankBuddyApp: App {
             SettingsView()
                 .environment(accountStore)
                 .environment(health)
+                .environment(\.openURL, browserOpenURLAction)
                 .preferredColorScheme(appearance.colorScheme)
         }
         .commands {
@@ -138,6 +139,7 @@ struct RankBuddyApp: App {
         MenuBarExtra("RankBuddy", systemImage: "checklist", isInserted: menuBarInserted) {
             MenuBarContent()
                 .environment(accountStore)
+                .environment(\.openURL, browserOpenURLAction)
         }
     }
 
