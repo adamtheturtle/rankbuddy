@@ -32,12 +32,22 @@ struct TestsScreen: View {
                         $0.name.localizedStandardCompare($1.name) == .orderedAscending
                     },
                     SortOption("Date Created", systemImage: "calendar", kind: .date,
-                               isMissing: { $0.createdAt == nil }, by: {
-                                   ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                               isMissing: { DisplayFormat.parseDate($0.createdAt) == nil }, by: {
+                                   guard
+                                       let lhs = DisplayFormat.parseDate($0.createdAt),
+                                       let rhs = DisplayFormat.parseDate($1.createdAt)
+                                   else { return false }
+
+                                   return lhs > rhs
                                }),
                     SortOption("Start Time", systemImage: "clock", kind: .date,
-                               isMissing: { $0.startTime == nil }, by: {
-                                   ($0.startTime ?? "") > ($1.startTime ?? "")
+                               isMissing: { DisplayFormat.parseDate($0.startTime) == nil }, by: {
+                                   guard
+                                       let lhs = DisplayFormat.parseDate($0.startTime),
+                                       let rhs = DisplayFormat.parseDate($1.startTime)
+                                   else { return false }
+
+                                   return lhs > rhs
                                })
                 ],
                 facets: [
@@ -165,8 +175,13 @@ struct TestsScreen: View {
                 SortOption("Account", systemImage: "person.crop.circle", kind: .text,
                            by: AccountScoped.byAccountLabel),
                 SortOption("Date Created", systemImage: "calendar", kind: .date,
-                           isMissing: { $0.item.createdAt == nil }, by: {
-                               ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "")
+                           isMissing: { DisplayFormat.parseDate($0.item.createdAt) == nil }, by: {
+                               guard
+                                   let lhs = DisplayFormat.parseDate($0.item.createdAt),
+                                   let rhs = DisplayFormat.parseDate($1.item.createdAt)
+                               else { return false }
+
+                               return lhs > rhs
                            })
             ],
             facets: [
