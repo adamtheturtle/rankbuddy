@@ -176,6 +176,7 @@ struct CandidateDetailView: View {
                 options: options
             )
             detail = await (try? client.candidate(testID: testID, candidateID: candidate.id)) ?? updated
+            registerDetailCommands()
             onChanged()
             return true
         } catch {
