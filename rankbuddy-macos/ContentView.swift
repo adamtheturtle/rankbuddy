@@ -180,6 +180,7 @@ struct ContentView: View {
                 .lineLimit(1)
             } icon: {
                 Image(systemName: ref.collection.systemImage)
+                    .accessibilityHidden(true)
             }
         }
         .buttonStyle(.plain)
