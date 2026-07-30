@@ -137,6 +137,7 @@ extension AccountStore {
             onRekeyed: { account in
                 RecentActivityStore.shared.clear(account: account.id)
                 LivenessSettings.clearSeen(accountID: account.id)
+                SavedSearchStore.clear(accountID: account.id)
                 Task {
                     await ListPageCache.clear(accountID: account.id)
                     await RankBuddySpotlightIndex.remove(accountID: account.id)

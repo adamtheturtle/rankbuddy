@@ -16,6 +16,31 @@ struct SavedSearchStoreTests {
         UserDefaults(suiteName: "savedsearch.tests.\(UUID().uuidString)") ?? .standard
     }
 
+    @Test func `clearing an account preserves other accounts`() {
+        let account = UUID()
+        let other = UUID()
+        let defaults = makeDefaults()
+        SavedSearchStore.save(
+            [SavedSearch(name: "Old org", query: "secret", dateRange: nil)],
+            restorationKey: "selection.tests.\(account)",
+            defaults: defaults
+        )
+        SavedSearchStore.save(
+            [SavedSearch(name: "Other", query: "safe", dateRange: nil)],
+            restorationKey: "selection.tests.\(other)",
+            defaults: defaults
+        )
+
+        SavedSearchStore.clear(accountID: account, defaults: defaults)
+
+        #expect(SavedSearchStore.load(
+            restorationKey: "selection.tests.\(account)", defaults: defaults
+        ).isEmpty)
+        #expect(SavedSearchStore.load(
+            restorationKey: "selection.tests.\(other)", defaults: defaults
+        ).count == 1)
+    }
+
     @Test func `an empty store loads nothing`() {
         let defaults = makeDefaults()
         #expect(SavedSearchStore.load(restorationKey: "tests.acc", defaults: defaults).isEmpty)

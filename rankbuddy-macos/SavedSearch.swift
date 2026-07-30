@@ -116,6 +116,16 @@ enum SavedSearchStore {
         "\(defaultsKey(for: restorationKey)).unreadable-backup"
     }
 
+    /// Purges every collection's saved searches for an account whose backend identity changed.
+    static func clear(accountID: UUID, defaults: UserDefaults = .standard) {
+        let suffix = ".\(accountID.uuidString)"
+        for key in defaults.dictionaryRepresentation().keys
+            where key.hasPrefix("savedsearch.")
+            && (key.hasSuffix(suffix) || key.hasSuffix("\(suffix).unreadable-backup")) {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
     /// Loads the saved searches for a list, or an empty array when none/unreadable.
     static func load(restorationKey: String, defaults: UserDefaults = .standard) -> [SavedSearch] {
         guard let data = defaults.data(forKey: defaultsKey(for: restorationKey)) else { return [] }
