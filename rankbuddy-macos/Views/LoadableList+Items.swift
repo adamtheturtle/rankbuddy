@@ -6,6 +6,16 @@
 import Foundation
 import HackerRankKit
 
+nonisolated enum ListSortPersistence {
+    static func fieldKey(restorationKey: String?) -> String? {
+        restorationKey.map { "sort.v2.\($0).field" }
+    }
+
+    static func directionKey(restorationKey: String?) -> String? {
+        restorationKey.map { "sort.v2.\($0).reversed" }
+    }
+}
+
 /// The list's derived collections, split out of `LoadableList.swift` to keep that file within
 /// the file-length budget. `extension` (internal), not `private extension`, so the view's body
 /// in the other file can read them.
@@ -126,30 +136,34 @@ extension LoadableList {
         }
     }
 
-    /// Where this list's chosen sort order is remembered between launches (#19). Keyed by title,
-    /// so each collection keeps its own preference.
-    private var sortDefaultsKey: String {
-        "sort.\(title)"
+    private var sortDefaultsKey: String? {
+        ListSortPersistence.fieldKey(restorationKey: restorationKey)
     }
 
-    /// Where the chosen direction (default vs. reversed) is remembered, beside the field.
-    private var sortReversedDefaultsKey: String {
-        "sort.\(title).reversed"
+    private var sortReversedDefaultsKey: String? {
+        ListSortPersistence.directionKey(restorationKey: restorationKey)
     }
 
-    /// Restores the saved sort field by label (falling back to the first option) and direction.
+    /// Restores direction only with a valid saved field, avoiding reversal of a fallback field.
     func restoreSort() {
         guard !sortOptions.isEmpty else { return }
+        guard let sortDefaultsKey,
+              let savedLabel = UserDefaults.standard.string(forKey: sortDefaultsKey),
+              let saved = sortOptions.first(where: { $0.label == savedLabel })
+        else {
+            sortSelection = sortOptions.first?.id
+            sortReversed = false
+            return
+        }
 
-        let savedLabel = UserDefaults.standard.string(forKey: sortDefaultsKey)
-        let saved = sortOptions.first { $0.label == savedLabel }
-        sortSelection = (saved ?? sortOptions.first)?.id
-        sortReversed = UserDefaults.standard.bool(forKey: sortReversedDefaultsKey)
+        sortSelection = saved.id
+        sortReversed = sortReversedDefaultsKey.map(UserDefaults.standard.bool(forKey:)) ?? false
     }
 
     /// Persists the current sort order by its stable label (the option ids are per-launch).
     func persistSort() {
-        guard let option = sortOptions.first(where: { $0.id == sortSelection }) else { return }
+        guard let sortDefaultsKey, let sortReversedDefaultsKey,
+              let option = sortOptions.first(where: { $0.id == sortSelection }) else { return }
 
         UserDefaults.standard.set(option.label, forKey: sortDefaultsKey)
         UserDefaults.standard.set(sortReversed, forKey: sortReversedDefaultsKey)

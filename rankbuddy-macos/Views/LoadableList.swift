@@ -268,7 +268,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 .onDisappear { commandContext.clearListActions() }
                 // Re-load the recall chips when the account-scoped key changes, so each account
                 // shows only its own saved searches (#25).
-                .onChange(of: restorationKey) { loadSavedSearches() }
+                .onChange(of: restorationKey) {
+                    loadSavedSearches()
+                    restoreSort()
+                }
                 .onChange(of: sortSelection) { persistSort() }
                 .onChange(of: sortReversed) { persistSort() }
                 .onChange(of: dateRange) {

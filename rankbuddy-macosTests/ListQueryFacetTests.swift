@@ -11,6 +11,14 @@ import Testing
 /// option derivation, and selection persistence — all pure, so they're tested directly.
 @MainActor
 struct ListQueryFacetTests {
+    @Test func `sort persistence keys use stable restoration identity`() {
+        #expect(ListSortPersistence.fieldKey(restorationKey: "tests.account-a")
+            != ListSortPersistence.fieldKey(restorationKey: "tests.account-b"))
+        #expect(ListSortPersistence.directionKey(restorationKey: "tests.account-a")
+            == "sort.v2.tests.account-a.reversed")
+        #expect(ListSortPersistence.fieldKey(restorationKey: nil) == nil)
+    }
+
     private struct Row {
         let state: String
         let langs: [String]
