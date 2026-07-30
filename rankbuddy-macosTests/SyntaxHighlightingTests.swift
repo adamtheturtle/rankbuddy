@@ -91,4 +91,8 @@ struct SyntaxHighlightingTests {
     @Test func `a digit inside an identifier is not a number`() {
         #expect(text("utf8 encode", .swift, of: .number).isEmpty)
     }
+
+    @Test func `scientific notation includes a signed exponent`() {
+        #expect(text("1e+10 6.02e-23 2E3", .swift, of: .number) == ["1e+10", "6.02e-23", "2E3"])
+    }
 }
