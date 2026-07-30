@@ -73,6 +73,15 @@ extension LoadableList {
                 message: "Scanning more loaded rows before showing results.",
                 isLoading: true
             )
+        } else if canContinueFilterScan {
+            CompactStateView(
+                title: "No Matches Yet",
+                systemImage: "magnifyingglass",
+                message: "More \(title.lowercased()) remain on the server. Continue scanning them for matches.",
+                actionTitle: "Search More",
+                actionSystemImage: "arrow.down.circle",
+                action: { Task { await continueFilterScan() } }
+            )
         } else {
             CompactStateView(
                 title: "No Results",
@@ -91,6 +100,11 @@ extension LoadableList {
         }
 
         return "No \(title.lowercased()) match the current filters."
+    }
+
+    /// The bounded automatic scan stopped before exhausting a client-filtered collection.
+    var canContinueFilterScan: Bool {
+        !isServerSearching && isClientFiltering && nextCursor != nil
     }
 
     /// Pages in more rows while a client-side filter is active so the match isn't limited to the
@@ -120,6 +134,30 @@ extension LoadableList {
             pagesLoadedThisFilter += 1
             // Stop if a load made no progress (e.g. it failed and cleared the cursor), so we
             // never spin.
+            if items.count == countBeforeLoad { break }
+        }
+    }
+
+    /// Scans another bounded batch after the user explicitly asks to continue. Repeated presses
+    /// can traverse an arbitrarily large collection without one vague query automatically
+    /// draining every page.
+    func continueFilterScan() async {
+        guard canContinueFilterScan, !isFilterLoading else { return }
+
+        isFilterLoading = true
+        defer { isFilterLoading = false }
+        var pagesLoadedThisScan = 0
+        while !Task.isCancelled,
+              ListSearchPaging.shouldKeepLoading(
+                  isFiltering: isClientFiltering,
+                  visibleMatches: visibleItems.count,
+                  hasMorePages: nextCursor != nil,
+                  pagesLoadedThisFilter: pagesLoadedThisScan,
+                  pageCap: searchPageCap
+              ) {
+            let countBeforeLoad = items.count
+            await loadMore()
+            pagesLoadedThisScan += 1
             if items.count == countBeforeLoad { break }
         }
     }
