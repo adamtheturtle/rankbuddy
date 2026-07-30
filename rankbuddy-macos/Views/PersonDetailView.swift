@@ -46,6 +46,7 @@ struct PersonDetailView: View {
     @State private var current: User?
     @State private var editError: String?
     @State private var lockPresented = false
+    @State private var wasLocked = false
 
     /// The freshest copy of the user: server echoes from per-field saves overlay the
     /// (possibly stale) row the list handed us.
@@ -69,8 +70,16 @@ struct PersonDetailView: View {
         return DisplayFormat.list(resolvedTeamNames ?? teamIDs)
     }
 
+    private var displayedStatus: String? {
+        wasLocked ? "deactivated" : displayed.status
+    }
+
+    private var displayedActivated: Bool? {
+        wasLocked ? false : displayed.activated
+    }
+
     private var canLock: Bool {
-        UserLockAvailability.canLock(status: displayed.status, activated: displayed.activated)
+        !wasLocked && UserLockAvailability.canLock(status: displayed.status, activated: displayed.activated)
     }
 
     var body: some View {
@@ -84,10 +93,10 @@ struct PersonDetailView: View {
                 } else {
                     editableRows
                 }
-                OptionalRow("Status", DisplayFormat.enumLabel(displayed.status))
+                OptionalRow("Status", DisplayFormat.enumLabel(displayedStatus))
                 OptionalRow("Country", displayed.country)
                 OptionalRow("Last active", DisplayFormat.date(displayed.lastActivityTime))
-                OptionalRow("Activated", DisplayFormat.boolean(displayed.activated))
+                OptionalRow("Activated", DisplayFormat.boolean(displayedActivated))
                 if account == nil {
                     OptionalRow("Company admin", DisplayFormat.boolean(displayed.companyAdmin))
                     OptionalRow("Team admin", DisplayFormat.boolean(displayed.teamAdmin))
@@ -189,7 +198,12 @@ struct PersonDetailView: View {
         let client = HackerRankClient(account: account)
         do {
             _ = try await client.lockUser(id: displayed.id)
-            current = try? await client.user(id: displayed.id)
+            wasLocked = true
+            do {
+                current = try await client.user(id: displayed.id)
+            } catch {
+                editError = "The user was locked, but their latest details couldn’t be refreshed."
+            }
             onChanged()
         } catch {
             editError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
