@@ -291,21 +291,31 @@ enum MCPClientInstall {
     static func replacingCodexServer(in text: String, with block: String) -> String {
         let lines = text.components(separatedBy: "\n")
         var result: [String] = []
-        var index = 0
+        var skippingRankBuddyTable = false
+        var insertedReplacement = false
+        let targetPath = ["mcp_servers", serverName]
 
-        while index < lines.count {
-            let line = lines[index].trimmingCharacters(in: .whitespaces)
-            if tomlHeaderKeyPath(line) == ["mcp_servers", serverName], !line.hasPrefix("[[") {
-                result.append(contentsOf: block.components(separatedBy: "\n"))
-                index += 1
-                while index < lines.count,
-                      !lines[index].trimmingCharacters(in: .whitespaces).hasPrefix("[") {
-                    index += 1
+        for rawLine in lines {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if line.hasPrefix("["), let path = tomlHeaderKeyPath(line) {
+                let belongsToRankBuddy = path.count >= targetPath.count
+                    && Array(path.prefix(targetPath.count)) == targetPath
+                skippingRankBuddyTable = belongsToRankBuddy
+                guard belongsToRankBuddy else {
+                    result.append(rawLine)
+                    continue
                 }
-            } else {
-                result.append(lines[index])
-                index += 1
+
+                if path == targetPath, !insertedReplacement, !line.hasPrefix("[[") {
+                    result.append(contentsOf: block.components(separatedBy: "\n"))
+                    insertedReplacement = true
+                }
+                continue
             }
+
+            guard !skippingRankBuddyTable else { continue }
+
+            result.append(rawLine)
         }
 
         return result.joined(separator: "\n")
