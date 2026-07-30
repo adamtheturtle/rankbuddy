@@ -66,6 +66,11 @@ struct GenerateCodeStubsSheet: View {
     }
 
     private func generate() async {
+        if let malformed = CodeStubValidation.malformedParameter(in: parameters) {
+            errorMessage = "Parameter “\(malformed)” must use name: type format."
+            return
+        }
+
         let parsed = parsedParameters
         if let duplicate = CodeStubValidation.duplicateParameterName(in: parsed) {
             errorMessage = "Parameter name “\(duplicate)” is repeated."
@@ -195,6 +200,22 @@ struct CustomCodeStubSheet: View {
 // MARK: - Request bodies
 
 nonisolated enum CodeStubValidation {
+    static func malformedParameter(in text: String) -> String? {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+
+        for rawPair in text.split(separator: ",", omittingEmptySubsequences: false) {
+            let pair = rawPair.trimmingCharacters(in: .whitespacesAndNewlines)
+            let parts = pair.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+            guard parts.count == 2,
+                  !parts[0].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  !parts[1].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            else {
+                return pair.isEmpty ? "(blank)" : pair
+            }
+        }
+        return nil
+    }
+
     static func duplicateParameterName(in parameters: [GenerateCodeStubsBody.Parameter]?) -> String? {
         var seen: Set<String> = []
         return parameters?.lazy.map(\.name).first { name in

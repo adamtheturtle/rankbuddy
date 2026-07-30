@@ -48,4 +48,11 @@ struct QuestionEditValidationTests {
         #expect(CodeStubValidation.duplicateParameterName(in: parameters) == "Value")
         #expect(CodeStubValidation.duplicateParameterName(in: [parameters[0]]) == nil)
     }
+
+    @Test func `generated stub parameters reject malformed entries`() {
+        #expect(CodeStubValidation.malformedParameter(in: "") == nil)
+        #expect(CodeStubValidation.malformedParameter(in: "counts: int[], target") == "target")
+        #expect(CodeStubValidation.malformedParameter(in: "name: ") == "name:")
+        #expect(CodeStubValidation.malformedParameter(in: "counts: int[], target: int") == nil)
+    }
 }
