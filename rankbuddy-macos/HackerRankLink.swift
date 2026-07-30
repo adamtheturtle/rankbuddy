@@ -33,6 +33,12 @@ enum HackerRankLink {
     }
 }
 
+nonisolated enum OpenLinkAccountSelection {
+    static func resolve(isMerged: Bool, selected: UUID?, current: UUID?) -> UUID? {
+        isMerged ? selected : current
+    }
+}
+
 /// Presentation state for the Open-by-URL sheet, set by the File ▸ "Open by URL…" command.
 @MainActor
 @Observable
@@ -47,13 +53,22 @@ struct OpenLinkSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var input = ""
     @State private var collection: FavoriteCollection = .tests
+    @State private var selectedAccountID: UUID?
 
     private var trimmed: String {
         input.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var canOpen: Bool {
-        !trimmed.isEmpty && store.currentAccount != nil
+        !trimmed.isEmpty && resolvedAccountID != nil
+    }
+
+    private var resolvedAccountID: UUID? {
+        OpenLinkAccountSelection.resolve(
+            isMerged: store.isMergedView,
+            selected: selectedAccountID,
+            current: store.currentAccount?.id
+        )
     }
 
     var body: some View {
@@ -71,11 +86,20 @@ struct OpenLinkSheet: View {
             .pickerStyle(.segmented)
             .help("Used when you paste a bare ID rather than a full URL")
 
-            if store.currentAccount == nil {
+            if store.isMergedView {
+                Picker("Account", selection: $selectedAccountID) {
+                    Text("Choose the owning account").tag(UUID?.none)
+                    ForEach(store.accounts) { account in
+                        Text(account.label).tag(Optional(account.id))
+                    }
+                }
+            }
+
+            if resolvedAccountID == nil {
                 Label(
                     store.accounts.isEmpty
                         ? "Add an account in Settings before opening HackerRank links."
-                        : "Select an account before opening this link.",
+                        : "Choose the account that owns this HackerRank item.",
                     systemImage: "person.crop.circle.badge.exclamationmark"
                 )
                 .font(.callout)
@@ -96,7 +120,7 @@ struct OpenLinkSheet: View {
     }
 
     private func open() {
-        guard !trimmed.isEmpty, let accountID = store.currentAccount?.id.uuidString else { return }
+        guard !trimmed.isEmpty, let accountID = resolvedAccountID?.uuidString else { return }
 
         let target = HackerRankLink.parse(trimmed) ?? (collection: collection, id: trimmed)
         RankBuddyDeepLink.open(collection: target.collection, accountID: accountID, itemID: target.id)

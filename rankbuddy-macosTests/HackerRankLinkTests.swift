@@ -54,4 +54,25 @@ struct HackerRankLinkTests {
     func `input without a usable collection segment returns nil`(_ input: String) {
         #expect(HackerRankLink.parse(input) == nil)
     }
+
+    @Test func `merged Open by URL requires an explicit account`() {
+        let hiddenCurrent = UUID()
+        let selected = UUID()
+
+        #expect(OpenLinkAccountSelection.resolve(
+            isMerged: true,
+            selected: nil,
+            current: hiddenCurrent
+        ) == nil)
+        #expect(OpenLinkAccountSelection.resolve(
+            isMerged: true,
+            selected: selected,
+            current: hiddenCurrent
+        ) == selected)
+        #expect(OpenLinkAccountSelection.resolve(
+            isMerged: false,
+            selected: selected,
+            current: hiddenCurrent
+        ) == hiddenCurrent)
+    }
 }
