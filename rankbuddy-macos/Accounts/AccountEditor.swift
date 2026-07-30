@@ -528,19 +528,21 @@ private extension AccountEditor {
     }
 
     func missingScopesWarning(client: HackerRankClient) async -> String? {
-        async let testsOK = endpointAuthorized { _ = try await client.testsPage() }
-        async let questionsOK = endpointAuthorized { _ = try await client.questionsPage() }
-        async let interviewsOK = endpointAuthorized { _ = try await client.interviewsPage() }
-        async let peopleOK = endpointAuthorized { _ = try await client.usersPage() }
-        async let teamsOK = endpointAuthorized { _ = try await client.teamsPage() }
+        var results: [(String, AccountScopeProbeResult)] = []
+        await results.append(("Tests", endpointAuthorized { _ = try await client.testsPage() }))
+        guard !Task.isCancelled else { return nil }
 
-        return await AccountScopeAssessment.warning([
-            ("Tests", testsOK),
-            ("Questions", questionsOK),
-            ("Interviews", interviewsOK),
-            ("People", peopleOK),
-            ("Teams", teamsOK)
-        ])
+        await results.append(("Questions", endpointAuthorized { _ = try await client.questionsPage() }))
+        guard !Task.isCancelled else { return nil }
+
+        await results.append(("Interviews", endpointAuthorized { _ = try await client.interviewsPage() }))
+        guard !Task.isCancelled else { return nil }
+
+        await results.append(("People", endpointAuthorized { _ = try await client.usersPage() }))
+        guard !Task.isCancelled else { return nil }
+
+        await results.append(("Teams", endpointAuthorized { _ = try await client.teamsPage() }))
+        return AccountScopeAssessment.warning(results)
     }
 
     func endpointAuthorized(_ probe: () async throws -> Void) async -> AccountScopeProbeResult {
