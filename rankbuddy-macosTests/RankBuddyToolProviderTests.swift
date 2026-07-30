@@ -86,6 +86,7 @@ struct RankBuddyToolProviderTests {
         #expect(body.contains("\"teams\""))
         #expect(body.contains("Backend Hiring"))
         #expect(body.contains("\"developers\""))
+        #expect(body.contains("\"next_cursor\""))
     }
 
     @Test func `team counts preserve unknown values`() {

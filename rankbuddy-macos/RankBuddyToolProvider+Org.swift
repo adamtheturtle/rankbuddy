@@ -18,11 +18,23 @@ extension RankBuddyToolProvider {
     }
 
     /// Dispatches the org-enumeration tools.
-    func callOrgListTool(_ name: String, account: String?) async -> CallTool.Result {
+    func callOrgListTool(
+        _ name: String,
+        arguments: [String: Value]?,
+        account: String?
+    ) async -> CallTool.Result {
         switch name {
-        case "list_users": await listUsers(account: account)
-        case "list_teams": await listTeams(account: account)
-        default: errorResult("Unknown tool: \(name)")
+        case "list_users": return await listUsers(account: account)
+
+        case "list_teams":
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+
+            return await listTeams(cursor: cursor, account: account)
+
+        default: return errorResult("Unknown tool: \(name)")
         }
     }
 
@@ -44,11 +56,11 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
-    private func listTeams(account: String?) async -> CallTool.Result {
+    private func listTeams(cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let page = try await HackerRankClient(account: resolved).teamsPage()
+            let page = try await HackerRankClient(account: resolved).teamsPage(after: cursor)
             let items = page.items.map { team in
                 [
                     "id": team.id, "name": team.name,
@@ -58,7 +70,8 @@ extension RankBuddyToolProvider {
                 ]
             }
             return jsonResult(pageMetadata(page).merging([
-                "account": resolved.label, "teams": items
+                "account": resolved.label, "teams": items,
+                "next_cursor": page.next ?? NSNull()
             ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list teams: \(error.localizedDescription)")
