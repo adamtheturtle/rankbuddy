@@ -9,6 +9,9 @@
 -->
 <plist version="1.0">
 <dict>
+	<!-- HTTPS API traffic uses only exempt, operating-system cryptography. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<!--
 	  The in-process favourite drag type (#89). FavoriteDrag.swift declares it with
 	  UTType(exportedAs: "com.rankbuddy.favorite"); an exported type must be backed by
