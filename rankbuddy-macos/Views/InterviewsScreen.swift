@@ -37,8 +37,13 @@ struct InterviewsScreen: View {
                 searchableText: { "\($0.title ?? "") \($0.status)" },
                 sortOptions: [
                     SortOption("Date Created", systemImage: "calendar", kind: .date,
-                               isMissing: { $0.createdAt == nil }, by: {
-                                   ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                               isMissing: { DisplayFormat.parseDate($0.createdAt) == nil }, by: {
+                                   guard
+                                       let lhs = DisplayFormat.parseDate($0.createdAt),
+                                       let rhs = DisplayFormat.parseDate($1.createdAt)
+                                   else { return false }
+
+                                   return lhs > rhs
                                }),
                     SortOption("Status", systemImage: "circle.fill", kind: .text) {
                         $0.status.localizedStandardCompare($1.status) == .orderedAscending
@@ -194,8 +199,13 @@ struct InterviewsScreen: View {
             searchableText: { "\($0.item.title ?? "") \($0.item.status) \($0.account.label)" },
             sortOptions: [
                 SortOption("Date Created", systemImage: "calendar", kind: .date,
-                           isMissing: { $0.item.createdAt == nil }, by: {
-                               ($0.item.createdAt ?? "") > ($1.item.createdAt ?? "")
+                           isMissing: { DisplayFormat.parseDate($0.item.createdAt) == nil }, by: {
+                               guard
+                                   let lhs = DisplayFormat.parseDate($0.item.createdAt),
+                                   let rhs = DisplayFormat.parseDate($1.item.createdAt)
+                               else { return false }
+
+                               return lhs > rhs
                            }),
                 SortOption("Account", systemImage: "person.crop.circle", kind: .text,
                            by: AccountScoped.byAccountLabel),
