@@ -203,18 +203,34 @@ enum MarkdownExport {
     }
 
     nonisolated static func interview(_ interview: Interview, title: String? = nil, notes: String? = nil) -> String {
-        document(
-            title: title ?? interview.title ?? "Interview \(interview.id)",
+        self.interview(InterviewReportData(interview: interview, title: title, notes: notes))
+    }
+
+    nonisolated static func interview(_ report: InterviewReportData) -> String {
+        let interview = report.interview
+        return document(
+            title: report.title,
             subtitle: "HackerRank Interview Report",
             sections: [
                 section("Interview", [
                     ("Status", DisplayFormat.enumLabel(interview.status)),
+                    ("Scheduled start", formattedDate(report.detail?.scheduledFrom)),
+                    ("Scheduled end", formattedDate(report.detail?.scheduledTo)),
                     ("Created", formattedDate(interview.createdAt)),
+                    ("Updated", formattedDate(interview.updatedAt)),
                     ("Ended", formattedDate(interview.endedAt)),
-                    ("Thumbs up", interview.thumbsUp.map(String.init))
+                    ("Thumbs up", interview.thumbsUp.map(String.init)),
+                    ("Report URL", interview.reportURL),
+                    ("Result URL", report.detail?.resultURL),
+                    ("Résumé URL", report.detail?.resumeURL)
                 ]),
-                textSection("Notes", notes ?? interview.notes),
-                textSection("Feedback", interview.feedback)
+                section("People", [
+                    ("Candidate", report.detail?.candidate?.displayName),
+                    ("Created by", report.detail?.user?.displayName)
+                ] + (report.detail?.interviewers ?? []).map { ("Interviewer", $0.displayName) }),
+                textSection("Notes", report.notes),
+                textSection("Feedback", interview.feedback),
+                textSection("Transcript", report.transcriptText)
             ]
         )
     }

@@ -8,10 +8,6 @@ import HackerRankKit
 import SwiftUI
 
 // swiftlint:disable type_body_length
-/// Detail for a single interview. Beyond the list row's fields, it fetches the richer
-/// single-interview read and the conversation transcript on selection (#103); both load
-/// lazily and degrade silently (e.g. in merged view, where the owning account is ambiguous).
-/// Scheduled fields save individually through `updateInterview` (#147).
 struct InterviewDetailView: View {
     let interview: Interview
     var onChanged: () -> Void = {}
@@ -45,6 +41,16 @@ struct InterviewDetailView: View {
 
     private var displayScheduledTo: String? {
         editedScheduledTo ?? detail?.scheduledTo
+    }
+
+    private var reportData: InterviewReportData {
+        InterviewReportData(
+            interview: interview,
+            title: displayTitle,
+            notes: displayNotes,
+            detail: detail,
+            transcript: transcript
+        )
     }
 
     /// Editing needs a single owning account, so the merged view stays read-only.
@@ -181,21 +187,18 @@ struct InterviewDetailView: View {
             title: displayTitle,
             webURL: URL.remoteWebURL(from: interview.url)
         )
-        // Share and Open (the interview on HackerRank) lead the bar like PadBuddy; Print and
-        // Markdown export are off the bar by default but one Customize Toolbar away.
         .toolbar(id: "interviewDetail") {
             DetailLinkToolbarContent(url: URL.remoteWebURL(from: interview.url), noun: "interview")
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Interview: \(displayTitle)") {
-                    InterviewReport(interview: interview, title: displayTitle, notes: displayNotes)
+                    InterviewReport(data: reportData)
                 }
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                let title = displayTitle
-                let notes = displayNotes
-                MarkdownExportButton(suggestedName: title) {
-                    MarkdownExport.interview(interview, title: title, notes: notes)
+                let snapshot = reportData
+                MarkdownExportButton(suggestedName: snapshot.title) {
+                    MarkdownExport.interview(snapshot)
                 }
             }
             .defaultCustomization(.hidden)
@@ -244,8 +247,6 @@ struct InterviewDetailView: View {
         Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
     }
 
-    /// The scheduled start/end row: a date picker when the field is present and editable,
-    /// the usual read-only row otherwise. Scheduling from scratch stays with the create flow.
     @ViewBuilder
     private func scheduledRow(
         label: String,
@@ -282,16 +283,15 @@ struct InterviewDetailView: View {
             owner: commandOwner,
             print: AppCommandContext.Action(title: "Print Interview…") {
                 printReport(
-                    InterviewReport(interview: interview, title: displayTitle, notes: displayNotes),
+                    InterviewReport(data: reportData),
                     jobTitle: "Interview: \(displayTitle)"
                 )
             },
             exportMarkdown: AppCommandContext.Action(title: "Export Interview as Markdown…") {
-                let title = displayTitle
-                let notes = displayNotes
+                let snapshot = reportData
                 MarkdownExport.save(
-                    { MarkdownExport.interview(interview, title: title, notes: notes) },
-                    suggestedName: title
+                    { MarkdownExport.interview(snapshot) },
+                    suggestedName: snapshot.title
                 )
             }
         )

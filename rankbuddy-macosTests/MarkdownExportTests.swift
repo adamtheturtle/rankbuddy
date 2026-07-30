@@ -95,6 +95,32 @@ struct MarkdownExportTests {
         #expect(!markdown.contains("Old notes"))
     }
 
+    @Test func `interview export includes loaded detail and transcript`() throws {
+        let interview = try JSONDecoder().decode(
+            Interview.self,
+            from: Data(#"{"id":"i1","title":"Pairing","status":"scheduled"}"#.utf8)
+        )
+        let detail = try JSONDecoder().decode(
+            InterviewDetail.self,
+            from: Data(
+                #"{"from":"2026-07-30T09:00:00Z","result_url":"https://hr.test/result","candidate":"Ada"}"#.utf8
+            )
+        )
+        let transcript = try JSONDecoder().decode(
+            InterviewTranscript.self,
+            from: Data(#"{"messages":[{"author":"Ian","text":"Hello"},{"candidate":true,"text":"Hi"}]}"#.utf8)
+        )
+        let markdown = MarkdownExport.interview(InterviewReportData(
+            interview: interview,
+            detail: detail,
+            transcript: transcript
+        ))
+
+        #expect(markdown.contains("- **Result URL:** https://hr.test/result"))
+        #expect(markdown.contains("- **Candidate:** Ada"))
+        #expect(markdown.contains("## Transcript\nIan: Hello\n\nCandidate: Hi"))
+    }
+
     @Test func `export includes loaded detail and inviters without an unrevealed password`() throws {
         let test = try JSONDecoder().decode(
             Test.self,

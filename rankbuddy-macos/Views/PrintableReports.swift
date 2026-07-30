@@ -215,32 +215,50 @@ struct TestReport: View {
 
 /// A printable interview report: lifecycle, notes, and feedback.
 struct InterviewReport: View {
-    let interview: Interview
-    var title: String?
-    var notes: String?
+    let data: InterviewReportData
 
     var body: some View {
+        let interview = data.interview
         ReportDocument(
-            title: title ?? interview.title ?? "Interview \(interview.id)",
+            title: data.title,
             subtitle: "HackerRank Interview Report"
         ) {
             PrintSection(title: "Interview") {
                 ReportFieldList(fields: reportFields([
-                    ("Title", title ?? interview.title),
+                    ("Title", data.title),
                     ("Status", DisplayFormat.enumLabel(interview.status)),
+                    ("Scheduled start", DisplayFormat.date(data.detail?.scheduledFrom)),
+                    ("Scheduled end", DisplayFormat.date(data.detail?.scheduledTo)),
                     ("Created", DisplayFormat.date(interview.createdAt)),
                     ("Updated", DisplayFormat.date(interview.updatedAt)),
                     ("Ended", DisplayFormat.date(interview.endedAt)),
-                    ("Thumbs up", interview.thumbsUp.map(String.init))
+                    ("Thumbs up", interview.thumbsUp.map(String.init)),
+                    ("Report URL", interview.reportURL),
+                    ("Result URL", data.detail?.resultURL),
+                    ("Résumé URL", data.detail?.resumeURL)
                 ]))
             }
 
-            if let notes = notes ?? interview.notes, !notes.isEmpty {
-                PrintSection(title: "Notes") { Text(notes) }
+            let people = reportFields([
+                ("Candidate", data.detail?.candidate?.displayName),
+                ("Created by", data.detail?.user?.displayName)
+            ] + (data.detail?.interviewers ?? []).map { ("Interviewer", $0.displayName) })
+            if !people.isEmpty {
+                PrintSection(title: "People") {
+                    ReportFieldList(fields: people)
+                }
+            }
+
+            if !data.notes.isEmpty {
+                PrintSection(title: "Notes") { Text(data.notes) }
             }
 
             if let feedback = interview.feedback, !feedback.isEmpty {
                 PrintSection(title: "Feedback") { Text(feedback) }
+            }
+
+            if let transcript = data.transcriptText {
+                PrintSection(title: "Transcript") { Text(transcript) }
             }
         }
     }
