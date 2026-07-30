@@ -120,6 +120,10 @@ struct AddTestcaseSheet: View {
     @State private var isSending = false
     @State private var errorMessage: String?
 
+    private var hasContent: Bool {
+        TestcaseValidation.hasContent([name, input, output, score, explanation], isSample: isSample)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -169,6 +173,7 @@ struct AddTestcaseSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Add") { Task { await add() } }
+                            .disabled(!hasContent)
                     }
                 }
             }
@@ -177,6 +182,11 @@ struct AddTestcaseSheet: View {
     }
 
     private func add() async {
+        guard hasContent else {
+            errorMessage = "Enter testcase content before adding it."
+            return
+        }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }
@@ -201,6 +211,12 @@ struct AddTestcaseSheet: View {
 }
 
 // MARK: - Request bodies
+
+nonisolated enum TestcaseValidation {
+    static func hasContent(_ values: [String], isSample: Bool) -> Bool {
+        values.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } || isSample
+    }
+}
 
 // These mirror HackerRankKit's typed requests (which land in a future Kit release); Kit
 // 0.4.0's testcase/codestub endpoints accept any `Encodable` body. Synthesized encoding

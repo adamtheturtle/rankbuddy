@@ -60,4 +60,10 @@ struct QuestionEditValidationTests {
         #expect(nonBlank(" \n\t ") == nil)
         #expect(nonBlank(" solve \n") == "solve")
     }
+
+    @Test func `testcases require meaningful content`() {
+        #expect(!TestcaseValidation.hasContent(["", " ", "\n", "", ""], isSample: false))
+        #expect(TestcaseValidation.hasContent(["", "1 2", "", "", ""], isSample: false))
+        #expect(TestcaseValidation.hasContent(["", "", "", "", ""], isSample: true))
+    }
 }
