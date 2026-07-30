@@ -311,6 +311,8 @@ struct TestDetailView: View {
     /// Returns whether it succeeded so the inline title can revert on failure; on success the
     /// list refreshes (which re-pushes the renamed detail).
     private func rename(to newName: String) async -> Bool {
+        guard TestNameValidation.isValid(newName) else { return false }
+
         do {
             try await HackerRankClient(account: account).updateTest(testID: displayedTest.id, name: newName)
             var renamed = TestDetailMetadata()

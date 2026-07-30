@@ -15,6 +15,11 @@ import Testing
 /// the client's responsibility and is covered in `HackerRankKit`'s own tests.
 @MainActor
 struct TestWriteFlowsTests {
+    @Test func `names respect the API limit`() {
+        #expect(TestNameValidation.isValid("Backend Screen"))
+        #expect(!TestNameValidation.isValid(String(repeating: "x", count: 256)))
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }

@@ -117,6 +117,9 @@ extension RankBuddyToolProvider {
 
         let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return errorResult("`name` must not be empty.") }
+        guard TestNameValidation.isValid(name) else {
+            return errorResult("`name` can be at most \(TestNameValidation.maxLength) characters.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -232,7 +235,12 @@ extension RankBuddyToolProvider {
     @MainActor
     private func updateTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
-        guard let name = stringArgument(arguments, "name") else { return missingArgument("name") }
+        guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
+
+        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard TestNameValidation.isValid(name) else {
+            return errorResult("`name` must contain 1 to \(TestNameValidation.maxLength) characters.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {

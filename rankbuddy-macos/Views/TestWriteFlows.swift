@@ -6,6 +6,14 @@
 import HackerRankKit
 import SwiftUI
 
+nonisolated enum TestNameValidation {
+    static let maxLength = 255
+
+    static func isValid(_ name: String) -> Bool {
+        !name.isEmpty && name.count <= maxLength
+    }
+}
+
 /// Whether the test editor is creating a new test or renaming an existing one (#57).
 enum TestEditorMode {
     case create
@@ -50,6 +58,11 @@ struct TestEditorSheet: View {
             Form {
                 Section {
                     TextField("Test name", text: $name)
+                } footer: {
+                    if trimmedName.count > TestNameValidation.maxLength {
+                        Text("Test name can be at most \(TestNameValidation.maxLength) characters.")
+                            .foregroundStyle(.red)
+                    }
                 }
 
                 if let errorMessage {
@@ -72,7 +85,7 @@ struct TestEditorSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button(isEditing ? "Save" : "Create") { Task { await save() } }
-                            .disabled(trimmedName.isEmpty)
+                            .disabled(!TestNameValidation.isValid(trimmedName))
                     }
                 }
             }
@@ -81,6 +94,8 @@ struct TestEditorSheet: View {
     }
 
     private func save() async {
+        guard TestNameValidation.isValid(trimmedName) else { return }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }
