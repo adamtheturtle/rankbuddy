@@ -561,6 +561,20 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("tags"))
     }
 
+    @Test func `invite_candidate rejects a malformed evaluator email`() async {
+        let result = await writeProvider().callTool(
+            "invite_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "email": .string("new@example.com"),
+                "evaluator_email": .string("not-an-email")
+            ]
+        )
+
+        #expect(result.isError == true)
+        #expect(text(result).contains("evaluator_email"))
+    }
+
     @Test func `invite_candidate rejects a blank test id`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

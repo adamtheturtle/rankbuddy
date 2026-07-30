@@ -317,7 +317,11 @@ extension RankBuddyToolProvider {
 
         let fullName = stringArgument(arguments, "full_name")
         let tags = stringArrayArgument(arguments, "tags")
-        let evaluatorEmail = stringArgument(arguments, "evaluator_email")
+        let evaluatorEmail = Self.normalizedOptionalString(stringArgument(arguments, "evaluator_email"))
+        guard evaluatorEmail.map(EmailValidation.isLikelyValid) ?? true else {
+            return errorResult("`evaluator_email` must be a valid email address.")
+        }
+
         let emailSubject = stringArgument(arguments, "email_subject")
         let emailMessage = stringArgument(arguments, "email_message")
         let atsCandidateID = stringArgument(arguments, "ats_candidate_id")
