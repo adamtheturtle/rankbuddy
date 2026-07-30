@@ -28,4 +28,11 @@ struct PersonDetailTests {
         let second = PersonTeamResolutionKey(accountID: UUID(), teamIDs: ["team-1"])
         #expect(first != second)
     }
+
+    @Test func `team resolution stops at a repeated cursor`() {
+        var seen: Set<String> = []
+        #expect(PersonTeamResolution.unseenCursor("next", seen: &seen) == "next")
+        #expect(PersonTeamResolution.unseenCursor("next", seen: &seen) == nil)
+        #expect(PersonTeamResolution.unseenCursor(nil, seen: &seen) == nil)
+    }
 }

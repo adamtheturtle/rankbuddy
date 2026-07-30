@@ -31,6 +31,12 @@ nonisolated enum PersonTeamResolution {
     static func labels(ids: [String], namesByID: [String: String]) -> [String] {
         ids.map { namesByID[$0] ?? $0 }
     }
+
+    static func unseenCursor(_ cursor: String?, seen: inout Set<String>) -> String? {
+        guard let cursor, seen.insert(cursor).inserted else { return nil }
+
+        return cursor
+    }
 }
 
 nonisolated struct PersonTeamResolutionKey: Hashable {
@@ -234,6 +240,7 @@ struct PersonDetailView: View {
         let wantedIDs = Set(ids)
         let client = HackerRankClient(account: account)
         var cursor: String?
+        var seenCursors: Set<String> = []
         var namesByID: [String: String] = [:]
 
         do {
@@ -242,7 +249,7 @@ struct PersonDetailView: View {
                 for team in page.items where wantedIDs.contains(team.id) {
                     namesByID[team.id] = team.name
                 }
-                cursor = page.next
+                cursor = PersonTeamResolution.unseenCursor(page.next, seen: &seenCursors)
             } while cursor != nil && namesByID.count < wantedIDs.count
 
             resolvedTeamNames = PersonTeamResolution.labels(ids: ids, namesByID: namesByID)
