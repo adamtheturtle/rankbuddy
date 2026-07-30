@@ -66,6 +66,12 @@ struct GenerateCodeStubsSheet: View {
     }
 
     private func generate() async {
+        let parsed = parsedParameters
+        if let duplicate = CodeStubValidation.duplicateParameterName(in: parsed) {
+            errorMessage = "Parameter name “\(duplicate)” is repeated."
+            return
+        }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }
@@ -75,7 +81,7 @@ struct GenerateCodeStubsSheet: View {
                 body: GenerateCodeStubsBody(
                     functionName: nonBlank(functionName),
                     returnType: nonBlank(returnType),
-                    parameters: parsedParameters,
+                    parameters: parsed,
                     languages: splitList(languages)
                 )
             )
@@ -189,6 +195,13 @@ struct CustomCodeStubSheet: View {
 // MARK: - Request bodies
 
 nonisolated enum CodeStubValidation {
+    static func duplicateParameterName(in parameters: [GenerateCodeStubsBody.Parameter]?) -> String? {
+        var seen: Set<String> = []
+        return parameters?.lazy.map(\.name).first { name in
+            !seen.insert(name.folding(options: .caseInsensitive, locale: .current)).inserted
+        }
+    }
+
     static func normalizedLanguage(_ language: String) -> String? {
         let normalized = language.trimmingCharacters(in: .whitespacesAndNewlines)
         return normalized.isEmpty ? nil : normalized
