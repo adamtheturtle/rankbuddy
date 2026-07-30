@@ -702,7 +702,7 @@ extension RankBuddyToolProvider {
     func prompts() async -> [Prompt] {
         [Prompt(
             name: "triage_candidates",
-            description: "Review candidate scores, statuses, and integrity/plagiarism concerns.",
+            description: "Review candidate scores and statuses from the exposed list data.",
             arguments: [
                 Prompt.Argument(name: "account", description: "Account label or UUID.", required: true),
                 Prompt.Argument(name: "test_id", description: "The test to triage.", required: true)
@@ -733,9 +733,10 @@ extension RankBuddyToolProvider {
             Call `list_candidates` with that `account` and `test_id`. While its `has_more` field \
             is true, call it again with the same account and test_id and `cursor` set to the \
             preceding `next_cursor`. Do not summarise until all pages are loaded. Then report \
-            each candidate's supplied score and status and flag integrity or plagiarism \
-            concerns. No cutoff is available: do not infer pass/fail or claim that a score \
-            passed a threshold.
+            each candidate's supplied score and status. Integrity, plagiarism, and proctoring \
+            data are not exposed by this tool, so explicitly state that limitation and do not \
+            infer or invent concerns. No cutoff is available: do not infer pass/fail or claim \
+            that a score passed a threshold.
             """
             return GetPrompt.Result(
                 description: "Candidate triage for a test.",

@@ -357,6 +357,8 @@ struct RankBuddyToolProviderTests {
         #expect(promptText.contains("next_cursor"))
         #expect(promptText.contains("all pages"))
         #expect(promptText.contains("do not infer pass/fail"))
+        #expect(promptText.contains("not exposed"))
+        #expect(promptText.contains("do not infer or invent concerns"))
         #expect(!promptText.contains("who passed"))
         #expect(promptText.contains(#""account":"00000000-0000-0000-0000-00000000DEAD""#))
         #expect(promptText.contains(#""test_id":"t1""#))
