@@ -19,7 +19,9 @@
     <p>RankBuddy stores the HackerRank personal access token you enter in the macOS Keychain, and your app preferences locally on your Mac. It does not transmit them anywhere except to HackerRank.</p>
 
     <h2>Who RankBuddy talks to</h2>
-    <p>RankBuddy communicates only with the HackerRank for Work API to fetch the data you ask it to display. There are no analytics services, advertising SDKs, or third-party telemetry endpoints.</p>
+    <p>RankBuddy contacts the HackerRank for Work API to fetch the data you ask it to display. There are no analytics services, advertising SDKs, or third-party telemetry endpoints.</p>
+    <p>A direct-download build may also use Sparkle to check for software updates. When that build includes an <code>SUFeedURL</code>, a manual update check—or automatic checks after you allow them—contacts the HTTPS host named in that URL to download its appcast. The host can receive the usual network metadata, including your IP address and HTTP request headers identifying RankBuddy and its version. RankBuddy does not enable Sparkle's optional system-profile reporting.</p>
+    <p>The current prerelease build has no update-feed URL configured and therefore does not contact an appcast host. The host will be identified here when the release feed is configured.</p>
 
     <h2>What RankBuddy does not do</h2>
     <ul>
