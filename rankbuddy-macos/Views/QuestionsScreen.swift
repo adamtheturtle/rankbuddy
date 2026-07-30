@@ -33,8 +33,13 @@ struct QuestionsScreen: View {
                         $0.type.localizedStandardCompare($1.type) == .orderedAscending
                     },
                     SortOption("Date Created", systemImage: "calendar", kind: .date,
-                               isMissing: { $0.createdAt == nil }, by: {
-                                   ($0.createdAt ?? "") > ($1.createdAt ?? "")
+                               isMissing: { DisplayFormat.parseDate($0.createdAt) == nil }, by: {
+                                   guard
+                                       let lhs = DisplayFormat.parseDate($0.createdAt),
+                                       let rhs = DisplayFormat.parseDate($1.createdAt)
+                                   else { return false }
+
+                                   return lhs > rhs
                                })
                 ],
                 restorationKey: "selection.questions.\(account.id)",
