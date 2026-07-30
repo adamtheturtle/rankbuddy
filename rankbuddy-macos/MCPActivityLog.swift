@@ -25,6 +25,9 @@ nonisolated struct MCPActivityEntry: Codable, Identifiable, Hashable {
 nonisolated enum MCPActivityLog {
     /// Keep the on-disk log bounded so it can't grow without limit.
     static let maxEntries = 200
+    static let maxEncodedEntryBytes = 4096
+    private static let maxToolCharacters = 128
+    private static let maxDetailCharacters = 512
 
     /// The log file in the app's Application Support container, shared by the GUI and the
     /// `--mcp` subprocess (same sandbox container).
@@ -49,9 +52,46 @@ nonisolated enum MCPActivityLog {
     /// Appends a tool call to the log. Called from the `--mcp` subprocess.
     static func record(tool: String, detail: String, to url: URL = fileURL) {
         let stamp = ISO8601DateFormatter().string(from: Date())
+        let entry = boundedEntry(timestamp: stamp, tool: tool, detail: detail)
         _ = withLock(for: url, mode: LOCK_EX) {
-            store(for: url).append(MCPActivityEntry(timestamp: stamp, tool: tool, detail: detail))
+            store(for: url).append(entry)
         }
+    }
+
+    /// Removes line-breaking/control input and caps a human-readable activity field.
+    static func normalizedSummary(_ value: String, maxCharacters: Int) -> String {
+        let bounded = value.prefix(maxCharacters + 1)
+        let wasTruncated = bounded.count > maxCharacters
+        let prefix = String(bounded.prefix(maxCharacters))
+        let normalized = prefix
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+            .unicodeScalars
+            .filter { !CharacterSet.controlCharacters.contains($0) }
+            .map(String.init)
+            .joined()
+        return wasTruncated ? "\(normalized)…" : normalized
+    }
+
+    static func boundedEntry(timestamp: String, tool: String, detail: String) -> MCPActivityEntry {
+        var tool = normalizedSummary(tool, maxCharacters: maxToolCharacters)
+        var detail = normalizedSummary(detail, maxCharacters: maxDetailCharacters)
+        var entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail)
+
+        while encodedSize(of: entry) > maxEncodedEntryBytes, !detail.isEmpty {
+            detail = String(detail.prefix(detail.count / 2))
+            entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail)
+        }
+        while encodedSize(of: entry) > maxEncodedEntryBytes, !tool.isEmpty {
+            tool = String(tool.prefix(tool.count / 2))
+            entry = MCPActivityEntry(timestamp: timestamp, tool: tool, detail: detail)
+        }
+        return entry
+    }
+
+    private static func encodedSize(of entry: MCPActivityEntry) -> Int {
+        (try? JSONEncoder().encode(entry).count) ?? .max
     }
 
     /// Parses JSONL log contents into entries, skipping any malformed line. Pure.

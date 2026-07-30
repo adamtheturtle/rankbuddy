@@ -40,6 +40,21 @@ struct MCPActivityLogTests {
         #expect(entries.map(\.tool) == ["search_tests", "list_tests"])
     }
 
+    @Test func `activity entries normalize controls and enforce an encoded byte ceiling`() throws {
+        let huge = String(repeating: "👨‍👩‍👧‍👦\n\u{0000}", count: 10000)
+        let entry = MCPActivityLog.boundedEntry(
+            timestamp: "2026-07-30T10:00:00Z",
+            tool: huge,
+            detail: huge
+        )
+        let encoded = try JSONEncoder().encode(entry)
+
+        #expect(encoded.count <= MCPActivityLog.maxEncodedEntryBytes)
+        #expect(!entry.tool.contains("\n"))
+        #expect(!entry.detail.contains("\n"))
+        #expect(!entry.detail.contains("\u{0000}"))
+    }
+
     @Test func `clearing removes the log`() {
         let url = tempURL()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }

@@ -122,7 +122,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         let parts = keys.compactMap { key -> String? in
             guard case let .string(value)? = arguments?[key], !value.isEmpty else { return nil }
 
-            return "\(key): \(value)"
+            return "\(key): \(MCPActivityLog.normalizedSummary(value, maxCharacters: 160))"
         }
         return parts.joined(separator: ", ")
     }
