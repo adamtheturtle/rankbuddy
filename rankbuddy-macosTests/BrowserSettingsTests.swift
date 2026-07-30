@@ -51,4 +51,15 @@ struct BrowserSettingsTests {
     @Test func `hostless web URLs are refused`() throws {
         #expect(try !BrowserSettings.isOpenableWebURL(#require(URL(string: "https:///report"))))
     }
+
+    @Test func `a removed browser preference is cleared`() throws {
+        let suite = "browser-settings.tests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set("com.example.browser-that-is-not-installed", forKey: BrowserSettings.defaultBrowserKey)
+
+        BrowserSettings.invalidateInstalledBrowsers()
+        #expect(BrowserSettings.validatedBrowserBundleID(defaults: defaults) == nil)
+        #expect(defaults.string(forKey: BrowserSettings.defaultBrowserKey) == nil)
+    }
 }

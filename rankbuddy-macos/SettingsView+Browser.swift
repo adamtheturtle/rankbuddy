@@ -49,6 +49,10 @@ extension SettingsView {
     private func refreshInstalledBrowsers() {
         BrowserSettings.invalidateInstalledBrowsers()
         installedBrowsers = BrowserSettings.installedBrowsers()
+        let validatedID = BrowserSettings.validatedBrowserBundleID() ?? ""
+        if defaultBrowserID != validatedID {
+            defaultBrowserID = validatedID
+        }
     }
 
     /// The first picker row: "System Default (Safari)" when the default resolves, else just
