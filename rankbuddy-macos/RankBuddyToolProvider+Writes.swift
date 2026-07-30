@@ -299,6 +299,7 @@ extension RankBuddyToolProvider {
     // MARK: - Candidates
 
     @MainActor
+    // swiftlint:disable:next cyclomatic_complexity
     private func inviteCandidateTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
         guard let email = stringArgument(arguments, "email") else { return missingArgument("email") }
@@ -326,6 +327,15 @@ extension RankBuddyToolProvider {
         let emailMessage = stringArgument(arguments, "email_message")
         let atsCandidateID = stringArgument(arguments, "ats_candidate_id")
         let atsRequisitionID = stringArgument(arguments, "ats_requisition_id")
+        let finishURL = Self.normalizedOptionalString(stringArgument(arguments, "finish_url"))
+        let resultURL = Self.normalizedOptionalString(stringArgument(arguments, "result_url"))
+        guard finishURL.map({ URL.remoteWebURL(from: $0) != nil }) ?? true else {
+            return errorResult("`finish_url` must be a valid HTTP or HTTPS URL.")
+        }
+        guard resultURL.map({ URL.remoteWebURL(from: $0) != nil }) ?? true else {
+            return errorResult("`result_url` must be a valid HTTP or HTTPS URL.")
+        }
+
         if let issue = CandidateInviteValidation.textIssue(.init(
             fullName: fullName,
             tags: tags,
@@ -351,8 +361,8 @@ extension RankBuddyToolProvider {
                     emailMessage: emailMessage,
                     templateID: stringArgument(arguments, "template_id"),
                     evaluatorEmail: evaluatorEmail,
-                    finishURL: stringArgument(arguments, "finish_url"),
-                    resultURL: stringArgument(arguments, "result_url"),
+                    finishURL: finishURL,
+                    resultURL: resultURL,
                     notifyResultUpdate: boolArgument(arguments, "notify_result_update"),
                     tags: tags,
                     force: boolArgument(arguments, "force"),
@@ -1206,6 +1216,9 @@ extension RankBuddyToolProvider {
         func boolean(_ description: String) -> [String: Any] {
             ["type": "boolean", "description": description]
         }
+        func url(_ description: String) -> [String: Any] {
+            ["type": "string", "format": "uri", "description": description]
+        }
         func write(
             _ name: String,
             _ description: String,
@@ -1249,8 +1262,8 @@ extension RankBuddyToolProvider {
                       "email_message": string("Custom invitation email message."),
                       "template_id": string("Invitation email template id."),
                       "evaluator_email": string("Evaluator email assigned to the invite."),
-                      "finish_url": string("URL to send the candidate to after finishing."),
-                      "result_url": string("Result/report callback or redirect URL."),
+                      "finish_url": url("HTTP(S) URL to send the candidate to after finishing."),
+                      "result_url": url("HTTP(S) result/report callback or redirect URL."),
                       "notify_result_update": boolean("Notify downstream systems when results update."),
                       "tags": ["type": "array", "items": ["type": "string"],
                                "description": "Candidate tags; a comma-separated string is also accepted."],

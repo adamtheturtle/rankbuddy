@@ -575,6 +575,22 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("evaluator_email"))
     }
 
+    @Test func `invite_candidate rejects non-web redirect URLs`() async {
+        for (field, value) in [("finish_url", "javascript:alert(1)"), ("result_url", "not a URL")] {
+            let result = await writeProvider().callTool(
+                "invite_candidate",
+                arguments: [
+                    "test_id": .string("t1"),
+                    "email": .string("new@example.com"),
+                    field: .string(value)
+                ]
+            )
+
+            #expect(result.isError == true)
+            #expect(text(result).contains(field))
+        }
+    }
+
     @Test func `invite_candidate rejects a blank test id`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",
