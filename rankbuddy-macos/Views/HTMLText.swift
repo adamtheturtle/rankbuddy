@@ -97,16 +97,19 @@ struct HTMLFragmentText: View {
                             }
 
                         case let .orderedList(items, start, step, markerStyle):
+                            let markers = HTMLFragmentSegment.markerValues(
+                                for: items, start: start, step: step
+                            )
                             VStack(alignment: .leading, spacing: 6) {
                                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                                     HStack(alignment: .firstTextBaseline, spacing: 10) {
-                                        Text("\(markerStyle.marker(for: start + index * step)).")
+                                        Text("\(markerStyle.marker(for: markers[index])).")
                                             .font(.body.monospacedDigit())
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: true, vertical: false)
                                             .frame(minWidth: 24, alignment: .trailing)
 
-                                        HTMLText(html: item, showsPlaceholder: showsPlaceholder)
+                                        HTMLText(html: item.html, showsPlaceholder: showsPlaceholder)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                     }
                                 }
@@ -151,8 +154,13 @@ struct HTMLFragmentText: View {
 }
 
 nonisolated enum HTMLFragmentSegment: Equatable {
+    struct OrderedItem: Equatable {
+        let html: String
+        let explicitValue: Int?
+    }
+
     case prose(String)
-    case orderedList(items: [String], start: Int, step: Int, markerStyle: OrderedListMarkerStyle)
+    case orderedList(items: [OrderedItem], start: Int, step: Int, markerStyle: OrderedListMarkerStyle)
 
     static func segments(from html: String) -> [Self] {
         let searchableHTML = maskingIgnoredMarkup(in: html)
@@ -196,12 +204,24 @@ nonisolated enum HTMLFragmentSegment: Equatable {
         return segments.isEmpty ? [.prose(html)] : segments
     }
 
-    private static func orderedListItems(from html: String) -> [String] {
+    static func markerValues(for items: [OrderedItem], start: Int, step: Int) -> [Int] {
+        var next = start
+        return items.map { item in
+            let marker = item.explicitValue ?? next
+            next = marker + step
+            return marker
+        }
+    }
+
+    private static func orderedListItems(from html: String) -> [OrderedItem] {
         // swiftlint:disable:next legacy_objc_type
         let nsHTML = html as NSString
         let searchableHTML = maskingIgnoredMarkup(in: html)
         return balancedElements(named: "li", in: searchableHTML).map { element in
-            nsHTML.substring(with: element.content)
+            OrderedItem(
+                html: nsHTML.substring(with: element.content),
+                explicitValue: integerAttribute("value", in: nsHTML.substring(with: element.attributes))
+            )
         }
     }
 

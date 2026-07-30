@@ -17,6 +17,10 @@ struct HTMLTextTests {
         String(AttributedString.fromHTML(html).characters)
     }
 
+    private func orderedItems(_ values: [String]) -> [HTMLFragmentSegment.OrderedItem] {
+        values.map { .init(html: $0, explicitValue: nil) }
+    }
+
     @Test func `strips block and inline tags`() {
         let text = plainText("<p>Solve <b>all</b> questions within the <i>time limit</i>.</p>")
         #expect(text == "Solve all questions within the time limit.")
@@ -94,33 +98,35 @@ struct HTMLTextTests {
         #expect(HTMLFragmentSegment.segments(from: script) == [.prose(script)])
         #expect(HTMLFragmentSegment.segments(
             from: "<ol><li>shown</li><!-- <li>hidden</li> --></ol>"
-        ) == [.orderedList(items: ["shown"], start: 1, step: 1, markerStyle: .decimal)])
+        ) == [.orderedList(items: orderedItems(["shown"]), start: 1, step: 1, markerStyle: .decimal)])
     }
 
     @Test func `reversed ordered lists count down from their effective start`() {
         #expect(HTMLFragmentSegment.segments(
             from: "<ol reversed><li>three</li><li>two</li><li>one</li></ol>"
         ) == [.orderedList(
-            items: ["three", "two", "one"],
+            items: orderedItems(["three", "two", "one"]),
             start: 3,
             step: -1,
             markerStyle: .decimal
         )])
         #expect(HTMLFragmentSegment.segments(
             from: "<ol reversed start=\"8\"><li>eight</li><li>seven</li></ol>"
-        ) == [.orderedList(items: ["eight", "seven"], start: 8, step: -1, markerStyle: .decimal)])
+        ) == [.orderedList(
+            items: orderedItems(["eight", "seven"]), start: 8, step: -1, markerStyle: .decimal
+        )])
     }
 
     @Test func `ordered lists begin at their explicit start value`() {
         #expect(HTMLFragmentSegment.segments(
             from: "<ol start=\"5\"><li>five</li><li>six</li></ol>"
-        ) == [.orderedList(items: ["five", "six"], start: 5, step: 1, markerStyle: .decimal)])
+        ) == [.orderedList(items: orderedItems(["five", "six"]), start: 5, step: 1, markerStyle: .decimal)])
     }
 
     @Test func `ordered lists retain alphabetic and Roman marker styles`() {
         #expect(HTMLFragmentSegment.segments(
             from: "<ol type=\"A\"><li>one</li></ol>"
-        ) == [.orderedList(items: ["one"], start: 1, step: 1, markerStyle: .upperAlpha)])
+        ) == [.orderedList(items: orderedItems(["one"]), start: 1, step: 1, markerStyle: .upperAlpha)])
         #expect(OrderedListMarkerStyle.lowerAlpha.marker(for: 27) == "aa")
         #expect(OrderedListMarkerStyle.upperRoman.marker(for: 14) == "XIV")
         #expect(OrderedListMarkerStyle.lowerRoman.marker(for: 9) == "ix")
@@ -130,11 +136,23 @@ struct HTMLTextTests {
         let html = "<ol><li>Outer<ol><li>Inner one</li><li>Inner two</li></ol></li><li>Last</li></ol>"
         #expect(HTMLFragmentSegment.segments(from: html) == [
             .orderedList(
-                items: ["Outer<ol><li>Inner one</li><li>Inner two</li></ol>", "Last"],
+                items: orderedItems(["Outer<ol><li>Inner one</li><li>Inner two</li></ol>", "Last"]),
                 start: 1,
                 step: 1,
                 markerStyle: .decimal
             )
         ])
+    }
+
+    @Test func `list item values reset numbering for following items`() {
+        let segments = HTMLFragmentSegment.segments(
+            from: "<ol start=\"5\"><li>five</li><li value=\"10\">ten</li><li>eleven</li></ol>"
+        )
+        guard case let .orderedList(items, start, step, _) = segments.first else {
+            Issue.record("Expected an ordered list")
+            return
+        }
+
+        #expect(HTMLFragmentSegment.markerValues(for: items, start: start, step: step) == [5, 10, 11])
     }
 }
