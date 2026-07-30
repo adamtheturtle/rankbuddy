@@ -14,6 +14,13 @@ nonisolated enum TokenKind: Equatable {
     case number
 }
 
+/// A token range into its source string. The lexer uses ranges so the rendering path does not
+/// allocate a separate `String` for every highlighted and plain run.
+nonisolated struct SyntaxToken {
+    let range: Range<String.Index>
+    let kind: TokenKind
+}
+
 /// A run of code of one `TokenKind`. The concatenation of every span's `text`, in order, is
 /// exactly the original source — so highlighting never drops or reorders characters.
 nonisolated struct SyntaxSpan: Equatable {
@@ -24,7 +31,7 @@ nonisolated struct SyntaxSpan: Equatable {
 /// A programming language RankBuddy can highlight (#94). Each case carries just enough lexical
 /// configuration — keywords and comment styles — for the shared lexer; `plain` highlights only
 /// strings, numbers, and comments it can detect generically.
-nonisolated enum CodeLanguage: Equatable {
+nonisolated enum CodeLanguage: Hashable {
     case swift
     case python
     case javascript
@@ -114,104 +121,117 @@ nonisolated struct SyntaxHighlighter {
     /// Splits `code` into ordered spans. Comments and strings take precedence over keywords and
     /// numbers, so a keyword inside a string or comment is not mis-coloured.
     func spans(_ code: String) -> [SyntaxSpan] {
-        let chars = Array(code)
-        var spans: [SyntaxSpan] = []
-        var plainStart = 0
-        var index = 0
+        tokens(code).map { SyntaxSpan(text: String(code[$0.range]), kind: $0.kind) }
+    }
 
-        func flushPlain(upTo end: Int) {
+    /// Splits `code` into source ranges without materialising an array of characters or copying
+    /// each run. Renderers can apply attributes directly to these ranges.
+    func tokens(_ code: String) -> [SyntaxToken] {
+        var tokens: [SyntaxToken] = []
+        var plainStart = code.startIndex
+        var index = code.startIndex
+
+        func flushPlain(upTo end: String.Index) {
             guard end > plainStart else { return }
 
-            spans.append(SyntaxSpan(text: String(chars[plainStart ..< end]), kind: .plain))
+            tokens.append(SyntaxToken(range: plainStart ..< end, kind: .plain))
         }
 
-        func emit(_ start: Int, _ end: Int, _ kind: TokenKind) {
+        func emit(_ start: String.Index, _ end: String.Index, _ kind: TokenKind) {
             flushPlain(upTo: start)
-            spans.append(SyntaxSpan(text: String(chars[start ..< end]), kind: kind))
+            tokens.append(SyntaxToken(range: start ..< end, kind: kind))
             plainStart = end
         }
 
-        while index < chars.count {
-            if let end = lineCommentEnd(chars, from: index) {
+        while index < code.endIndex {
+            if let end = lineCommentEnd(code, from: index) {
                 emit(index, end, .comment)
                 index = end
-            } else if let end = blockCommentEnd(chars, from: index) {
+            } else if let end = blockCommentEnd(code, from: index) {
                 emit(index, end, .comment)
                 index = end
-            } else if let end = stringEnd(chars, from: index) {
+            } else if let end = stringEnd(code, from: index) {
                 emit(index, end, .string)
                 index = end
-            } else if let end = numberEnd(chars, from: index) {
+            } else if let end = numberEnd(code, from: index) {
                 emit(index, end, .number)
                 index = end
-            } else if let end = identifierEnd(chars, from: index) {
-                if isKeyword(chars, index, end) {
+            } else if let end = identifierEnd(code, from: index) {
+                if isKeyword(code, index, end) {
                     emit(index, end, .keyword)
                 }
                 index = end
             } else {
-                index += 1
+                code.formIndex(after: &index)
             }
         }
 
-        flushPlain(upTo: chars.count)
-        return spans
+        flushPlain(upTo: code.endIndex)
+        return tokens
     }
 
-    private func lineCommentEnd(_ chars: [Character], from start: Int) -> Int? {
-        for prefix in language.lineCommentPrefixes where matches(chars, start, prefix) {
+    private func lineCommentEnd(_ code: String, from start: String.Index) -> String.Index? {
+        for prefix in language.lineCommentPrefixes where code[start...].hasPrefix(prefix) {
             var end = start
-            while end < chars.count, chars[end] != "\n" {
-                end += 1
+            while end < code.endIndex, code[end] != "\n" {
+                code.formIndex(after: &end)
             }
             return end
         }
         return nil
     }
 
-    private func blockCommentEnd(_ chars: [Character], from start: Int) -> Int? {
-        guard language.hasBlockComments, matches(chars, start, "/*") else { return nil }
+    private func blockCommentEnd(_ code: String, from start: String.Index) -> String.Index? {
+        guard language.hasBlockComments, code[start...].hasPrefix("/*") else { return nil }
 
-        var end = start + 2
-        while end < chars.count {
-            if matches(chars, end, "*/") { return end + 2 }
-
-            end += 1
+        var end = code.index(start, offsetBy: 2)
+        while end < code.endIndex {
+            if code[end...].hasPrefix("*/") {
+                return code.index(end, offsetBy: 2)
+            }
+            code.formIndex(after: &end)
         }
-        return chars.count
+        return code.endIndex
     }
 
-    private func stringEnd(_ chars: [Character], from start: Int) -> Int? {
+    private func stringEnd(_ code: String, from start: String.Index) -> String.Index? {
         let delimiters: Set<Character> = ["\"", "'", "`"]
-        guard let delimiter = chars[safe: start], delimiters.contains(delimiter) else { return nil }
+        let delimiter = code[start]
+        guard delimiters.contains(delimiter) else { return nil }
 
-        var end = start + 1
-        while end < chars.count {
-            if chars[end] == "\\" {
-                end += 2
+        var end = code.index(after: start)
+        while end < code.endIndex {
+            if code[end] == "\\" {
+                code.formIndex(after: &end)
+                if end < code.endIndex {
+                    code.formIndex(after: &end)
+                }
                 continue
             }
-            if chars[end] == delimiter { return end + 1 }
+            if code[end] == delimiter { return code.index(after: end) }
             // A bare delimiter that never closes on its line is not a string (e.g. an apostrophe
             // in prose) — bail so it stays plain.
-            if chars[end] == "\n" { return nil }
+            if code[end] == "\n" { return nil }
 
-            end += 1
+            code.formIndex(after: &end)
         }
         return nil
     }
 
-    private func numberEnd(_ chars: [Character], from start: Int) -> Int? {
-        guard let first = chars[safe: start], first.isNumber else { return nil }
+    private func numberEnd(_ code: String, from start: String.Index) -> String.Index? {
+        guard code[start].isNumber else { return nil }
 
         // A number must not start in the middle of an identifier (e.g. the `2` in `utf8`).
-        if let prev = chars[safe: start - 1], prev.isLetter || prev == "_" { return nil }
+        if start > code.startIndex {
+            let previous = code[code.index(before: start)]
+            if previous.isLetter || previous == "_" { return nil }
+        }
 
         var end = start
-        while end < chars.count {
-            let char = chars[end]
+        while end < code.endIndex {
+            let char = code[end]
             if char.isHexDigit || char == "." || char == "x" || char == "_" {
-                end += 1
+                code.formIndex(after: &end)
             } else {
                 break
             }
@@ -219,39 +239,23 @@ nonisolated struct SyntaxHighlighter {
         return end
     }
 
-    private func identifierEnd(_ chars: [Character], from start: Int) -> Int? {
-        guard let first = chars[safe: start], first.isLetter || first == "_" else { return nil }
+    private func identifierEnd(_ code: String, from start: String.Index) -> String.Index? {
+        let first = code[start]
+        guard first.isLetter || first == "_" else { return nil }
 
-        var end = start + 1
-        while end < chars.count, chars[end].isLetter || chars[end].isNumber || chars[end] == "_" {
-            end += 1
+        var end = code.index(after: start)
+        while end < code.endIndex, code[end].isLetter || code[end].isNumber || code[end] == "_" {
+            code.formIndex(after: &end)
         }
         return end
     }
 
-    private func isKeyword(_ chars: [Character], _ start: Int, _ end: Int) -> Bool {
-        let word = String(chars[start ..< end])
+    private func isKeyword(_ code: String, _ start: String.Index, _ end: String.Index) -> Bool {
+        let word = String(code[start ..< end])
         if language.keywordsAreCaseInsensitive {
             return language.keywords.contains(word.lowercased())
         }
         return language.keywords.contains(word)
-    }
-
-    private func matches(_ chars: [Character], _ start: Int, _ token: String) -> Bool {
-        let token = Array(token)
-        guard start + token.count <= chars.count else { return false }
-
-        for offset in 0 ..< token.count where chars[start + offset] != token[offset] {
-            return false
-        }
-        return true
-    }
-}
-
-private extension Array {
-    /// Bounds-checked subscript so the lexer can peek past the ends without trapping.
-    nonisolated subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
     }
 }
 

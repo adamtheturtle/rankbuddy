@@ -9,8 +9,10 @@ import Testing
 struct SyntaxHighlightingTests {
     /// The lexer must never alter the source: concatenating every span reproduces the input.
     private func assertLossless(_ code: String, _ language: CodeLanguage) {
-        let spans = SyntaxHighlighter(language: language).spans(code)
+        let highlighter = SyntaxHighlighter(language: language)
+        let spans = highlighter.spans(code)
         #expect(spans.map(\.text).joined() == code)
+        #expect(highlighter.tokens(code).map { String(code[$0.range]) }.joined() == code)
     }
 
     private func kinds(_ code: String, _ language: CodeLanguage) -> [TokenKind] {
