@@ -95,4 +95,9 @@ struct SyntaxHighlightingTests {
     @Test func `scientific notation includes a signed exponent`() {
         #expect(text("1e+10 6.02e-23 2E3", .swift, of: .number) == ["1e+10", "6.02e-23", "2E3"])
     }
+
+    @Test func `decimal numbers do not consume or precede identifier letters`() {
+        #expect(text("123abc 42value", .swift, of: .number).isEmpty)
+        #expect(text("123.45 0x1A_F", .swift, of: .number) == ["123.45", "0x1A_F"])
+    }
 }

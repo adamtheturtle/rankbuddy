@@ -283,20 +283,46 @@ nonisolated struct SyntaxHighlighter {
             if previous.isLetter || previous == "_" { return nil }
         }
 
-        var end = start
-        while end < code.endIndex {
-            let char = code[end]
-            if char == "e" || char == "E", let exponentEnd = exponentEnd(code, marker: end) {
-                end = exponentEnd
-                continue
-            }
-            if char.isHexDigit || char == "." || char == "x" || char == "_" {
+        var end = code.index(after: start)
+        if code[start] == "0", end < code.endIndex, code[end] == "x" || code[end] == "X" {
+            return hexadecimalEnd(code, afterPrefix: code.index(after: end))
+        }
+
+        while end < code.endIndex, code[end].isNumber || code[end] == "_" {
+            code.formIndex(after: &end)
+        }
+        if end < code.endIndex, code[end] == "." {
+            code.formIndex(after: &end)
+            while end < code.endIndex, code[end].isNumber || code[end] == "_" {
                 code.formIndex(after: &end)
-            } else {
-                break
             }
         }
+        if end < code.endIndex,
+           code[end] == "e" || code[end] == "E",
+           let exponentEnd = exponentEnd(code, marker: end) {
+            end = exponentEnd
+        }
+        guard !continuesIdentifier(code, at: end) else { return nil }
+
         return end
+    }
+
+    private func hexadecimalEnd(_ code: String, afterPrefix start: String.Index) -> String.Index? {
+        var end = start
+        var hasDigit = false
+        while end < code.endIndex, code[end].isHexDigit || code[end] == "_" {
+            hasDigit = hasDigit || code[end].isHexDigit
+            code.formIndex(after: &end)
+        }
+        guard hasDigit, !continuesIdentifier(code, at: end) else { return nil }
+
+        return end
+    }
+
+    private func continuesIdentifier(_ code: String, at index: String.Index) -> Bool {
+        guard index < code.endIndex else { return false }
+
+        return code[index].isLetter || code[index].isNumber || code[index] == "_"
     }
 
     private func exponentEnd(_ code: String, marker: String.Index) -> String.Index? {
