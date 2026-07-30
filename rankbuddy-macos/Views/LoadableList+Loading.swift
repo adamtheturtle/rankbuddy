@@ -40,7 +40,7 @@ extension LoadableList {
             phase = .loaded
             // Cached rows are shown immediately; the load below is a background refresh (#102).
             isBackgroundRefreshing = true
-            await restoreIfNeeded(items)
+            await restoreIfNeeded(items, isProvisional: true)
         } else if preservesVisibleState {
             // Keep the current rows/detail in place until the server returns the filtered page, so
             // changing an interviews date chip doesn't flash through an empty intermediate state.
@@ -177,7 +177,7 @@ extension LoadableList {
     /// detail was open — scrolls to the saved free-scroll anchor. A missing item (deleted, a
     /// different account, or only on a not-yet-loaded page) simply leaves the list at the top
     /// — no loops, no blank pane (#19).
-    func restoreIfNeeded(_ items: [Item]) async {
+    func restoreIfNeeded(_ items: [Item], isProvisional: Bool = false) async {
         guard !didRestore, detailItem == nil else { return }
 
         let storedDetail = restorationKey.flatMap { UserDefaults.standard.string(forKey: $0) }
@@ -186,7 +186,8 @@ extension LoadableList {
             storedDetailID: storedDetail,
             storedAnchorID: storedAnchor,
             items: items,
-            hasMorePages: nextCursor != nil
+            hasMorePages: nextCursor != nil,
+            isProvisional: isProvisional
         ) else { return }
 
         didRestore = true

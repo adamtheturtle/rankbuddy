@@ -68,6 +68,16 @@ struct ListRestorationTests {
         ))
     }
 
+    @Test func `a missing target remains pending in provisional cached rows`() {
+        #expect(ListRestoration.isPending(
+            storedDetailID: "fresh-only",
+            storedAnchorID: nil,
+            items: items,
+            hasMorePages: false,
+            isProvisional: true
+        ))
+    }
+
     @Test func `the saved detail remains pending even when the scroll anchor is loaded`() {
         #expect(ListRestoration.isPending(
             storedDetailID: "later",

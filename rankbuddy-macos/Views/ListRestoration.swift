@@ -54,9 +54,10 @@ nonisolated enum ListRestoration {
         storedDetailID: String?,
         storedAnchorID: String?,
         items: [some Identifiable],
-        hasMorePages: Bool
+        hasMorePages: Bool,
+        isProvisional: Bool = false
     ) -> Bool {
-        guard hasMorePages else { return false }
+        guard hasMorePages || isProvisional else { return false }
 
         let targetID = storedDetailID ?? storedAnchorID
         guard let targetID else { return false }
