@@ -145,11 +145,16 @@ extension LoadableList {
             nextCursor = page.next
             totalCount = page.totalCount
             phase = .loaded
+            backgroundRefreshError = nil
             await autoLoadServerSearchResults()
         } catch {
             guard generation == loadGeneration, !Task.isCancelled else { return }
 
-            if items.isEmpty { phase = .failed(message(for: error)) }
+            if items.isEmpty {
+                phase = .failed(message(for: error))
+            } else {
+                backgroundRefreshError = "Search failed: \(message(for: error))"
+            }
         }
     }
 
