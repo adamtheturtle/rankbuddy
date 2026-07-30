@@ -6,6 +6,7 @@
 @testable import rankbuddy_macos
 import Testing
 
+@MainActor
 struct ListSortTests {
     private struct Item: Equatable {
         let value: Int?

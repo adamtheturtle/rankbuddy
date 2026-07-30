@@ -28,6 +28,10 @@ struct MarkdownExportTests {
         #expect(text == "Solve two sum & return.")
     }
 
+    @Test func `HTML entities are decoded exactly once`() {
+        #expect(MarkdownExport.plainText(fromHTML: "&amp;lt;tag&amp;gt;") == "&lt;tag&gt;")
+    }
+
     @Test func `inline field values are single-line and bounded`() {
         let oversized = String(repeating: "x", count: MarkdownExport.Limits.inlineCharacters + 1)
         let markdown = MarkdownExport.section("Candidate\nForged", [("Name", "Ada\n- forged"), ("Bio", oversized)])
@@ -47,10 +51,10 @@ struct MarkdownExportTests {
             ]
         )
 
-        #expect(markdown.contains(#"# \# \[Report\]\(https://example.com\)"#))
-        #expect(markdown.contains(#"_\_unsafe\__"#))
-        #expect(markdown.contains(#"## \* Section"#))
-        #expect(markdown.contains(#"- **La\*\*bel:** \`code\` \- \[link\]\(x\)"#))
+        #expect(markdown.contains("# \\# \\[Report\\]\\(https://example.com\\)"))
+        #expect(markdown.contains("_\\_unsafe\\__"))
+        #expect(markdown.contains("## \\* Section"))
+        #expect(markdown.contains("- **La\\*\\*bel:** \\`code\\` \\- \\[link\\]\\(x\\)"))
         #expect(markdown.contains("\\# Heading\n\\- item\n\\<script\\>alert\\(1\\)\\</script\\>"))
     }
 
