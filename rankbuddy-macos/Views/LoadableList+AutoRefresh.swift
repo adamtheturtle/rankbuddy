@@ -35,11 +35,7 @@ extension LoadableList {
         nextCursor = page.next
         totalCount = page.totalCount
         onFirstPage(page.items)
-        if let key = cacheKey {
-            await ListPageCache.store(
-                items: page.items, cursor: page.next, totalCount: page.totalCount, for: key
-            )
-        }
+        await cacheFirstPage(page)
         // Refresh the detail from the replacement row, or atomically clear both detail and
         // selection if the item disappeared elsewhere.
         reconcilePreservedSelection(in: items)

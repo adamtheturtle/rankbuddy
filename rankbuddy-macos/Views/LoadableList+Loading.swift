@@ -74,11 +74,7 @@ extension LoadableList {
             totalCount = page.totalCount
             phase = .loaded
             onFirstPage(page.items)
-            if let key = cacheKey {
-                await ListPageCache.store(
-                    items: page.items, cursor: page.next, totalCount: page.totalCount, for: key
-                )
-            }
+            await cacheFirstPage(page)
             if preservesVisibleState {
                 reconcilePreservedSelection(in: items)
             } else {
@@ -135,6 +131,14 @@ extension LoadableList {
 
     func message(for error: Error) -> String {
         (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+
+    func cacheFirstPage(_ page: Page<Item>) async {
+        guard let key = cacheKey else { return }
+
+        await ListPageCache.store(
+            items: page.items, cursor: page.next, totalCount: page.totalCount, for: key
+        )
     }
 
     /// Reconciles a preserved selection after a background server-filter reload. If the selected
