@@ -42,12 +42,12 @@ unreviewed automation. It is the human-readable counterpart to
 The validation tools are version-pinned in `ci.yml` and must be bumped in lockstep
 with the local toolchain and the config files they read:
 
-| Tool        | Pinned in            | Keep aligned with          |
-| ----------- | -------------------- | -------------------------- |
-| SwiftLint   | `ci.yml` (`0.63.3`)  | `.swiftlint.yml`           |
-| SwiftFormat | `ci.yml` (`0.61.1`)  | `.swiftformat`             |
-| actionlint  | `ci.yml` (`1.7.12`)  | the workflow syntax in use |
-| Swift/Xcode | `swift:6.2` container + `Xcode_26.5` on macOS | the app target's Swift version |
+| Tool        | Pinned in                                     | Keep aligned with               |
+| ----------- | --------------------------------------------- | ------------------------------- |
+| SwiftLint   | `ci.yml` (`0.63.3`)                           | `.swiftlint.yml`                |
+| SwiftFormat | `ci.yml` (`0.61.1`)                           | `.swiftformat`                  |
+| actionlint  | `ci.yml` (`1.7.12`)                           | the workflow syntax in use      |
+| Swift/Xcode | `swift:6.2` container + `Xcode_26.5` on macOS | the app target's Swift version  |
 
 When upgrading a tool locally, bump the version in `ci.yml` in the same change so
 local and CI parsing/build behavior stay identical.

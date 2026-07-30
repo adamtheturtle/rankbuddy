@@ -71,16 +71,16 @@ List endpoints use **offset/limit** pagination and return a top-level envelope:
 
 ## Endpoints used (read-only MVP)
 
-| Resource    | Path                                        |
-| ----------- | ------------------------------------------- |
-| Tests       | `GET /x/api/v3/tests`                        |
-| Candidates  | `GET /x/api/v3/tests/{test_id}/candidates`  |
-| Questions   | `GET /x/api/v3/questions`                    |
-| Interviews  | `GET /x/api/v3/interviews`                   |
-| Users       | `GET /x/api/v3/users`                        |
-| Current user| `GET /x/api/v3/users/me`                     |
-| Teams       | `GET /x/api/v3/teams`                        |
-| Team members| `GET /x/api/v3/teams/{team_id}/users`       |
+| Resource     | Path                                         |
+| ------------ | -------------------------------------------- |
+| Tests        | `GET /x/api/v3/tests`                        |
+| Candidates   | `GET /x/api/v3/tests/{test_id}/candidates`   |
+| Questions    | `GET /x/api/v3/questions`                    |
+| Interviews   | `GET /x/api/v3/interviews`                   |
+| Users        | `GET /x/api/v3/users`                        |
+| Current user | `GET /x/api/v3/users/me`                     |
+| Teams        | `GET /x/api/v3/teams`                        |
+| Team members | `GET /x/api/v3/teams/{team_id}/users`        |
 
 Candidates exist only in the context of a test, so RankBuddy nests them under a test
 rather than offering a global candidates list. `users/me` returns a single user object
