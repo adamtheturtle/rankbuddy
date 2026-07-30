@@ -669,6 +669,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("At least one"))
     }
 
+    @Test func `update_team rejects a blank target id`() async {
+        let result = await writeProvider().callTool(
+            "update_team",
+            arguments: ["team_id": .string(" \n"), "name": .string("Backend")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("team_id"))
+    }
+
     @Test func `invite_candidate rejects additional time beyond the product limit`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

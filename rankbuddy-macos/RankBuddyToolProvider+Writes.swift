@@ -638,7 +638,10 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func updateTeamTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let teamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
+        guard let rawTeamID = stringArgument(arguments, "team_id") else { return missingArgument("team_id") }
+        guard let teamID = Self.normalizedOptionalString(rawTeamID) else {
+            return errorResult("`team_id` must not be empty.")
+        }
 
         let allowedInviteRoles = ["recruiter", "interviewer", "developer"]
         let inviteAs = Self.normalizedOptionalString(stringArgument(arguments, "invite_as"))?.lowercased()
