@@ -14,4 +14,11 @@ struct PersonDetailTests {
         #expect(!UserLockAvailability.canLock(status: "active", activated: false))
         #expect(UserLockAvailability.canLock(status: nil, activated: nil))
     }
+
+    @Test func `team labels retain resolved names and fall back per id`() {
+        #expect(PersonTeamResolution.labels(
+            ids: ["team-1", "team-2"],
+            namesByID: ["team-1": "Platform"]
+        ) == ["Platform", "team-2"])
+    }
 }

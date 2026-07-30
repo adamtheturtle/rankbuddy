@@ -27,6 +27,12 @@ nonisolated enum UserLockAvailability {
     }
 }
 
+nonisolated enum PersonTeamResolution {
+    static func labels(ids: [String], namesByID: [String: String]) -> [String] {
+        ids.map { namesByID[$0] ?? $0 }
+    }
+}
+
 /// Detail for a single user. With an account it is editable in place — name, role, and
 /// admin flags save per field (PadBuddy's pad-detail Properties pattern) — and offers a
 /// destructive Lock User action; without one it stays read-only (#147).
@@ -234,11 +240,9 @@ struct PersonDetailView: View {
                 cursor = page.next
             } while cursor != nil && namesByID.count < wantedIDs.count
 
-            resolvedTeamNames = ids.map {
-                namesByID[$0] ?? $0
-            }
+            resolvedTeamNames = PersonTeamResolution.labels(ids: ids, namesByID: namesByID)
         } catch {
-            resolvedTeamNames = nil
+            resolvedTeamNames = PersonTeamResolution.labels(ids: ids, namesByID: namesByID)
         }
     }
 }
