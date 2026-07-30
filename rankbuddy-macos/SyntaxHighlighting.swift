@@ -118,6 +118,19 @@ nonisolated enum CodeLanguage: Hashable {
 nonisolated struct SyntaxHighlighter {
     let language: CodeLanguage
 
+    private enum StringEscape {
+        case backslash
+        case doubledQuote
+        case literal
+    }
+
+    private struct StringRule {
+        let prefix: String
+        let terminator: String
+        let escape: StringEscape
+        let allowsNewline: Bool
+    }
+
     /// Splits `code` into ordered spans. Comments and strings take precedence over keywords and
     /// numbers, so a keyword inside a string or comment is not mis-coloured.
     func spans(_ code: String) -> [SyntaxSpan] {
@@ -195,27 +208,70 @@ nonisolated struct SyntaxHighlighter {
     }
 
     private func stringEnd(_ code: String, from start: String.Index) -> String.Index? {
-        let delimiters: Set<Character> = ["\"", "'", "`"]
-        let delimiter = code[start]
-        guard delimiters.contains(delimiter) else { return nil }
+        guard let rule = stringRule(code, from: start) else { return nil }
 
-        var end = code.index(after: start)
+        var end = code.index(start, offsetBy: rule.prefix.count)
         while end < code.endIndex {
-            if code[end] == "\\" {
+            if rule.escape == .backslash, code[end] == "\\" {
                 code.formIndex(after: &end)
                 if end < code.endIndex {
                     code.formIndex(after: &end)
                 }
                 continue
             }
-            if code[end] == delimiter { return code.index(after: end) }
+            if rule.escape == .doubledQuote, code[end...].hasPrefix("\"\"") {
+                end = code.index(end, offsetBy: 2)
+                continue
+            }
+            if code[end...].hasPrefix(rule.terminator) {
+                return code.index(end, offsetBy: rule.terminator.count)
+            }
             // A bare delimiter that never closes on its line is not a string (e.g. an apostrophe
             // in prose) — bail so it stays plain.
-            if code[end] == "\n" { return nil }
+            if !rule.allowsNewline, code[end] == "\n" { return nil }
 
             code.formIndex(after: &end)
         }
         return nil
+    }
+
+    private func stringRule(_ code: String, from start: String.Index) -> StringRule? {
+        if language == .swift {
+            var quote = start
+            while quote < code.endIndex, code[quote] == "#" {
+                code.formIndex(after: &quote)
+            }
+            if quote > start, quote < code.endIndex, code[quote] == "\"" {
+                let hashes = String(code[start ..< quote])
+                return StringRule(
+                    prefix: hashes + "\"",
+                    terminator: "\"" + hashes,
+                    escape: .literal,
+                    allowsNewline: false
+                )
+            }
+        }
+
+        if language == .cFamily {
+            for prefix in ["$@\"", "@$\"", "@\"", "$\""] where code[start...].hasPrefix(prefix) {
+                return StringRule(
+                    prefix: prefix,
+                    terminator: "\"",
+                    escape: prefix.contains("@") ? .doubledQuote : .backslash,
+                    allowsNewline: prefix.contains("@")
+                )
+            }
+        }
+
+        let delimiter = code[start]
+        guard ["\"", "'", "`"].contains(delimiter) else { return nil }
+
+        return StringRule(
+            prefix: String(delimiter),
+            terminator: String(delimiter),
+            escape: .backslash,
+            allowsNewline: false
+        )
     }
 
     private func numberEnd(_ code: String, from start: String.Index) -> String.Index? {

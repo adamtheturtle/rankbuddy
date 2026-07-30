@@ -55,6 +55,28 @@ struct SyntaxHighlightingTests {
         #expect(!spans.contains { $0.kind == .keyword && $0.text == "return" })
     }
 
+    @Test func `swift raw string matches its hash delimiter`() {
+        let raw = "##\"a quote \\\" and // text\"##"
+        #expect(text(raw, .swift, of: .string) == [raw])
+        #expect(text(raw, .swift, of: .comment).isEmpty)
+    }
+
+    @Test func `c sharp interpolated and verbatim strings protect their contents`() {
+        let code = #"$"value {item} // text" @"quote "" and /* text */" $@"{item} // text""#
+        #expect(text(code, .cFamily, of: .string) == [
+            #"$"value {item} // text""#,
+            #"@"quote "" and /* text */""#,
+            #"$@"{item} // text""#
+        ])
+        #expect(text(code, .cFamily, of: .comment).isEmpty)
+    }
+
+    @Test func `javascript template interpolation stays in the string token`() {
+        let template = #"`value ${item ?? "// text"}`"#
+        #expect(text(template, .javascript, of: .string) == [template])
+        #expect(text(template, .javascript, of: .comment).isEmpty)
+    }
+
     @Test func `block comments span multiple lines for c-family`() {
         let code = "int x; /* a\nb */ y"
         #expect(text(code, .cFamily, of: .comment) == ["/* a\nb */"])
