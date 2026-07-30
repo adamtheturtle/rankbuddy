@@ -7,6 +7,7 @@ import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 
+// swiftlint:disable file_length
 // swiftlint:disable:next type_body_length
 struct TestDetailView: View {
     let test: Test
@@ -27,6 +28,7 @@ struct TestDetailView: View {
     @State private var detail: TestDetail?
     @State private var detailTest: Test?
     @State private var inviters: [TestInviter] = []
+    @State private var inviterLoadError: String?
     @State private var passwordRevealed = false
     @State private var commandOwner = UUID()
 
@@ -138,6 +140,19 @@ struct TestDetailView: View {
                                     }
                                 }
                                 .textSelection(.enabled)
+                            }
+                        }
+                    }
+
+                    if let inviterLoadError {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Inviters couldn’t be loaded.")
+                                .foregroundStyle(.secondary)
+                            Text(inviterLoadError)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Button("Retry") {
+                                Task { await retryInviters(for: requestIdentity) }
                             }
                         }
                     }
@@ -316,18 +331,38 @@ struct TestDetailView: View {
         detail = nil
         detailTest = nil
         inviters = []
+        inviterLoadError = nil
         passwordRevealed = false
         let client = HackerRankClient(account: account)
         let metadataClient = HackerRankDetailMetadataClient(account: account)
         async let loadedDetail = try? client.test(id: test.id)
-        async let loadedInviters = try? client.testInviters(testID: test.id)
+        async let loadedInviters = fetchInviters(account: account, testID: test.id)
         async let loadedMetadata = try? metadataClient.test(id: test.id)
         let loaded = await (loadedDetail, loadedInviters, loadedMetadata)
         guard !Task.isCancelled, identity == requestIdentity else { return }
 
         detail = loaded.0
-        inviters = loaded.1?.items ?? []
+        inviters = loaded.1.items
+        inviterLoadError = loaded.1.error
         detailTest = loaded.2?.applying(to: test)
+    }
+
+    private func retryInviters(for identity: TestDetailRequestIdentity) async {
+        inviterLoadError = nil
+        let loaded = await fetchInviters(account: account, testID: test.id)
+        guard !Task.isCancelled, identity == requestIdentity else { return }
+
+        inviters = loaded.items
+        inviterLoadError = loaded.error
+    }
+
+    private func fetchInviters(account: Account, testID: String) async -> (items: [TestInviter], error: String?) {
+        do {
+            let items = try await HackerRankClient(account: account).testInviters(testID: testID).items
+            return (items, nil)
+        } catch {
+            return ([], (error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
     }
 
     private func beginDelete() {
