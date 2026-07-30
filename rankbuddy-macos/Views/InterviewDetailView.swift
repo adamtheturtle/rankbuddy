@@ -16,6 +16,8 @@ struct InterviewDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppCommandContext.self) private var commandContext
     @State private var detail: InterviewDetail?
+    @State private var detailError: String?
+    @State private var isDetailLoading = false
     @State private var transcript: InterviewTranscript?
     @State private var transcriptError: String?
     @State private var isTranscriptLoading = false
@@ -97,6 +99,8 @@ struct InterviewDetailView: View {
     var body: some View {
         Form {
             InspectorHeader(title: displayTitle, badges: interview.inspectorBadges, onRename: renameAction)
+
+            detailLoadStatus
 
             Section("Properties") {
                 OptionalRow("Status", DisplayFormat.enumLabel(interview.status))
@@ -254,6 +258,22 @@ struct InterviewDetailView: View {
 
     private static let iso8601 = ISO8601DateFormatter()
 
+    @ViewBuilder private var detailLoadStatus: some View {
+        if isDetailLoading {
+            Section {
+                ProgressView("Loading interview details…")
+            }
+        } else if let detailError {
+            Section {
+                Label(detailError, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.red)
+                Button("Retry Details") {
+                    Task { await loadInterviewDetail(for: requestIdentity) }
+                }
+            }
+        }
+    }
+
     private var transcriptSection: some View {
         Section("Transcript") {
             if isTranscriptLoading {
@@ -345,22 +365,53 @@ struct InterviewDetailView: View {
     /// where a single owning account isn't known, so the wrong account is never queried.
     private func loadDetail(for identity: InterviewDetailRequestIdentity) async {
         detail = nil
+        detailError = nil
+        isDetailLoading = true
         transcript = nil
         transcriptError = nil
         isTranscriptLoading = true
         guard let account = owningAccount else {
+            isDetailLoading = false
             isTranscriptLoading = false
             return
         }
 
         let client = HackerRankClient(account: account)
-        async let fetchedDetail = try? client.interview(id: interview.id)
+        async let fetchedDetail = Self.fetchDetail(client: client, interviewID: interview.id)
         async let fetchedTranscript = Self.fetchTranscript(client: client, interviewID: interview.id)
         let loaded = await (fetchedDetail, fetchedTranscript)
         guard !Task.isCancelled, identity == requestIdentity else { return }
 
-        detail = loaded.0
+        applyDetailResult(loaded.0)
         applyTranscriptResult(loaded.1)
+    }
+
+    private func loadInterviewDetail(for identity: InterviewDetailRequestIdentity) async {
+        detail = nil
+        detailError = nil
+        isDetailLoading = true
+        guard let account = owningAccount else {
+            isDetailLoading = false
+            return
+        }
+
+        let result = await Self.fetchDetail(
+            client: HackerRankClient(account: account),
+            interviewID: interview.id
+        )
+        guard !Task.isCancelled, identity == requestIdentity else { return }
+
+        applyDetailResult(result)
+    }
+
+    private func applyDetailResult(_ result: DetailLoadResult) {
+        isDetailLoading = false
+        switch result {
+        case let .loaded(value):
+            detail = value
+        case let .failed(message):
+            detailError = message
+        }
     }
 
     private func loadTranscript(for identity: InterviewDetailRequestIdentity) async {
@@ -394,6 +445,22 @@ struct InterviewDetailView: View {
     private enum TranscriptLoadResult {
         case loaded(InterviewTranscript)
         case failed(String)
+    }
+
+    private enum DetailLoadResult {
+        case loaded(InterviewDetail)
+        case failed(String)
+    }
+
+    private nonisolated static func fetchDetail(
+        client: HackerRankClient,
+        interviewID: String
+    ) async -> DetailLoadResult {
+        do {
+            return try await .loaded(client.interview(id: interviewID))
+        } catch {
+            return .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
     }
 
     private nonisolated static func fetchTranscript(
