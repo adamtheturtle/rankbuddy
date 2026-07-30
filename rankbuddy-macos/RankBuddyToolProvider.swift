@@ -245,15 +245,18 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     // MARK: - Account resolution
 
-    /// The account matching `identifier` (label or id), or the current account when nil/unknown.
+    /// The account matching `identifier` (label or UUID), or the current account when omitted.
+    /// An explicit unknown identifier fails closed so writes can never drift to another org.
     /// Internal (not private) so the write-tools extension in another file can resolve too (#73).
     @MainActor
     func resolveAccount(_ identifier: String?) -> Account? {
         let store = makeStore()
         guard let identifier else { return store.currentAccount }
 
-        return store.accounts.first { $0.label == identifier || $0.id.uuidString == identifier }
-            ?? store.currentAccount
+        if let id = UUID(uuidString: identifier) {
+            return store.accounts.first { $0.id == id }
+        }
+        return store.accounts.first { $0.label == identifier }
     }
 
     // MARK: - List tools

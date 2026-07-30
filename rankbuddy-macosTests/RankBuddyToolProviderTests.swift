@@ -126,6 +126,19 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.isKnownTool("update_test"))
     }
 
+    @Test func `account resolution accepts UUID casing and rejects unknown targets`() {
+        let current = Account(label: "Current", token: "current")
+        let target = Account(label: "Target", token: "target")
+        let provider = RankBuddyToolProvider(makeStore: {
+            AccountStore.rankBuddy(isTesting: true, seed: [current, target])
+        })
+
+        #expect(provider.resolveAccount(target.id.uuidString.lowercased())?.id == target.id)
+        #expect(provider.resolveAccount("Target")?.id == target.id)
+        #expect(provider.resolveAccount(UUID().uuidString) == nil)
+        #expect(provider.resolveAccount("Missing") == nil)
+    }
+
     @Test func `write audit summaries identify targets and redact email addresses`() {
         let detail = RankBuddyToolProvider.callDetail(
             tool: "remove_team_member",
