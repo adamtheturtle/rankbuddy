@@ -71,6 +71,10 @@ struct QuestionDetailView: View {
         account ?? (store.isMergedView ? nil : store.currentAccount)
     }
 
+    private var requestIdentity: QuestionDetailRequestIdentity {
+        QuestionDetailRequestIdentity(accountID: owningAccount?.id, questionID: question.id)
+    }
+
     /// The freshest copy of the question: saved edits overlay the detail metadata, then the list row.
     private var displayed: Question {
         editOverlay.applying(to: detailQuestion ?? question)
@@ -183,7 +187,7 @@ struct QuestionDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayed.name)
-        .task(id: question.id) { await loadDetail() }
+        .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onChange(of: scenePhase) { _, phase in
@@ -431,7 +435,7 @@ extension QuestionDetailView {
     /// Fetches the richer question detail on selection (#105). Best-effort — a failure leaves the
     /// base list-row detail intact — and skipped in the merged view, where the owning account is
     /// ambiguous, so the wrong account is never queried. Re-hides the answer for each question.
-    private func loadDetail() async {
+    private func loadDetail(for identity: QuestionDetailRequestIdentity) async {
         detail = nil
         detailQuestion = nil
         answerRevealed = false
@@ -441,9 +445,11 @@ extension QuestionDetailView {
         let metadataClient = HackerRankDetailMetadataClient(account: account)
         async let loadedDetail = try? client.question(id: question.id)
         async let loadedMetadata = try? metadataClient.question(id: question.id)
+        let loaded = await (loadedDetail, loadedMetadata)
+        guard !Task.isCancelled, identity == requestIdentity else { return }
 
-        detail = await loadedDetail
-        detailQuestion = await (loadedMetadata).flatMap(\.self)?.applying(to: question)
+        detail = loaded.0
+        detailQuestion = loaded.1?.applying(to: question)
     }
 }
 

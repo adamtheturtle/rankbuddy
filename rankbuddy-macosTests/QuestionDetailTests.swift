@@ -74,4 +74,14 @@ struct QuestionDetailTests {
         #expect(overlay.applying(to: original).name == "Renamed")
         #expect(overlay.applying(to: refreshed).languages == ["python"])
     }
+
+    @Test func `detail request identity includes account and question`() {
+        let accountA = UUID()
+        let accountB = UUID()
+        let original = QuestionDetailRequestIdentity(accountID: accountA, questionID: "q1")
+
+        #expect(original != QuestionDetailRequestIdentity(accountID: accountB, questionID: "q1"))
+        #expect(original != QuestionDetailRequestIdentity(accountID: accountA, questionID: "q2"))
+        #expect(original == QuestionDetailRequestIdentity(accountID: accountA, questionID: "q1"))
+    }
 }

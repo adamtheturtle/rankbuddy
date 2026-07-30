@@ -3,7 +3,13 @@
 //  rankbuddy-macos
 //
 
+import Foundation
 import HackerRankKit
+
+nonisolated struct QuestionDetailRequestIdentity: Hashable {
+    let accountID: UUID?
+    let questionID: String
+}
 
 /// A question plus the rich fields currently available in its inspector.
 nonisolated struct QuestionReportData {
