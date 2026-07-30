@@ -32,6 +32,11 @@ enum CandidateInviteValidation {
         additionalTime.map(additionalTimeRange.contains) ?? true
     }
 
+    static func normalizedFullName(_ value: String) -> String? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
     static func normalizedTags(_ value: String) -> [String]? {
         var seen: Set<String> = []
         let tags = value.split(separator: ",")
@@ -124,7 +129,7 @@ struct InviteCandidateSheet: View {
 
     private var textValidationIssue: String? {
         CandidateInviteValidation.textIssue(.init(
-            fullName: trimmed(fullName),
+            fullName: CandidateInviteValidation.normalizedFullName(fullName),
             tags: CandidateInviteValidation.normalizedTags(tags),
             evaluatorEmail: trimmed(evaluatorEmail),
             emailSubject: trimmed(emailSubject),
@@ -251,7 +256,7 @@ struct InviteCandidateSheet: View {
             try await HackerRankClient(account: account).inviteCandidate(
                 testID: testID,
                 email: trimmedEmail,
-                fullName: fullName,
+                fullName: CandidateInviteValidation.normalizedFullName(fullName),
                 sendEmail: sendEmail,
                 options: CandidateInviteOptions(
                     validFrom: trimmed(validFrom),

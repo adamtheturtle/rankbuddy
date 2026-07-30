@@ -41,6 +41,11 @@ struct InviteCandidateTests {
         #expect(CandidateInviteValidation.normalizedTags(" , ") == nil)
     }
 
+    @Test func `optional candidate names are trimmed and omitted when blank`() {
+        #expect(CandidateInviteValidation.normalizedFullName("  Ada Lovelace \n") == "Ada Lovelace")
+        #expect(CandidateInviteValidation.normalizedFullName(" \n ") == nil)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
