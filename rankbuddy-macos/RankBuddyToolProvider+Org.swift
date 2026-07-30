@@ -24,7 +24,13 @@ extension RankBuddyToolProvider {
         account: String?
     ) async -> CallTool.Result {
         switch name {
-        case "list_users": return await listUsers(account: account)
+        case "list_users":
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+
+            return await listUsers(cursor: cursor, account: account)
 
         case "list_teams":
             let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
@@ -39,16 +45,17 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
-    private func listUsers(account: String?) async -> CallTool.Result {
+    private func listUsers(cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let page = try await HackerRankClient(account: resolved).usersPage()
+            let page = try await HackerRankClient(account: resolved).usersPage(after: cursor)
             let items = page.items.map {
                 ["id": $0.id, "email": $0.email, "name": $0.displayName, "role": $0.role ?? ""]
             }
             return jsonResult(pageMetadata(page).merging([
-                "account": resolved.label, "users": items
+                "account": resolved.label, "users": items,
+                "next_cursor": page.next ?? NSNull()
             ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list users: \(error.localizedDescription)")

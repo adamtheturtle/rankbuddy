@@ -75,6 +75,7 @@ struct RankBuddyToolProviderTests {
         #expect(result.isError != true)
         #expect(body.contains("\"users\""))
         #expect(body.contains("rhea@example.com"))
+        #expect(body.contains("\"next_cursor\""))
         #expect(!body.contains("\"returned_count\" : 0"))
         #expect(!body.contains("\"count\""))
     }
