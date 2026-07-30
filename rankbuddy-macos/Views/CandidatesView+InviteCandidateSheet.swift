@@ -273,6 +273,7 @@ struct InviteCandidateSheet: View {
             }
         }
         .frame(width: 500, height: 560)
+        .interactiveDismissDisabled(isSending)
         .task { await loadTemplates() }
         .onDisappear { mutationTask?.cancel() }
     }

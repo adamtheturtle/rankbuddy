@@ -69,6 +69,7 @@ struct CreateTeamSheet: View {
             }
         }
         .frame(width: 440, height: 240)
+        .interactiveDismissDisabled(isSending)
         .onDisappear { mutationTask?.cancel() }
     }
 
@@ -148,6 +149,7 @@ struct AddTeamMemberSheet: View {
             }
         }
         .frame(width: 440, height: 280)
+        .interactiveDismissDisabled(isSending)
         .onDisappear { mutationTask?.cancel() }
     }
 

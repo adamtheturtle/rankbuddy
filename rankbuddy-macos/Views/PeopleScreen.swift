@@ -278,6 +278,7 @@ struct CreateUserSheet: View {
         // Grow the sheet when the error section appears so the form doesn't have to scroll to
         // show it (server messages can wrap to a few lines).
         .frame(width: 440, height: errorMessage == nil ? 360 : 460)
+        .interactiveDismissDisabled(isSending)
         .onDisappear { mutationTask?.cancel() }
         .task { await loadTeams() }
     }

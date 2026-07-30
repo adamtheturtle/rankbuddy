@@ -115,6 +115,7 @@ struct NewPadSheet: View {
             }
         }
         .frame(width: 440, height: 240)
+        .interactiveDismissDisabled(isSending)
         .onDisappear { mutationTask?.cancel() }
     }
 
@@ -216,6 +217,7 @@ struct ScheduleInterviewSheet: View {
             }
         }
         .frame(width: 460, height: 380)
+        .interactiveDismissDisabled(isSending)
         .onDisappear { mutationTask?.cancel() }
     }
 

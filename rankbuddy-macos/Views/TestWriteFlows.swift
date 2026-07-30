@@ -117,6 +117,7 @@ struct TestEditorSheet: View {
             }
         }
         .frame(width: 440, height: 220)
+        .interactiveDismissDisabled(isSending)
         .onDisappear { mutationTask?.cancel() }
     }
 
