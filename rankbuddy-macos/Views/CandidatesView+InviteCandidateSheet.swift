@@ -47,6 +47,16 @@ enum CandidateInviteValidation {
         return "Valid until must be later than Valid from."
     }
 
+    static func validityTimestampIssue(validFrom: String?, validUntil: String?) -> String? {
+        if let validFrom, parsedTimestamp(validFrom) == nil {
+            return "Valid from must be an ISO-8601 timestamp."
+        }
+        if let validUntil, parsedTimestamp(validUntil) == nil {
+            return "Valid until must be an ISO-8601 timestamp."
+        }
+        return nil
+    }
+
     static func normalizedFullName(_ value: String) -> String? {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
@@ -151,8 +161,16 @@ struct InviteCandidateSheet: View {
         isEmailValid
             && evaluatorEmailValid
             && additionalTimeValid
+            && validityTimestampIssue == nil
             && validityOrderIssue == nil
             && textValidationIssue == nil
+    }
+
+    private var validityTimestampIssue: String? {
+        CandidateInviteValidation.validityTimestampIssue(
+            validFrom: trimmed(validFrom),
+            validUntil: trimmed(validUntil)
+        )
     }
 
     private var validityOrderIssue: String? {
@@ -211,6 +229,9 @@ struct InviteCandidateSheet: View {
                 } footer: {
                     if !additionalTimeValid {
                         Text("Additional time must be a whole number from 0 to 1,440 minutes.")
+                            .foregroundStyle(.red)
+                    } else if let validityTimestampIssue {
+                        Text(validityTimestampIssue)
                             .foregroundStyle(.red)
                     } else if let validityOrderIssue {
                         Text(validityOrderIssue)

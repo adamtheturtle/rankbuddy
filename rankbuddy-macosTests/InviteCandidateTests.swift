@@ -105,4 +105,19 @@ struct InviteCandidateTests {
             validUntil: "also-not-yet-validated"
         ) == nil)
     }
+
+    @Test func `invitation validity timestamps must be ISO 8601`() {
+        #expect(CandidateInviteValidation.validityTimestampIssue(
+            validFrom: "2026-08-01T10:00:00Z",
+            validUntil: "2026-08-01T11:00:00.500Z"
+        ) == nil)
+        #expect(CandidateInviteValidation.validityTimestampIssue(
+            validFrom: "tomorrow morning",
+            validUntil: nil
+        ) == "Valid from must be an ISO-8601 timestamp.")
+        #expect(CandidateInviteValidation.validityTimestampIssue(
+            validFrom: nil,
+            validUntil: "next week"
+        ) == "Valid until must be an ISO-8601 timestamp.")
+    }
 }
