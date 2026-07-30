@@ -13,6 +13,7 @@ import SwiftUI
 struct TestsScreen: View {
     @Environment(AccountStore.self) private var store
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(AppCommandContext.self) private var commandContext
     @Environment(\.openWindow) private var openWindow
     @Environment(\.undoManager) private var undoManager
     @State private var createPresented = false
@@ -136,12 +137,21 @@ struct TestsScreen: View {
             .sheet(isPresented: $createPresented) {
                 TestEditorSheet(account: account, mode: .create) { reloadToken += 1 }
             }
+            .onAppear { consumeCreationRequest() }
+            .onChange(of: commandContext.creationRequest) { consumeCreationRequest() }
         } else {
             NavigationStack {
                 NoAccountView()
                     .navigationTitle("Tests")
             }
         }
+    }
+
+    private func consumeCreationRequest() {
+        guard commandContext.creationRequest == .test else { return }
+
+        commandContext.creationRequest = nil
+        createPresented = true
     }
 
     private var createButton: some View {

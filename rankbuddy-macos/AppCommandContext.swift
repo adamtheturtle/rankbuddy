@@ -10,6 +10,11 @@ import SwiftUI
 @Observable
 @MainActor
 final class AppCommandContext {
+    enum CreationRequest: Equatable {
+        case scheduleInterview
+        case test
+    }
+
     struct Action {
         let title: String
         var isEnabled: @MainActor () -> Bool = { true }
@@ -32,6 +37,7 @@ final class AppCommandContext {
     /// Reloads the visible list (⌘R). Mirrors PadBuddy, whose Reload lives on the Go menu so the
     /// toolbar's Refresh button can be hidden from the default toolbar (#101).
     var refresh: Action?
+    var creationRequest: CreationRequest?
 
     func clearListActions() {
         primaryNew = nil

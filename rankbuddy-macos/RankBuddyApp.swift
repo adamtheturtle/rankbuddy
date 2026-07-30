@@ -140,6 +140,7 @@ struct RankBuddyApp: App {
         MenuBarExtra("RankBuddy", systemImage: "checklist", isInserted: menuBarInserted) {
             MenuBarContent()
                 .environment(accountStore)
+                .environment(commandContext)
                 .environment(\.openURL, browserOpenURLAction)
         }
     }

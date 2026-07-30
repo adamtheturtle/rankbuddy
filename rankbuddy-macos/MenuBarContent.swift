@@ -25,20 +25,12 @@ struct MenuBarContent: View {
     }
 
     @Environment(AccountStore.self) private var store
-    @State private var createSheet: MenuBarCreateSheet?
+    @Environment(AppCommandContext.self) private var commandContext
     @State private var padError: String?
 
     var body: some View {
         Group {
             menuItems
-        }
-        .sheet(item: $createSheet) { sheet in
-            switch sheet {
-            case let .scheduledInterview(account):
-                ScheduleInterviewSheet(account: account) { finishCreate(in: .interviews) }
-            case let .test(account):
-                TestEditorSheet(account: account, mode: .create) { finishCreate(in: .tests) }
-            }
         }
         .alert("Couldn’t Create Pad", isPresented: padErrorPresented) {
             Button("OK") { padError = nil }
@@ -170,14 +162,16 @@ struct MenuBarContent: View {
                 }
 
                 Button {
-                    if let account = writableAccount { createSheet = .scheduledInterview(account) }
+                    commandContext.creationRequest = .scheduleInterview
+                    finishCreate(in: .interviews)
                 } label: {
                     Label("Schedule Interview…", systemImage: "calendar.badge.plus")
                 }
                 .disabled(writableAccount == nil)
 
                 Button {
-                    if let account = writableAccount { createSheet = .test(account) }
+                    commandContext.creationRequest = .test
+                    finishCreate(in: .tests)
                 } label: {
                     Label("New Test…", systemImage: "doc.badge.plus")
                 }
@@ -326,19 +320,5 @@ enum RankBuddyLinks {
             URLQueryItem(name: "body", value: body)
         ]
         return components.url ?? URL(string: "mailto:\(feedbackEmail)") ?? apiDocs
-    }
-}
-
-/// The create sheet the menu bar is currently presenting (#121). The account is captured when
-/// the action is chosen so a later account switch does not retarget an already-open sheet.
-private enum MenuBarCreateSheet: Identifiable {
-    case scheduledInterview(Account)
-    case test(Account)
-
-    var id: String {
-        switch self {
-        case let .scheduledInterview(account): "scheduled-interview-\(account.id.uuidString)"
-        case let .test(account): "test-\(account.id.uuidString)"
-        }
     }
 }
