@@ -91,9 +91,10 @@ enum RankBuddyPalette {
                 systemImage: "star.fill",
                 searchText: "\(favorite.title) favourite \(favorite.collection.section.title)"
             ) {
-                UserDefaults.standard.set(
-                    favorite.itemID,
-                    forKey: "selection.\(favorite.collection.rawValue).\(favorite.accountID)"
+                RankBuddyDeepLink.open(
+                    collection: favorite.collection,
+                    accountID: favorite.accountID,
+                    itemID: favorite.itemID
                 )
                 selection.wrappedValue = favorite.collection.section
             }

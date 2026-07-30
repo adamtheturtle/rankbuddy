@@ -107,6 +107,9 @@ struct RankBuddyPaletteTests {
         #expect(box.value == .questions)
         // Routing writes the per-account selection key the Questions list restores from.
         #expect(UserDefaults.standard.string(forKey: "selection.questions.\(account.id)") == "q42")
+        // The live request reaches a Questions list that was already mounted.
+        #expect(DeepLinkRouter.shared.request?.key == "selection.questions.\(account.id)")
+        #expect(DeepLinkRouter.shared.request?.itemID == "q42")
     }
 
     @Test func `favourites contribute nothing when there are none`() {
