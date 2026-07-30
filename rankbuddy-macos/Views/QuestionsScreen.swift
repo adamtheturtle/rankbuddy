@@ -68,6 +68,16 @@ struct QuestionsScreen: View {
                         account: account.id
                     )
                 },
+                onItemsLoaded: { questions in
+                    favorites.refreshMetadata(from: questions.map {
+                        FavoriteRef(
+                            accountID: account.id.uuidString,
+                            collection: .questions,
+                            itemID: $0.id,
+                            title: $0.name
+                        )
+                    })
+                },
                 accessoryToolbar: { AnyView(createButton) },
                 primaryMenuAction: AppCommandContext.Action(title: "New Question…") { createPresented = true },
                 reloadToken: reloadToken,

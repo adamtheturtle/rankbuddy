@@ -88,6 +88,16 @@ struct TestsScreen: View {
                         account: account.id
                     )
                 },
+                onItemsLoaded: { tests in
+                    favorites.refreshMetadata(from: tests.map {
+                        FavoriteRef(
+                            accountID: account.id.uuidString,
+                            collection: .tests,
+                            itemID: $0.id,
+                            title: $0.name
+                        )
+                    })
+                },
                 accessoryToolbar: { AnyView(createButton) },
                 primaryMenuAction: AppCommandContext.Action(title: "New Test…") { createPresented = true },
                 reloadToken: reloadToken,

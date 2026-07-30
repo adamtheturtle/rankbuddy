@@ -52,6 +52,7 @@ extension LoadableList {
         guard let page = try? await loadPage(nil) else { return }
 
         items = page.items
+        onItemsLoaded(page.items)
         nextCursor = page.next
         totalCount = page.totalCount
         await cacheFirstPage(page)

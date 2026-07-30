@@ -118,6 +118,25 @@ final class FavoritesStore {
         replace(with: favorites + [ref], undoManager: undoManager, actionName: "Add Favourite")
     }
 
+    /// Refreshes display metadata for already-favourited items without adding new favourites or
+    /// changing their order.
+    func refreshMetadata(from refs: [FavoriteRef]) {
+        guard !hasUnreadableData else { return }
+
+        let titles = Dictionary(refs.map { ($0.id, $0.title) }, uniquingKeysWith: { _, newest in newest })
+        let refreshed = favorites.map { favorite in
+            guard let title = titles[favorite.id], title != favorite.title else { return favorite }
+
+            return FavoriteRef(
+                accountID: favorite.accountID,
+                collection: favorite.collection,
+                itemID: favorite.itemID,
+                title: title
+            )
+        }
+        replace(with: refreshed)
+    }
+
     /// Adds the item when absent, removes it when present. Returns the resulting state.
     @discardableResult
     func toggle(_ ref: FavoriteRef, undoManager: UndoManager? = nil) -> Bool {

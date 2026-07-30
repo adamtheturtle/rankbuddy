@@ -60,6 +60,22 @@ struct FavoritesStoreTests {
         #expect(store.favorites.first(where: { $0.itemID == "t1" })?.title == "New title")
     }
 
+    @Test func `fresh metadata updates titles without adding or reordering favourites`() {
+        let store = FavoritesStore(defaults: makeDefaults(#function))
+        store.replace(with: [
+            ref("acc1", .tests, "t1", "Old title"),
+            ref("acc1", .questions, "q1", "Question")
+        ])
+
+        store.refreshMetadata(from: [
+            ref("acc1", .tests, "t1", "New title"),
+            ref("acc1", .tests, "not-favourited", "Ignored")
+        ])
+
+        #expect(store.favorites.map(\.itemID) == ["t1", "q1"])
+        #expect(store.favorites.map(\.title) == ["New title", "Question"])
+    }
+
     @Test func `loading persisted favourites repairs duplicate identities`() throws {
         let defaults = makeDefaults(#function)
         let encoded = try JSONEncoder().encode([

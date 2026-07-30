@@ -88,6 +88,16 @@ struct InterviewsScreen: View {
                         account: account.id
                     )
                 },
+                onItemsLoaded: { interviews in
+                    favorites.refreshMetadata(from: interviews.map {
+                        FavoriteRef(
+                            accountID: account.id.uuidString,
+                            collection: .interviews,
+                            itemID: $0.id,
+                            title: $0.title ?? "Interview \($0.id)"
+                        )
+                    })
+                },
                 accessoryToolbar: { AnyView(newMenu(account: account)) },
                 primaryMenuAction: AppCommandContext.Action(title: "New Pad…") { padPresented = true },
                 secondaryMenuAction: AppCommandContext.Action(title: "Schedule Interview…") {

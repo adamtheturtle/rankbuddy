@@ -116,6 +116,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     var openInWindow: ((Item) -> Void)?
     /// Called when an item is opened in the detail pane or a standalone window.
     var onOpen: (Item) -> Void = { _ in }
+    /// Called whenever a fresh page arrives, for lightweight metadata reconciliation.
+    var onItemsLoaded: ([Item]) -> Void = { _ in }
     /// Extra leading toolbar content (e.g. a write action like "Invite Candidate", #12).
     /// Defaults to nothing, keeping read-only lists unchanged.
     var accessoryToolbar: () -> AnyView = { AnyView(EmptyView()) }
