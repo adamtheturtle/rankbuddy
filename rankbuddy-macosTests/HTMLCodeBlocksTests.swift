@@ -49,6 +49,9 @@ struct HTMLCodeBlocksTests {
     @Test func `literal less than signs do not erase code`() {
         #expect(HTMLCodeBlocks.stripTags("if x < y {\nreturn x > 0") == "if x < y {\nreturn x > 0")
         #expect(HTMLCodeBlocks.stripTags("value <unfinished") == "value <unfinished")
+        #expect(HTMLCodeBlocks.stripTags("if (a<b && c>d)") == "if (a<b && c>d)")
+        #expect(HTMLCodeBlocks.stripTags("Array<String> values") == "Array<String> values")
+        #expect(HTMLCodeBlocks.stripTags("<code class=\"swift\">let x = 1</code>") == "let x = 1")
     }
 
     @Test func `language hint reads from a lang attribute on pre`() {

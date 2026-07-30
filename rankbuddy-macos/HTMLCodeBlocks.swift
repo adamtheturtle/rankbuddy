@@ -153,17 +153,15 @@ nonisolated enum HTMLCodeBlocks {
             }
 
             let contentStart = html.index(after: index)
-            guard contentStart < html.endIndex, isTagOpening(in: html, at: contentStart) else {
+            guard contentStart < html.endIndex,
+                  let close = html[contentStart...].firstIndex(of: ">"),
+                  let tag = knownTagName(in: html[contentStart ..< close])
+            else {
                 result.append("<")
                 index = contentStart
                 continue
             }
-            guard let close = html[contentStart...].firstIndex(of: ">") else {
-                result.append(contentsOf: html[index...])
-                break
-            }
 
-            let tag = html[contentStart ..< close].lowercased()
             if tag.hasPrefix("br") || tag == "/div" || tag == "/p" {
                 result.append("\n")
             }
@@ -172,14 +170,24 @@ nonisolated enum HTMLCodeBlocks {
         return result
     }
 
-    private static func isTagOpening(in html: String, at index: String.Index) -> Bool {
-        if html[index].isLetter || html[index] == "!" || html[index] == "?" {
-            return true
-        }
-        guard html[index] == "/" else { return false }
+    private static func knownTagName(in content: Substring) -> String? {
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let closing = trimmed.hasPrefix("/")
+        let body = closing ? trimmed.dropFirst() : trimmed[...]
+        let name = body.prefix(while: \.isLetter).lowercased()
+        let known = ["b", "br", "code", "div", "em", "i", "p", "span", "strong"]
+        guard known.contains(name) else { return nil }
 
-        let nameStart = html.index(after: index)
-        return nameStart < html.endIndex && html[nameStart].isLetter
+        let remainder = body.dropFirst(name.count).trimmingCharacters(in: .whitespacesAndNewlines)
+        if closing {
+            guard remainder.isEmpty else { return nil }
+
+            return "/\(name)"
+        }
+        guard remainder.isEmpty || remainder == "/" || (remainder.contains("=") && !remainder.contains("&"))
+        else { return nil }
+
+        return name
     }
 
     /// Decodes the HTML entities that appear in escaped source code.
