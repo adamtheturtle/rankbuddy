@@ -452,11 +452,11 @@ private extension AccountEditor {
                 label = defaultLabel
             }
 
-            validation = .valid
             let warning = await missingScopesWarning(client: client)
             guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
 
             scopeWarning = warning
+            validation = .valid
         } catch {
             guard validationStillMatches(fingerprint), !Task.isCancelled else { return }
 
