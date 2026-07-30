@@ -54,6 +54,10 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     // swiftlint:disable:next cyclomatic_complexity
     func callTool(_ name: String, arguments: [String: Value]?) async -> CallTool.Result {
+        guard Self.isKnownTool(name) else {
+            return errorResult("Unknown tool: \(name)")
+        }
+
         let account = stringArgument(arguments, "account")
         MCPActivityLog.record(tool: name, detail: Self.callDetail(arguments))
 
@@ -88,6 +92,12 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             return await callPeopleSearchTool(name, arguments: arguments, account: account)
         default:
             return errorResult("Unknown tool: \(name)")
+        }
+    }
+
+    static func isKnownTool(_ name: String) -> Bool {
+        (descriptors + writeDescriptors).contains {
+            $0["name"] as? String == name
         }
     }
 

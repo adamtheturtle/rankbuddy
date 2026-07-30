@@ -110,9 +110,15 @@ struct RankBuddyToolProviderTests {
     }
 
     @Test func `an unknown tool is an error`() async {
+        #expect(!RankBuddyToolProvider.isKnownTool("delete_everything"))
         let result = await provider().callTool("delete_everything", arguments: nil)
         #expect(result.isError == true)
         #expect(text(result).contains("Unknown tool"))
+    }
+
+    @Test func `advertised tools are recognized for activity logging`() {
+        #expect(RankBuddyToolProvider.isKnownTool("list_tests"))
+        #expect(RankBuddyToolProvider.isKnownTool("update_test"))
     }
 
     // MARK: - Search
