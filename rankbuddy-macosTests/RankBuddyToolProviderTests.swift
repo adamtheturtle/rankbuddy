@@ -625,6 +625,18 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `invite_candidate rejects blank and malformed candidate emails`() async {
+        for email in [" \n", "not-an-email"] {
+            let result = await writeProvider().callTool(
+                "invite_candidate",
+                arguments: ["test_id": .string("t1"), "email": .string(email)]
+            )
+
+            #expect(result.isError == true)
+            #expect(text(result).contains("email"))
+        }
+    }
+
     @Test func `invite_candidate rejects a blank test id`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

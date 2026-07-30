@@ -302,9 +302,15 @@ extension RankBuddyToolProvider {
     // swiftlint:disable:next cyclomatic_complexity
     private func inviteCandidateTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
-        guard let email = stringArgument(arguments, "email") else { return missingArgument("email") }
+        guard let rawEmail = stringArgument(arguments, "email") else { return missingArgument("email") }
 
         let testID = rawTestID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let email = Self.normalizedOptionalString(rawEmail) else {
+            return errorResult("`email` must not be empty.")
+        }
+        guard EmailValidation.isLikelyValid(email) else {
+            return errorResult("`email` must be a valid email address.")
+        }
         guard !testID.isEmpty else { return errorResult("`test_id` must not be empty.") }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
@@ -1235,6 +1241,9 @@ extension RankBuddyToolProvider {
         func dateTime(_ description: String) -> [String: Any] {
             ["type": "string", "format": "date-time", "description": description]
         }
+        func email(_ description: String) -> [String: Any] {
+            ["type": "string", "format": "email", "minLength": 1, "description": description]
+        }
         func write(
             _ name: String,
             _ description: String,
@@ -1268,7 +1277,7 @@ extension RankBuddyToolProvider {
                   required: ["test_id"], destructive: true),
             write("invite_candidate", "Invite a candidate to a test by email.",
                   properties: [
-                      "test_id": string("The test's id."), "email": string("The candidate's email."),
+                      "test_id": string("The test's id."), "email": email("The candidate's email."),
                       "full_name": string("The candidate's name (optional)."),
                       "send_email": boolean("Email the invite (default true)."),
                       "additional_time": integer("Extra time accommodation in minutes (0–1,440)."),
