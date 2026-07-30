@@ -114,7 +114,7 @@ struct CustomCodeStubSheet: View {
     @State private var errorMessage: String?
 
     private var canSave: Bool {
-        !language.trimmingCharacters(in: .whitespaces).isEmpty && CodeStubValidation.hasSource(code)
+        CodeStubValidation.normalizedLanguage(language) != nil && CodeStubValidation.hasSource(code)
     }
 
     var body: some View {
@@ -160,6 +160,10 @@ struct CustomCodeStubSheet: View {
     }
 
     private func save() async {
+        guard let normalizedLanguage = CodeStubValidation.normalizedLanguage(language) else {
+            errorMessage = "Language must not be blank."
+            return
+        }
         guard CodeStubValidation.hasSource(code) else {
             errorMessage = "Stub code must not be blank."
             return
@@ -172,7 +176,7 @@ struct CustomCodeStubSheet: View {
             _ = try await HackerRankClient(account: account).updateCustomCodeStubs(
                 questionID: questionID,
                 body: CustomCodeStubsBody(stubs: [
-                    .init(language: language.trimmingCharacters(in: .whitespaces), code: code)
+                    .init(language: normalizedLanguage, code: code)
                 ])
             )
             dismiss()
@@ -185,6 +189,11 @@ struct CustomCodeStubSheet: View {
 // MARK: - Request bodies
 
 nonisolated enum CodeStubValidation {
+    static func normalizedLanguage(_ language: String) -> String? {
+        let normalized = language.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.isEmpty ? nil : normalized
+    }
+
     static func hasSource(_ code: String) -> Bool {
         !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }

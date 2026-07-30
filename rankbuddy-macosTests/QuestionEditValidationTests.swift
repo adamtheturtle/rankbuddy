@@ -34,4 +34,9 @@ struct QuestionEditValidationTests {
         #expect(!CodeStubValidation.hasSource(" \n\t "))
         #expect(CodeStubValidation.hasSource("  return value\n"))
     }
+
+    @Test func `custom code stub languages reject every blank form`() {
+        #expect(CodeStubValidation.normalizedLanguage(" \n\t ") == nil)
+        #expect(CodeStubValidation.normalizedLanguage("\npython \n") == "python")
+    }
 }
