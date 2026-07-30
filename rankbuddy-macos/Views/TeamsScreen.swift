@@ -11,13 +11,15 @@ import SwiftUI
 /// The Teams section: the organisation's teams, with read-only detail (#36) and a
 /// "New Team" write action (#59).
 struct TeamsScreen: View {
-    @Environment(AccountStore.self) private var store
-    @Environment(\.openWindow) private var openWindow
+    @Environment(AccountStore.self) var store
+    @Environment(\.openWindow) var openWindow
     @State private var createPresented = false
-    @State private var reloadToken = 0
+    @State var reloadToken = 0
 
     var body: some View {
-        if let account = store.currentAccount {
+        if store.isMergedView {
+            mergedList
+        } else if let account = store.currentAccount {
             LoadableList(
                 title: "Teams",
                 emptyMessage: "No teams",
