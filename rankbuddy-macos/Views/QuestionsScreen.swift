@@ -48,10 +48,14 @@ struct QuestionsScreen: View {
                             title: question.name,
                             undoManager: undoManager
                         ),
-                        openInWindow: { openWindow(value: DetailWindowValue.question(question)) }
+                        openInWindow: {
+                            openWindow(value: DetailWindowValue.question(question, accountID: account.id))
+                        }
                     )
                 },
-                openInWindow: { openWindow(value: DetailWindowValue.question($0)) },
+                openInWindow: {
+                    openWindow(value: DetailWindowValue.question($0, accountID: account.id))
+                },
                 onFirstPage: { questions in
                     RecentActivityStore.shared.record(
                         questions.map {
@@ -89,7 +93,9 @@ struct QuestionsScreen: View {
                 },
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
                 row: { QuestionRow(question: $0) },
-                detail: { QuestionDetailView(question: $0) { reloadToken += 1 } }
+                detail: {
+                    QuestionDetailView(question: $0, account: account) { reloadToken += 1 }
+                }
             )
             .sheet(isPresented: $createPresented) {
                 NewQuestionSheet(account: account) { reloadToken += 1 }
@@ -140,10 +146,14 @@ struct QuestionsScreen: View {
                 rowMenuItems(
                     copyLabel: "Copy Name",
                     copyText: scoped.item.name,
-                    openInWindow: { openWindow(value: DetailWindowValue.question(scoped.item)) }
+                    openInWindow: {
+                        openWindow(value: DetailWindowValue.question(scoped.item, accountID: scoped.account.id))
+                    }
                 )
             },
-            openInWindow: { openWindow(value: DetailWindowValue.question($0.item)) },
+            openInWindow: {
+                openWindow(value: DetailWindowValue.question($0.item, accountID: $0.account.id))
+            },
             rowTransfer: { scoped in
                 RowTransfer(title: scoped.item.name, subtitle: scoped.account.label, fields: [
                     ("Name", scoped.item.name),
@@ -156,7 +166,7 @@ struct QuestionsScreen: View {
             row: {
                 MergedRow(title: $0.item.name, subtitle: DisplayFormat.enumLabel($0.item.type), account: $0.account)
             },
-            detail: { QuestionDetailView(question: $0.item) }
+            detail: { QuestionDetailView(question: $0.item, account: $0.account) }
         )
     }
 }

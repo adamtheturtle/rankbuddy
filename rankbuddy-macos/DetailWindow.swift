@@ -17,7 +17,7 @@ import SwiftUI
 nonisolated enum DetailWindowValue: Codable, Hashable {
     case test(Test, accountID: UUID?)
     case candidate(TestCandidate)
-    case question(Question)
+    case question(Question, accountID: UUID?)
     case interview(Interview)
     case user(User, accountID: UUID?)
     case team(Team, accountID: UUID?)
@@ -29,7 +29,7 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
         switch self {
         case let .test(test, _): test.name
         case let .candidate(candidate): candidate.fullName ?? candidate.email
-        case let .question(question): question.name
+        case let .question(question, _): question.name
         case let .interview(interview): interview.title ?? "Interview \(interview.id)"
         case let .user(user, _): user.displayName
         case let .team(team, _): team.name
@@ -89,8 +89,12 @@ struct DetailWindowContent: View {
         case let .candidate(candidate):
             CandidateDetailView(candidate: candidate)
 
-        case let .question(question):
-            QuestionDetailView(question: question)
+        case let .question(question, accountID):
+            if let account = resolvedAccount(accountID) {
+                QuestionDetailView(question: question, account: account)
+            } else {
+                NoAccountView()
+            }
 
         case let .interview(interview):
             InterviewDetailView(interview: interview)

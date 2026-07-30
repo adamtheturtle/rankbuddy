@@ -40,6 +40,7 @@ struct QuestionEditOverlay {
 /// `updateQuestion`; coding questions also gain testcase and code-stub actions (#147).
 struct QuestionDetailView: View {
     let question: Question
+    let account: Account?
     var onChanged: () -> Void = {}
     @Environment(AccountStore.self) private var store
     @Environment(\.controlActiveState) private var controlActiveState
@@ -59,6 +60,16 @@ struct QuestionDetailView: View {
     @State private var generateStubsPresented = false
     @State private var customStubPresented = false
 
+    init(question: Question, account: Account? = nil, onChanged: @escaping () -> Void = {}) {
+        self.question = question
+        self.account = account
+        self.onChanged = onChanged
+    }
+
+    private var owningAccount: Account? {
+        account ?? (store.isMergedView ? nil : store.currentAccount)
+    }
+
     /// The freshest copy of the question: saved edits overlay the detail metadata, then the list row.
     private var displayed: Question {
         editOverlay.applying(to: detailQuestion ?? question)
@@ -66,7 +77,7 @@ struct QuestionDetailView: View {
 
     /// Editing needs a single owning account, so the merged view stays read-only.
     private var canEdit: Bool {
-        !store.isMergedView && store.currentAccount != nil
+        owningAccount != nil
     }
 
     /// The problem statement, or `nil` when it is missing or renders as blank — HackerRank
@@ -188,7 +199,7 @@ struct QuestionDetailView: View {
         // one Customize Toolbar away.
         .toolbar(id: "questionDetail") {
             DetailLinkToolbarContent(
-                url: store.currentAccount.flatMap {
+                url: owningAccount.flatMap {
                     RankBuddyUserActivity.webURL(base: $0.baseURL, collection: .questions, itemID: question.id)
                 },
                 noun: "question"
@@ -211,7 +222,7 @@ struct QuestionDetailView: View {
                     Label("Delete", systemImage: "trash")
                 }
                 .help("Delete this question")
-                .disabled(store.currentAccount == nil || store.isMergedView)
+                .disabled(owningAccount == nil)
             }
             .defaultCustomization(.hidden)
         }
@@ -234,17 +245,17 @@ struct QuestionDetailView: View {
             Text(editError ?? "")
         }
         .sheet(isPresented: $addTestcasePresented) {
-            if let account = store.currentAccount {
+            if let account = owningAccount {
                 AddTestcaseSheet(questionID: question.id, account: account) {}
             }
         }
         .sheet(isPresented: $generateStubsPresented) {
-            if let account = store.currentAccount {
+            if let account = owningAccount {
                 GenerateCodeStubsSheet(questionID: question.id, account: account)
             }
         }
         .sheet(isPresented: $customStubPresented) {
-            if let account = store.currentAccount {
+            if let account = owningAccount {
                 CustomCodeStubSheet(questionID: question.id, account: account)
             }
         }
@@ -348,7 +359,7 @@ extension QuestionDetailView {
         name: String? = nil,
         _ options: QuestionWriteOptions = QuestionWriteOptions()
     ) async -> Bool {
-        guard let account = store.currentAccount, !store.isMergedView else { return false }
+        guard let account = owningAccount else { return false }
 
         do {
             _ = try await HackerRankClient(account: account).updateQuestion(
@@ -368,7 +379,7 @@ extension QuestionDetailView {
     }
 
     private func deleteAllTestcases() async {
-        guard let account = store.currentAccount, !store.isMergedView else { return }
+        guard let account = owningAccount else { return }
 
         do {
             _ = try await HackerRankClient(account: account).deleteAllTestcases(questionID: question.id)
@@ -378,7 +389,7 @@ extension QuestionDetailView {
     }
 
     private func deleteQuestion() async {
-        guard let account = store.currentAccount, !store.isMergedView else { return }
+        guard let account = owningAccount else { return }
 
         do {
             try await HackerRankClient(account: account).deleteQuestion(questionID: question.id)
@@ -412,7 +423,7 @@ extension QuestionDetailView {
         detail = nil
         detailQuestion = nil
         answerRevealed = false
-        guard !store.isMergedView, let account = store.currentAccount else { return }
+        guard let account = owningAccount else { return }
 
         let client = HackerRankClient(account: account)
         let metadataClient = HackerRankDetailMetadataClient(account: account)
