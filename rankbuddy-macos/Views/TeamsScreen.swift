@@ -30,8 +30,8 @@ struct TeamsScreen: View {
                         $0.name.localizedStandardCompare($1.name) == .orderedAscending
                     },
                     SortOption("Size", systemImage: "person.3", kind: .amount,
-                               isMissing: { $0.developerCount == nil }, by: {
-                                   ($0.developerCount ?? 0) > ($1.developerCount ?? 0)
+                               isMissing: { $0.knownMemberCount == nil }, by: {
+                                   ($0.knownMemberCount ?? 0) > ($1.knownMemberCount ?? 0)
                                })
                 ],
                 facets: [

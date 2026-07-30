@@ -79,4 +79,17 @@ struct SectionDisplayTests {
         let team = try decode(Team.self, #"{"id":"t1","name":"Backend"}"#)
         #expect(team.memberSummary == nil)
     }
+
+    @Test func `known member count totals every represented role`() {
+        let team = Team(
+            id: "team",
+            name: "Platform",
+            recruiterCount: 3,
+            developerCount: 1,
+            interviewerCount: 50
+        )
+
+        #expect(team.knownMemberCount == 54)
+        #expect(Team(id: "empty", name: "Empty").knownMemberCount == nil)
+    }
 }
