@@ -72,7 +72,10 @@ struct ContentView: View {
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             VStack(spacing: 0) {
-                if health.isUnauthorized(store.currentAccountID) {
+                // The health monitor probes one current account. In merged mode that account is
+                // an invisible implementation detail, so a single-account warning would blame
+                // the All Accounts scope without identifying which credential needs attention.
+                if !store.isMergedView, health.isUnauthorized(store.currentAccountID) {
                     UnauthorizedBanner()
                 }
                 detailView(for: selection)
