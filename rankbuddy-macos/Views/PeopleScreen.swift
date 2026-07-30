@@ -169,6 +169,7 @@ struct CreateUserSheet: View {
     @State private var teamsError: String?
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
 
     private static let roles = organisationUserRoles
 
@@ -254,14 +255,16 @@ struct CreateUserSheet: View {
             .navigationTitle("Create User")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button("Create") { Task { await create() } }
+                        Button("Create") { mutationTask = Task { await create() } }
                             .disabled(!canCreate)
                             .help(canCreate
                                 ? "Create user"
@@ -273,6 +276,7 @@ struct CreateUserSheet: View {
         // Grow the sheet when the error section appears so the form doesn't have to scroll to
         // show it (server messages can wrap to a few lines).
         .frame(width: 440, height: errorMessage == nil ? 360 : 460)
+        .onDisappear { mutationTask?.cancel() }
         .task { await loadTeams() }
     }
 

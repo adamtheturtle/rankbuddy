@@ -31,6 +31,7 @@ struct TestEditorSheet: View {
     @State private var name: String
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
 
     init(account: Account, mode: TestEditorMode, onSaved: @escaping () -> Void) {
         self.account = account
@@ -77,20 +78,25 @@ struct TestEditorSheet: View {
             .navigationTitle(isEditing ? "Rename Test" : "New Test")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button(isEditing ? "Save" : "Create") { Task { await save() } }
-                            .disabled(!TestNameValidation.isValid(trimmedName))
+                        Button(isEditing ? "Save" : "Create") {
+                            mutationTask = Task { await save() }
+                        }
+                        .disabled(!TestNameValidation.isValid(trimmedName))
                     }
                 }
             }
         }
         .frame(width: 440, height: 220)
+        .onDisappear { mutationTask?.cancel() }
     }
 
     private func save() async {

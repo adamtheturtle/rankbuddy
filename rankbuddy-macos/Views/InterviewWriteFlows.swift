@@ -63,6 +63,7 @@ struct NewPadSheet: View {
     @State private var title = ""
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -92,20 +93,23 @@ struct NewPadSheet: View {
             .navigationTitle("New Pad")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button("Create") { Task { await create() } }
+                        Button("Create") { mutationTask = Task { await create() } }
                             .disabled(title.count > PadTitleValidation.maxLength)
                     }
                 }
             }
         }
         .frame(width: 440, height: 240)
+        .onDisappear { mutationTask?.cancel() }
     }
 
     private func create() async {
@@ -139,6 +143,7 @@ struct ScheduleInterviewSheet: View {
     @State private var notes = ""
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
 
     private var trimmedTitle: String {
         title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -189,20 +194,23 @@ struct ScheduleInterviewSheet: View {
             .navigationTitle("Schedule Interview")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button("Schedule") { Task { await schedule() } }
+                        Button("Schedule") { mutationTask = Task { await schedule() } }
                             .disabled(!isValid)
                     }
                 }
             }
         }
         .frame(width: 460, height: 380)
+        .onDisappear { mutationTask?.cancel() }
     }
 
     private func schedule() async {

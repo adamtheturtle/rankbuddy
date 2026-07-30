@@ -23,6 +23,7 @@ struct CreateTeamSheet: View {
     @State private var name = ""
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
 
     private var trimmedName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -52,20 +53,23 @@ struct CreateTeamSheet: View {
             .navigationTitle("New Team")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button("Create") { Task { await create() } }
+                        Button("Create") { mutationTask = Task { await create() } }
                             .disabled(!TeamNameValidation.isValid(trimmedName))
                     }
                 }
             }
         }
         .frame(width: 440, height: 240)
+        .onDisappear { mutationTask?.cancel() }
     }
 
     private func create() async {
@@ -96,6 +100,7 @@ struct AddTeamMemberSheet: View {
     @State private var role = "interviewer"
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
 
     private static let roles = ["recruiter", "interviewer", "developer"]
 
@@ -127,20 +132,23 @@ struct AddTeamMemberSheet: View {
             .navigationTitle("Add Member")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button("Add") { Task { await add() } }
+                        Button("Add") { mutationTask = Task { await add() } }
                             .disabled(!EmailValidation.isLikelyValid(email))
                     }
                 }
             }
         }
         .frame(width: 440, height: 280)
+        .onDisappear { mutationTask?.cancel() }
     }
 
     private func add() async {

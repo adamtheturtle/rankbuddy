@@ -84,6 +84,7 @@ struct InviteCandidateSheet: View {
     @State private var atsRequisitionID = ""
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
     /// The account's invitation email templates (#147); the picker is hidden when none load.
     @State private var templates: [InviteTemplate] = []
     @State private var selectedTemplateID: String?
@@ -184,14 +185,16 @@ struct InviteCandidateSheet: View {
             .navigationTitle("Invite Candidate")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button("Invite") { Task { await invite() } }
+                        Button("Invite") { mutationTask = Task { await invite() } }
                             .disabled(!canInvite)
                     }
                 }
@@ -199,6 +202,7 @@ struct InviteCandidateSheet: View {
         }
         .frame(width: 500, height: 560)
         .task { await loadTemplates() }
+        .onDisappear { mutationTask?.cancel() }
     }
 
     private func templateName(_ id: String) -> String {
