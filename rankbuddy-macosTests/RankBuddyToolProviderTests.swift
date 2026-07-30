@@ -741,6 +741,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(updated).contains("recommended_duration"))
     }
 
+    @Test func `update_question rejects unsupported types`() async {
+        let result = await writeProvider().callTool(
+            "update_question",
+            arguments: ["question_id": .string("question-1"), "type": .string("essay")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("type"))
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",

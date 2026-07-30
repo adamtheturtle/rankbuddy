@@ -13,6 +13,8 @@ import MCPKit
 // swiftlint:disable file_length
 
 extension RankBuddyToolProvider {
+    nonisolated static let supportedQuestionTypes = ["coding", "mcq", "subjective"]
+
     static let writeToolNames: Set<String> = [
         "create_test", "update_test", "archive_test", "delete_test", "invite_candidate",
         "update_candidate", "cancel_candidate_invite", "delete_candidate_report",
@@ -592,6 +594,12 @@ extension RankBuddyToolProvider {
     @MainActor
     private func updateQuestionTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let questionID = stringArgument(arguments, "question_id") else { return missingArgument("question_id") }
+
+        let rawType = stringArgument(arguments, "type")
+        let type = Self.normalizedOptionalString(rawType)?.lowercased()
+        guard rawType == nil || type.map(Self.supportedQuestionTypes.contains) == true else {
+            return errorResult("`type` must be coding, mcq, or subjective.")
+        }
         guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
             return errorResult("`max_score` must be a finite number of zero or greater.")
         }
@@ -604,7 +612,7 @@ extension RankBuddyToolProvider {
             let written = try await HackerRankClient(account: resolved).updateQuestion(
                 questionID: questionID,
                 name: stringArgument(arguments, "name"),
-                type: stringArgument(arguments, "type"),
+                type: type,
                 options: questionWriteOptions(arguments)
             )
             return jsonResult([
@@ -1252,7 +1260,7 @@ extension RankBuddyToolProvider {
                   properties: [
                       "question_id": string("The question's id."),
                       "name": string("The question's name."),
-                      "type": string("Question type, such as coding or mcq."),
+                      "type": string("Question type.", allowedValues: Self.supportedQuestionTypes),
                       "status": string("Question lifecycle status."),
                       "languages": ["type": "array", "items": ["type": "string"],
                                     "description": "Allowed languages; a comma-separated string is also accepted."],
