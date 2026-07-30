@@ -11,13 +11,15 @@ extension LoadableList {
     // them in the background, so returning to a section does not flash a full-screen spinner.
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func reload() async {
-        loadGeneration = UUID()
+        let generation = UUID()
+        loadGeneration = generation
         didRestore = false
         loadMoreError = nil
         backgroundRefreshError = nil
         loadedCursors = []
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
+        let requestCacheKey = cacheKey
 
         let isServerFilterReload = serverDateFiltering && dateRange != nil
         let isLoadedPhase = if case .loaded = phase {
@@ -32,8 +34,15 @@ extension LoadableList {
         }
         pagesLoaded = 1
 
-        if let key = cacheKey,
-           let cached = await ListPageCache.cached([Item].self, for: key),
+        // swiftlint:disable:next large_tuple
+        let cached: (items: [Item], cursor: String?, totalCount: Int?)? = if let requestCacheKey {
+            await ListPageCache.cached([Item].self, for: requestCacheKey)
+        } else {
+            nil
+        }
+        guard generation == loadGeneration else { return }
+
+        if let cached,
            !cached.items.isEmpty {
             items = cached.items
             nextCursor = cached.cursor
@@ -64,19 +73,25 @@ extension LoadableList {
 
         // Always clear refresh/filter hints once the fresh load settles, whichever way it goes.
         defer {
-            isBackgroundRefreshing = false
-            if isServerFilterReload { isFilterLoading = false }
+            if generation == loadGeneration {
+                isBackgroundRefreshing = false
+                if isServerFilterReload { isFilterLoading = false }
+            }
         }
 
         do {
             let page = try await loadCurrentPage(nil)
+            guard generation == loadGeneration else { return }
+
             items = page.items
             onItemsLoaded(page.items)
             nextCursor = page.next
             totalCount = page.totalCount
             phase = .loaded
             backgroundRefreshError = nil
-            await cacheFirstPage(page)
+            await cacheFirstPage(page, for: requestCacheKey)
+            guard generation == loadGeneration else { return }
+
             refreshDetailIfPresent(in: items)
             if preservesVisibleState {
                 reconcilePreservedSelection(in: items)
@@ -84,6 +99,8 @@ extension LoadableList {
                 await restoreIfNeeded(items)
             }
         } catch {
+            guard generation == loadGeneration else { return }
+
             // Keep cached rows usable, but make their failed refresh and retry path explicit.
             if items.isEmpty {
                 phase = .failed(message(for: error))
@@ -145,8 +162,8 @@ extension LoadableList {
         (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 
-    func cacheFirstPage(_ page: Page<Item>) async {
-        guard let key = cacheKey else { return }
+    func cacheFirstPage(_ page: Page<Item>, for key: String?) async {
+        guard let key else { return }
 
         await ListPageCache.store(
             items: page.items, cursor: page.next, totalCount: page.totalCount, for: key

@@ -62,7 +62,7 @@ extension LoadableList {
         onItemsLoaded(page.items)
         nextCursor = page.next
         totalCount = page.totalCount
-        await cacheFirstPage(page)
+        await cacheFirstPage(page, for: cacheKey)
         // Refresh the detail from the replacement row, or atomically clear both detail and
         // selection if the item disappeared elsewhere.
         reconcilePreservedSelection(in: items)
