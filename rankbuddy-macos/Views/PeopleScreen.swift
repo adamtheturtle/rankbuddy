@@ -12,6 +12,20 @@ import SwiftUI
 /// and the detail view's role picker.
 let organisationUserRoles = ["recruiter", "interviewer", "developer"]
 
+nonisolated enum UserNameValidation {
+    static let maxLength = 255
+
+    static func issue(firstName: String, lastName: String?) -> String? {
+        if firstName.count > maxLength {
+            return "First name can be at most \(maxLength) characters."
+        }
+        if let lastName, lastName.count > maxLength {
+            return "Last name can be at most \(maxLength) characters."
+        }
+        return nil
+    }
+}
+
 /// The People section: the organisation's users (members), with read-only detail (#36) and
 /// a "Create User" write action (#58).
 struct PeopleScreen: View {
@@ -178,7 +192,11 @@ struct CreateUserSheet: View {
     /// rejects the request with HTTP 400 "Parameter … is required" otherwise); the last
     /// name is genuinely optional.
     private var canCreate: Bool {
-        isEmailValid && !trimmedFirstName.isEmpty && selectedTeamID != nil
+        isEmailValid && !trimmedFirstName.isEmpty && selectedTeamID != nil && nameValidationIssue == nil
+    }
+
+    private var nameValidationIssue: String? {
+        UserNameValidation.issue(firstName: trimmedFirstName, lastName: trimmedLastName)
     }
 
     private var shouldShowEmailValidation: Bool {
@@ -202,6 +220,11 @@ struct CreateUserSheet: View {
                     }
                     TextField("First name", text: $firstName)
                     TextField("Last name (optional)", text: $lastName)
+                    if let nameValidationIssue {
+                        Label(nameValidationIssue, systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                     Picker("Role", selection: $role) {
                         ForEach(Self.roles, id: \.self) { Text(DisplayFormat.enumLabel($0)).tag($0) }
                     }

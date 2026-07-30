@@ -13,6 +13,17 @@ import Testing
 /// and 401s the bad-token account.
 @MainActor
 struct CreateUserTests {
+    @Test func `user names respect API limits`() {
+        #expect(UserNameValidation.issue(
+            firstName: String(repeating: "x", count: 256),
+            lastName: nil
+        )?.contains("First name") == true)
+        #expect(UserNameValidation.issue(
+            firstName: "Ada",
+            lastName: String(repeating: "x", count: 256)
+        )?.contains("Last name") == true)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }

@@ -492,8 +492,13 @@ extension RankBuddyToolProvider {
         guard let rawRole = stringArgument(arguments, "role") else { return missingArgument("role") }
 
         let firstName = rawFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lastName = Self.normalizedOptionalString(stringArgument(arguments, "last_name"))
         let role = rawRole.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !firstName.isEmpty else { return errorResult("`first_name` must not be empty.") }
+
+        if let issue = UserNameValidation.issue(firstName: firstName, lastName: lastName) {
+            return errorResult(issue)
+        }
         guard ["recruiter", "developer", "interviewer"].contains(role) else {
             return errorResult("`role` must be recruiter, developer, or interviewer.")
         }
@@ -507,7 +512,7 @@ extension RankBuddyToolProvider {
             let created = try await HackerRankClient(account: resolved).createUser(
                 email: email,
                 firstName: firstName,
-                lastName: Self.normalizedOptionalString(stringArgument(arguments, "last_name")),
+                lastName: lastName,
                 role: role,
                 teamIDs: [teamID]
             )
