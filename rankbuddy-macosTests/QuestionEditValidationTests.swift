@@ -55,4 +55,9 @@ struct QuestionEditValidationTests {
         #expect(CodeStubValidation.malformedParameter(in: "name: ") == "name:")
         #expect(CodeStubValidation.malformedParameter(in: "counts: int[], target: int") == nil)
     }
+
+    @Test func `blank function names normalize to nil`() {
+        #expect(nonBlank(" \n\t ") == nil)
+        #expect(nonBlank(" solve \n") == "solve")
+    }
 }

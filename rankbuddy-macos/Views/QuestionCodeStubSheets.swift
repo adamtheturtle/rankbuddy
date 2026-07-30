@@ -57,7 +57,7 @@ struct GenerateCodeStubsSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Generate") { Task { await generate() } }
-                            .disabled(functionName.trimmingCharacters(in: .whitespaces).isEmpty)
+                            .disabled(nonBlank(functionName) == nil)
                     }
                 }
             }
@@ -66,6 +66,11 @@ struct GenerateCodeStubsSheet: View {
     }
 
     private func generate() async {
+        guard let normalizedFunctionName = nonBlank(functionName) else {
+            errorMessage = "Function name must not be blank."
+            return
+        }
+
         if let malformed = CodeStubValidation.malformedParameter(in: parameters) {
             errorMessage = "Parameter “\(malformed)” must use name: type format."
             return
@@ -84,7 +89,7 @@ struct GenerateCodeStubsSheet: View {
             _ = try await HackerRankClient(account: account).generateCodeStubs(
                 questionID: questionID,
                 body: GenerateCodeStubsBody(
-                    functionName: nonBlank(functionName),
+                    functionName: normalizedFunctionName,
                     returnType: nonBlank(returnType),
                     parameters: parsed,
                     languages: splitList(languages)
