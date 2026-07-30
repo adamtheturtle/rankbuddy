@@ -19,6 +19,11 @@ struct MenuBarContent: View {
     @AppStorage(MenuBarPreferences.recentCountKey) private var recentCount = MenuBarPreferences.defaultRecentCount
     @AppStorage(MenuBarPreferences.activeOnlyKey) private var activeOnly = false
     @Environment(\.openWindow) private var openWindow
+
+    private var displayedRecentCount: Int {
+        MenuBarPreferences.normalizedRecentCount(recentCount)
+    }
+
     @Environment(AccountStore.self) private var store
     @State private var createSheet: MenuBarCreateSheet?
 
@@ -186,7 +191,7 @@ struct MenuBarContent: View {
     /// network work (#23). Suppressed when the Recent section is already filtered to active items
     /// (the `activeOnly` toggle), so the two don't render an identical list twice.
     @ViewBuilder private var activeSection: some View {
-        if !activeOnly, let account = store.currentAccount, recentCount > 0 {
+        if !activeOnly, let account = store.currentAccount, displayedRecentCount > 0 {
             let active = RecentActivityStore.shared.recentAll(account: account.id).filter(\.isActiveOrUpcoming)
             if !active.isEmpty {
                 Divider()
@@ -200,7 +205,7 @@ struct MenuBarContent: View {
     /// Recent items the current account has listed, read from the on-disk cache the main
     /// window populates — no second network stack (#23). Hidden when there's nothing cached.
     @ViewBuilder private var recentSection: some View {
-        if let account = store.currentAccount, recentCount > 0 {
+        if let account = store.currentAccount, displayedRecentCount > 0 {
             let cached = RecentActivityStore.shared.recentAll(account: account.id)
             let recents = activeOnly ? cached.filter(\.isActiveOrUpcoming) : cached
             if !recents.isEmpty {
@@ -220,7 +225,7 @@ struct MenuBarContent: View {
         account: Account,
         icon: @escaping (RecentItem) -> String
     ) -> some View {
-        ForEach(items.prefix(recentCount)) { item in
+        ForEach(items.prefix(displayedRecentCount)) { item in
             Button {
                 RankBuddyDeepLink.open(
                     collection: item.collection,
@@ -232,8 +237,8 @@ struct MenuBarContent: View {
                 Label(item.title, systemImage: icon(item))
             }
         }
-        if items.count > recentCount {
-            Text("…\(items.count - recentCount) more")
+        if items.count > displayedRecentCount {
+            Text("…\(items.count - displayedRecentCount) more")
                 .foregroundStyle(.secondary)
         }
     }

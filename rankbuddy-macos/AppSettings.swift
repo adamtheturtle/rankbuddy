@@ -91,6 +91,10 @@ enum MenuBarPreferences {
     /// The largest value the stepper allows (PadBuddy parity, #88).
     static let maxRecentCount = 30
 
+    static func normalizedRecentCount(_ value: Int) -> Int {
+        min(max(value, 0), maxRecentCount)
+    }
+
     /// The `@AppStorage` key for filtering the menu-bar list to active/upcoming items (#67).
     static let activeOnlyKey = "rb.menuBarActiveOnly"
 }

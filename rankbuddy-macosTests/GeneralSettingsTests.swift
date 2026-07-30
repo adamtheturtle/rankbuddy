@@ -10,6 +10,12 @@ import Testing
 /// label and the off/Duration mapping the timer reads.
 @MainActor
 struct GeneralSettingsTests {
+    @Test func `menu recent count is clamped to its supported range`() {
+        #expect(MenuBarPreferences.normalizedRecentCount(-4) == 0)
+        #expect(MenuBarPreferences.normalizedRecentCount(8) == 8)
+        #expect(MenuBarPreferences.normalizedRecentCount(100) == MenuBarPreferences.maxRecentCount)
+    }
+
     @Test func `the interval label reads off below the minimum`() {
         #expect(GeneralSettings.refreshIntervalLabel(0) == "Off")
         #expect(GeneralSettings.refreshIntervalLabel(GeneralSettings.minRefreshSeconds - 1) == "Off")
