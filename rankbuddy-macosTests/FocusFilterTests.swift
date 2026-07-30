@@ -69,6 +69,63 @@ struct FocusFilterTests {
         #expect(store.currentAccountID == acctA.id)
     }
 
+    @Test func `a new process session replaces a stale focus snapshot`() {
+        let acctA = Account(label: "A", token: "a")
+        let acctB = Account(label: "B", token: "b")
+        let acctC = Account(label: "C", token: "c")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [acctA, acctB, acctC])
+        let defaults = freshDefaults()
+        store.currentAccountID = acctA.id
+
+        ScopeToAccountFocusFilter.apply(
+            accountID: acctB.id.uuidString,
+            store: store,
+            defaults: defaults,
+            sessionID: "old-process"
+        )
+
+        // A later process starts from a different user selection while the stale keys remain.
+        store.currentAccountID = acctC.id
+        ScopeToAccountFocusFilter.apply(
+            accountID: acctB.id.uuidString,
+            store: store,
+            defaults: defaults,
+            sessionID: "new-process"
+        )
+        ScopeToAccountFocusFilter.apply(
+            accountID: nil,
+            store: store,
+            defaults: defaults,
+            sessionID: "new-process"
+        )
+
+        #expect(store.currentAccountID == acctC.id)
+    }
+
+    @Test func `a different process cannot restore a stale snapshot`() {
+        let acctA = Account(label: "A", token: "a")
+        let acctB = Account(label: "B", token: "b")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [acctA, acctB])
+        let defaults = freshDefaults()
+        store.currentAccountID = acctA.id
+        ScopeToAccountFocusFilter.apply(
+            accountID: acctB.id.uuidString,
+            store: store,
+            defaults: defaults,
+            sessionID: "old-process"
+        )
+
+        store.currentAccountID = acctB.id
+        ScopeToAccountFocusFilter.apply(
+            accountID: nil,
+            store: store,
+            defaults: defaults,
+            sessionID: "new-process"
+        )
+
+        #expect(store.currentAccountID == acctB.id)
+    }
+
     @Test func `an unknown account with no snapshot leaves the selection untouched`() {
         let work = Account(label: "Work", token: "w")
         let store = AccountStore.rankBuddy(isTesting: true, seed: [work])

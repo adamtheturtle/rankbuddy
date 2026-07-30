@@ -106,6 +106,8 @@ struct ScopeToAccountFocusFilter: SetFocusFilterIntent {
 
     private static let savedShowAllKey = "focusFilter.savedShowAllAccounts"
     private static let savedCurrentKey = "focusFilter.savedCurrentAccountID"
+    private static let savedSessionKey = "focusFilter.savedSessionID"
+    private static let processSessionID = UUID().uuidString
 
     func perform() async throws -> some IntentResult {
         await MainActor.run {
@@ -120,7 +122,12 @@ struct ScopeToAccountFocusFilter: SetFocusFilterIntent {
     /// original selection at the end. Split out of `perform()` so the snapshot/restore logic is
     /// unit-testable without the AppIntents runtime (#96).
     @MainActor
-    static func apply(accountID: String?, store: AccountStore, defaults: UserDefaults) {
+    static func apply(
+        accountID: String?,
+        store: AccountStore,
+        defaults: UserDefaults,
+        sessionID: String = processSessionID
+    ) {
         if let accountID {
             guard
                 let uuid = UUID(uuidString: accountID),
@@ -132,23 +139,28 @@ struct ScopeToAccountFocusFilter: SetFocusFilterIntent {
             // Entering a Focus-scoped state: snapshot the pre-Focus selection once, so a
             // later Focus switch (account A -> account B with no "off" between) keeps the
             // original snapshot to restore at the end.
-            if defaults.object(forKey: savedShowAllKey) == nil {
+            if defaults.string(forKey: savedSessionKey) != sessionID {
                 defaults.set(store.showAllAccounts, forKey: savedShowAllKey)
                 defaults.set(store.currentAccountID?.uuidString ?? "", forKey: savedCurrentKey)
+                defaults.set(sessionID, forKey: savedSessionKey)
             }
             store.showAllAccounts = false
             store.currentAccountID = uuid
         } else if defaults.object(forKey: savedShowAllKey) != nil {
-            // Focus turned off: restore whatever was selected before it began.
-            let savedShowAll = defaults.bool(forKey: savedShowAllKey)
-            if let savedID = defaults.string(forKey: savedCurrentKey),
-               let uuid = UUID(uuidString: savedID),
-               store.accounts.contains(where: { $0.id == uuid }) {
-                store.currentAccountID = uuid
+            // Only the process session that created a snapshot may restore it. A stale snapshot
+            // left by a terminated intent/app process is discarded instead of changing selection.
+            if defaults.string(forKey: savedSessionKey) == sessionID {
+                let savedShowAll = defaults.bool(forKey: savedShowAllKey)
+                if let savedID = defaults.string(forKey: savedCurrentKey),
+                   let uuid = UUID(uuidString: savedID),
+                   store.accounts.contains(where: { $0.id == uuid }) {
+                    store.currentAccountID = uuid
+                }
+                store.showAllAccounts = savedShowAll
             }
-            store.showAllAccounts = savedShowAll
             defaults.removeObject(forKey: savedShowAllKey)
             defaults.removeObject(forKey: savedCurrentKey)
+            defaults.removeObject(forKey: savedSessionKey)
         }
     }
 }
