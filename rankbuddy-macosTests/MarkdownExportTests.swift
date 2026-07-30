@@ -66,4 +66,15 @@ struct MarkdownExportTests {
         #expect(markdown.contains("- **Email:** ada@example.com"))
         #expect(markdown.contains("## Feedback\nStrong."))
     }
+
+    @Test func `interview export uses edited title and notes overlays`() throws {
+        let interview = try JSONDecoder().decode(
+            Interview.self,
+            from: Data(#"{"id":"i1","title":"Old","notes":"Old notes","status":"scheduled"}"#.utf8)
+        )
+        let markdown = MarkdownExport.interview(interview, title: "New", notes: "New notes")
+        #expect(markdown.hasPrefix("# New"))
+        #expect(markdown.contains("## Notes\nNew notes"))
+        #expect(!markdown.contains("Old notes"))
+    }
 }

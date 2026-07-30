@@ -7,6 +7,7 @@ import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 
+// swiftlint:disable type_body_length
 /// Detail for a single interview. Beyond the list row's fields, it fetches the richer
 /// single-interview read and the conversation transcript on selection (#103); both load
 /// lazily and degrade silently (e.g. in merged view, where the owning account is ambiguous).
@@ -185,13 +186,13 @@ struct InterviewDetailView: View {
             DetailLinkToolbarContent(url: URL.remoteWebURL(from: interview.url), noun: "interview")
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Interview: \(displayTitle)") {
-                    InterviewReport(interview: interview)
+                    InterviewReport(interview: interview, title: displayTitle, notes: displayNotes)
                 }
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
                 MarkdownExportButton(suggestedName: displayTitle) {
-                    MarkdownExport.interview(interview)
+                    MarkdownExport.interview(interview, title: displayTitle, notes: displayNotes)
                 }
             }
             .defaultCustomization(.hidden)
@@ -275,10 +276,16 @@ struct InterviewDetailView: View {
 
     private func registerDetailCommands() {
         commandContext.print = AppCommandContext.Action(title: "Print Interview…") {
-            printReport(InterviewReport(interview: interview), jobTitle: "Interview: \(displayTitle)")
+            printReport(
+                InterviewReport(interview: interview, title: displayTitle, notes: displayNotes),
+                jobTitle: "Interview: \(displayTitle)"
+            )
         }
         commandContext.exportMarkdown = AppCommandContext.Action(title: "Export Interview as Markdown…") {
-            MarkdownExport.save(MarkdownExport.interview(interview), suggestedName: displayTitle)
+            MarkdownExport.save(
+                MarkdownExport.interview(interview, title: displayTitle, notes: displayNotes),
+                suggestedName: displayTitle
+            )
         }
     }
 
@@ -309,6 +316,8 @@ struct InterviewDetailView: View {
         }
     }
 }
+
+// swiftlint:enable type_body_length
 
 /// The `PUT /interviews/{id}` body. Mirrors HackerRankKit's typed request (which lands in a
 /// future Kit release); Kit 0.4.0's `updateInterview` accepts any `Encodable` body, and the

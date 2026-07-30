@@ -183,12 +183,17 @@ struct TestReport: View {
 /// A printable interview report: lifecycle, notes, and feedback.
 struct InterviewReport: View {
     let interview: Interview
+    var title: String?
+    var notes: String?
 
     var body: some View {
-        ReportDocument(title: interview.title ?? "Interview \(interview.id)", subtitle: "HackerRank Interview Report") {
+        ReportDocument(
+            title: title ?? interview.title ?? "Interview \(interview.id)",
+            subtitle: "HackerRank Interview Report"
+        ) {
             PrintSection(title: "Interview") {
                 ReportFieldList(fields: reportFields([
-                    ("Title", interview.title),
+                    ("Title", title ?? interview.title),
                     ("Status", DisplayFormat.enumLabel(interview.status)),
                     ("Created", DisplayFormat.date(interview.createdAt)),
                     ("Updated", DisplayFormat.date(interview.updatedAt)),
@@ -197,7 +202,7 @@ struct InterviewReport: View {
                 ]))
             }
 
-            if let notes = interview.notes, !notes.isEmpty {
+            if let notes = notes ?? interview.notes, !notes.isEmpty {
                 PrintSection(title: "Notes") { Text(notes) }
             }
 

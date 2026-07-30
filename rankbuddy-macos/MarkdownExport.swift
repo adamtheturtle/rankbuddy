@@ -128,9 +128,9 @@ enum MarkdownExport {
         ])
     }
 
-    static func interview(_ interview: Interview) -> String {
+    static func interview(_ interview: Interview, title: String? = nil, notes: String? = nil) -> String {
         document(
-            title: interview.title ?? "Interview \(interview.id)",
+            title: title ?? interview.title ?? "Interview \(interview.id)",
             subtitle: "HackerRank Interview Report",
             sections: [
                 section("Interview", [
@@ -139,7 +139,7 @@ enum MarkdownExport {
                     ("Ended", DisplayFormat.date(interview.endedAt)),
                     ("Thumbs up", interview.thumbsUp.map(String.init))
                 ]),
-                textSection("Notes", interview.notes),
+                textSection("Notes", notes ?? interview.notes),
                 textSection("Feedback", interview.feedback)
             ]
         )
