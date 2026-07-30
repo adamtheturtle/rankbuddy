@@ -58,4 +58,19 @@ struct DetailWindowValueTests {
 
         #expect(restoredAccountID == accountID)
     }
+
+    @Test func `standalone team persists identity instead of a stale snapshot`() throws {
+        let accountID = UUID()
+        let value = DetailWindowValue.team(
+            teamID: "team-1",
+            teamName: "Platform",
+            accountID: accountID
+        )
+        let data = try JSONEncoder().encode(value)
+        let restored = try JSONDecoder().decode(DetailWindowValue.self, from: data)
+
+        #expect(restored == value)
+        #expect(value.windowTitle == "Platform")
+        #expect(try #require(String(data: data, encoding: .utf8)).contains("departments") == false)
+    }
 }

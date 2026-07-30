@@ -52,12 +52,15 @@ extension TeamsScreen {
                     copyLabel: "Copy Name",
                     copyText: scoped.item.name,
                     openInWindow: {
-                        openWindow(value: DetailWindowValue.team(scoped.item, accountID: scoped.account.id))
+                        openWindow(value: DetailWindowValue.teamWindow(
+                            scoped.item,
+                            accountID: scoped.account.id
+                        ))
                     }
                 )
             },
             openInWindow: {
-                openWindow(value: DetailWindowValue.team($0.item, accountID: $0.account.id))
+                openWindow(value: DetailWindowValue.teamWindow($0.item, accountID: $0.account.id))
             },
             rowTransfer: { scoped in
                 RowTransfer(

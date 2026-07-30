@@ -20,7 +20,7 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
     case question(Question, accountID: UUID?)
     case interview(Interview)
     case user(User, accountID: UUID?)
-    case team(Team, accountID: UUID?)
+    case team(teamID: String, teamName: String, accountID: UUID?)
     case teamMembers(teamID: String, teamName: String, accountID: UUID?)
     case testCandidates(testID: String, testName: String, accountID: UUID?)
 
@@ -32,7 +32,7 @@ nonisolated enum DetailWindowValue: Codable, Hashable {
         case let .question(question, _): question.name
         case let .interview(interview): interview.title ?? "Interview \(interview.id)"
         case let .user(user, _): user.displayName
-        case let .team(team, _): team.name
+        case let .team(_, teamName, _): teamName
         case let .teamMembers(_, teamName, _): "\(teamName) Members"
         case let .testCandidates(_, testName, _): "\(testName) Candidates"
         }
@@ -52,6 +52,12 @@ nonisolated enum DetailWindowAccountResolution {
         guard let id else { return current }
 
         return accounts.first { $0.id == id }
+    }
+}
+
+nonisolated extension DetailWindowValue {
+    static func teamWindow(_ team: Team, accountID: UUID?) -> Self {
+        .team(teamID: team.id, teamName: team.name, accountID: accountID)
     }
 }
 
@@ -102,9 +108,9 @@ struct DetailWindowContent: View {
         case let .user(user, accountID):
             PersonDetailView(user: user, account: resolvedAccount(accountID))
 
-        case let .team(team, accountID):
+        case let .team(teamID, _, accountID):
             if let account = resolvedAccount(accountID) {
-                TeamDetailView(team: team, account: account)
+                StandaloneTeamDetailView(teamID: teamID, account: account)
             } else {
                 NoAccountView()
             }
@@ -132,5 +138,48 @@ struct DetailWindowContent: View {
     /// or the current account only when the value never carried an explicit account.
     private func resolvedAccount(_ id: UUID?) -> Account? {
         DetailWindowAccountResolution.resolve(id: id, accounts: store.accounts, current: store.currentAccount)
+    }
+}
+
+/// Reloads a standalone team from its persisted identity so restored windows never present a
+/// serialized list-row snapshot as current server state.
+private struct StandaloneTeamDetailView: View {
+    let teamID: String
+    let account: Account
+
+    @State private var team: Team?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Group {
+            if let team {
+                TeamDetailView(team: team, account: account) {
+                    Task { await load() }
+                }
+            } else if let errorMessage {
+                ContentUnavailableView {
+                    Label("Couldn’t Load Team", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(errorMessage)
+                } actions: {
+                    Button("Try Again") { Task { await load() } }
+                }
+            } else {
+                ProgressView("Loading team…")
+            }
+        }
+        .task(id: teamID) { await load() }
+    }
+
+    private func load() async {
+        errorMessage = nil
+        do {
+            team = try await HackerRankClient(account: account).team(id: teamID)
+        } catch {
+            guard !Task.isCancelled else { return }
+
+            team = nil
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 }

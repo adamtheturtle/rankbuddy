@@ -42,10 +42,14 @@ struct TeamsScreen: View {
                     rowMenuItems(
                         copyLabel: "Copy Name",
                         copyText: team.name,
-                        openInWindow: { openWindow(value: DetailWindowValue.team(team, accountID: account.id)) }
+                        openInWindow: {
+                            openWindow(value: DetailWindowValue.teamWindow(team, accountID: account.id))
+                        }
                     )
                 },
-                openInWindow: { openWindow(value: DetailWindowValue.team($0, accountID: account.id)) },
+                openInWindow: {
+                    openWindow(value: DetailWindowValue.teamWindow($0, accountID: account.id))
+                },
                 accessoryToolbar: { AnyView(createButton) },
                 primaryMenuAction: AppCommandContext.Action(title: "New Team…") { createPresented = true },
                 reloadToken: reloadToken,
