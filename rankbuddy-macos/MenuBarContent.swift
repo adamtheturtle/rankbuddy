@@ -26,6 +26,7 @@ struct MenuBarContent: View {
 
     @Environment(AccountStore.self) private var store
     @State private var createSheet: MenuBarCreateSheet?
+    @State private var padError: String?
 
     var body: some View {
         Group {
@@ -38,6 +39,11 @@ struct MenuBarContent: View {
             case let .test(account):
                 TestEditorSheet(account: account, mode: .create) { finishCreate(in: .tests) }
             }
+        }
+        .alert("Couldn’t Create Pad", isPresented: padErrorPresented) {
+            Button("OK") { padError = nil }
+        } message: {
+            Text(padError ?? "")
         }
     }
 
@@ -263,10 +269,16 @@ struct MenuBarContent: View {
                 finishCreate(in: .interviews)
             }
         } catch {
-            // Offline/auth failure: bring the main window forward on Interviews so the failure
-            // isn't silent and the user can retry from the full create flow.
+            padError = error.localizedDescription
             finishCreate(in: .interviews)
         }
+    }
+
+    private var padErrorPresented: Binding<Bool> {
+        Binding(
+            get: { padError != nil },
+            set: { if !$0 { padError = nil } }
+        )
     }
 
     private func finishCreate(in section: SidebarSection) {
