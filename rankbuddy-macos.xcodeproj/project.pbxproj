@@ -21,6 +21,7 @@
 		66AE79D22FFE6820003A66B1 /* HackerRankKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D12FFE6820003A66B1 /* HackerRankKit */; };
 		66AE79D42FFE6820003A66B1 /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D32FFE6820003A66B1 /* HackerRankKitMock */; };
 		66AE79D62FFE6843003A66B1 /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D52FFE6843003A66B1 /* HackerRankKitMock */; };
+		66AE79D82FFE6843003A66B1 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D72FFE6843003A66B1 /* PaginatedRESTClient */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -87,6 +88,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				66AE79D62FFE6843003A66B1 /* HackerRankKitMock in Frameworks */,
+				66AE79D82FFE6843003A66B1 /* PaginatedRESTClient in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -173,6 +175,7 @@
 			name = "rankbuddy-macosTests";
 			packageProductDependencies = (
 				66AE79D52FFE6843003A66B1 /* HackerRankKitMock */,
+				66AE79D72FFE6843003A66B1 /* PaginatedRESTClient */,
 			);
 			productName = "rankbuddy-macosTests";
 			productReference = 662C2C552FEC525200FE99C0 /* rankbuddy-macosTests.xctest */;
@@ -705,6 +708,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */;
 			productName = HackerRankKitMock;
+		};
+		66AE79D72FFE6843003A66B1 /* PaginatedRESTClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66769DFE2FED4A320023907A /* XCRemoteSwiftPackageReference "PaginatedRESTClient" */;
+			productName = PaginatedRESTClient;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
