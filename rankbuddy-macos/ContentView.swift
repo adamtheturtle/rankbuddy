@@ -187,6 +187,10 @@ struct ContentView: View {
     /// originating account, not whichever happens to be active). Returns whether anything ours
     /// was accepted, which drives the drop animation.
     private func handleFavoriteDrop(_ providers: [NSItemProvider]) -> Bool {
+        // The synchronous `onDrop` result can only truthfully accept a payload that the app's
+        // own row-drag lifecycle created. Merely advertising our exported type is insufficient.
+        guard dragMonitor.isDragging else { return false }
+
         let identifier = UTType.rankBuddyFavorite.identifier
         let accepted = providers.filter { $0.hasItemConformingToTypeIdentifier(identifier) }
         guard !accepted.isEmpty else { return false }
