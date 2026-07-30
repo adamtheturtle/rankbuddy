@@ -44,15 +44,17 @@ nonisolated enum CreateUserTeamPaging {
 /// The People section: the organisation's users (members), with read-only detail (#36) and
 /// a "Create User" write action (#58).
 struct PeopleScreen: View {
-    @Environment(AccountStore.self) private var store
-    @Environment(\.openWindow) private var openWindow
+    @Environment(AccountStore.self) var store
+    @Environment(\.openWindow) var openWindow
     @State private var createPresented = false
-    @State private var reloadToken = 0
+    @State var reloadToken = 0
     @State private var userPendingLock: User?
     @State private var lockError: String?
 
     var body: some View {
-        if let account = store.currentAccount {
+        if store.isMergedView {
+            mergedList
+        } else if let account = store.currentAccount {
             LoadableList(
                 title: "People",
                 emptyMessage: "No people",
