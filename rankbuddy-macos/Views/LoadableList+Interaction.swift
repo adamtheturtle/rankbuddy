@@ -90,6 +90,23 @@ extension LoadableList {
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
+    func backgroundRefreshFailure(message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundStyle(.secondary)
+            Text("Couldn’t refresh: \(message)")
+                .lineLimit(2)
+            Spacer()
+            Button("Retry") {
+                Task { await reload() }
+            }
+        }
+        .font(.callout)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.yellow.opacity(0.12))
+    }
+
     /// A loaded-count summary. Prefer the API's exact total when available; fall back to the
     /// loaded visible count while more pages remain.
     func subtitle(visibleCount: Int) -> String {

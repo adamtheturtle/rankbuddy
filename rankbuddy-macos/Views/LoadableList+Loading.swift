@@ -13,6 +13,7 @@ extension LoadableList {
     func reload() async {
         didRestore = false
         loadMoreError = nil
+        backgroundRefreshError = nil
         loadedCursors = []
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
         if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
@@ -73,6 +74,7 @@ extension LoadableList {
             nextCursor = page.next
             totalCount = page.totalCount
             phase = .loaded
+            backgroundRefreshError = nil
             await cacheFirstPage(page)
             if preservesVisibleState {
                 reconcilePreservedSelection(in: items)
@@ -80,9 +82,12 @@ extension LoadableList {
                 await restoreIfNeeded(items)
             }
         } catch {
-            // Keep showing cached rows on a refresh failure; only surface the error when there
-            // was nothing to show.
-            if items.isEmpty { phase = .failed(message(for: error)) }
+            // Keep cached rows usable, but make their failed refresh and retry path explicit.
+            if items.isEmpty {
+                phase = .failed(message(for: error))
+            } else {
+                backgroundRefreshError = message(for: error)
+            }
         }
     }
 

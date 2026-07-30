@@ -219,6 +219,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// section reads as "refreshing" in the subtitle rather than silently or with a full spinner.
     /// Set by the loading extension; only ever true when rows are already on screen.
     @State var isBackgroundRefreshing = false
+    /// A non-blocking failure from refreshing already-visible rows.
+    @State var backgroundRefreshError: String?
     /// The list's saved searches, shown as recall chips in the filter bar (#25). Loaded on appear
     /// and when the account-scoped key changes; mutated as the user saves or deletes one. Internal
     /// so the `LoadableList+FilterBar` extension can drive them, per the repo's split-file rule.
@@ -371,6 +373,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             // nothing when it has nothing to show, so plain lists are unchanged.
             savedSearchesBar
             filterBar
+            if let backgroundRefreshError {
+                backgroundRefreshFailure(message: backgroundRefreshError)
+            }
 
             if visible.isEmpty {
                 filterEmptyState
