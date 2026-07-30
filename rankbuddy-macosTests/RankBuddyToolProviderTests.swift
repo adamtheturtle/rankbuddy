@@ -547,6 +547,20 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("additional_time"))
     }
 
+    @Test func `invite_candidate rejects an invalid tag array without writing`() async {
+        let result = await writeProvider().callTool(
+            "invite_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "email": .string("new@example.com"),
+                "tags": .array([.string("onsite"), .int(7), .string("backend")])
+            ]
+        )
+
+        #expect(result.isError == true)
+        #expect(text(result).contains("tags"))
+    }
+
     @Test func `invite_candidate rejects a blank test id`() async {
         let result = await writeProvider().callTool(
             "invite_candidate",

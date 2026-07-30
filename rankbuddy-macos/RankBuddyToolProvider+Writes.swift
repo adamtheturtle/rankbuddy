@@ -108,6 +108,16 @@ extension RankBuddyToolProvider {
         return nil
     }
 
+    private func hasInvalidStringArrayElements(_ arguments: [String: Value]?, _ key: String) -> Bool {
+        guard case let .array(values)? = arguments?[key] else { return false }
+
+        return values.contains { value in
+            guard case let .string(text) = value else { return true }
+
+            return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+    }
+
     // MARK: - Tests
 
     // swiftlint:disable function_body_length
@@ -300,6 +310,9 @@ extension RankBuddyToolProvider {
         let additionalTime = intArgument(arguments, "additional_time")
         guard CandidateInviteValidation.isValid(additionalTime: additionalTime) else {
             return errorResult("`additional_time` must be a whole number from 0 to 1,440 minutes.")
+        }
+        guard !hasInvalidStringArrayElements(arguments, "tags") else {
+            return errorResult("Every `tags` array item must be a non-empty string.")
         }
 
         let fullName = stringArgument(arguments, "full_name")
