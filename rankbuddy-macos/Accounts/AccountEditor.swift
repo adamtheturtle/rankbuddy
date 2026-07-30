@@ -52,6 +52,7 @@ struct AccountEditor: View {
     let existing: Account?
     let embedded: Bool
     let onFinish: ((Account.ID?) -> Void)?
+    let onDirtyChange: ((Bool) -> Void)?
 
     @State private var label: String
     @State private var token: String
@@ -64,20 +65,29 @@ struct AccountEditor: View {
     @State private var scopeWarning: String?
     @State private var validationTask: Task<Void, Never>?
     @State private var validationGeneration = 0
+    @State private var savedDraft: DraftFingerprint
 
     private let initialToken: String
     private let initialBaseURLOverride: String
 
-    init(existing: Account? = nil, embedded: Bool = false, onFinish: ((Account.ID?) -> Void)? = nil) {
+    init(
+        existing: Account? = nil,
+        embedded: Bool = false,
+        onFinish: ((Account.ID?) -> Void)? = nil,
+        onDirtyChange: ((Bool) -> Void)? = nil
+    ) {
+        let initialDraft = DraftFingerprint(account: existing)
         self.existing = existing
         self.embedded = embedded
         self.onFinish = onFinish
+        self.onDirtyChange = onDirtyChange
         _label = State(initialValue: existing?.label ?? "")
         _token = State(initialValue: existing?.token ?? "")
         _baseURLOverride = State(initialValue: existing?.baseURLOverride ?? "")
         _userEmail = State(initialValue: existing?.userEmail ?? "")
         _selectedIcon = State(initialValue: existing?.displayIcon ?? Account.defaultIconSymbol)
         _selectedTintHex = State(initialValue: existing?.tintHex)
+        _savedDraft = State(initialValue: initialDraft)
         initialToken = existing?.token ?? ""
         initialBaseURLOverride = existing?.baseURLOverride ?? ""
     }
@@ -99,6 +109,12 @@ struct AccountEditor: View {
             }
             .onChange(of: token) { _, _ in credentialsChanged() }
             .onChange(of: baseURLOverride) { _, _ in credentialsChanged() }
+            .onChange(of: currentDraft) { _, draft in
+                onDirtyChange?(draft != savedDraft)
+            }
+            .onAppear {
+                onDirtyChange?(currentDraft != savedDraft)
+            }
             .onChange(of: scenePhase) { _, phase in
                 if phase != .active {
                     isTokenRevealed = false
@@ -340,6 +356,17 @@ struct AccountEditor: View {
         selectedIcon != Account.defaultIconSymbol || selectedTintHex != nil
     }
 
+    private var currentDraft: DraftFingerprint {
+        DraftFingerprint(
+            label: label,
+            token: token,
+            baseURLOverride: baseURLOverride,
+            userEmail: userEmail,
+            selectedIcon: selectedIcon,
+            selectedTintHex: selectedTintHex
+        )
+    }
+
     private var draft: Account {
         Account(
             label: trimmedLabel.isEmpty ? defaultLabel : trimmedLabel,
@@ -393,6 +420,8 @@ struct AccountEditor: View {
             store.update(account)
         }
         health.clearUnauthorized(account.id)
+        savedDraft = currentDraft
+        onDirtyChange?(false)
         if let onFinish {
             onFinish(account.id)
         } else {
@@ -425,6 +454,40 @@ struct AccountEditor: View {
 /// Same-file extension so the struct body stays within the lint length budget; `private`
 /// state remains accessible from here.
 private extension AccountEditor {
+    struct DraftFingerprint: Equatable {
+        let label: String
+        let token: String
+        let baseURLOverride: String
+        let userEmail: String
+        let selectedIcon: String
+        let selectedTintHex: String?
+
+        init(account: Account?) {
+            label = account?.label ?? ""
+            token = account?.token ?? ""
+            baseURLOverride = account?.baseURLOverride ?? ""
+            userEmail = account?.userEmail ?? ""
+            selectedIcon = account?.displayIcon ?? Account.defaultIconSymbol
+            selectedTintHex = account?.tintHex
+        }
+
+        init(
+            label: String,
+            token: String,
+            baseURLOverride: String,
+            userEmail: String,
+            selectedIcon: String,
+            selectedTintHex: String?
+        ) {
+            self.label = label
+            self.token = token
+            self.baseURLOverride = baseURLOverride
+            self.userEmail = userEmail
+            self.selectedIcon = selectedIcon
+            self.selectedTintHex = selectedTintHex
+        }
+    }
+
     struct ValidationFingerprint: Equatable {
         let token: String
         let baseURL: URL

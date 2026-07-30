@@ -18,6 +18,13 @@ struct AccountsSettingsView: View {
     /// True while the detail pane shows a blank editor for a not-yet-saved account.
     @State private var addingNew = false
     @State private var accountPendingRemoval: Account?
+    @State private var editorIsDirty = false
+    @State private var pendingEditorTransition: EditorTransition?
+
+    private enum EditorTransition {
+        case select(Account.ID)
+        case add
+    }
 
     var body: some View {
         HSplitView {
@@ -37,6 +44,12 @@ struct AccountsSettingsView: View {
             Button("Cancel", role: .cancel) { accountPendingRemoval = nil }
         } message: {
             Text("Remove \(accountPendingRemoval?.label ?? "this account") from RankBuddy?")
+        }
+        .alert("Discard Unsaved Changes?", isPresented: discardAlertPresented) {
+            Button("Discard Changes", role: .destructive) { performPendingEditorTransition() }
+            Button("Cancel", role: .cancel) { pendingEditorTransition = nil }
+        } message: {
+            Text("Your changes to this account have not been saved.")
         }
     }
 
@@ -76,8 +89,7 @@ struct AccountsSettingsView: View {
             get: { addingNew ? nil : selectedID },
             set: { newValue in
                 if let newValue {
-                    addingNew = false
-                    selectedID = newValue
+                    requestEditorTransition(.select(newValue))
                 }
             }
         )
@@ -87,8 +99,7 @@ struct AccountsSettingsView: View {
     private var addRemoveControl: some View {
         HStack(spacing: 0) {
             Button {
-                addingNew = true
-                selectedID = nil
+                requestEditorTransition(.add)
             } label: {
                 Image(systemName: "plus")
                     .frame(width: 24, height: 20)
@@ -126,15 +137,20 @@ struct AccountsSettingsView: View {
             AccountEditor(existing: nil, embedded: true) { savedID in
                 addingNew = false
                 if let savedID { selectedID = savedID }
-            }
+            } onDirtyChange: { editorIsDirty = $0 }
         } else if let account = selectedAccount {
             VStack(spacing: 0) {
                 accountDetailHeader(account)
                 Divider()
                 // `.id` re-creates the editor (and its field state) when the selection changes,
                 // since SwiftUI reuses the view instance across a binding change.
-                AccountEditor(existing: account, embedded: true) { _ in }
-                    .id(account.id)
+                AccountEditor(
+                    existing: account,
+                    embedded: true,
+                    onFinish: { _ in },
+                    onDirtyChange: { editorIsDirty = $0 }
+                )
+                .id(account.id)
             }
         } else {
             emptyDetail
@@ -210,6 +226,51 @@ struct AccountsSettingsView: View {
             get: { accountPendingRemoval != nil },
             set: { if !$0 { accountPendingRemoval = nil } }
         )
+    }
+
+    private var discardAlertPresented: Binding<Bool> {
+        Binding(
+            get: { pendingEditorTransition != nil },
+            set: { if !$0 { pendingEditorTransition = nil } }
+        )
+    }
+
+    private func requestEditorTransition(_ transition: EditorTransition) {
+        switch transition {
+        case let .select(id) where !addingNew && selectedID == id:
+            return
+        case .add where addingNew:
+            return
+        default:
+            break
+        }
+
+        guard editorIsDirty else {
+            applyEditorTransition(transition)
+            return
+        }
+
+        pendingEditorTransition = transition
+    }
+
+    private func performPendingEditorTransition() {
+        guard let transition = pendingEditorTransition else { return }
+
+        pendingEditorTransition = nil
+        applyEditorTransition(transition)
+    }
+
+    private func applyEditorTransition(_ transition: EditorTransition) {
+        editorIsDirty = false
+        switch transition {
+        case let .select(id):
+            addingNew = false
+            selectedID = id
+
+        case .add:
+            addingNew = true
+            selectedID = nil
+        }
     }
 
     private func confirmRemoveSelected() {
