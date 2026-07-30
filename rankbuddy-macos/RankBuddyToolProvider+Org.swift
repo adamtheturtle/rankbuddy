@@ -13,6 +13,10 @@ import MCPKit
 /// tools, each returns the first page and reports `has_more` so an assistant knows the org is
 /// larger than the page shown.
 extension RankBuddyToolProvider {
+    nonisolated static func nullableCount(_ value: Int?) -> Any {
+        value.map { $0 as Any } ?? NSNull()
+    }
+
     /// Dispatches the org-enumeration tools.
     func callOrgListTool(_ name: String, account: String?) async -> CallTool.Result {
         switch name {
@@ -48,9 +52,9 @@ extension RankBuddyToolProvider {
             let items = page.items.map { team in
                 [
                     "id": team.id, "name": team.name,
-                    "recruiters": team.recruiterCount ?? 0,
-                    "developers": team.developerCount ?? 0,
-                    "interviewers": team.interviewerCount ?? 0
+                    "recruiters": Self.nullableCount(team.recruiterCount),
+                    "developers": Self.nullableCount(team.developerCount),
+                    "interviewers": Self.nullableCount(team.interviewerCount)
                 ]
             }
             return jsonResult(pageMetadata(page).merging([

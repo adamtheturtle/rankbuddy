@@ -88,6 +88,12 @@ struct RankBuddyToolProviderTests {
         #expect(body.contains("\"developers\""))
     }
 
+    @Test func `team counts preserve unknown values`() {
+        #expect(RankBuddyToolProvider.nullableCount(nil) is NSNull)
+        #expect(RankBuddyToolProvider.nullableCount(0) as? Int == 0)
+        #expect(RankBuddyToolProvider.nullableCount(3) as? Int == 3)
+    }
+
     @Test func `list_accounts names the account without exposing a token`() async {
         let result = await provider().callTool("list_accounts", arguments: nil)
         let body = text(result)
