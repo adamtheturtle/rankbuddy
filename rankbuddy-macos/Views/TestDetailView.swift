@@ -12,8 +12,7 @@ import SwiftUI
 //
 // Beyond the list row's fields, it fetches the richer single-test read on selection (#105) and
 // merges the candidate login links, the (sensitive) master password — gated behind an explicit
-// reveal — and the MCQ scoring. The fetch is best-effort: a failure leaves the list-row detail
-// intact.
+// reveal — and MCQ scoring. Detail fetch failures leave the list-row data intact.
 // swiftlint:disable:next type_body_length
 struct TestDetailView: View {
     let test: Test
@@ -148,6 +147,7 @@ struct TestDetailView: View {
         .navigationTitle(displayedTest.name)
         .task(id: displayedTest.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
+        .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onChange(of: scenePhase) { _, phase in
             if phase != .active {
                 passwordRevealed = false

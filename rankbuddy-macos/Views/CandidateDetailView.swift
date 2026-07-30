@@ -113,6 +113,7 @@ struct CandidateDetailView: View {
         .navigationTitle(candidate.fullName ?? candidate.email)
         .task(id: self.candidate.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
+        .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onDisappear { commandContext.clearDetailActions(owner: commandOwner) }
         // Print and Markdown export are off the bar by default but one Customize Toolbar away.
         .toolbar(id: "candidateDetail") {

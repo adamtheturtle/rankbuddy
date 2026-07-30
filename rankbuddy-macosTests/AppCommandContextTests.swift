@@ -51,4 +51,26 @@ struct AppCommandContextTests {
         #expect(context.print?.title == "Print Window")
         #expect(context.exportMarkdown?.title == "Export Window")
     }
+
+    @Test func `activating a window owner switches the commands to that window`() {
+        let context = AppCommandContext()
+        let mainOwner = UUID()
+        let windowOwner = UUID()
+
+        context.registerDetailActions(
+            owner: mainOwner,
+            print: .init(title: "Print Main") {},
+            exportMarkdown: .init(title: "Export Main") {}
+        )
+        context.registerDetailActions(
+            owner: windowOwner,
+            print: .init(title: "Print Window") {},
+            exportMarkdown: .init(title: "Export Window") {}
+        )
+
+        context.activateDetailActions(owner: mainOwner)
+        #expect(context.print?.title == "Print Main")
+        context.activateDetailActions(owner: windowOwner)
+        #expect(context.print?.title == "Print Window")
+    }
 }

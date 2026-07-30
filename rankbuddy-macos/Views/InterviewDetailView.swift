@@ -11,8 +11,7 @@ import SwiftUI
 /// Detail for a single interview. Beyond the list row's fields, it fetches the richer
 /// single-interview read and the conversation transcript on selection (#103); both load
 /// lazily and degrade silently (e.g. in merged view, where the owning account is ambiguous).
-/// Outside the merged view the title renames in place, the notes edit inline, and the
-/// scheduled window is adjustable — each saving per field via `updateInterview` (#147).
+/// Scheduled fields save individually through `updateInterview` (#147).
 struct InterviewDetailView: View {
     let interview: Interview
     var onChanged: () -> Void = {}
@@ -174,6 +173,7 @@ struct InterviewDetailView: View {
         .navigationTitle(displayTitle)
         .task(id: interview.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
+        .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onDisappear { commandContext.clearDetailActions(owner: commandOwner) }
         .advertisesItemActivity(
             collection: .interviews,

@@ -181,6 +181,7 @@ struct QuestionDetailView: View {
         .navigationTitle(displayed.name)
         .task(id: question.id) { await loadDetail() }
         .onAppear { registerDetailCommands() }
+        .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onChange(of: scenePhase) { _, phase in
             if phase != .active {
                 answerRevealed = false

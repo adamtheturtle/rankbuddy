@@ -66,6 +66,14 @@ final class AppCommandContext {
         applyTopDetailRegistration()
     }
 
+    func activateDetailActions(owner: UUID) {
+        guard let index = detailRegistrations.firstIndex(where: { $0.owner == owner }) else { return }
+
+        let registration = detailRegistrations.remove(at: index)
+        detailRegistrations.append(registration)
+        applyTopDetailRegistration()
+    }
+
     private func applyTopDetailRegistration() {
         exportMarkdown = detailRegistrations.last?.exportMarkdown
         print = detailRegistrations.last?.print
@@ -81,5 +89,25 @@ struct CommandActionButton: View {
             action?.perform()
         }
         .disabled(action?.isEnabled() != true)
+    }
+}
+
+private struct DetailCommandActivationModifier: ViewModifier {
+    let context: AppCommandContext
+    let owner: UUID
+    @Environment(\.controlActiveState) private var controlActiveState
+
+    func body(content: Content) -> some View {
+        content.onChange(of: controlActiveState) { _, state in
+            if state == .key {
+                context.activateDetailActions(owner: owner)
+            }
+        }
+    }
+}
+
+extension View {
+    func activatesDetailCommands(in context: AppCommandContext, owner: UUID) -> some View {
+        modifier(DetailCommandActivationModifier(context: context, owner: owner))
     }
 }
