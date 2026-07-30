@@ -82,7 +82,8 @@ extension SettingsView {
         } footer: {
             Text("Keeps a count of scheduled interviews on the Dock icon and, optionally, " +
                 "posts a notification when new interviews appear, refreshed in the background " +
-                "even when no window is open. Badge counts the current account or every account.")
+                "even when no window is open. Current account follows the visible account scope, " +
+                "including all visible accounts in merged mode.")
         }
     }
 }

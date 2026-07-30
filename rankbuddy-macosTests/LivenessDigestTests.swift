@@ -115,6 +115,12 @@ struct LivenessDigestTests {
         let all = DockBadgeScope.allAccounts.badgeableAccounts(in: store)
         #expect(all.count == 2)
         #expect(all.allSatisfy { !$0.isMock })
+
+        // Merged mode has no visible current account, so current scope follows the visible set.
+        store.showAllAccounts = true
+        let merged = DockBadgeScope.currentAccount.badgeableAccounts(in: store)
+        #expect(merged.count == 2)
+        #expect(merged.allSatisfy { !$0.isMock })
     }
 
     @Test func `probe scheduler bounds concurrency and yields every healthy result`() async {

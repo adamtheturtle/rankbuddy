@@ -20,8 +20,6 @@ enum LivenessSettings {
     static let intervalMinutesKey = "rb.refreshMinutes"
     static let dockScopeKey = "rb.dockBadgeScope"
 
-    /// The Dock-badge scope as stored, defaulting to the current account (the historical
-    /// behaviour) for an unset or unrecognised value.
     static func dockBadgeScope() -> DockBadgeScope {
         DockBadgeScope(rawValue: UserDefaults.standard.string(forKey: dockScopeKey) ?? "") ?? .currentAccount
     }
@@ -46,10 +44,8 @@ enum LivenessSettings {
     }
 }
 
-/// Which accounts the Dock badge's scheduled-interview count covers (#68). Matters with
-/// multiple accounts: "all accounts" sums upcoming interviews across every real account,
-/// while "current account" counts only the selected one. `RawRepresentable`/`String` so it
-/// persists directly through `@AppStorage`.
+/// Which accounts the Dock badge's scheduled-interview count covers (#68).
+/// The raw string persists directly through `@AppStorage`.
 enum DockBadgeScope: String, CaseIterable, Identifiable {
     case currentAccount
     case allAccounts
@@ -70,7 +66,11 @@ enum DockBadgeScope: String, CaseIterable, Identifiable {
     func badgeableAccounts(in store: AccountStore) -> [Account] {
         let usable: (Account) -> Bool = { !$0.isMock && !$0.token.isEmpty }
         switch self {
-        case .currentAccount: return [store.currentAccount].compactMap(\.self).filter(usable)
+        case .currentAccount:
+            return store.showAllAccounts
+                ? store.accounts.filter(usable)
+                : [store.currentAccount].compactMap(\.self).filter(usable)
+
         case .allAccounts: return store.accounts.filter(usable)
         }
     }
