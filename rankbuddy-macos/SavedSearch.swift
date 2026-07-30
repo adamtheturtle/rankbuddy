@@ -30,7 +30,7 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
     init(name: String, query: String, dateRange: String?, facets: [String: [String]] = [:], id: UUID = UUID()) {
         self.id = id
         self.name = name
-        self.query = query
+        self.query = Self.normalizedQuery(query)
         self.dateRange = dateRange
         self.facets = facets.filter { !$0.value.isEmpty }
     }
@@ -39,7 +39,7 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
-        query = try container.decode(String.self, forKey: .query)
+        query = try Self.normalizedQuery(container.decode(String.self, forKey: .query))
         dateRange = try container.decodeIfPresent(String.self, forKey: .dateRange)
         // Older snapshots predate facet capture; default to none so they still decode.
         facets = try container.decodeIfPresent([String: [String]].self, forKey: .facets) ?? [:]
@@ -71,7 +71,7 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
     /// Whether this captures any constraint at all — an empty query, no range, and no facets
     /// would save nothing useful, so the UI refuses to create one.
     var isEmpty: Bool {
-        query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        query.isEmpty
             && dateRange == nil
             && facets.values.allSatisfy(\.isEmpty)
     }
@@ -85,7 +85,13 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
         facets liveFacets: [String: Set<String>]
     ) -> Bool {
         let normalizedLive = liveFacets.filter { !$0.value.isEmpty }
-        return query == liveQuery && dateRange == liveRange && facetSelection == normalizedLive
+        return query == Self.normalizedQuery(liveQuery)
+            && dateRange == liveRange
+            && facetSelection == normalizedLive
+    }
+
+    static func normalizedQuery(_ query: String) -> String {
+        query.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

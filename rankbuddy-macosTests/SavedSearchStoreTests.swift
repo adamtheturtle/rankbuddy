@@ -94,6 +94,13 @@ struct SavedSearchStoreTests {
         #expect(SavedSearch(name: "x", query: "", dateRange: nil, facets: ["state": []]).isEmpty)
     }
 
+    @Test func `saved search queries use trimmed list semantics`() {
+        let search = SavedSearch(name: "Backend", query: " backend \n", dateRange: nil)
+
+        #expect(search.query == "backend")
+        #expect(search.matches(query: "\tbackend ", dateRange: nil, facets: [:]))
+    }
+
     @Test func `facet selections round-trip through persistence`() {
         let defaults = makeDefaults()
         let searches = [
