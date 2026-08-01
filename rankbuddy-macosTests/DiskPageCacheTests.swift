@@ -65,6 +65,20 @@ struct DiskPageCacheTests {
         #expect(loaded == nil)
     }
 
+    @Test func `far future pages are removed instead of restored`() async {
+        await DiskPageCache.clear()
+        let now = Date(timeIntervalSince1970: 1000)
+        await DiskPageCache.store(
+            items: ["future"],
+            cursor: nil,
+            totalCount: nil,
+            for: "selection.tests.account",
+            now: now.addingTimeInterval(24 * 60 * 60)
+        )
+
+        #expect(await DiskPageCache.load([String].self, for: "selection.tests.account", now: now) == nil)
+    }
+
     @Test func `candidate pages are never persisted`() async {
         await DiskPageCache.clear()
         let key = "selection.candidates.test.account"

@@ -21,6 +21,9 @@ actor DiskPageCacheActor {
 
 @DiskPageCacheActor
 enum DiskPageCache {
+    /// Tolerates minor wall-clock adjustment while rejecting corrupt or wildly skewed dates.
+    private static let maximumFutureSkew: TimeInterval = 5 * 60
+
     /// A persisted first page: the items, the cursor to the page after them, and the last known total.
     private struct Payload<Item: Codable>: Codable {
         let items: [Item]
@@ -111,7 +114,9 @@ enum DiskPageCache {
             try? FileManager.default.removeItem(at: url)
             return nil
         }
-        guard now.timeIntervalSince(payload.storedAt) <= maximumAge(for: key) else {
+
+        let age = now.timeIntervalSince(payload.storedAt)
+        guard age >= -maximumFutureSkew, age <= maximumAge(for: key) else {
             try? FileManager.default.removeItem(at: url)
             return nil
         }
