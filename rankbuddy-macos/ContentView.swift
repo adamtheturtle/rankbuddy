@@ -22,10 +22,12 @@ struct ContentView: View {
     @Environment(AccountHealthMonitor.self) private var health
     @Environment(\.undoManager) private var undoManager
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
     /// Reveals the Favourites drop zone only while a favourite-able row is being dragged (#89).
     @State private var dragMonitor = FavoriteDragMonitor.shared
     /// Whether a drag is currently hovering the Favourites drop zone (drives its highlight).
     @State private var isFavoriteDropTargeted = false
+    @State private var candidateRouter = CandidateDeepLinkRouter.shared
     private let whatsNewEnvironment = WhatsNewEnvironment(
         versionStore: WhatsNewContent.versionStore(),
         whatsNewCollection: [WhatsNewContent.current]
@@ -96,7 +98,9 @@ struct ContentView: View {
         // dangling palette/navigation entries (#25).
         .onAppear {
             favorites.prune(toAccountIDs: Set(store.accounts.map(\.id.uuidString)))
+            openCandidateRequest(candidateRouter.request)
         }
+        .onChange(of: candidateRouter.request) { _, request in openCandidateRequest(request) }
         .whatsNewSheet()
         .environment(\.whatsNew, whatsNewEnvironment)
         .onChange(of: store.accounts.map(\.id)) {
@@ -141,6 +145,23 @@ struct ContentView: View {
                     "Reset only if you want to start with an empty list."
             )
         }
+    }
+
+    private func openCandidateRequest(_ request: CandidateDeepLinkRouter.Request?) {
+        guard let request,
+              let accountID = UUID(uuidString: request.accountID),
+              store.accounts.contains(where: { $0.id == accountID }) else { return }
+
+        store.showAllAccounts = false
+        store.currentAccountID = accountID
+        openWindow(
+            value: DetailWindowValue.candidate(
+                testID: request.testID,
+                candidateID: request.candidateID,
+                accountID: accountID
+            )
+        )
+        candidateRouter.consume(request)
     }
 
     /// Favourites in the selected account scope, shown as a sidebar section (#41).

@@ -88,6 +88,7 @@ struct RefreshRankBuddyDataIntent: AppIntent {
         _ = try await RankBuddyDataRefresh.refresh {
             try await RankBuddyObjectEntityQuery().suggestedEntities()
         }
+        _ = try await RankBuddyCandidateEntityQuery().suggestedEntities()
         return .result()
     }
 }

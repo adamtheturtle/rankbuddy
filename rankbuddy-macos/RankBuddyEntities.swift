@@ -257,6 +257,7 @@ enum RankBuddySpotlightIndex {
     /// the system requests suggestions.
     static func clear() async {
         try? await CSSearchableIndex(name: name).deleteAllSearchableItems()
+        await RankBuddyCandidateSpotlightIndex.clear()
     }
 
     /// Removes one account's donated items after deletion or re-keying, preserving every other
@@ -264,6 +265,7 @@ enum RankBuddySpotlightIndex {
     static func remove(accountID: UUID) async {
         try? await CSSearchableIndex(name: name)
             .deleteSearchableItems(withDomainIdentifiers: [accountID.uuidString])
+        await RankBuddyCandidateSpotlightIndex.remove(accountID: accountID)
     }
 }
 

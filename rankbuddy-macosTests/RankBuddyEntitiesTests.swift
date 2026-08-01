@@ -15,6 +15,38 @@ import Testing
 @MainActor
 @Suite(.serialized)
 struct RankBuddyEntitiesTests {
+    @Test func `candidate entity round trips its nested route without PII`() async throws {
+        let accountID = UUID().uuidString
+        let entity = RankBuddyCandidateEntity(
+            accountID: accountID,
+            testID: "test-1",
+            candidateID: "candidate-2",
+            testTitle: "Backend"
+        )
+        let restored = try #require(
+            try await RankBuddyCandidateEntityQuery().entities(for: [entity.id]).first
+        )
+
+        #expect(restored.accountID == accountID)
+        #expect(restored.testID == "test-1")
+        #expect(restored.candidateID == "candidate-2")
+        #expect(entity.attributeSet.domainIdentifier == accountID)
+        #expect(entity.attributeSet.keywords == nil)
+    }
+
+    @Test func `candidate deep link keeps parent test and account`() {
+        let accountID = UUID().uuidString
+        CandidateDeepLinkRouter.shared.open(
+            accountID: accountID,
+            testID: "test-1",
+            candidateID: "candidate-2"
+        )
+
+        #expect(CandidateDeepLinkRouter.shared.request?.accountID == accountID)
+        #expect(CandidateDeepLinkRouter.shared.request?.testID == "test-1")
+        #expect(CandidateDeepLinkRouter.shared.request?.candidateID == "candidate-2")
+    }
+
     @Test func `spotlight replacement requires every collection snapshot`() {
         let complete = RankBuddyObjectEntityQuery.AccountSnapshot(
             accountID: "a", enrichables: [], isComplete: true
