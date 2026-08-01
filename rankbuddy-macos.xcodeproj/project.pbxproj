@@ -856,7 +856,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/buddy-kit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.16.12;
+				version = 0.16.13;
 			};
 		};
 		663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */ = {

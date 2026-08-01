@@ -52,10 +52,15 @@ final class AccountDataRecovery {
         guard issue?.replacementAllowed != false else { return nil }
         guard let data = try? JSONEncoder().encode(accounts) else { return nil }
 
-        // A replacement is safe once the original payload has a recovery copy. Clearing the
-        // presentation state lets the newly added account become usable without a relaunch.
-        issue = nil
         return data
+    }
+
+    func persistenceCompleted(_ succeeded: Bool, keychain: KeychainStore) {
+        guard succeeded, let backupKey = issue?.backupKey else { return }
+        guard keychain.delete(account: backupKey) else { return }
+
+        UserDefaults.standard.removeObject(forKey: Self.backupDefaultsKey)
+        issue = nil
     }
 
     private func backup(_ data: Data, keychain: KeychainStore) -> String? {
@@ -167,7 +172,10 @@ extension AccountStore {
                     await RankBuddySpotlightIndex.remove(accountID: account.id)
                 }
             },
-            logger: logger
+            logger: logger,
+            onPersistenceResult: { succeeded in
+                AccountDataRecovery.shared.persistenceCompleted(succeeded, keychain: keychain)
+            }
         )
         return AccountStore(config: config)
     }
