@@ -182,7 +182,10 @@ struct MarkdownExportTests {
         let detail = try JSONDecoder().decode(
             QuestionDetail.self,
             from: Data(
-                #"{"options":["<b>JOIN</b>","SELECT &amp; PROJECT"],"answer":"<b>JOIN</b>","internal_notes":"<p>Use joins.</p>"}"#.utf8
+                #"""
+                {"options":["<b>JOIN</b>","SELECT &amp; PROJECT"],"answer":"<b>JOIN</b>",
+                 "internal_notes":"<p>Use joins.</p>"}
+                """#.utf8
             )
         )
 
