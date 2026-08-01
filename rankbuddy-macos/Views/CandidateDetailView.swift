@@ -195,9 +195,9 @@ struct CandidateDetailView: View {
         })
     }
 
-    /// "a, b, c" → ["a", "b", "c"]; nil when the field is cleared entirely.
-    private static func splitList(_ text: String) -> [String]? {
-        CandidateInviteValidation.normalizedTags(text)
+    /// "a, b, c" → ["a", "b", "c"]; an explicit empty array clears every tag.
+    private static func splitList(_ text: String) -> [String] {
+        CandidateInviteValidation.normalizedTags(text) ?? []
     }
 
     /// Applies one field's update, then re-reads the candidate so the detail reflects the
