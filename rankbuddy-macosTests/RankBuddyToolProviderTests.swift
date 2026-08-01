@@ -594,6 +594,18 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `list_invite_templates validates and normalizes access`() async {
+        let blank = await provider().callTool(
+            "list_invite_templates", arguments: ["access": .string(" \n")]
+        )
+        let unsupported = await provider().callTool(
+            "list_invite_templates", arguments: ["access": .string("team")]
+        )
+        #expect(blank.isError != true)
+        #expect(unsupported.isError == true)
+        #expect(text(unsupported).contains("access"))
+    }
+
     @Test func `search_candidates rejects a whitespace-only test id`() async {
         let result = await provider().callTool(
             "search_candidates",

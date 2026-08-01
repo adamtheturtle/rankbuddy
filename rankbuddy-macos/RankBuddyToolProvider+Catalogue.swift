@@ -83,7 +83,13 @@ extension RankBuddyToolProvider {
                      ],
                      required: ["test_id", "candidate_id"]),
             readOnly("list_invite_templates", "List invite email templates.",
-                     properties: ["access": string("Optional access filter."), "account": account]),
+                     properties: [
+                         "access": [
+                             "type": "string", "enum": ["company", "private"],
+                             "description": "Optional access filter."
+                         ],
+                         "account": account
+                     ]),
             readOnly("get_invite_template", "Get an invite email template.",
                      properties: ["template_id": ["type": "string", "description": "The template id."],
                                   "account": account],

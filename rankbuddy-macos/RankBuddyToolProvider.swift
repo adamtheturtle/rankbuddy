@@ -348,11 +348,15 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     ) async -> CallTool.Result {
         switch name {
         case "list_invite_templates":
-            await listInviteTemplates(access: stringArgument(arguments, "access"), account: account)
+            let access = Self.normalizedOptionalString(stringArgument(arguments, "access"))?.lowercased()
+            guard access.map({ ["company", "private"].contains($0) }) ?? true else {
+                return errorResult("`access` must be company or private.")
+            }
+            return await listInviteTemplates(access: access, account: account)
         case "list_interview_templates":
-            await listInterviewTemplates(account: account)
+            return await listInterviewTemplates(account: account)
         default:
-            errorResult("Unknown tool: \(name)")
+            return errorResult("Unknown tool: \(name)")
         }
     }
 
