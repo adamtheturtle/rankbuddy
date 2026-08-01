@@ -159,12 +159,12 @@ extension LoadableList {
                   pagesLoadedThisFilter: pagesLoadedThisFilter,
                   pageCap: searchPageCap
               ) {
-            let countBeforeLoad = items.count
+            let cursorBeforeLoad = nextCursor
             await loadMore()
             pagesLoadedThisFilter += 1
-            // Stop if a load made no progress (e.g. it failed and cleared the cursor), so we
-            // never spin.
-            if items.count == countBeforeLoad { break }
+            // A duplicate-only page can advance the cursor without increasing the merged row
+            // count. Cursor advancement is therefore the authoritative progress signal.
+            if nextCursor == cursorBeforeLoad { break }
         }
     }
 
@@ -185,10 +185,10 @@ extension LoadableList {
                   pagesLoadedThisFilter: pagesLoadedThisScan,
                   pageCap: searchPageCap
               ) {
-            let countBeforeLoad = items.count
+            let cursorBeforeLoad = nextCursor
             await loadMore()
             pagesLoadedThisScan += 1
-            if items.count == countBeforeLoad { break }
+            if nextCursor == cursorBeforeLoad { break }
         }
     }
 }
