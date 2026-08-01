@@ -59,6 +59,7 @@ configured live accounts continue using their authenticated network sessions.
   ```sh
   swiftformat . --lint     # formatting (SwiftFormat owns formatting)
   swiftlint --strict       # correctness (SwiftLint owns correctness)
+  periphery scan --strict  # unused code (nightly/manual CI)
   ```
 
   Configuration lives in `.swiftformat`, `.swiftlint.yml`, and `.periphery.yml`.

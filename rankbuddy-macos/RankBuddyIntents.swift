@@ -45,6 +45,7 @@ enum RankBuddySectionOption: String, AppEnum {
 /// observes live, so an already-frontmost app switches sections immediately.
 struct OpenRankBuddySectionIntent: AppIntent {
     static let title: LocalizedStringResource = "Open Section"
+    // periphery:ignore
     static let description = IntentDescription("Opens RankBuddy to a specific section.")
     static let openAppWhenRun = true
 
@@ -65,6 +66,7 @@ struct OpenRankBuddySectionIntent: AppIntent {
 /// Brings RankBuddy's main window to the front (or launches it).
 struct OpenRankBuddyIntent: AppIntent {
     static let title: LocalizedStringResource = "Open RankBuddy"
+    // periphery:ignore
     static let description = IntentDescription("Opens the RankBuddy main window.")
     static let openAppWhenRun = true
 
@@ -78,6 +80,7 @@ struct OpenRankBuddyIntent: AppIntent {
 /// write access to HackerRank (#24).
 struct RefreshRankBuddyDataIntent: AppIntent {
     static let title: LocalizedStringResource = "Refresh RankBuddy Data"
+    // periphery:ignore
     static let description = IntentDescription("Refreshes RankBuddy's cached lists and searchable items.")
 
     @MainActor

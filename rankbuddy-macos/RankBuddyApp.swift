@@ -12,6 +12,7 @@ import SwiftUI
 /// window so the app never opens duplicate main windows, plus a `Settings`
 /// scene for preferences and account management.
 struct RankBuddyApp: App {
+    // periphery:ignore
     /// Provides the Dock right-click menu (#45).
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     /// The app's single multi-account store, shared with every scene via the environment.
@@ -24,6 +25,7 @@ struct RankBuddyApp: App {
     @State private var commandContext = AppCommandContext()
     /// Account-aware favourites, shared with the lists and the palette (#25).
     @State private var favorites: FavoritesStore
+    // periphery:ignore
     /// Mirrors favourites to iCloud when the capability is present; nil in demo mode (#22).
     @State private var favoritesSync: FavoritesSyncCoordinator?
     /// The user's chosen appearance (General settings), applied to the main window.
@@ -164,7 +166,11 @@ struct RankBuddyApp: App {
     private var presenceErrorPresented: Binding<Bool> {
         Binding(
             get: { presenceError != nil },
-            set: { if !$0 { presenceError = nil } }
+            set: {
+                if !$0 {
+                    presenceError = nil
+                }
+            }
         )
     }
 

@@ -88,6 +88,7 @@ struct AccountFocusEntityQuery: EntityQuery {
 /// calls `perform()` again with `account == nil`, which restores the snapshot.
 struct ScopeToAccountFocusFilter: SetFocusFilterIntent {
     static let title: LocalizedStringResource = "Scope to Account"
+    // periphery:ignore
     /// Read by the AppIntents framework (Focus settings metadata), not Swift.
     static let description = IntentDescription(
         "Limit RankBuddy to a single HackerRank account while a Focus is on."

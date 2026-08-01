@@ -127,22 +127,6 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         return entities
     }
 
-    /// Fetches the first page of the current account's tests, questions, and interviews and
-    /// maps them to entities. Returns `[]` when there is no current account.
-    @MainActor
-    static func currentAccountEntities() async throws -> [RankBuddyObjectEntity] {
-        try await currentAccountEnrichables().map(\.entity)
-    }
-
-    /// Fetches the current account's first pages and pairs each entity with the on-device text
-    /// its Spotlight keywords are generated from (#92). Returns `[]` when there is no current
-    /// account. The keyword source is built from fields already in the page response, so this
-    /// adds no network work over the plain entity fetch.
-    @MainActor
-    static func currentAccountEnrichables() async throws -> [EnrichableEntity] {
-        try await currentAccountSnapshot()?.enrichables ?? []
-    }
-
     struct AccountSnapshot {
         let accountID: String
         let enrichables: [EnrichableEntity]
@@ -196,13 +180,6 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         } while cursor != nil && pagesLoaded < pageCap
 
         return items
-    }
-
-    @MainActor
-    static func currentAccountSnapshot() async throws -> AccountSnapshot? {
-        guard let account = SharedAccountStore.resolve().currentAccount else { return nil }
-
-        return await snapshot(for: account)
     }
 
     @MainActor
@@ -294,6 +271,7 @@ enum RankBuddySpotlightIndex {
 /// account and section via the same per-account selection key the lists restore from (#19/#24).
 struct OpenRankBuddyObjectIntent: OpenIntent {
     static let title: LocalizedStringResource = "Open RankBuddy Item"
+    // periphery:ignore
     static let description = IntentDescription("Opens a test, question, or interview in RankBuddy.")
 
     @Parameter(title: "Item")
