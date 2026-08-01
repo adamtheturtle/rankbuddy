@@ -184,7 +184,11 @@ struct CandidateDetailView: View {
     }
 
     private var editErrorPresented: Binding<Bool> {
-        Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
+        Binding(get: { editError != nil }, set: {
+            if !$0 {
+                editError = nil
+            }
+        })
     }
 
     /// "a, b, c" → ["a", "b", "c"]; nil when the field is cleared entirely.
@@ -201,13 +205,20 @@ struct CandidateDetailView: View {
         guard let testID, let account else { return false }
 
         let client = HackerRankClient(account: account)
+        let snapshot = displayedCandidate
         do {
-            let updated = try await client.updateCandidate(
+            _ = try await client.updateCandidate(
                 testID: testID,
                 candidateID: candidate.id,
                 options: options
             )
-            detail = await (try? client.candidate(testID: testID, candidateID: candidate.id)) ?? updated
+            do {
+                detail = try await client.candidate(testID: testID, candidateID: candidate.id)
+                detailError = nil
+            } catch {
+                detail = snapshot.applying(options)
+                detailError = "Changes were saved, but the candidate details couldn’t be refreshed."
+            }
             registerDetailCommands()
             onChanged()
             return true
@@ -279,6 +290,33 @@ struct CandidateDetailView: View {
             detailError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
         registerDetailCommands()
+    }
+}
+
+extension TestCandidate {
+    /// Applies fields intentionally sent by an update while retaining rich read-only detail.
+    func applying(_ options: CandidateUpdateOptions) -> Self {
+        Self(
+            id: id,
+            email: email,
+            fullName: options.fullName ?? fullName,
+            score: score,
+            percentageScore: percentageScore,
+            test: test,
+            status: status,
+            atsState: options.atsState ?? atsState,
+            integrityStatus: integrityStatus,
+            attemptStartTime: attemptStartTime,
+            attemptEndTime: attemptEndTime,
+            tags: options.tags ?? tags,
+            feedback: feedback,
+            reportURL: reportURL,
+            pdfURL: pdfURL,
+            plagiarismStatus: plagiarismStatus,
+            outOfWindowEvents: outOfWindowEvents,
+            outOfWindowDuration: outOfWindowDuration,
+            editorPasteCount: editorPasteCount
+        )
     }
 }
 
