@@ -21,6 +21,7 @@ struct ServicesProviderTests {
         #expect(ServicesProvider.target(for: "https://host/x/tests/t1", currentAccountID: nil) == nil)
         // A bare id can't be typed without the chooser, so the Service ignores it.
         #expect(ServicesProvider.target(for: "bare-id", currentAccountID: "ACC") == nil)
+        #expect(ServicesProvider.target(for: "not-a-url/tests/t1", currentAccountID: "ACC") == nil)
     }
 
     @Test func `service resolution explains every rejected input`() {

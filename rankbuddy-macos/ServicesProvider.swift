@@ -66,7 +66,7 @@ final class ServicesProvider: NSObject {
         guard let accountID = currentAccountID else {
             return .failure(.missingAccount)
         }
-        guard let parsed = HackerRankLink.parse(text) else {
+        guard let parsed = HackerRankLink.parseAbsoluteWebURL(text) else {
             return .failure(.unsupportedURL)
         }
 

@@ -58,6 +58,21 @@ enum HackerRankLink {
         return nil
     }
 
+    /// Service input must be an absolute web URL; unlike the Open sheet it never accepts
+    /// path-shaped text or a bare ID because there is no type chooser to disambiguate it.
+    static func parseAbsoluteWebURL(
+        _ input: String,
+        allowedHosts: Set<String> = defaultAllowedHosts
+    ) -> (collection: FavoriteCollection, id: String)? {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let components = URLComponents(string: trimmed),
+              ["http", "https"].contains(components.scheme?.lowercased() ?? ""),
+              components.host != nil
+        else { return nil }
+
+        return parse(trimmed, allowedHosts: allowedHosts)
+    }
+
     /// Backend IDs are opaque but must remain safe to persist and route. This matches the MCP
     /// prompt boundary so every user-controlled identifier has the same bounded alphabet.
     static func isValidOpaqueID(_ value: String) -> Bool {
