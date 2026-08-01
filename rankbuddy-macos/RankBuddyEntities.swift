@@ -115,7 +115,9 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         let entities = enrichables.map(\.entity)
         // Replace the complete configured-account snapshot so switching accounts and backend
         // deletions cannot leave stale results.
-        try? await RankBuddySpotlightIndex.replaceAll(with: entities)
+        if await (try? RankBuddySpotlightIndex.replaceAll(with: entities)) != nil {
+            await SpotlightKeywordEnricher.baseEntitiesReindexed(entities)
+        }
         // On-device keyword enrichment (#92): additive, gated on model availability, re-indexing
         // the same ids with topical keywords. The source text is already in hand from the fetch
         // above (no extra network). Detached so a slow generation never delays the suggestions

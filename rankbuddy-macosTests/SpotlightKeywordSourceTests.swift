@@ -10,6 +10,15 @@ import Testing
 
 @MainActor
 struct SpotlightKeywordSourceTests {
+    @Test func `base reindex retires only overwritten keyword completions`() {
+        let remaining = SpotlightEnrichmentCompletion.remaining(
+            afterReindexing: ["tests|a|1", "questions|a|2"],
+            completed: ["tests|a|1", "interviews|b|3"]
+        )
+
+        #expect(remaining == ["interviews|b|3"])
+    }
+
     @Test func `account invalidation retires only its captured enrichment generation`() {
         var generations = SpotlightEnrichmentGeneration()
         let first = generations.token(for: "account-a")

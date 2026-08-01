@@ -55,6 +55,12 @@ nonisolated enum SpotlightEnrichmentRetry {
     }
 }
 
+nonisolated enum SpotlightEnrichmentCompletion {
+    static func remaining(afterReindexing ids: Set<String>, completed: Set<String>) -> Set<String> {
+        completed.subtracting(ids)
+    }
+}
+
 /// Builds the on-device text a RankBuddy object's Spotlight keywords are generated from (#92).
 ///
 /// Pure and deterministic (unit-tested): it assembles the list fields RankBuddy *already*
@@ -211,6 +217,15 @@ enum SpotlightKeywordEnricher {
         generations.invalidate(accountID: accountID)
         pendingByID = pendingByID.filter { $0.value.enrichable.entity.accountID != accountID }
         enrichedIDs = enrichedIDs.filter { RankBuddyObjectEntity(id: $0)?.accountID != accountID }
+    }
+
+    /// A base refresh writes empty keyword attributes over these ids, so they are no longer
+    /// complete even if this process generated keywords for them earlier.
+    static func baseEntitiesReindexed(_ entities: [RankBuddyObjectEntity]) {
+        enrichedIDs = SpotlightEnrichmentCompletion.remaining(
+            afterReindexing: Set(entities.map(\.id)),
+            completed: enrichedIDs
+        )
     }
 
     private static func shouldQueue(_ enrichable: EnrichableEntity, now: Date) -> Bool {
