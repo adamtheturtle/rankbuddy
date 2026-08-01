@@ -154,10 +154,6 @@ enum MarkdownExport {
         ])
     }
 
-    nonisolated static func test(_ test: Test) -> String {
-        self.test(TestReportData(test: test))
-    }
-
     nonisolated static func test(_ report: TestReportData) -> String {
         let test = report.test
         return document(title: test.name, subtitle: "HackerRank Test Report", sections: [
@@ -192,10 +188,6 @@ enum MarkdownExport {
             textSection("Tags", test.tags.flatMap { $0.isEmpty ? nil : $0.joined(separator: ", ") }),
             textSection("Instructions", test.instructions.map(plainText(fromHTML:)))
         ])
-    }
-
-    nonisolated static func question(_ question: Question) -> String {
-        self.question(QuestionReportData(question: question))
     }
 
     nonisolated static func question(_ report: QuestionReportData) -> String {

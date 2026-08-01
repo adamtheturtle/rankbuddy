@@ -112,22 +112,6 @@ final class ServicesProvider: NSObject {
         return hosts
     }
 
-    /// Resolves and opens the selected text against the current account, bringing the app forward.
-    @MainActor
-    static func open(_ text: String) {
-        let currentID = UserDefaults.standard.string(forKey: AccountStore.currentIDDefaultsKey)
-        let store = SharedAccountStore.resolve()
-        let allowedHosts = allowedHosts(currentAccountID: currentID, accounts: store.accounts)
-        guard let target = target(
-            for: text,
-            currentAccountID: currentID,
-            accounts: store.accounts,
-            allowedHosts: allowedHosts
-        ) else { return }
-
-        open(target)
-    }
-
     @MainActor
     private static func open(_ target: ServiceTarget) {
         RankBuddyDeepLink.open(collection: target.collection, accountID: target.accountID, itemID: target.itemID)

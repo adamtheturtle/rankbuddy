@@ -84,10 +84,6 @@ struct MenuBarContent: View {
             .keyboardShortcut("q")
     }
 
-    /// Where a HackerRank for Work personal access token is generated (mirrors `GetTokenLink`).
-    private static let tokenURL = URL(string: "https://www.hackerrank.com/work/settings/token")
-        ?? Account.defaultBaseURL
-
     private var writableAccount: Account? {
         guard !NetworkMonitor.shared.isOffline, !store.isMergedView else { return nil }
 

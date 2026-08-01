@@ -19,14 +19,6 @@ enum AppAppearance: String, CaseIterable, Identifiable {
         rawValue
     }
 
-    var label: String {
-        switch self {
-        case .system: "System"
-        case .light: "Light"
-        case .dark: "Dark"
-        }
-    }
-
     /// The SwiftUI color scheme to force, or `nil` to follow the system.
     var colorScheme: ColorScheme? {
         switch self {

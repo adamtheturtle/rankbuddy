@@ -166,7 +166,11 @@ struct CandidatesList: View {
 
     /// A presented-flag for optional "pending action" state: dismissing clears it.
     private func presented(_ value: Binding<(some Any)?>) -> Binding<Bool> {
-        Binding(get: { value.wrappedValue != nil }, set: { if !$0 { value.wrappedValue = nil } })
+        Binding(get: { value.wrappedValue != nil }, set: {
+            if !$0 {
+                value.wrappedValue = nil
+            }
+        })
     }
 
     private func cancelInvite(_ candidate: TestCandidate) async {
@@ -217,14 +221,6 @@ struct CandidateRow: View {
             Spacer(minLength: 12)
             candidate.integrityBadge
         }
-    }
-
-    private var subtitle: String {
-        if let score = candidate.score {
-            return "\(candidate.email) - Score: \(score.formatted())"
-        }
-
-        return candidate.email
     }
 }
 
