@@ -63,6 +63,7 @@ enum FileExport {
 
     nonisolated static func sanitizedSuggestedName(_ name: String) -> String {
         let cleaned = name
+            .trimmingCharacters(in: .whitespacesAndNewlines)
             .prefix(160)
             .map { character -> Character in
                 if character == "/" || character == ":" ||
