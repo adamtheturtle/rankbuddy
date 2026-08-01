@@ -274,11 +274,18 @@ extension LoadableList {
         restorationKey: String,
         actionName: String
     ) {
-        let previous = savedSearches
+        let isCurrentScope = self.restorationKey == restorationKey
+        let previous = isCurrentScope
+            ? savedSearches
+            : SavedSearchStore.load(restorationKey: restorationKey)
         guard previous != searches else { return }
 
-        savedSearches = searches
         SavedSearchStore.save(searches, restorationKey: restorationKey)
+        if isCurrentScope {
+            savedSearches = searches
+        } else {
+            loadSavedSearches()
+        }
         undoManager?.registerUndo(withTarget: UndoAction {
             replaceSavedSearches(previous, restorationKey: restorationKey, actionName: actionName)
         }) { target in
