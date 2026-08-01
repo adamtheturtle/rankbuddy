@@ -214,4 +214,27 @@ struct RecentActivityTests {
         #expect(!ended.isActiveOrUpcoming(now: now))
         #expect(upcoming.isActiveOrUpcoming(now: now))
     }
+
+    @Test func `scheduled interviews stop being actionable after their cached end`() throws {
+        let now = try #require(ISO8601DateFormatter().date(from: "2026-07-01T12:00:00Z"))
+        let ended = RecentItem(
+            collection: .interviews,
+            id: "ended",
+            title: "Ended",
+            subtitle: "scheduled",
+            startTime: "2026-07-01T10:00:00Z",
+            endTime: "2026-07-01T11:00:00Z"
+        )
+        let current = RecentItem(
+            collection: .interviews,
+            id: "current",
+            title: "Current",
+            subtitle: "scheduled",
+            startTime: "2026-07-01T11:30:00Z",
+            endTime: "2026-07-01T12:30:00Z"
+        )
+
+        #expect(!ended.isActiveOrUpcoming(now: now))
+        #expect(current.isActiveOrUpcoming(now: now))
+    }
 }

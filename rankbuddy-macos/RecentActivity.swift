@@ -61,6 +61,10 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
         case .interviews:
             guard let status else { return false }
 
+            if let end = Self.parseWindowDate(endTime), now >= end {
+                return false
+            }
+
             return status == "active" || LivenessDigest.isNotificationEligible(status: status)
 
         default:
