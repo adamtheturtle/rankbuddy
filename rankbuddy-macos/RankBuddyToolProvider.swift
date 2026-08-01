@@ -55,13 +55,20 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     func callTool(_ name: String, arguments: [String: Value]?) async -> CallTool.Result {
         let startedAt = Date()
-        let account = stringArgument(arguments, "account")
-        let resolvedAccount = name == "list_accounts" ? nil : await resolveAccount(account)?.label
-        let accountError = await accountResolutionError(account)
+        let account: String? = if case let .string(value)? = arguments?["account"] { value } else { nil }
+        let accountHasWrongType = arguments?["account"] != nil && account == nil
+        let resolvedAccount: String? = if name == "list_accounts" || accountHasWrongType {
+            nil
+        } else {
+            await resolveAccount(account)?.label
+        }
+        let accountError = accountHasWrongType ? nil : await accountResolutionError(account)
         let result: CallTool.Result = if !Self.isKnownTool(name) {
             errorResult("Unknown tool: \(name)")
         } else if let unknown = Self.unknownArgument(in: arguments, toolName: name) {
             errorResult("Unknown argument “\(unknown)” for tool \(name).")
+        } else if accountHasWrongType {
+            errorResult("`account` must be a string.")
         } else if let accountError {
             errorResult(accountError)
         } else {

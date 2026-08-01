@@ -198,6 +198,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("Unknown tool"))
     }
 
+    @Test func `account arguments must be strings`() async {
+        for account in [Value.int(7), .bool(true), .array([])] {
+            let result = await provider().callTool("list_tests", arguments: ["account": account])
+            #expect(result.isError == true)
+            #expect(text(result).contains("account"))
+            #expect(text(result).contains("string"))
+        }
+    }
+
     @Test func `advertised tools are recognized for activity logging`() {
         #expect(RankBuddyToolProvider.isKnownTool("list_tests"))
         #expect(RankBuddyToolProvider.isKnownTool("update_test"))
