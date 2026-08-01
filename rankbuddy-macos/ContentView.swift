@@ -27,7 +27,7 @@ struct ContentView: View {
     /// Whether a drag is currently hovering the Favourites drop zone (drives its highlight).
     @State private var isFavoriteDropTargeted = false
     private let whatsNewEnvironment = WhatsNewEnvironment(
-        versionStore: UserDefaultsWhatsNewVersionStore(),
+        versionStore: WhatsNewContent.versionStore(),
         whatsNewCollection: [WhatsNewContent.current]
     )
 

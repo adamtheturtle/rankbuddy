@@ -8,7 +8,24 @@ import WhatsNewKit
 
 /// The current release notes. WhatsNewKit owns version gating and persistence, matching PadBuddy.
 enum WhatsNewContent {
+    static let legacyLastSeenKey = "rb.lastSeenVersion"
     static let featureCount = 4
+
+    /// Moves the pre-WhatsNewKit dismissal marker into the package's version store before the
+    /// sheet checks presentation state, then retires the legacy key.
+    static func versionStore(defaults: UserDefaults = .standard) -> UserDefaultsWhatsNewVersionStore {
+        let store = UserDefaultsWhatsNewVersionStore(userDefaults: defaults)
+        if let legacy = defaults.string(forKey: legacyLastSeenKey), isVersionString(legacy) {
+            store.save(presentedVersion: .init(stringLiteral: legacy))
+            defaults.removeObject(forKey: legacyLastSeenKey)
+        }
+        return store
+    }
+
+    private static func isVersionString(_ value: String) -> Bool {
+        let components = value.split(separator: ".", omittingEmptySubsequences: false)
+        return (1 ... 3).contains(components.count) && components.allSatisfy { Int($0) != nil }
+    }
 
     static let current = WhatsNew(
         version: .current(),
