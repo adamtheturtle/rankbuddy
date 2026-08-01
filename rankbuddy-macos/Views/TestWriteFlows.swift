@@ -25,6 +25,26 @@ nonisolated enum TestNameValidation {
     }
 }
 
+nonisolated enum TestAssessmentValidation {
+    static let maximumDuration = 1440
+    static let maximumCutoffScore = 1_000_000
+
+    static func error(duration: String, cutoffScore: String) -> String? {
+        let normalizedDuration = duration.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !normalizedDuration.isEmpty,
+           Int(normalizedDuration).map({ (1 ... maximumDuration).contains($0) }) != true {
+            return "Duration must be a whole number from 1 through 1,440 minutes."
+        }
+
+        let normalizedCutoff = cutoffScore.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !normalizedCutoff.isEmpty,
+           Int(normalizedCutoff).map({ (0 ... maximumCutoffScore).contains($0) }) != true {
+            return "Cutoff score must be a whole number from 0 through 1,000,000."
+        }
+        return nil
+    }
+}
+
 /// Whether the test editor is creating a new test or editing an existing assessment.
 enum TestEditorMode {
     case create
@@ -101,8 +121,8 @@ struct TestEditorSheet: View {
 
     private var options: TestWriteOptions {
         TestWriteOptions(
-            duration: Int(duration),
-            cutoffScore: Int(cutoffScore),
+            duration: Int(duration.trimmingCharacters(in: .whitespacesAndNewlines)),
+            cutoffScore: Int(cutoffScore.trimmingCharacters(in: .whitespacesAndNewlines)),
             instructions: instructions,
             startTime: startTime,
             endTime: endTime,
@@ -114,13 +134,8 @@ struct TestEditorSheet: View {
     }
 
     private var validationError: String? {
-        if !duration.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-           Int(duration).map({ $0 > 0 }) != true {
-            return "Duration must be a whole number greater than zero."
-        }
-        if !cutoffScore.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-           Int(cutoffScore).map({ $0 >= 0 }) != true {
-            return "Cutoff score must be a whole number of zero or more."
+        if let error = TestAssessmentValidation.error(duration: duration, cutoffScore: cutoffScore) {
+            return error
         }
         return TestScheduleValidation.error(startTime: startTime, endTime: endTime)
     }

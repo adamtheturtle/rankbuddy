@@ -27,6 +27,14 @@ struct TestWriteFlowsTests {
         #expect(TestNameValidation.canSubmit("New Test", currentName: nil))
     }
 
+    @Test func `assessment numbers have product ceilings`() {
+        #expect(TestAssessmentValidation.error(duration: "1", cutoffScore: "0") == nil)
+        #expect(TestAssessmentValidation.error(duration: " 1440\n", cutoffScore: "1000000") == nil)
+        #expect(TestAssessmentValidation.error(duration: "0", cutoffScore: "0") != nil)
+        #expect(TestAssessmentValidation.error(duration: "1441", cutoffScore: "0") != nil)
+        #expect(TestAssessmentValidation.error(duration: "30", cutoffScore: "1000001") != nil)
+    }
+
     @Test func `assessment schedule accepts an ordered ISO window`() {
         #expect(TestScheduleValidation.error(
             startTime: "2026-08-01T09:00:00Z",
