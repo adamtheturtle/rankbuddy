@@ -21,10 +21,23 @@ final class AppCommandContext {
         let perform: @MainActor () -> Void
     }
 
+    struct ListActions {
+        let primaryNew: Action?
+        let secondaryNew: Action?
+        let exportCSV: Action?
+        let exportSelectedCSV: Action?
+        let refresh: Action
+    }
+
     private struct DetailRegistration {
         let owner: UUID
         let print: Action
         let exportMarkdown: Action
+    }
+
+    private struct ListRegistration {
+        let owner: UUID
+        let actions: ListActions
     }
 
     var primaryNew: Action?
@@ -34,17 +47,41 @@ final class AppCommandContext {
     var exportMarkdown: Action?
     var print: Action?
     private var detailRegistrations: [DetailRegistration] = []
+    private var listRegistrations: [ListRegistration] = []
     /// Reloads the visible list (⌘R). Mirrors PadBuddy, whose Reload lives on the Go menu so the
     /// toolbar's Refresh button can be hidden from the default toolbar (#101).
     var refresh: Action?
     var creationRequest: CreationRequest?
 
-    func clearListActions() {
-        primaryNew = nil
-        secondaryNew = nil
-        exportCSV = nil
-        exportSelectedCSV = nil
-        refresh = nil
+    func registerListActions(owner: UUID, actions: ListActions) {
+        let registration = ListRegistration(owner: owner, actions: actions)
+        if let index = listRegistrations.firstIndex(where: { $0.owner == owner }) {
+            listRegistrations[index] = registration
+        } else {
+            listRegistrations.append(registration)
+        }
+        applyTopListRegistration()
+    }
+
+    func clearListActions(owner: UUID) {
+        listRegistrations.removeAll { $0.owner == owner }
+        applyTopListRegistration()
+    }
+
+    func activateListActions(owner: UUID) {
+        guard let index = listRegistrations.firstIndex(where: { $0.owner == owner }) else { return }
+
+        let registration = listRegistrations.remove(at: index)
+        listRegistrations.append(registration)
+        applyTopListRegistration()
+    }
+
+    private func applyTopListRegistration() {
+        primaryNew = listRegistrations.last?.actions.primaryNew
+        secondaryNew = listRegistrations.last?.actions.secondaryNew
+        exportCSV = listRegistrations.last?.actions.exportCSV
+        exportSelectedCSV = listRegistrations.last?.actions.exportSelectedCSV
+        refresh = listRegistrations.last?.actions.refresh
     }
 
     func registerDetailActions(owner: UUID, print: Action, exportMarkdown: Action) {
@@ -112,8 +149,26 @@ private struct DetailCommandActivationModifier: ViewModifier {
     }
 }
 
+private struct ListCommandActivationModifier: ViewModifier {
+    let context: AppCommandContext
+    let owner: UUID
+    @Environment(\.controlActiveState) private var controlActiveState
+
+    func body(content: Content) -> some View {
+        content.onChange(of: controlActiveState) { _, state in
+            if state == .key {
+                context.activateListActions(owner: owner)
+            }
+        }
+    }
+}
+
 extension View {
     func activatesDetailCommands(in context: AppCommandContext, owner: UUID) -> some View {
         modifier(DetailCommandActivationModifier(context: context, owner: owner))
+    }
+
+    func activatesListCommands(in context: AppCommandContext, owner: UUID) -> some View {
+        modifier(ListCommandActivationModifier(context: context, owner: owner))
     }
 }

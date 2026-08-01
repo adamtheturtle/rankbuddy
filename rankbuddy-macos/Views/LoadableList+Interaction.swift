@@ -189,36 +189,42 @@ extension LoadableList {
     }
 
     func registerListCommands() {
-        commandContext.primaryNew = primaryMenuAction
-        commandContext.secondaryNew = secondaryMenuAction
         // Reload drives ⌘R from the Go menu, so the toolbar's Refresh button can be hidden from
         // the default toolbar (available via Customize) exactly like PadBuddy's Reload (#101).
-        commandContext.refresh = AppCommandContext.Action(
+        let refresh = AppCommandContext.Action(
             title: "Reload \(title)",
             isEnabled: { !isLoading },
             perform: { Task { await reload() } }
         )
-        guard let csvExport else {
-            commandContext.exportCSV = nil
-            commandContext.exportSelectedCSV = nil
-            return
-        }
-
-        let exportTitle = csvExportIsPartial ? "Export Loaded \(title) Rows CSV…" : "Export \(title) CSV…"
-        commandContext.exportCSV = AppCommandContext.Action(title: exportTitle) {
-            let snapshot = visibleItems
-            CSVExport.save({ csvExport(snapshot) }, suggestedName: csvExportSuggestedName)
-        }
-        let selectedCount = selectedItems.count
-        commandContext.exportSelectedCSV = AppCommandContext.Action(
-            title: selectedCount == 0 ? "Export Selected CSV…" : "Export Selected CSV (\(selectedCount))…",
-            isEnabled: { !selectedItems.isEmpty },
-            perform: {
-                let snapshot = selectedItems
-                guard !snapshot.isEmpty else { return }
-
-                CSVExport.save({ csvExport(snapshot) }, suggestedName: "\(csvFilename)-selected")
+        let exportCSV = csvExport.map { csvExport in
+            let exportTitle = csvExportIsPartial ? "Export Loaded \(title) Rows CSV…" : "Export \(title) CSV…"
+            return AppCommandContext.Action(title: exportTitle) {
+                let snapshot = visibleItems
+                CSVExport.save({ csvExport(snapshot) }, suggestedName: csvExportSuggestedName)
             }
+        }
+        let exportSelectedCSV = csvExport.map { csvExport in
+            let selectedCount = selectedItems.count
+            return AppCommandContext.Action(
+                title: selectedCount == 0 ? "Export Selected CSV…" : "Export Selected CSV (\(selectedCount))…",
+                isEnabled: { !selectedItems.isEmpty },
+                perform: {
+                    let snapshot = selectedItems
+                    guard !snapshot.isEmpty else { return }
+
+                    CSVExport.save({ csvExport(snapshot) }, suggestedName: "\(csvFilename)-selected")
+                }
+            )
+        }
+        commandContext.registerListActions(
+            owner: commandOwner,
+            actions: AppCommandContext.ListActions(
+                primaryNew: primaryMenuAction,
+                secondaryNew: secondaryMenuAction,
+                exportCSV: exportCSV,
+                exportSelectedCSV: exportSelectedCSV,
+                refresh: refresh
+            )
         )
     }
 

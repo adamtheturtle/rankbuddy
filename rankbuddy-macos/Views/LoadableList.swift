@@ -244,6 +244,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// Drives the "Save Search" naming alert raised by the bar's Save action (#25).
     @State var isNamingSearch = false
     @State var newSearchName = ""
+    @State var commandOwner = UUID()
 
     var body: some View {
         HSplitView {
@@ -296,7 +297,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 loadSavedSearches()
                 registerListCommands()
             }
-            .onDisappear { commandContext.clearListActions() }
+            .activatesListCommands(in: commandContext, owner: commandOwner)
+            .onDisappear { commandContext.clearListActions(owner: commandOwner) }
             // Re-load the recall chips when the account-scoped key changes, so each account
             // shows only its own saved searches (#25).
             .onChange(of: restorationKey) {
