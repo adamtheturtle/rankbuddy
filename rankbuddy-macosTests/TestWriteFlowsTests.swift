@@ -42,6 +42,16 @@ struct TestWriteFlowsTests {
         #expect(TestBooleanEditing.updateValue(true, changed: true) == true)
     }
 
+    @Test func `assessment edits omit unchanged fields and rebase unchanged names`() {
+        #expect(TestDirtyField.scalar(90, original: 90) == nil)
+        #expect(TestDirtyField.scalar(120, original: 90) == 120)
+        #expect(TestDirtyField.text("Old instructions", original: "Old instructions") == nil)
+        #expect(TestDirtyField.text("New instructions", original: "Old instructions") == "New instructions")
+        #expect(TestDirtyField.list(["swift"], original: ["swift"]) == nil)
+        #expect(TestDirtyField.needsNameRebase(edited: "Old", original: "Old"))
+        #expect(!TestDirtyField.needsNameRebase(edited: "Local", original: "Old"))
+    }
+
     @Test func `assessment schedule accepts an ordered ISO window`() {
         #expect(TestScheduleValidation.error(
             startTime: "2026-08-01T09:00:00Z",

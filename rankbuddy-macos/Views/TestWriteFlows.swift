@@ -51,6 +51,24 @@ nonisolated enum TestBooleanEditing {
     }
 }
 
+nonisolated enum TestDirtyField {
+    static func scalar<Value: Equatable>(_ current: Value?, original: Value?) -> Value? {
+        current == original ? nil : current
+    }
+
+    static func text(_ current: String, original: String?) -> String? {
+        current == (original ?? "") ? nil : current
+    }
+
+    static func list(_ current: [String]?, original: [String]?) -> [String]? {
+        current == original ? nil : current
+    }
+
+    static func needsNameRebase(edited: String, original: String) -> Bool {
+        edited == original
+    }
+}
+
 /// Whether the test editor is creating a new test or editing an existing assessment.
 enum TestEditorMode {
     case create
@@ -132,23 +150,44 @@ struct TestEditorSheet: View {
     }
 
     private var options: TestWriteOptions {
-        TestWriteOptions(
-            duration: Int(duration.trimmingCharacters(in: .whitespacesAndNewlines)),
-            cutoffScore: Int(cutoffScore.trimmingCharacters(in: .whitespacesAndNewlines)),
-            instructions: instructions,
-            startTime: startTime,
-            endTime: endTime,
-            languages: commaSeparated(languages),
-            tags: commaSeparated(tags),
-            shuffleQuestions: TestBooleanEditing.updateValue(
-                shuffleQuestions,
-                changed: shuffleQuestionsChanged
-            ),
-            enableProctoring: TestBooleanEditing.updateValue(
-                enableProctoring,
-                changed: enableProctoringChanged
+        let duration = Int(duration.trimmingCharacters(in: .whitespacesAndNewlines))
+        let cutoffScore = Int(cutoffScore.trimmingCharacters(in: .whitespacesAndNewlines))
+        let languages = commaSeparated(languages)
+        let tags = commaSeparated(tags)
+
+        switch mode {
+        case .create:
+            return TestWriteOptions(
+                duration: duration,
+                cutoffScore: cutoffScore,
+                instructions: instructions,
+                startTime: startTime,
+                endTime: endTime,
+                languages: languages,
+                tags: tags,
+                shuffleQuestions: shuffleQuestions,
+                enableProctoring: enableProctoring
             )
-        )
+
+        case let .edit(test):
+            return TestWriteOptions(
+                duration: TestDirtyField.scalar(duration, original: test.duration),
+                cutoffScore: TestDirtyField.scalar(cutoffScore, original: test.cutoffScore),
+                instructions: TestDirtyField.text(instructions, original: test.instructions),
+                startTime: TestDirtyField.text(startTime, original: test.startTime),
+                endTime: TestDirtyField.text(endTime, original: test.endTime),
+                languages: TestDirtyField.list(languages, original: test.languages),
+                tags: TestDirtyField.list(tags, original: test.tags),
+                shuffleQuestions: TestBooleanEditing.updateValue(
+                    shuffleQuestions,
+                    changed: shuffleQuestionsChanged
+                ),
+                enableProctoring: TestBooleanEditing.updateValue(
+                    enableProctoring,
+                    changed: enableProctoringChanged
+                )
+            )
+        }
     }
 
     private var validationError: String? {
@@ -241,7 +280,14 @@ struct TestEditorSheet: View {
             case .create:
                 try await client.createTest(name: trimmedName, options: options)
             case let .edit(test):
-                try await client.updateTest(testID: test.id, name: trimmedName, options: options)
+                let originalName = TestNameValidation.normalized(test.name)
+                let shouldRebaseName = TestDirtyField.needsNameRebase(edited: trimmedName, original: originalName)
+                let updateName: String = if shouldRebaseName {
+                    try await latestTestName(testID: test.id, client: client)
+                } else {
+                    trimmedName
+                }
+                try await client.updateTest(testID: test.id, name: updateName, options: options)
             }
             onSaved()
             dismiss()
@@ -250,11 +296,34 @@ struct TestEditorSheet: View {
         }
     }
 
+    private func latestTestName(testID: String, client: HackerRankClient) async throws -> String {
+        var cursor: String?
+        var seen: Set<String> = []
+        for _ in 0 ..< 100 {
+            let page = try await client.testsPage(after: cursor)
+            if let test = page.items.first(where: { $0.id == testID }) {
+                return test.name
+            }
+            guard let next = page.next, seen.insert(next).inserted else { break }
+
+            cursor = next
+        }
+        throw TestEditRebaseError.testNotFound
+    }
+
     private func commaSeparated(_ value: String) -> [String]? {
         let values = value.split(separator: ",").map {
             $0.trimmingCharacters(in: .whitespacesAndNewlines)
         }.filter { !$0.isEmpty }
         return values.isEmpty ? nil : values
+    }
+}
+
+nonisolated enum TestEditRebaseError: LocalizedError {
+    case testNotFound
+
+    var errorDescription: String? {
+        "Couldn’t refresh this assessment before saving. Reload it and try again."
     }
 }
 
