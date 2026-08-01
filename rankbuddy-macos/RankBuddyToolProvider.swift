@@ -269,8 +269,11 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             return await candidateReportPDF(testID: testID, candidateID: candidateID, account: account)
 
         case "get_invite_template":
-            guard let templateID = stringArgument(arguments, "template_id") else {
+            guard let rawTemplateID = stringArgument(arguments, "template_id") else {
                 return missingArgument("template_id")
+            }
+            guard let templateID = Self.normalizedOptionalString(rawTemplateID) else {
+                return errorResult("`template_id` must not be empty.")
             }
 
             return await getInviteTemplate(templateID: templateID, account: account)
