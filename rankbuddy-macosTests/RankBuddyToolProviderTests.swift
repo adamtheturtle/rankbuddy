@@ -1486,6 +1486,24 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `interview template writes enforce text limits`() async {
+        let create = await writeProvider().callTool(
+            "create_interview_template",
+            arguments: ["name": .string(String(repeating: "n", count: 256))]
+        )
+        let update = await writeProvider().callTool(
+            "update_interview_template",
+            arguments: [
+                "template_id": .int(1),
+                "description": .string(String(repeating: "d", count: 10_001))
+            ]
+        )
+        for result in [create, update] {
+            #expect(result.isError == true)
+            #expect(text(result).contains("at most"))
+        }
+    }
+
     @Test func `update_question rejects unsupported types`() async {
         let result = await writeProvider().callTool(
             "update_question",

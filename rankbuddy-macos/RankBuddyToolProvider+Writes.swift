@@ -9,6 +9,25 @@ import HackerRankKit
 import MCP
 import MCPKit
 
+nonisolated enum InterviewTemplateValidation {
+    static let maxNameLength = 255
+    static let maxTitleLength = 255
+    static let maxDescriptionLength = 10_000
+
+    static func textIssue(name: String?, title: String?, description: String?) -> String? {
+        if let name, name.count > maxNameLength {
+            return "`name` can be at most \(maxNameLength) characters."
+        }
+        if let title, title.count > maxTitleLength {
+            return "`title` can be at most \(maxTitleLength) characters."
+        }
+        if let description, description.count > maxDescriptionLength {
+            return "`description` can be at most \(maxDescriptionLength.formatted()) characters."
+        }
+        return nil
+    }
+}
+
 // Write dispatch stays centralized so tool schemas and handlers remain aligned.
 // swiftlint:disable file_length
 
@@ -1213,14 +1232,19 @@ extension RankBuddyToolProvider {
         guard let name = Self.normalizedOptionalString(rawName) else {
             return errorResult("`name` must not be empty.")
         }
+        let title = Self.normalizedOptionalString(stringArgument(arguments, "title"))
+        let description = Self.normalizedOptionalString(stringArgument(arguments, "description"))
+        if let issue = InterviewTemplateValidation.textIssue(
+            name: name, title: title, description: description
+        ) { return errorResult(issue) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let template = try await HackerRankClient(account: resolved).createInterviewTemplate(
                 options: InterviewTemplateWriteOptions(
                     name: name,
-                    title: Self.normalizedOptionalString(stringArgument(arguments, "title")),
-                    description: Self.normalizedOptionalString(stringArgument(arguments, "description"))
+                    title: title,
+                    description: description
                 )
             )
             return interviewTemplateResult(template, account: resolved.label)
@@ -1250,6 +1274,9 @@ extension RankBuddyToolProvider {
         guard arguments?["name"] != nil || arguments?["title"] != nil || arguments?["description"] != nil else {
             return errorResult("At least one of `name`, `title`, or `description` must be provided.")
         }
+        if let issue = InterviewTemplateValidation.textIssue(
+            name: name, title: title, description: description
+        ) { return errorResult(issue) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -1418,11 +1445,13 @@ extension RankBuddyToolProvider {
         func string(
             _ description: String,
             minLength: Int? = nil,
+            maxLength: Int? = nil,
             format: String? = nil,
             allowedValues: [String]? = nil
         ) -> [String: Any] {
             var schema: [String: Any] = ["type": "string", "description": description]
             if let minLength { schema["minLength"] = minLength }
+            if let maxLength { schema["maxLength"] = maxLength }
             if let format { schema["format"] = format }
             if let allowedValues { schema["enum"] = allowedValues }
             return schema
@@ -1713,18 +1742,24 @@ extension RankBuddyToolProvider {
                   required: ["interview_id"], destructive: true),
             write("create_interview_template", "Create a native HackerRank interview template.",
                   properties: [
-                      "name": string("The template's name.", minLength: 1),
-                      "title": string("Default interview title."),
-                      "description": string("Default interview description."),
+                      "name": string("The template's name.", minLength: 1,
+                                     maxLength: InterviewTemplateValidation.maxNameLength),
+                      "title": string("Default interview title.",
+                                      maxLength: InterviewTemplateValidation.maxTitleLength),
+                      "description": string("Default interview description.",
+                                            maxLength: InterviewTemplateValidation.maxDescriptionLength),
                       "account": account
                   ],
                   required: ["name"]),
             write("update_interview_template", "Update a native HackerRank interview template.",
                   properties: [
                       "template_id": integer("The template id.", minimum: 1),
-                      "name": string("The template's name."),
-                      "title": string("Default interview title."),
-                      "description": string("Default interview description."),
+                      "name": string("The template's name.",
+                                     maxLength: InterviewTemplateValidation.maxNameLength),
+                      "title": string("Default interview title.",
+                                      maxLength: InterviewTemplateValidation.maxTitleLength),
+                      "description": string("Default interview description.",
+                                            maxLength: InterviewTemplateValidation.maxDescriptionLength),
                       "account": account
                   ],
                   required: ["template_id"]),
