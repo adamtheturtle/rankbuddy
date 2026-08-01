@@ -135,21 +135,20 @@ enum LivenessProbe {
         let interviews: [Interview]
     }
 
-    nonisolated static func interviews(account: Account, timeout: Duration) async -> [Interview]? {
-        await withTaskGroup(of: [Interview]?.self) { group in
-            group.addTask {
-                try? await pagedInterviews(limit: pageLimit) {
-                    try await HackerRankClient(account: account).interviewsPage(after: $0)
-                }
-            }
-            group.addTask {
-                try? await Task.sleep(for: timeout)
-                return nil
-            }
+    /// Races work against a deadline without placing the work in a structured task group.
+    /// Losing work may finish later, but it cannot hold the caller beyond the timeout.
+    nonisolated static func firstResult<Value: Sendable>(
+        timeout: Duration,
+        operation: @escaping @Sendable () async -> Value?
+    ) async -> Value? {
+        await TimeoutRace.first(timeout: timeout, operation: operation)
+    }
 
-            let first = await group.next()
-            group.cancelAll()
-            return first.flatMap(\.self)
+    nonisolated static func interviews(account: Account, timeout: Duration) async -> [Interview]? {
+        await firstResult(timeout: timeout) {
+            try? await pagedInterviews(limit: pageLimit) {
+                try await HackerRankClient(account: account).interviewsPage(after: $0)
+            }
         }
     }
 

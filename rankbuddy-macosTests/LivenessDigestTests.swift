@@ -176,6 +176,19 @@ struct LivenessDigestTests {
         #expect(Set(received) == Set(0 ..< 8))
     }
 
+    @Test func `probe timeout does not await losing work`() async {
+        let clock = ContinuousClock()
+        let start = clock.now
+
+        let result: Int? = await LivenessProbe.firstResult(timeout: .milliseconds(5)) {
+            try? await Task.sleep(for: .milliseconds(250))
+            return 1
+        }
+
+        #expect(result == nil)
+        #expect(start.duration(to: clock.now) < .milliseconds(100))
+    }
+
     @Test func `liveness probe follows interview cursors`() async throws {
         let first = try interview(id: "first", status: "completed")
         let second = try interview(id: "second", status: "scheduled")
