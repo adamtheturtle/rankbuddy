@@ -210,7 +210,11 @@ struct PersonDetailView: View {
     }
 
     private var editErrorPresented: Binding<Bool> {
-        Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
+        Binding(get: { editError != nil }, set: {
+            if !$0 {
+                editError = nil
+            }
+        })
     }
 
     /// Applies one field's update, then re-reads the user so the detail reflects the
@@ -220,12 +224,22 @@ struct PersonDetailView: View {
 
         let identity = detailIdentity
         let client = HackerRankClient(account: account)
+        let snapshot = displayed
         do {
-            let updated = try await client.updateUser(id: identity.userID, options: options)
-            let refreshed = await (try? client.user(id: identity.userID)) ?? updated
+            _ = try await client.updateUser(id: identity.userID, options: options)
+            let refreshed: User
+            let refreshError: String?
+            do {
+                refreshed = try await client.user(id: identity.userID)
+                refreshError = nil
+            } catch {
+                refreshed = snapshot.applying(options)
+                refreshError = "Changes were saved, but the user details couldn’t be refreshed."
+            }
             guard identity == detailIdentity else { return false }
 
             current = refreshed
+            editError = refreshError
             onChanged()
             return true
         } catch {
@@ -323,6 +337,26 @@ struct PersonDetailView: View {
         isLocking = false
         resolvedTeamNames = nil
         isResolvingTeams = false
+    }
+}
+
+extension User {
+    /// Applies editable fields while retaining identity, teams, status, and activity metadata.
+    func applying(_ options: UserUpdateOptions) -> Self {
+        Self(
+            id: id,
+            email: email,
+            firstName: options.firstName ?? firstName,
+            lastName: options.lastName ?? lastName,
+            country: options.country ?? country,
+            role: options.role ?? role,
+            status: status,
+            teams: teams,
+            activated: activated,
+            companyAdmin: options.companyAdmin ?? companyAdmin,
+            teamAdmin: options.teamAdmin ?? teamAdmin,
+            lastActivityTime: lastActivityTime
+        )
     }
 }
 
