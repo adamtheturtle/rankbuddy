@@ -55,13 +55,28 @@ struct RankBuddyEntitiesTests {
     }
 
     @Test func `spotlight discovery follows cursors to its bound`() async throws {
-        let items = try await RankBuddyObjectEntityQuery.pagedItems(pageCap: 2) { cursor in
+        let items = try await RankBuddyObjectEntityQuery.pagedItems(pageCap: 2, id: { $0 }, loadPage: { cursor in
             cursor == nil
                 ? Page(items: [1], next: "page-2")
                 : Page(items: [2], next: "page-3")
-        }
+        })
 
         #expect(items == [1, 2])
+    }
+
+    @Test func `spotlight discovery stops cursor cycles and deduplicates items`() async throws {
+        var requestedCursors: [String?] = []
+        let items = try await RankBuddyObjectEntityQuery.pagedItems(pageCap: 20, id: { $0 }, loadPage: { cursor in
+            requestedCursors.append(cursor)
+            switch cursor {
+            case nil: Page(items: [1, 2], next: "page-2")
+            case "page-2": Page(items: [2, 3], next: "page-3")
+            default: Page(items: [3, 4], next: "page-2")
+            }
+        })
+
+        #expect(items == [1, 2, 3, 4])
+        #expect(requestedCursors.count == 3)
     }
 
     @Test func `opening an entity writes the section's restoration key`() {
