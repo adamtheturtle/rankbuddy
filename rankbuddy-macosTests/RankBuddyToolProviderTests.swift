@@ -557,6 +557,16 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `candidate_report_pdf rejects blank target ids`() async {
+        for key in ["test_id", "candidate_id"] {
+            var arguments = ["test_id": Value.string("test-1"), "candidate_id": .string("candidate-1")]
+            arguments[key] = .string(" \n")
+            let result = await provider().callTool("candidate_report_pdf", arguments: arguments)
+            #expect(result.isError == true)
+            #expect(text(result).contains(key))
+        }
+    }
+
     @Test func `search_candidates rejects a whitespace-only test id`() async {
         let result = await provider().callTool(
             "search_candidates",

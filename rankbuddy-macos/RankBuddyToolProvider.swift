@@ -261,9 +261,15 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             )
 
         case "candidate_report_pdf":
-            guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
-            guard let candidateID = stringArgument(arguments, "candidate_id") else {
+            guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+            guard let testID = Self.normalizedOptionalString(rawTestID) else {
+                return errorResult("`test_id` must not be empty.")
+            }
+            guard let rawCandidateID = stringArgument(arguments, "candidate_id") else {
                 return missingArgument("candidate_id")
+            }
+            guard let candidateID = Self.normalizedOptionalString(rawCandidateID) else {
+                return errorResult("`candidate_id` must not be empty.")
             }
 
             return await candidateReportPDF(testID: testID, candidateID: candidateID, account: account)
