@@ -180,6 +180,7 @@ struct CreateUserSheet: View {
     @State private var mutationTask: Task<Void, Never>?
 
     private static let roles = organisationUserRoles
+    private static let maxEmailLength = 320
 
     private var trimmedEmail: String {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -194,7 +195,7 @@ struct CreateUserSheet: View {
     }
 
     private var isEmailValid: Bool {
-        EmailValidation.isLikelyValid(email)
+        trimmedEmail.count <= Self.maxEmailLength && EmailValidation.isLikelyValid(trimmedEmail)
     }
 
     /// The API requires email, firstname, role, and at least one team on POST /users (it
@@ -334,6 +335,8 @@ struct CreateUserSheet: View {
     }
 
     private func create() async {
+        guard canCreate else { return }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }
