@@ -97,6 +97,8 @@ struct SavedSearchStoreTests {
 
         #expect(loaded == [valid])
         #expect(defaults.data(forKey: SavedSearchStore.recoveryKey(for: restorationKey)) == raw)
+        let repaired = try #require(defaults.data(forKey: SavedSearchStore.defaultsKey(for: restorationKey)))
+        #expect(try JSONDecoder().decode([SavedSearch].self, from: repaired) == [valid])
     }
 
     @Test func `searches are scoped by restoration key`() {

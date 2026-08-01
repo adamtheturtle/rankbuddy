@@ -157,7 +157,9 @@ enum SavedSearchStore {
 
             return try? JSONDecoder().decode(SavedSearch.self, from: recordData)
         }
-        return validated(recovered, restorationKey: restorationKey, defaults: defaults)
+        let valid = validated(recovered, restorationKey: restorationKey, defaults: defaults)
+        save(valid, restorationKey: restorationKey, defaults: defaults)
+        return valid
     }
 
     /// Persists the saved searches for a list, removing the key entirely when empty.
