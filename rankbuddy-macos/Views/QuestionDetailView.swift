@@ -7,6 +7,8 @@ import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 
+// swiftlint:disable file_length
+
 /// Detail for a single question. Beyond the list row's fields, it fetches the richer
 /// single-question read on selection (#105) and merges the MCQ options, the (sensitive) correct
 /// answer — gated behind an explicit reveal — and the author's internal notes. The fetch is
@@ -238,11 +240,19 @@ struct QuestionDetailView: View {
 
 extension QuestionDetailView {
     private var deleteErrorPresented: Binding<Bool> {
-        Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
+        Binding(get: { deleteError != nil }, set: {
+            if !$0 {
+                deleteError = nil
+            }
+        })
     }
 
     private var editErrorPresented: Binding<Bool> {
-        Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
+        Binding(get: { editError != nil }, set: {
+            if !$0 {
+                editError = nil
+            }
+        })
     }
 
     /// Testcase and code-stub actions for coding questions. HackerRank has no testcase read
@@ -353,6 +363,7 @@ extension QuestionDetailView {
         detailError = nil
         isDetailLoading = true
         detailQuestion = nil
+        editOverlay = QuestionEditOverlay()
         answerRevealed = false
         guard let account = owningAccount else {
             isDetailLoading = false
