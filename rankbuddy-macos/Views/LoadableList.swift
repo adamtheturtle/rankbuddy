@@ -288,7 +288,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             .task(id: serverSearchToken) { await reloadForServerSearch() }
     }
 
-    private var listChangeObservers: some View {
+    private var listLifecycleObservers: some View {
         listTaskContent
             .onChange(of: reloadToken) { Task { await reload() } }
             .onAppear {
@@ -303,6 +303,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 loadSavedSearches()
                 restoreSort()
             }
+    }
+
+    private var listPersistenceObservers: some View {
+        listLifecycleObservers
             .onChange(of: sortSelection) { persistSort() }
             .onChange(of: sortReversed) { persistSort() }
             .onChange(of: query) {
@@ -317,6 +321,10 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             .onChange(of: selectedFacets) {
                 ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))
             }
+    }
+
+    private var listChangeObservers: some View {
+        listPersistenceObservers
             .onChange(of: clientFilterToken) {
                 reconcileSelectionWithVisibleItems()
             }
