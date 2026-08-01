@@ -50,8 +50,12 @@ extension RankBuddyToolProvider {
     }
 
     func callWriteTool(_ name: String, arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        if let result = await callTestWriteTool(name, arguments, account: account) { return result }
-        if let result = await callTeamInterviewWriteTool(name, arguments, account: account) { return result }
+        if let result = await callTestWriteTool(name, arguments, account: account) {
+            return result
+        }
+        if let result = await callTeamInterviewWriteTool(name, arguments, account: account) {
+            return result
+        }
         return errorResult("Unknown tool: \(name)")
     }
 
@@ -104,12 +108,16 @@ extension RankBuddyToolProvider {
     }
 
     private func boolArgument(_ arguments: [String: Value]?, _ key: String) -> Bool? {
-        if case let .bool(value)? = arguments?[key] { return value }
+        if case let .bool(value)? = arguments?[key] {
+            return value
+        }
         return nil
     }
 
     private func intArgument(_ arguments: [String: Value]?, _ key: String) -> Int? {
-        if case let .int(value)? = arguments?[key] { return value }
+        if case let .int(value)? = arguments?[key] {
+            return value
+        }
         return nil
     }
 
@@ -158,7 +166,9 @@ extension RankBuddyToolProvider {
             return errorResult("`name` can be at most \(TestNameValidation.maxLength) characters.")
         }
 
-        if let error = testWriteValidationError(arguments) { return errorResult(error) }
+        if let error = testWriteValidationError(arguments) {
+            return errorResult(error)
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -207,8 +217,12 @@ extension RankBuddyToolProvider {
         let formatter = ISO8601DateFormatter()
         let fromDate = from.flatMap(formatter.date(from:))
         let toDate = until.flatMap(formatter.date(from:))
-        if from != nil, fromDate == nil { return "`invite_valid_from` must be ISO-8601." }
-        if until != nil, toDate == nil { return "`invite_valid_to` must be ISO-8601." }
+        if from != nil, fromDate == nil {
+            return "`invite_valid_from` must be ISO-8601."
+        }
+        if until != nil, toDate == nil {
+            return "`invite_valid_to` must be ISO-8601."
+        }
         if let fromDate, let toDate, toDate <= fromDate {
             return "`invite_valid_to` must be later than `invite_valid_from`."
         }
@@ -224,11 +238,21 @@ extension RankBuddyToolProvider {
             guard case let .string(value)? = arguments?[key] else { return false }
 
             return normalizedOptionalString(value) != nil
-        }) { return true }
-        if case .int? = arguments?["ats_state"] { return true }
-        if case .bool? = arguments?["accept_result_updates"] { return true }
-        if case .array? = arguments?["tags"] { return true }
-        if case let .string(value)? = arguments?["tags"] { return !normalizedStringList([value]).isEmpty }
+        }) {
+            return true
+        }
+        if case .int? = arguments?["ats_state"] {
+            return true
+        }
+        if case .bool? = arguments?["accept_result_updates"] {
+            return true
+        }
+        if case .array? = arguments?["tags"] {
+            return true
+        }
+        if case let .string(value)? = arguments?["tags"] {
+            return !normalizedStringList([value]).isEmpty
+        }
         return false
     }
 
@@ -251,9 +275,15 @@ extension RankBuddyToolProvider {
             guard case let .string(value)? = arguments?[key] else { return false }
 
             return normalizedOptionalString(value) != nil
-        }) { return true }
+        }) {
+            return true
+        }
         let clearableTextKeys = ["last_name", "country", "phone"]
-        if clearableTextKeys.contains(where: { if case .string? = arguments?[$0] { return true }; return false }) {
+        if clearableTextKeys.contains(where: {
+            if case .string? = arguments?[$0] {
+                return true
+            }; return false
+        }) {
             return true
         }
         let integerKeys = [
@@ -261,11 +291,17 @@ extension RankBuddyToolProvider {
             "shared_questions_permission", "shared_tests_permission",
             "shared_interviews_permission", "shared_candidates_permission"
         ]
-        if integerKeys.contains(where: { if case .int? = arguments?[$0] { return true }; return false }) {
+        if integerKeys.contains(where: {
+            if case .int? = arguments?[$0] {
+                return true
+            }; return false
+        }) {
             return true
         }
         return ["company_admin", "team_admin"].contains {
-            if case .bool? = arguments?[$0] { return true }
+            if case .bool? = arguments?[$0] {
+                return true
+            }
             return false
         }
     }
@@ -324,7 +360,9 @@ extension RankBuddyToolProvider {
             return errorResult("`name` must contain 1 to \(TestNameValidation.maxLength) characters.")
         }
 
-        if let error = testWriteValidationError(arguments) { return errorResult(error) }
+        if let error = testWriteValidationError(arguments) {
+            return errorResult(error)
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -515,7 +553,9 @@ extension RankBuddyToolProvider {
         let fullName = stringArgument(arguments, "full_name")?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let tags = stringArrayArgument(arguments, "tags", preservingEmpty: true)
-        if let error = Self.candidateWindowError(from: validFrom, until: validTo) { return errorResult(error) }
+        if let error = Self.candidateWindowError(from: validFrom, until: validTo) {
+            return errorResult(error)
+        }
         if hasInvalidStringArrayElements(arguments, "tags") {
             return errorResult("`tags` must contain only non-empty strings.")
         }
@@ -708,7 +748,10 @@ extension RankBuddyToolProvider {
             return errorResult("`role` must be recruiter, developer, or interviewer.")
         }
 
-        if let issue = UserNameValidation.issue(firstName: firstName ?? "", lastName: lastName) {
+        if let firstName, let issue = UserNameValidation.firstNameIssue(firstName) {
+            return errorResult(issue)
+        }
+        if let issue = UserNameValidation.lastNameIssue(lastName) {
             return errorResult(issue)
         }
 
@@ -794,7 +837,9 @@ extension RankBuddyToolProvider {
             return errorResult("`recommended_duration` must be zero or greater.")
         }
 
-        if let error = questionListValidationError(arguments) { return errorResult(error) }
+        if let error = questionListValidationError(arguments) {
+            return errorResult(error)
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -847,7 +892,9 @@ extension RankBuddyToolProvider {
             return errorResult("`recommended_duration` must be zero or greater.")
         }
 
-        if let error = questionUpdateValidationError(arguments, name: name) { return errorResult(error) }
+        if let error = questionUpdateValidationError(arguments, name: name) {
+            return errorResult(error)
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -893,7 +940,9 @@ extension RankBuddyToolProvider {
         _ arguments: [String: Value]?,
         name: String?
     ) -> String? {
-        if arguments?["name"] != nil, name == nil { return "`name` must not be empty." }
+        if arguments?["name"] != nil, name == nil {
+            return "`name` must not be empty."
+        }
         return questionListValidationError(arguments)
     }
 
@@ -1265,7 +1314,9 @@ extension RankBuddyToolProvider {
         let description = Self.normalizedOptionalString(stringArgument(arguments, "description"))
         if let issue = InterviewTemplateValidation.textIssue(
             name: name, title: title, description: description
-        ) { return errorResult(issue) }
+        ) {
+            return errorResult(issue)
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -1306,7 +1357,9 @@ extension RankBuddyToolProvider {
 
         if let issue = InterviewTemplateValidation.textIssue(
             name: name, title: title, description: description
-        ) { return errorResult(issue) }
+        ) {
+            return errorResult(issue)
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -1480,16 +1533,28 @@ extension RankBuddyToolProvider {
             allowedValues: [String]? = nil
         ) -> [String: Any] {
             var schema: [String: Any] = ["type": "string", "description": description]
-            if let minLength { schema["minLength"] = minLength }
-            if let maxLength { schema["maxLength"] = maxLength }
-            if let format { schema["format"] = format }
-            if let allowedValues { schema["enum"] = allowedValues }
+            if let minLength {
+                schema["minLength"] = minLength
+            }
+            if let maxLength {
+                schema["maxLength"] = maxLength
+            }
+            if let format {
+                schema["format"] = format
+            }
+            if let allowedValues {
+                schema["enum"] = allowedValues
+            }
             return schema
         }
         func integer(_ description: String, minimum: Int? = nil, maximum: Int? = nil) -> [String: Any] {
             var schema: [String: Any] = ["type": "integer", "description": description]
-            if let minimum { schema["minimum"] = minimum }
-            if let maximum { schema["maximum"] = maximum }
+            if let minimum {
+                schema["minimum"] = minimum
+            }
+            if let maximum {
+                schema["maximum"] = maximum
+            }
             return schema
         }
         func boolean(_ description: String) -> [String: Any] {
@@ -1512,7 +1577,9 @@ extension RankBuddyToolProvider {
             destructive: Bool = false
         ) -> [String: Any] {
             var annotations: [String: Any] = ["readOnlyHint": false]
-            if destructive { annotations["destructiveHint"] = true }
+            if destructive {
+                annotations["destructiveHint"] = true
+            }
             return [
                 "name": name, "description": description, "annotations": annotations,
                 "inputSchema": [

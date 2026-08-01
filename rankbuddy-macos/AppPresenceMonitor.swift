@@ -36,7 +36,7 @@ final class AppPresenceMonitor {
         self.activate = activate
     }
 
-    deinit {
+    isolated deinit {
         if let observer {
             notificationCenter.removeObserver(observer)
         }
@@ -51,7 +51,7 @@ final class AppPresenceMonitor {
             object: defaults,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated {
+            _ = MainActor.assumeIsolated {
                 self?.reconcile()
             }
         }

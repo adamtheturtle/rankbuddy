@@ -66,14 +66,18 @@ struct RankBuddyEntitiesTests {
 
     @Test func `spotlight discovery stops cursor cycles and deduplicates items`() async throws {
         var requestedCursors: [String?] = []
-        let items = try await RankBuddyObjectEntityQuery.pagedItems(pageCap: 20, id: { $0 }, loadPage: { cursor in
-            requestedCursors.append(cursor)
-            switch cursor {
-            case nil: Page(items: [1, 2], next: "page-2")
-            case "page-2": Page(items: [2, 3], next: "page-3")
-            default: Page(items: [3, 4], next: "page-2")
+        let items = try await RankBuddyObjectEntityQuery.pagedItems(
+            pageCap: 20,
+            id: { (value: Int) in value },
+            loadPage: { cursor in
+                requestedCursors.append(cursor)
+                switch cursor {
+                case nil: return Page(items: [1, 2], next: "page-2")
+                case "page-2": return Page(items: [2, 3], next: "page-3")
+                default: return Page(items: [3, 4], next: "page-2")
+                }
             }
-        })
+        )
 
         #expect(items == [1, 2, 3, 4])
         #expect(requestedCursors.count == 3)

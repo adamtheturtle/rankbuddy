@@ -3,6 +3,8 @@
 //  rankbuddy-macos
 //
 
+import Foundation
+
 nonisolated enum UserNameValidation {
     static let maxLength = 255
 

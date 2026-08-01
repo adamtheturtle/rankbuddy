@@ -51,7 +51,7 @@ struct CandidateDetailView: View {
                 editError = issue
                 return false
             }
-            await save(CandidateUpdateOptions(fullName: newName))
+            return await save(CandidateUpdateOptions(fullName: newName))
         }
     }
 
@@ -296,7 +296,7 @@ struct CandidateDetailView: View {
 
 extension TestCandidate {
     /// Applies fields intentionally sent by an update while retaining rich read-only detail.
-    func applying(_ options: CandidateUpdateOptions) -> Self {
+    nonisolated func applying(_ options: CandidateUpdateOptions) -> Self {
         Self(
             id: id,
             email: email,

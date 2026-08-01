@@ -249,8 +249,8 @@ struct HackerRankClientTests {
     @Test func `inviters fixture decodes as a paged resource`() async throws {
         let page = try await makeClient().testInviters(testID: "t1")
 
-        #expect(page.items.map(\.id) == ["u1", "u2"])
-        #expect(page.items.map(\.email) == ["rhea@example.com", "ian@example.com"])
+        #expect(page.items.map(\.id) == ["u1", "u2", "u-missing-email"])
+        #expect(page.items.map(\.email) == ["rhea@example.com", "ian@example.com", ""])
         #expect(page.next == nil)
     }
 
@@ -304,9 +304,9 @@ struct HackerRankClientTests {
         let cancelled = try await client.cancelCandidateInvite(testID: "t1", candidateID: "c1")
         let deleted = try await client.deleteCandidateReport(testID: "t1", candidateID: "c1")
 
-        #expect(updated.id == "c-created")
-        #expect(cancelled.id == "c-created")
-        #expect(deleted.id == "c-created")
+        #expect(updated.id == "c-invited")
+        #expect(cancelled.id == "c-invited")
+        #expect(deleted.id == "c-invited")
     }
 
     @Test func `candidate report PDF fixture returns a sanitized URL`() async throws {

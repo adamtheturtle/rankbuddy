@@ -450,7 +450,7 @@ struct TeamDetailView: View {
 
 extension Team {
     /// Applies editable fields while retaining counts and other rich read-only metadata.
-    func applying(_ options: TeamUpdateOptions) -> Self {
+    nonisolated func applying(_ options: TeamUpdateOptions) -> Self {
         Self(
             id: id,
             name: options.name ?? name,

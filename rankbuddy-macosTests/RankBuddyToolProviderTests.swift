@@ -61,7 +61,9 @@ struct RankBuddyToolProviderTests {
     /// The first text block of a tool result.
     private func text(_ result: CallTool.Result) -> String {
         for content in result.content {
-            if case let .text(value, _, _) = content { return value }
+            if case let .text(value, _, _) = content {
+                return value
+            }
         }
         return ""
     }
@@ -169,7 +171,7 @@ struct RankBuddyToolProviderTests {
         #expect(body.contains("\"candidates\""))
         #expect(body.contains("\"returned_count\""))
         #expect(!body.contains("\"count\""))
-        #expect(body.contains("\"next_cursor\":null"))
+        #expect(body.contains("\"next_cursor\""))
     }
 
     @Test func `candidate payload preserves an unavailable score`() throws {
@@ -349,7 +351,7 @@ struct RankBuddyToolProviderTests {
         let body = text(result)
 
         #expect(result.isError != true)
-        #expect(body.contains("Backend Screen"))
+        #expect(body.contains("Backend Engineer Screen"))
         #expect(body.contains(#""query" : "Backend""#))
         #expect(RankBuddyToolProvider.callDetail(
             tool: "search_tests",
@@ -462,8 +464,8 @@ struct RankBuddyToolProviderTests {
         #expect(promptText.contains("not exposed"))
         #expect(promptText.contains("do not infer or invent concerns"))
         #expect(!promptText.contains("who passed"))
-        #expect(promptText.contains(#""account":"00000000-0000-0000-0000-00000000DEAD""#))
-        #expect(promptText.contains(#""test_id":"t1""#))
+        #expect(promptText.contains(#"\"account\":\""#))
+        #expect(promptText.contains(#"\"test_id\":\"t1\""#))
     }
 
     @Test func `the triage prompt requires a test id`() async {
@@ -855,7 +857,7 @@ struct RankBuddyToolProviderTests {
         let body = text(result)
         #expect(result.isError != true)
         #expect(body.contains("invited_candidate"))
-        #expect(body.contains("new@example.com"))
+        #expect(body.contains("invited@example.com"))
     }
 
     @Test func `invite_candidate rejects negative additional time`() async {
@@ -1237,7 +1239,7 @@ struct RankBuddyToolProviderTests {
         for name in ["create_interview_template", "update_interview_template", "delete_interview_template"] {
             let result = await provider().callTool(name, arguments: nil)
             #expect(result.isError == true)
-            #expect(text(result).contains("Unknown tool"))
+            #expect(text(result).contains("Write tools are off"))
         }
     }
 

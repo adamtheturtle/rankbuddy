@@ -46,7 +46,9 @@ enum ListQuery {
 
             let normalizedChosen = Set(chosen.map(normalizedFacetValue))
             let normalizedValues = Set(facet.values(item).map(normalizedFacetValue))
-            if normalizedValues.isDisjoint(with: normalizedChosen) { return false }
+            if normalizedValues.isDisjoint(with: normalizedChosen) {
+                return false
+            }
         }
         return true
     }
@@ -71,7 +73,7 @@ enum ListQuery {
     /// Comparison key shared by facet option identity and filtering. Case folding matches the
     /// localized, case-insensitive semantics used by list text search while retaining one backend
     /// spelling for display.
-    static func normalizedFacetValue(_ value: String) -> String {
+    nonisolated static func normalizedFacetValue(_ value: String) -> String {
         value
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .folding(options: .caseInsensitive, locale: .current)

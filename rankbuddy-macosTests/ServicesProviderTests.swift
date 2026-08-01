@@ -65,7 +65,7 @@ struct ServicesProviderTests {
         let account = Account(
             label: "Enterprise",
             token: "token",
-            baseURL: URL(string: "https://hiring.example.org") ?? Account.defaultBaseURL
+            baseURLOverride: "https://hiring.example.org"
         )
         let hosts = ServicesProvider.allowedHosts(
             currentAccountID: account.id.uuidString,

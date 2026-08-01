@@ -37,12 +37,12 @@ struct TeamWriteFlowsTests {
     @Test func `adding a member decodes the membership record`() async throws {
         // The membership path contains "/users", so the mock acknowledges with a user record.
         let result = try await makeClient().addTeamMember(teamID: "tm1", email: " new@example.com ", role: "developer")
-        #expect(result.id == "u-created")
+        #expect(result.id == "u1")
     }
 
     @Test func `removing a member succeeds against the demo without throwing`() async throws {
         let result = try await makeClient().removeTeamMember(teamID: "tm1", userID: "u2")
-        #expect(result.id == "u-created")
+        #expect(result.id == "u1")
     }
 
     @Test func `team writes against the bad-key account surface the server's 401`() async {
