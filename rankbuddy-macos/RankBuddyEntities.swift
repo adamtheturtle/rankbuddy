@@ -115,7 +115,8 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
         let entities = enrichables.map(\.entity)
         // Replace the complete configured-account snapshot so switching accounts and backend
         // deletions cannot leave stale results.
-        if await (try? RankBuddySpotlightIndex.replaceAll(with: entities)) != nil {
+        if Self.shouldReplaceIndex(after: snapshots),
+           await (try? RankBuddySpotlightIndex.replaceAll(with: entities)) != nil {
             await SpotlightKeywordEnricher.baseEntitiesReindexed(entities)
         }
         // On-device keyword enrichment (#92): additive, gated on model availability, re-indexing
@@ -145,18 +146,28 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
     struct AccountSnapshot {
         let accountID: String
         let enrichables: [EnrichableEntity]
+        let isComplete: Bool
+    }
+
+    static func shouldReplaceIndex(after snapshots: [AccountSnapshot]) -> Bool {
+        snapshots.allSatisfy(\.isComplete)
+    }
+
+    private struct CollectionSnapshot {
+        let enrichables: [EnrichableEntity]
+        let succeeded: Bool
     }
 
     @MainActor
     private static func collect(
         _ collection: String,
         operation: @MainActor () async throws -> [EnrichableEntity]
-    ) async -> [EnrichableEntity] {
+    ) async -> CollectionSnapshot {
         do {
-            return try await operation()
+            return try await CollectionSnapshot(enrichables: operation(), succeeded: true)
         } catch {
             logger.error("Failed to refresh \(collection, privacy: .public): \(error, privacy: .public)")
-            return []
+            return CollectionSnapshot(enrichables: [], succeeded: false)
         }
     }
 
@@ -241,11 +252,12 @@ struct RankBuddyObjectEntityQuery: EntityQuery {
             }
         }
 
-        var enrichables: [EnrichableEntity] = []
-        enrichables += await tests
-        enrichables += await questions
-        enrichables += await interviews
-        return AccountSnapshot(accountID: accountID, enrichables: enrichables)
+        let snapshots = await [tests, questions, interviews]
+        return AccountSnapshot(
+            accountID: accountID,
+            enrichables: snapshots.flatMap(\.enrichables),
+            isComplete: snapshots.allSatisfy(\.succeeded)
+        )
     }
 }
 

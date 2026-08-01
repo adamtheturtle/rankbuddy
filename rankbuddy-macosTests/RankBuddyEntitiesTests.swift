@@ -14,6 +14,18 @@ import Testing
 /// that opening an entity writes the same per-account selection key the lists restore from.
 @MainActor
 struct RankBuddyEntitiesTests {
+    @Test func `spotlight replacement requires every collection snapshot`() {
+        let complete = RankBuddyObjectEntityQuery.AccountSnapshot(
+            accountID: "a", enrichables: [], isComplete: true
+        )
+        let partial = RankBuddyObjectEntityQuery.AccountSnapshot(
+            accountID: "b", enrichables: [], isComplete: false
+        )
+
+        #expect(RankBuddyObjectEntityQuery.shouldReplaceIndex(after: [complete]))
+        #expect(!RankBuddyObjectEntityQuery.shouldReplaceIndex(after: [complete, partial]))
+    }
+
     @Test func `the composite id encodes collection, account, and item`() {
         let entity = RankBuddyObjectEntity(collection: .questions, accountID: "acc1", itemID: "q42", title: "Two Sum")
         #expect(entity.id == "questions|acc1|q42")
