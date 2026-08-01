@@ -36,7 +36,10 @@ extension RankBuddyToolProvider {
             return await searchUsers(query: query, cursor: cursor, account: account)
 
         case "search_candidates":
-            guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+            guard let rawTestID = stringArgument(arguments, "test_id"),
+                  let testID = Self.normalizedOptionalString(rawTestID) else {
+                return errorResult("`test_id` is required and must not be empty.")
+            }
             guard let rawQuery = stringArgument(arguments, "query") else { return missingArgument("query") }
             guard let query = Self.validatedSearchQuery(rawQuery) else {
                 return errorResult("`query` must contain non-whitespace text.")
