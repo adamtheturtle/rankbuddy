@@ -70,6 +70,20 @@ private struct ReportFieldList: View {
     }
 }
 
+/// Print snapshots cannot wait for SwiftUI tasks. Import rich text during view construction so
+/// the renderer always receives final content rather than HTMLText's transient placeholder.
+private struct PrintHTMLText: View {
+    let attributed: AttributedString
+
+    init(html: String) {
+        attributed = .fromHTML(html)
+    }
+
+    var body: some View {
+        Text(attributed)
+    }
+}
+
 /// A document shell: a titled header over the supplied sections, padded for print margins.
 private struct ReportDocument<Content: View>: View {
     let title: String
@@ -205,7 +219,7 @@ struct TestReport: View {
             }
 
             if let instructions = test.instructions, !instructions.isEmpty {
-                PrintSection(title: "Instructions") { HTMLText(html: instructions) }
+                PrintSection(title: "Instructions") { PrintHTMLText(html: instructions) }
             }
         }
     }
@@ -303,11 +317,11 @@ struct QuestionReport: View {
             }
 
             if let statement = question.problemStatement, !statement.isEmpty {
-                PrintSection(title: "Problem statement") { HTMLText(html: statement) }
+                PrintSection(title: "Problem statement") { PrintHTMLText(html: statement) }
             }
 
             if let notes = data.internalNotes, !notes.isEmpty {
-                PrintSection(title: "Internal notes") { HTMLText(html: notes) }
+                PrintSection(title: "Internal notes") { PrintHTMLText(html: notes) }
             }
         }
     }
