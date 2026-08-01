@@ -485,7 +485,11 @@ extension RankBuddyToolProvider {
         let evaluatorEmail = Self.normalizedOptionalString(stringArgument(arguments, "evaluator_email"))
         let validFrom = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_from"))
         let validTo = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_to"))
+        let atsState = intArgument(arguments, "ats_state")
         if let error = Self.candidateWindowError(from: validFrom, until: validTo) { return errorResult(error) }
+        guard atsState.map({ CandidateATSState(rawValue: $0) != nil }) ?? true else {
+            return errorResult("`ats_state` must be a documented HackerRank ATS state from 0 to 22.")
+        }
         guard rawFinishURL == nil || finishURL != nil else {
             return errorResult("`test_finish_url` must be a valid HTTP or HTTPS URL.")
         }
@@ -503,7 +507,7 @@ extension RankBuddyToolProvider {
                 candidateID: candidateID,
                 options: CandidateUpdateOptions(
                     fullName: stringArgument(arguments, "full_name"),
-                    atsState: intArgument(arguments, "ats_state"),
+                    atsState: atsState,
                     inviteValidFrom: validFrom,
                     inviteValidTo: validTo,
                     evaluatorEmail: evaluatorEmail,
@@ -1478,7 +1482,7 @@ extension RankBuddyToolProvider {
                       "test_id": string("The test's id."),
                       "candidate_id": string("The candidate's id."),
                       "full_name": string("Candidate name."),
-                      "ats_state": integer("ATS state code."),
+                      "ats_state": integer("HackerRank ATS state code (0–22).", minimum: 0, maximum: 22),
                       "invite_valid_from": string("ISO-8601 timestamp before which the invite is inactive."),
                       "invite_valid_to": string("ISO-8601 timestamp after which the invite expires."),
                       "evaluator_email": string("Evaluator email assigned to the candidate."),

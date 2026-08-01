@@ -899,6 +899,21 @@ struct RankBuddyToolProviderTests {
         #expect(result.isError != true)
     }
 
+    @Test func `update_candidate rejects unsupported ATS states`() async {
+        for state in [-1, 23] {
+            let result = await writeProvider().callTool(
+                "update_candidate",
+                arguments: [
+                    "test_id": .string("t1"),
+                    "candidate_id": .string("candidate-1"),
+                    "ats_state": .int(state)
+                ]
+            )
+            #expect(result.isError == true)
+            #expect(text(result).contains("ats_state"))
+        }
+    }
+
     @Test func `update_candidate rejects blank target ids`() async {
         let blankTest = await writeProvider().callTool(
             "update_candidate",
