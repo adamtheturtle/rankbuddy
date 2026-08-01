@@ -50,8 +50,12 @@ extension RankBuddyToolProvider {
 
         do {
             let page = try await HackerRankClient(account: resolved).usersPage(after: cursor)
+            guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
+                return errorResult("HackerRank returned a user without a usable ID.")
+            }
             let items = page.items.map {
-                ["id": $0.id, "email": $0.email, "name": $0.displayName, "role": $0.role ?? ""]
+                ["id": $0.id.trimmingCharacters(in: .whitespacesAndNewlines),
+                 "email": $0.email, "name": $0.displayName, "role": $0.role ?? ""]
             }
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "users": items,
@@ -68,9 +72,12 @@ extension RankBuddyToolProvider {
 
         do {
             let page = try await HackerRankClient(account: resolved).teamsPage(after: cursor)
+            guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
+                return errorResult("HackerRank returned a team without a usable ID.")
+            }
             let items = page.items.map { team in
                 [
-                    "id": team.id, "name": team.name,
+                    "id": team.id.trimmingCharacters(in: .whitespacesAndNewlines), "name": team.name,
                     "recruiters": Self.nullableCount(team.recruiterCount),
                     "developers": Self.nullableCount(team.developerCount),
                     "interviewers": Self.nullableCount(team.interviewerCount)

@@ -565,6 +565,11 @@ struct RankBuddyToolProviderTests {
         #expect(!RankBuddyToolProvider.allResourceIDsUsable(["test-1", " \n"]))
     }
 
+    @Test func `organization lists require usable resource ids`() {
+        #expect(RankBuddyToolProvider.allResourceIDsUsable(["user-1", " team-1 "]))
+        #expect(!RankBuddyToolProvider.allResourceIDsUsable(["user-1", "\t"]))
+    }
+
     @Test func `invite template lists omit addressless records`() throws {
         let missing = try JSONDecoder().decode(
             InviteTemplate.self, from: Data(#"{"name":"No ID"}"#.utf8)
