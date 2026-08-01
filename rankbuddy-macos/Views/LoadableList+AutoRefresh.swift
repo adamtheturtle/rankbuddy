@@ -63,6 +63,7 @@ extension LoadableList {
 
         items = page.items
         backgroundRefreshError = nil
+        partialLoadWarning = nil
         if !isServerSearching {
             onItemsLoaded(page.items)
         }

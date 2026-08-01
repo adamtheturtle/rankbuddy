@@ -167,6 +167,7 @@ extension LoadableList {
             totalCount = page.totalCount ?? totalCount
             pagesLoaded += 1
             loadMoreError = nil
+            partialLoadWarning = nil
             await restoreIfNeeded(items)
             resolvePendingDeepLinkIfLoaded()
         } catch {
