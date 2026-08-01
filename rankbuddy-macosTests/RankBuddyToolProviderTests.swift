@@ -523,6 +523,12 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("test_id"))
     }
 
+    @Test func `list_candidates rejects a whitespace-only test id`() async {
+        let result = await provider().callTool("list_candidates", arguments: ["test_id": .string(" \n\t ")])
+        #expect(result.isError == true)
+        #expect(text(result).contains("test_id"))
+    }
+
     @Test func `create_team rejects a whitespace-only name`() async {
         let result = await writeProvider().callTool("create_team", arguments: ["name": .string(" \n\t ")])
         #expect(result.isError == true)

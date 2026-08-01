@@ -245,7 +245,10 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     private func callKeyedTool(_ name: String, arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         switch name {
         case "list_candidates":
-            guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+            guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+            guard let testID = Self.normalizedOptionalString(rawTestID) else {
+                return errorResult("`test_id` must not be empty.")
+            }
 
             return await listCandidates(
                 testID: testID,
