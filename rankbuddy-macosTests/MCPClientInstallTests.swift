@@ -8,6 +8,7 @@ import Foundation
 import Testing
 
 @MainActor
+// swiftlint:disable:next type_body_length
 struct MCPClientInstallTests {
     private func freshDefaults() -> UserDefaults {
         UserDefaults(suiteName: "mcp-install.tests.\(UUID().uuidString)") ?? .standard
@@ -184,20 +185,29 @@ struct MCPClientInstallTests {
         #expect(MCPClientInstall.codexServerDeclaration(
             in: #"[mcp_servers]"# + "\n" + #"rankbuddy = { command = "old" }"#
         ) == .other)
+        #expect(MCPClientInstall.codexServerDeclaration(
+            in: #"mcp_servers = { rankbuddy = { command = "old" } }"#
+        ) == .other)
         #expect(MCPClientInstall.codexServerDeclaration(in: "[[mcp_servers.rankbuddy]]") == .other)
     }
 
     @Test func `codex install refuses unsafe existing declaration forms`() throws {
-        let url = try temporaryFile(named: "config.toml")
-        try #"mcp_servers.rankbuddy = { command = "old" }"#.write(to: url, atomically: true, encoding: .utf8)
+        for declaration in [
+            #"mcp_servers.rankbuddy = { command = "old" }"#,
+            #"mcp_servers = { rankbuddy = { command = "old" } }"#
+        ] {
+            let url = try temporaryFile(named: "config.toml")
+            try declaration.write(to: url, atomically: true, encoding: .utf8)
 
-        #expect(throws: MCPClientInstall.CodexConfigError.self) {
-            try MCPClientInstall.upsertCodexServer(
-                into: url,
-                client: .codex,
-                command: "new",
-                shouldReplace: { _ in true }
-            )
+            #expect(throws: MCPClientInstall.CodexConfigError.self) {
+                try MCPClientInstall.upsertCodexServer(
+                    into: url,
+                    client: .codex,
+                    command: "new",
+                    shouldReplace: { _ in true }
+                )
+            }
+            #expect(try String(contentsOf: url, encoding: .utf8) == declaration)
         }
     }
 

@@ -399,6 +399,9 @@ enum MCPClientInstall {
             guard let keyPath = tomlKeyValueKeyPath(line) else { continue }
 
             let fullPath = currentTable + keyPath
+            if currentTable.isEmpty, keyPath == ["mcp_servers"] {
+                return .other
+            }
             if fullPath.count >= 2, Array(fullPath.prefix(2)) == ["mcp_servers", serverName] {
                 found = .other
             }
