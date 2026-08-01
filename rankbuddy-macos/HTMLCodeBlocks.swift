@@ -31,9 +31,11 @@ nonisolated enum HTMLCodeBlocks {
                 segments.append(.prose(String(prose)))
             }
 
-            guard let openEnd = rest.range(of: ">", range: preStart.lowerBound ..< rest.endIndex),
+            guard let openingBracket = closingBracket(in: rest, after: preStart.lowerBound),
                   let close = rest.range(
-                      of: "</pre>", options: .caseInsensitive, range: openEnd.upperBound ..< rest.endIndex
+                      of: "</pre>",
+                      options: .caseInsensitive,
+                      range: rest.index(after: openingBracket) ..< rest.endIndex
                   )
             else {
                 // Malformed (unterminated <pre>): keep the remainder as prose and stop.
@@ -41,8 +43,9 @@ nonisolated enum HTMLCodeBlocks {
                 return segments
             }
 
-            let openTag = String(rest[preStart.lowerBound ..< openEnd.upperBound])
-            let inner = String(rest[openEnd.upperBound ..< close.lowerBound])
+            let contentStart = rest.index(after: openingBracket)
+            let openTag = String(rest[preStart.lowerBound ..< contentStart])
+            let inner = String(rest[contentStart ..< close.lowerBound])
             segments.append(.code(
                 languageHint: languageHint(openTag: openTag, inner: inner),
                 code: decodeEntities(stripTags(inner))
@@ -54,6 +57,23 @@ nonisolated enum HTMLCodeBlocks {
             segments.append(.prose(String(rest)))
         }
         return segments
+    }
+
+    private static func closingBracket(in html: Substring, after opening: String.Index) -> String.Index? {
+        var quote: Character?
+        var index = html.index(after: opening)
+        while index < html.endIndex {
+            let character = html[index]
+            if let activeQuote = quote {
+                if character == activeQuote { quote = nil }
+            } else if character == "\"" || character == "'" {
+                quote = character
+            } else if character == ">" {
+                return index
+            }
+            html.formIndex(after: &index)
+        }
+        return nil
     }
 
     private static func preTagStart(in html: Substring) -> Range<String.Index>? {

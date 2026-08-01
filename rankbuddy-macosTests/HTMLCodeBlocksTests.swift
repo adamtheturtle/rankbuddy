@@ -22,6 +22,12 @@ struct HTMLCodeBlocksTests {
         ])
     }
 
+    @Test func `pre opening tags allow greater-than inside quoted attributes`() {
+        let html = #"<pre data-label="a > b"><code>let x = 1</code></pre>"#
+
+        #expect(HTMLCodeBlocks.segments(html) == [.code(languageHint: nil, code: "let x = 1")])
+    }
+
     @Test func `entities inside code are decoded`() {
         let html = "<pre><code>if (a &lt; b &amp;&amp; b &gt; 0) {}</code></pre>"
         let segments = HTMLCodeBlocks.segments(html)
