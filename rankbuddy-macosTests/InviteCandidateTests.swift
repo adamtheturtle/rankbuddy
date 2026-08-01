@@ -36,6 +36,8 @@ struct InviteCandidateTests {
     }
 
     @Test func `invite text options enforce payload limits`() {
+        #expect(CandidateInviteValidation.fullNameIssue(String(repeating: "x", count: 255)) == nil)
+        #expect(CandidateInviteValidation.fullNameIssue(String(repeating: "x", count: 256)) != nil)
         #expect(CandidateInviteValidation.textIssue(.init(
             fullName: String(repeating: "x", count: 256),
             tags: nil,

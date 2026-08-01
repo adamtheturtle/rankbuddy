@@ -47,6 +47,10 @@ struct CandidateDetailView: View {
         guard testID != nil, account != nil else { return nil }
 
         return { newName in
+            if let issue = CandidateInviteValidation.fullNameIssue(newName) {
+                editError = issue
+                return false
+            }
             await save(CandidateUpdateOptions(fullName: newName))
         }
     }

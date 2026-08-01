@@ -70,9 +70,15 @@ enum CandidateInviteValidation {
         return tags.isEmpty ? nil : tags
     }
 
+    static func fullNameIssue(_ value: String?) -> String? {
+        guard let value, value.count > maxFullNameLength else { return nil }
+
+        return "Full name can be at most \(maxFullNameLength) characters."
+    }
+
     static func textIssue(_ fields: TextFields) -> String? {
-        if let fullName = fields.fullName, fullName.count > maxFullNameLength {
-            return "Full name can be at most \(maxFullNameLength) characters."
+        if let issue = fullNameIssue(fields.fullName) {
+            return issue
         }
         if let tags = fields.tags, tags.count > maxTagCount {
             return "Use at most \(maxTagCount) tags."
