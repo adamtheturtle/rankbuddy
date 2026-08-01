@@ -79,9 +79,10 @@ struct InterviewDetailView: View {
         )
     }
 
-    /// Editing needs a single owning account, so the merged view stays read-only.
+    /// Editing needs a single owning account. An explicitly account-scoped standalone window
+    /// remains writable even while the main window shows All Accounts.
     private var canEdit: Bool {
-        !store.isMergedView && store.currentAccount != nil
+        owningAccount != nil
     }
 
     /// The rename hook for the header; `nil` (a static title) when editing is unavailable.
@@ -240,7 +241,7 @@ struct InterviewDetailView: View {
                     Label("Delete", systemImage: "trash")
                 }
                 .help("Delete this interview")
-                .disabled(store.currentAccount == nil || store.isMergedView)
+                .disabled(!canEdit)
             }
             .defaultCustomization(.hidden)
         }
