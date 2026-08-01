@@ -293,8 +293,8 @@ struct InterviewDetailView: View {
                     Task { await loadTranscript(for: requestIdentity) }
                 }
             } else if let messages = transcript?.messages, !messages.isEmpty {
-                ForEach(messages) { message in
-                    TranscriptMessageRow(message: message)
+                ForEach(TranscriptMessageOccurrence.rows(messages)) { row in
+                    TranscriptMessageRow(message: row.message)
                 }
             } else {
                 ContentUnavailableView(
@@ -507,6 +507,15 @@ struct InterviewDetailView: View {
 
 /// One message in the interview transcript, styled to distinguish the candidate from the
 /// interviewers (#103).
+nonisolated struct TranscriptMessageOccurrence: Identifiable {
+    let id: Int
+    let message: InterviewMessage
+
+    static func rows(_ messages: [InterviewMessage]) -> [Self] {
+        messages.enumerated().map { Self(id: $0.offset, message: $0.element) }
+    }
+}
+
 struct TranscriptMessageRow: View {
     let message: InterviewMessage
 
@@ -551,8 +560,8 @@ struct TranscriptMessageRow: View {
     let transcript = (try? JSONDecoder().decode(InterviewTranscript.self, from: Data(json.utf8)))
     return Form {
         Section("Transcript") {
-            ForEach(transcript?.messages ?? []) { message in
-                TranscriptMessageRow(message: message)
+            ForEach(TranscriptMessageOccurrence.rows(transcript?.messages ?? [])) { row in
+                TranscriptMessageRow(message: row.message)
             }
         }
     }

@@ -75,6 +75,23 @@ struct InterviewDetailTests {
         #expect(detail.messages.isEmpty)
     }
 
+    @Test func `transcript rows distinguish colliding fallback message IDs`() throws {
+        let transcript = try JSONDecoder().decode(
+            InterviewTranscript.self,
+            from: Data(#"""
+            {"messages":[
+              {"author":"A","timestamp":1,"text":"one"},
+              {"author":"A","timestamp":1,"text":"two"}
+            ]}
+            """#.utf8)
+        )
+        #expect(transcript.messages[0].id == transcript.messages[1].id)
+
+        let rows = TranscriptMessageOccurrence.rows(transcript.messages)
+
+        #expect(rows.map(\.id) == [0, 1])
+    }
+
     @Test func `scheduled interview end must follow its start`() {
         let start = Date(timeIntervalSinceReferenceDate: 1000)
         #expect(InterviewDetailView.isValidSchedule(start: start, end: start.addingTimeInterval(1)))
