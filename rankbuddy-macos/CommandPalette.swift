@@ -165,10 +165,12 @@ enum RankBuddyPalette {
         selection: Binding<SidebarSection>
     ) async -> [PaletteResult] {
         guard let account = store.currentAccount,
-              let page = try? await HackerRankClient(account: account).questionsPage()
+              let questions = try? await discoverItems(
+                  loadPage: { try await HackerRankClient(account: account).questionsPage(after: $0) }
+              )
         else { return [] }
 
-        return page.items.map { question in
+        return questions.map { question in
             PaletteResult(
                 id: "question.\(question.id)",
                 title: question.name,
@@ -194,10 +196,12 @@ enum RankBuddyPalette {
         selection: Binding<SidebarSection>
     ) async -> [PaletteResult] {
         guard let account = store.currentAccount,
-              let page = try? await HackerRankClient(account: account).interviewsPage()
+              let interviews = try? await discoverItems(
+                  loadPage: { try await HackerRankClient(account: account).interviewsPage(after: $0) }
+              )
         else { return [] }
 
-        return page.items.map { interview in
+        return interviews.map { interview in
             let title = interview.title ?? "Interview \(interview.id)"
             return PaletteResult(
                 id: "interview.\(interview.id)",
