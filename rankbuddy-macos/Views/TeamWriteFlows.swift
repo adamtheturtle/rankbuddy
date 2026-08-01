@@ -104,9 +104,14 @@ struct AddTeamMemberSheet: View {
     @State private var mutationTask: Task<Void, Never>?
 
     private static let roles = ["recruiter", "interviewer", "developer"]
+    private static let maxEmailLength = 320
 
     private var trimmedEmail: String {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var canAdd: Bool {
+        trimmedEmail.count <= Self.maxEmailLength && EmailValidation.isLikelyValid(trimmedEmail)
     }
 
     var body: some View {
@@ -143,7 +148,7 @@ struct AddTeamMemberSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Add") { mutationTask = Task { await add() } }
-                            .disabled(!EmailValidation.isLikelyValid(email))
+                            .disabled(!canAdd)
                     }
                 }
             }
@@ -154,6 +159,8 @@ struct AddTeamMemberSheet: View {
     }
 
     private func add() async {
+        guard canAdd else { return }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }
