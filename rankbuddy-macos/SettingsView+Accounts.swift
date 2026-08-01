@@ -55,6 +55,9 @@ struct AccountsSettingsView: View {
         } message: {
             Text("Your changes to this account have not been saved.")
         }
+        // Prevent the Settings scene itself from bypassing the same dirty-editor protection used
+        // by sidebar/add transitions. The draft must be saved or explicitly discarded first.
+        .interactiveDismissDisabled(editorIsDirty)
     }
 
     /// The account matching the current sidebar selection, if it still exists.
