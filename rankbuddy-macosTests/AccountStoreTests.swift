@@ -13,6 +13,11 @@ import Testing
 /// every Keychain/UserDefaults side effect, so they never touch the real login keychain.
 @MainActor
 struct AccountStoreTests {
+    @Test func `account recovery reuses its bounded Keychain slot`() {
+        #expect(AccountDataRecovery.backupKey(existingKey: nil) == "accounts-recovery")
+        #expect(AccountDataRecovery.backupKey(existingKey: "accounts-recovery-old") == "accounts-recovery-old")
+    }
+
     @Test func `scope assessment reports unavailable probes separately`() {
         let warning = AccountScopeAssessment.warning([
             ("Tests", .authorized),

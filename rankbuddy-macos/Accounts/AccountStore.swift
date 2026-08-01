@@ -60,16 +60,21 @@ final class AccountDataRecovery {
 
     private func backup(_ data: Data, keychain: KeychainStore) -> String? {
         let defaults = UserDefaults.standard
-        if let existingKey = defaults.string(forKey: Self.backupDefaultsKey),
+        let existingKey = defaults.string(forKey: Self.backupDefaultsKey)
+        if let existingKey,
            keychain.readData(account: existingKey) == data {
             return existingKey
         }
 
-        let key = "accounts-recovery-\(UUID().uuidString)"
+        let key = Self.backupKey(existingKey: existingKey)
         guard keychain.write(data, account: key) else { return nil }
 
         defaults.set(key, forKey: Self.backupDefaultsKey)
         return key
+    }
+
+    nonisolated static func backupKey(existingKey: String?) -> String {
+        existingKey ?? "accounts-recovery"
     }
 }
 
