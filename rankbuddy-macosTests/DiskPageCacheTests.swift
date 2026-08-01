@@ -32,6 +32,8 @@ struct DiskPageCacheTests {
 
         // A decode into the wrong element type fails cleanly to nil rather than trapping.
         #expect(await DiskPageCache.load([Bool].self, for: "disk.mismatch") == nil)
+        // The failed decode retires the corrupt/schema-incompatible file instead of retrying it.
+        #expect(await DiskPageCache.load([Int].self, for: "disk.mismatch") == nil)
     }
 
     @Test func `cached hydrates from disk on a memory miss`() async {

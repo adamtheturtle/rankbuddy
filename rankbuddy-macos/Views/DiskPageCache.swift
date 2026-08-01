@@ -104,10 +104,13 @@ enum DiskPageCache {
             }
             return nil
         }
-        guard let url = fileURL(for: key),
-              let data = try? Data(contentsOf: url),
+        guard let url = fileURL(for: key) else { return nil }
+        guard let data = try? Data(contentsOf: url),
               let payload = try? JSONDecoder().decode(Payload<Item>.self, from: data)
-        else { return nil }
+        else {
+            try? FileManager.default.removeItem(at: url)
+            return nil
+        }
         guard now.timeIntervalSince(payload.storedAt) <= maximumAge(for: key) else {
             try? FileManager.default.removeItem(at: url)
             return nil
