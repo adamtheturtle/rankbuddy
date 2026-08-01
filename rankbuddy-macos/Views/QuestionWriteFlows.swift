@@ -31,6 +31,18 @@ struct NewQuestionSheet: View {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var payloadIssue: String? {
+        QuestionAuthoringValidation.boundsIssue(
+            problemStatement: problemStatement,
+            languages: splitList(languages),
+            tags: splitList(tags)
+        )
+    }
+
+    private var displayedError: String? {
+        errorMessage ?? payloadIssue
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -51,9 +63,9 @@ struct NewQuestionSheet: View {
                         .labelsHidden()
                 }
 
-                if let errorMessage {
+                if let displayedError {
                     Section {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                        Label(displayedError, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -73,17 +85,21 @@ struct NewQuestionSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Create") { mutationTask = Task { await create() } }
-                            .disabled(trimmedName.isEmpty)
+                            .disabled(trimmedName.isEmpty || payloadIssue != nil)
                             .help(trimmedName.isEmpty ? "Enter a name to create a question" : "Create question")
                     }
                 }
             }
         }
-        .frame(width: 460, height: errorMessage == nil ? 460 : 540)
+        .frame(width: 460, height: displayedError == nil ? 460 : 540)
         .onDisappear { mutationTask?.cancel() }
     }
 
     private func create() async {
+        if let payloadIssue {
+            errorMessage = payloadIssue
+            return
+        }
         guard QuestionCreationValidation.isValidDurationText(duration) else {
             errorMessage = "Recommended duration must be a whole number of zero or more minutes."
             return
@@ -138,6 +154,14 @@ struct AddTestcaseSheet: View {
         TestcaseValidation.hasContent([name, input, output, score, explanation], isSample: isSample)
     }
 
+    private var payloadIssue: String? {
+        TestcaseValidation.boundsIssue(name: name, input: input, output: output, explanation: explanation)
+    }
+
+    private var displayedError: String? {
+        errorMessage ?? payloadIssue
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -167,9 +191,9 @@ struct AddTestcaseSheet: View {
                         .labelsHidden()
                 }
 
-                if let errorMessage {
+                if let displayedError {
                     Section {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                        Label(displayedError, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -189,16 +213,20 @@ struct AddTestcaseSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Add") { mutationTask = Task { await add() } }
-                            .disabled(!hasContent)
+                            .disabled(!hasContent || payloadIssue != nil)
                     }
                 }
             }
         }
-        .frame(width: 460, height: errorMessage == nil ? 520 : 600)
+        .frame(width: 460, height: displayedError == nil ? 520 : 600)
         .onDisappear { mutationTask?.cancel() }
     }
 
     private func add() async {
+        if let payloadIssue {
+            errorMessage = payloadIssue
+            return
+        }
         guard hasContent else {
             errorMessage = "Enter testcase content before adding it."
             return
@@ -238,6 +266,10 @@ struct AddTestcaseSheet: View {
 // MARK: - Request bodies
 
 nonisolated enum TestcaseValidation {
+    static let maxNameLength = 255
+    static let maxDataLength = 1_000_000
+    static let maxExplanationLength = 100_000
+
     static func hasContent(_ values: [String], isSample: Bool) -> Bool {
         values.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } || isSample
     }
@@ -251,6 +283,51 @@ nonisolated enum TestcaseValidation {
         guard isSample else { return true }
 
         return [input, output].contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    static func boundsIssue(name: String, input: String, output: String, explanation: String) -> String? {
+        if name.count > maxNameLength {
+            return "Testcase name must be at most 255 characters."
+        }
+        if input.count > maxDataLength {
+            return "Testcase input must be at most 1,000,000 characters."
+        }
+        if output.count > maxDataLength {
+            return "Expected output must be at most 1,000,000 characters."
+        }
+        if explanation.count > maxExplanationLength {
+            return "Explanation must be at most 100,000 characters."
+        }
+        return nil
+    }
+}
+
+nonisolated enum QuestionAuthoringValidation {
+    static let maxProblemStatementLength = 1_000_000
+    static let maxListCount = 100
+    static let maxListItemLength = 255
+
+    static func boundsIssue(problemStatement: String, languages: [String]?, tags: [String]?) -> String? {
+        if problemStatement.count > maxProblemStatementLength {
+            return "Problem statement must be at most 1,000,000 characters."
+        }
+        if let issue = listIssue(languages, label: "Languages") {
+            return issue
+        }
+        if let issue = listIssue(tags, label: "Tags") {
+            return issue
+        }
+        return nil
+    }
+
+    private static func listIssue(_ values: [String]?, label: String) -> String? {
+        if let values, values.count > maxListCount {
+            return "\(label) may contain at most 100 items."
+        }
+        if values?.contains(where: { $0.count > maxListItemLength }) == true {
+            return "Each \(label.lowercased()) item must be at most 255 characters."
+        }
+        return nil
     }
 }
 

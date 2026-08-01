@@ -144,6 +144,34 @@ struct QuestionEditValidationTests {
         #expect(TestcaseValidation.hasContent(["", "", "", "", ""], isSample: true))
     }
 
+    @Test func `question authoring payloads enforce size and list bounds`() {
+        let oversized = String(repeating: "x", count: QuestionAuthoringValidation.maxProblemStatementLength + 1)
+        let tooMany = Array(repeating: "swift", count: QuestionAuthoringValidation.maxListCount + 1)
+
+        #expect(QuestionAuthoringValidation.boundsIssue(
+            problemStatement: oversized,
+            languages: nil,
+            tags: nil
+        ) != nil)
+        #expect(QuestionAuthoringValidation.boundsIssue(
+            problemStatement: "",
+            languages: tooMany,
+            tags: nil
+        ) != nil)
+        #expect(TestcaseValidation.boundsIssue(
+            name: String(repeating: "x", count: TestcaseValidation.maxNameLength + 1),
+            input: "",
+            output: "",
+            explanation: ""
+        ) != nil)
+        #expect(TestcaseValidation.boundsIssue(
+            name: "sample",
+            input: String(repeating: "x", count: TestcaseValidation.maxDataLength),
+            output: "",
+            explanation: ""
+        ) == nil)
+    }
+
     @Test func `testcase scores reject non-numeric text`() {
         #expect(TestcaseValidation.isValidScore(""))
         #expect(TestcaseValidation.isValidScore(" 10\n"))
