@@ -249,10 +249,14 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard let testID = Self.normalizedOptionalString(rawTestID) else {
                 return errorResult("`test_id` must not be empty.")
             }
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
 
             return await listCandidates(
                 testID: testID,
-                cursor: stringArgument(arguments, "cursor"),
+                cursor: cursor,
                 account: account
             )
 

@@ -529,6 +529,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("test_id"))
     }
 
+    @Test func `list_candidates rejects a whitespace-only cursor`() async {
+        let result = await provider().callTool(
+            "list_candidates",
+            arguments: ["test_id": .string("test-1"), "cursor": .string(" \n\t ")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("cursor"))
+    }
+
     @Test func `search_candidates rejects a whitespace-only test id`() async {
         let result = await provider().callTool(
             "search_candidates",
