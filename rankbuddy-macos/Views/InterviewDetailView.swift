@@ -380,6 +380,10 @@ struct InterviewDetailView: View {
     /// best-effort: failures leave the base list-row detail intact. Skipped in the merged view,
     /// where a single owning account isn't known, so the wrong account is never queried.
     private func loadDetail(for identity: InterviewDetailRequestIdentity) async {
+        editedTitle = nil
+        editedNotes = nil
+        editedScheduledFrom = nil
+        editedScheduledTo = nil
         detail = nil
         detailError = nil
         isDetailLoading = true
