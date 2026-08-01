@@ -16,10 +16,15 @@ struct QuestionEditOverlay {
             status: update.status ?? options.status,
             languages: update.languages ?? options.languages,
             problemStatement: update.problemStatement ?? options.problemStatement,
-            recommendedDuration: update.recommendedDuration ?? options.recommendedDuration,
+            recommendedDuration: update.clearsRecommendedDuration
+                ? nil : update.recommendedDuration ?? options.recommendedDuration,
             tags: update.tags ?? options.tags,
-            maxScore: update.maxScore ?? options.maxScore,
-            skills: update.skills ?? options.skills
+            maxScore: update.clearsMaxScore ? nil : update.maxScore ?? options.maxScore,
+            skills: update.skills ?? options.skills,
+            clearsRecommendedDuration: update.recommendedDuration == nil
+                ? update.clearsRecommendedDuration || options.clearsRecommendedDuration : false,
+            clearsMaxScore: update.maxScore == nil
+                ? update.clearsMaxScore || options.clearsMaxScore : false
         )
     }
 
@@ -37,7 +42,10 @@ extension QuestionDetailView {
                 return false
             }
 
-            return await save(QuestionWriteOptions(maxScore: QuestionEditValidation.maxScore(from: newValue)))
+            return await save(QuestionWriteOptions(
+                maxScore: QuestionEditValidation.maxScore(from: newValue),
+                clearsMaxScore: newValue.isEmpty
+            ))
         }
         EditableNumberRow(label: "Recommended duration (minutes)", value: displayed.recommendedDuration) { newValue in
             guard QuestionEditValidation.isValidRecommendedDuration(newValue) else {
@@ -45,7 +53,10 @@ extension QuestionDetailView {
                 return false
             }
 
-            return await save(QuestionWriteOptions(recommendedDuration: newValue))
+            return await save(QuestionWriteOptions(
+                recommendedDuration: newValue,
+                clearsRecommendedDuration: newValue == nil
+            ))
         }
         EditableLanguagesRow(value: displayed.languages) { newValue in
             await save(QuestionWriteOptions(languages: newValue ?? []))
@@ -81,9 +92,10 @@ extension Question {
             status: options.status ?? status,
             languages: options.languages ?? languages,
             problemStatement: options.problemStatement ?? problemStatement,
-            recommendedDuration: options.recommendedDuration ?? recommendedDuration,
+            recommendedDuration: options.clearsRecommendedDuration
+                ? nil : options.recommendedDuration ?? recommendedDuration,
             tags: options.tags ?? tags,
-            maxScore: options.maxScore ?? maxScore,
+            maxScore: options.clearsMaxScore ? nil : options.maxScore ?? maxScore,
             skills: options.skills ?? skills
         )
     }

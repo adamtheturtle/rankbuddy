@@ -59,6 +59,27 @@ struct QuestionDetailTests {
         #expect(updated.tags?.isEmpty == true)
     }
 
+    @Test func `explicit scalar updates clear question metadata`() throws {
+        let question = try JSONDecoder().decode(
+            Question.self,
+            from: Data(#"{"id":"q1","type":"code","name":"Two Sum","recommended_duration":30,"max_score":100}"#.utf8)
+        )
+        var overlay = QuestionEditOverlay()
+        overlay.merge(
+            name: nil,
+            options: QuestionWriteOptions(clearsRecommendedDuration: true, clearsMaxScore: true)
+        )
+
+        let cleared = overlay.applying(to: question)
+        #expect(cleared.recommendedDuration == nil)
+        #expect(cleared.maxScore == nil)
+
+        overlay.merge(name: nil, options: QuestionWriteOptions(recommendedDuration: 45, maxScore: 80))
+        let replaced = overlay.applying(to: question)
+        #expect(replaced.recommendedDuration == 45)
+        #expect(replaced.maxScore == 80)
+    }
+
     @Test func `edit overlay preserves newer unedited metadata`() throws {
         let original = try JSONDecoder().decode(
             Question.self,
