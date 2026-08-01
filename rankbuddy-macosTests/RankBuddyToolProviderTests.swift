@@ -512,6 +512,16 @@ struct RankBuddyToolProviderTests {
         #expect(URL.remoteWebURL(from: "file:///tmp/interview") == nil)
     }
 
+    @Test func `candidate report requires a usable web URL`() {
+        #expect(RankBuddyToolProvider.candidateReportURL(primary: nil, fallback: nil) == nil)
+        #expect(RankBuddyToolProvider.candidateReportURL(
+            primary: "file:///tmp/report.pdf", fallback: "https://example.com/report.pdf"
+        ) == "https://example.com/report.pdf")
+        #expect(RankBuddyToolProvider.candidateReportURL(
+            primary: "https://example.com/primary.pdf", fallback: "https://example.com/fallback.pdf"
+        ) == "https://example.com/primary.pdf")
+    }
+
     @Test func `delete_test rejects a whitespace-only target`() async {
         let result = await writeProvider().callTool("delete_test", arguments: ["test_id": .string(" \n\t ")])
         #expect(result.isError == true)

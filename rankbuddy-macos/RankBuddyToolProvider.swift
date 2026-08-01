@@ -237,6 +237,12 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return normalized.isEmpty ? nil : normalized
     }
 
+    nonisolated static func candidateReportURL(primary: String?, fallback: String?) -> String? {
+        [primary, fallback]
+            .compactMap { $0.flatMap(URL.remoteWebURL(from:))?.absoluteString }
+            .first
+    }
+
     private func invalidSearchQuery() -> CallTool.Result {
         errorResult("`query` must contain non-whitespace text.")
     }
@@ -479,11 +485,14 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
                 testID: testID,
                 candidateID: candidateID
             )
+            guard let url = Self.candidateReportURL(primary: pdf.url, fallback: pdf.pdfURL) else {
+                return errorResult("HackerRank returned no usable candidate report PDF URL.")
+            }
             return jsonResult([
                 "account": resolved.label,
                 "test_id": testID,
                 "candidate_id": candidateID,
-                "url": pdf.url ?? pdf.pdfURL ?? ""
+                "url": url
             ])
         } catch {
             return errorResult("Couldn't fetch candidate report PDF: \(error.localizedDescription)")
