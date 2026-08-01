@@ -342,7 +342,7 @@ struct InterviewDetailView: View {
     /// Applies one field's update, then re-reads the detail so the scheduled window and any
     /// other server-derived fields reflect the write.
     private func update(_ options: InterviewUpdateOptions) async -> Bool {
-        guard !store.isMergedView, let account = store.currentAccount else { return false }
+        guard let account = owningAccount else { return false }
 
         do {
             _ = try await HackerRankClient(account: account).updateInterview(id: interview.id, options: options)
@@ -495,7 +495,7 @@ struct InterviewDetailView: View {
     }
 
     private func deleteInterview() async {
-        guard !store.isMergedView, let account = store.currentAccount else { return }
+        guard let account = owningAccount else { return }
 
         do {
             try await HackerRankClient(account: account).deleteInterview(id: interview.id)
