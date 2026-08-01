@@ -165,6 +165,10 @@ extension RankBuddyToolProvider {
         return normalized.isEmpty ? nil : normalized
     }
 
+    nonisolated static func validatedResultID(_ responseID: String?, fallback: String) -> String {
+        validatedCreatedID(responseID) ?? fallback
+    }
+
     nonisolated static func normalizedOptionalString(_ value: String?) -> String? {
         let normalized = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return normalized.isEmpty ? nil : normalized
@@ -805,7 +809,7 @@ extension RankBuddyToolProvider {
             return jsonResult([
                 "account": resolved.label,
                 "updated_question": [
-                    "id": written.id ?? questionID,
+                    "id": Self.validatedResultID(written.id, fallback: questionID),
                     "name": written.name ?? "",
                     "type": written.type ?? ""
                 ]
