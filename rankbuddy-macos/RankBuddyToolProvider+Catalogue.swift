@@ -88,6 +88,7 @@ extension RankBuddyToolProvider {
                              "type": "string", "enum": ["company", "private"],
                              "description": "Optional access filter."
                          ],
+                         "cursor": string("Opaque next_cursor from the preceding page."),
                          "account": account
                      ]),
             readOnly("get_invite_template", "Get an invite email template.",

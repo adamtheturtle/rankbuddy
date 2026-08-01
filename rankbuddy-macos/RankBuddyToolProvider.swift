@@ -418,7 +418,11 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard access.map({ ["company", "private"].contains($0) }) ?? true else {
                 return errorResult("`access` must be company or private.")
             }
-            return await listInviteTemplates(access: access, account: account)
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+            return await listInviteTemplates(cursor: cursor, access: access, account: account)
         case "list_interview_templates":
             return await listInterviewTemplates(account: account)
         default:
@@ -595,14 +599,17 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     }
 
     @MainActor
-    private func listInviteTemplates(access: String?, account: String?) async -> CallTool.Result {
+    private func listInviteTemplates(cursor: String?, access: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let page = try await HackerRankClient(account: resolved).inviteTemplatesPage(access: access)
+            let page = try await HackerRankClient(account: resolved).inviteTemplatesPage(
+                after: cursor, access: access
+            )
             let items = page.items.compactMap(Self.inviteTemplatePayload)
             return jsonResult(pageMetadata(page).merging([
-                "account": resolved.label, "templates": items
+                "account": resolved.label, "templates": items,
+                "next_cursor": page.next ?? NSNull()
             ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list invite templates: \(error.localizedDescription)")

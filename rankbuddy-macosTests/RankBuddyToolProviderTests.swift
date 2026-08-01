@@ -708,6 +708,17 @@ struct RankBuddyToolProviderTests {
         #expect(text(unsupported).contains("access"))
     }
 
+    @Test func `list_invite_templates supports pagination`() async {
+        let page = await provider().callTool("list_invite_templates", arguments: nil)
+        let blank = await provider().callTool(
+            "list_invite_templates", arguments: ["cursor": .string(" \n")]
+        )
+        #expect(page.isError != true)
+        #expect(text(page).contains("next_cursor"))
+        #expect(blank.isError == true)
+        #expect(text(blank).contains("cursor"))
+    }
+
     @Test func `search_candidates rejects a whitespace-only test id`() async {
         let result = await provider().callTool(
             "search_candidates",
