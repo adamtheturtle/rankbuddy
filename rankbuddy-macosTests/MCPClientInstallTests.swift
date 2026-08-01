@@ -189,6 +189,23 @@ struct MCPClientInstallTests {
             in: #"mcp_servers = { rankbuddy = { command = "old" } }"#
         ) == .other)
         #expect(MCPClientInstall.codexServerDeclaration(in: "[[mcp_servers.rankbuddy]]") == .other)
+        #expect(MCPClientInstall.codexServerDeclaration(
+            in: #"["mcp_servers.rankbuddy"]"#
+        ) == .notDeclared)
+    }
+
+    @Test func `codex install preserves quoted keys containing dots`() throws {
+        let url = try temporaryFile(named: "config.toml")
+        let unrelated = #"["mcp_servers.rankbuddy"]"# + "\n" + #"value = "keep""# + "\n"
+        try unrelated.write(to: url, atomically: true, encoding: .utf8)
+
+        try MCPClientInstall.upsertCodexServer(
+            into: url, client: .codex, command: "new", shouldReplace: { _ in true }
+        )
+
+        let result = try String(contentsOf: url, encoding: .utf8)
+        #expect(result.contains(unrelated))
+        #expect(result.contains("[mcp_servers.rankbuddy]\ncommand = \"new\""))
     }
 
     @Test func `codex install refuses unsafe existing declaration forms`() throws {

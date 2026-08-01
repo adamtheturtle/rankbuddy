@@ -532,7 +532,7 @@ nonisolated enum MCPClientInstall {
         guard let closing = inner.firstIndex(of: "]") else { return nil }
 
         inner = String(inner[..<closing])
-        return inner.components(separatedBy: ".").map(normalizedTOMLKey)
+        return tomlDottedKeyPath(inner)
     }
 
     private static func tomlKeyValueKeyPath(_ line: String) -> [String]? {
@@ -541,7 +541,42 @@ nonisolated enum MCPClientInstall {
         let key = String(line[..<equals])
         guard !key.isEmpty else { return nil }
 
-        return key.components(separatedBy: ".").map(normalizedTOMLKey)
+        return tomlDottedKeyPath(key)
+    }
+
+    private static func tomlDottedKeyPath(_ text: String) -> [String]? {
+        var components: [String] = []
+        var current = ""
+        var quote: Character?
+        var escaped = false
+
+        for character in text {
+            if let activeQuote = quote {
+                current.append(character)
+                if activeQuote == "\"", escaped {
+                    escaped = false
+                } else if activeQuote == "\"", character == "\\" {
+                    escaped = true
+                } else if character == activeQuote {
+                    quote = nil
+                }
+            } else if character == "\"" || character == "'" {
+                quote = character
+                current.append(character)
+            } else if character == "." {
+                guard !current.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+
+                components.append(normalizedTOMLKey(current))
+                current = ""
+            } else {
+                current.append(character)
+            }
+        }
+
+        guard quote == nil, !current.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+
+        components.append(normalizedTOMLKey(current))
+        return components
     }
 
     private static func normalizedTOMLKey(_ component: String) -> String {
