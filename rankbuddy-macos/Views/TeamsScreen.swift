@@ -398,12 +398,22 @@ struct TeamDetailView: View {
     private func save(_ options: TeamUpdateOptions) async -> Bool {
         let identity = detailIdentity
         let client = HackerRankClient(account: account)
+        let snapshot = displayed
         do {
-            let updated = try await client.updateTeam(id: identity.teamID, options: options)
-            let refreshed = await (try? client.team(id: identity.teamID)) ?? updated
+            _ = try await client.updateTeam(id: identity.teamID, options: options)
+            let refreshed: Team
+            let refreshError: String?
+            do {
+                refreshed = try await client.team(id: identity.teamID)
+                refreshError = nil
+            } catch {
+                refreshed = snapshot.applying(options)
+                refreshError = "Changes were saved, but the team details couldn’t be refreshed."
+            }
             guard identity == detailIdentity else { return false }
 
             current = refreshed
+            editError = refreshError
             onChanged()
             return true
         } catch {
@@ -438,6 +448,23 @@ struct TeamDetailView: View {
         deletePresented = false
         deleteError = nil
         editError = nil
+    }
+}
+
+extension Team {
+    /// Applies editable fields while retaining counts and other rich read-only metadata.
+    func applying(_ options: TeamUpdateOptions) -> Self {
+        Self(
+            id: id,
+            name: options.name ?? name,
+            owner: owner,
+            createdAt: createdAt,
+            recruiterCount: recruiterCount,
+            developerCount: developerCount,
+            interviewerCount: interviewerCount,
+            locations: options.locations ?? locations,
+            departments: options.departments ?? departments
+        )
     }
 }
 
