@@ -51,7 +51,11 @@ struct RankBuddyObjectEntity: IndexedEntity {
     /// Reconstructs the routing fields from a composite id, or `nil` if it doesn't parse.
     init?(id: String, title: String) {
         let parts = id.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
-        guard parts.count == 3, let collection = FavoriteCollection(rawValue: String(parts[0])) else {
+        guard parts.count == 3,
+              let collection = FavoriteCollection(rawValue: String(parts[0])),
+              UUID(uuidString: String(parts[1])) != nil,
+              !parts[2].isEmpty
+        else {
             return nil
         }
 
@@ -63,7 +67,7 @@ struct RankBuddyObjectEntity: IndexedEntity {
         let parts = id.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
         guard parts.count == 3,
               let collection = FavoriteCollection(rawValue: String(parts[0])),
-              !parts[1].isEmpty,
+              UUID(uuidString: String(parts[1])) != nil,
               !parts[2].isEmpty
         else { return nil }
 
@@ -289,17 +293,19 @@ enum RankBuddyDeepLink {
     }
 
     @MainActor
+    @discardableResult
     static func open(
         collection: FavoriteCollection,
         accountID: String,
         itemID: String,
         store: AccountStore = SharedAccountStore.resolve()
-    ) {
-        if let encodedID = UUID(uuidString: accountID),
-           store.accounts.contains(where: { $0.id == encodedID }) {
-            store.showAllAccounts = false
-            store.currentAccountID = encodedID
-        }
+    ) -> Bool {
+        guard let encodedID = UUID(uuidString: accountID),
+              store.accounts.contains(where: { $0.id == encodedID })
+        else { return false }
+
+        store.showAllAccounts = false
+        store.currentAccountID = encodedID
         UserDefaults.standard.set(itemID, forKey: selectionKey(collection: collection, accountID: accountID))
         UserDefaults.standard.set(collection.section.rawValue, forKey: "selectedSection")
         // Poke the router so a list that is *already on screen* (e.g. clicking a favourite for the
@@ -310,6 +316,7 @@ enum RankBuddyDeepLink {
             key: selectionKey(collection: collection, accountID: accountID),
             itemID: itemID
         )
+        return true
     }
 }
 
