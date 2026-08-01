@@ -225,6 +225,24 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `write integer arguments reject wrong JSON types`() async {
+        let team = await writeProvider().callTool(
+            "update_team",
+            arguments: [
+                "team_id": .string("team-1"), "name": .string("Platform"),
+                "recruiter_cap": .string("10")
+            ]
+        )
+        let user = await writeProvider().callTool(
+            "update_user",
+            arguments: ["user_id": .string("user-1"), "tests_permission": .double(2)]
+        )
+        for result in [team, user] {
+            #expect(result.isError == true)
+            #expect(text(result).contains("integer"))
+        }
+    }
+
     @Test func `advertised tools are recognized for activity logging`() {
         #expect(RankBuddyToolProvider.isKnownTool("list_tests"))
         #expect(RankBuddyToolProvider.isKnownTool("update_test"))
