@@ -13,6 +13,22 @@ import Testing
 /// spanning collections, and account scoping. Uses a uniquely-named on-disk cache per test.
 @MainActor
 struct RecentActivityTests {
+    @Test func `adoption replaces configured account history`() {
+        let store = store(#function, limit: 5)
+        let first = UUID()
+        let second = UUID()
+        store.record([item("old", .tests)], for: .tests, account: first)
+        store.record([item("other", .questions)], for: .questions, account: second)
+
+        store.adopt(
+            [first: [item("new", .interviews)]],
+            accountIDs: [first, second]
+        )
+
+        #expect(store.recentAll(account: first).map(\.id) == ["new"])
+        #expect(store.recentAll(account: second).isEmpty)
+    }
+
     private func store(_ name: String, limit: Int = 8) -> RecentActivityStore {
         let cache = DiskCache(
             directoryName: "RecentActivity.tests.\(name)",

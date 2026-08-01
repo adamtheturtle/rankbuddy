@@ -116,6 +116,8 @@ nonisolated struct RecentMenuRow: Identifiable {
 /// would need that).
 nonisolated struct RecentActivityStore {
     static let shared = Self()
+    static let didChange = Notification.Name("RankBuddyRecentActivityDidChange")
+    static let modifiedAtKey = "rankbuddy.recentActivity.modifiedAt"
 
     /// Retain enough from any one collection to satisfy the menu's largest selectable count.
     static let perCollectionLimit = MenuBarPreferences.maxRecentCount
@@ -144,6 +146,7 @@ nonisolated struct RecentActivityStore {
             seen.insert($0.id).inserted
         }
         cache.save(Array((items + retained).prefix(limit)), kind: collection.rawValue, account: account)
+        Self.markChanged()
     }
 
     /// The cached recent items for one collection.
@@ -172,5 +175,25 @@ nonisolated struct RecentActivityStore {
         for collection in FavoriteCollection.allCases {
             cache.delete(kind: collection.rawValue, account: account)
         }
+        Self.markChanged()
+    }
+
+    /// Replaces the complete recent history for configured accounts during cloud reconciliation.
+    func adopt(_ snapshot: [UUID: [RecentItem]], accountIDs: Set<UUID>) {
+        for accountID in accountIDs {
+            for collection in FavoriteCollection.allCases {
+                cache.delete(kind: collection.rawValue, account: accountID)
+                let items = snapshot[accountID]?.filter { $0.collection == collection } ?? []
+                if !items.isEmpty {
+                    cache.save(Array(items.prefix(limit)), kind: collection.rawValue, account: accountID)
+                }
+            }
+        }
+        Self.markChanged()
+    }
+
+    private static func markChanged() {
+        UserDefaults.standard.set(Date(), forKey: modifiedAtKey)
+        NotificationCenter.default.post(name: didChange, object: nil)
     }
 }

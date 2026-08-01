@@ -17,6 +17,21 @@ nonisolated struct ApplicationStartupGate {
     }
 }
 
+@MainActor
+struct ApplicationSyncServices {
+    let favorites: FavoritesSyncCoordinator?
+    let savedSearches: SavedSearchSyncCoordinator?
+    let preferences: PreferenceSyncCoordinator?
+    let recentActivity: RecentActivitySyncCoordinator?
+
+    func start() {
+        favorites?.start()
+        savedSearches?.start()
+        preferences?.start()
+        recentActivity?.start()
+    }
+}
+
 /// Starts process-wide services independently of whether SwiftUI creates the main window.
 @MainActor
 enum ApplicationStartup {
@@ -24,17 +39,13 @@ enum ApplicationStartup {
     private static let presenceMonitor = AppPresenceMonitor()
 
     static func start(
-        favoritesSync: FavoritesSyncCoordinator?,
-        savedSearchSync: SavedSearchSyncCoordinator?,
-        preferenceSync: PreferenceSyncCoordinator?,
+        syncServices: ApplicationSyncServices,
         health: AccountHealthMonitor,
         store: AccountStore
     ) {
         guard gate.claim() else { return }
 
-        favoritesSync?.start()
-        savedSearchSync?.start()
-        preferenceSync?.start()
+        syncServices.start()
         NetworkMonitor.shared.start()
         LivenessNotifier.shared.register()
         LivenessMonitor.shared.start(store: store)

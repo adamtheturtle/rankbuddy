@@ -30,6 +30,7 @@ struct RankBuddyApp: App {
     @State private var favoritesSync: FavoritesSyncCoordinator?
     @State private var savedSearchSync: SavedSearchSyncCoordinator?
     @State private var preferenceSync: PreferenceSyncCoordinator?
+    @State private var recentActivitySync: RecentActivitySyncCoordinator?
     /// The user's chosen appearance (General settings), applied to the main window.
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
     /// Where the app shows itself — Dock, Menu Bar, or both (#66). Drives the activation policy
@@ -73,12 +74,22 @@ struct RankBuddyApp: App {
             ? nil
             : PreferenceSyncCoordinator(store: CloudSyncKeyValueStore(key: PreferenceSyncCoordinator.key))
         _preferenceSync = State(initialValue: preferenceSync)
+        let recentActivitySync = isDemo
+            ? nil
+            : RecentActivitySyncCoordinator(
+                store: CloudSyncKeyValueStore(key: RecentActivitySyncCoordinator.key),
+                accountIDs: { Set(store.accounts.map(\.id)) }
+            )
+        _recentActivitySync = State(initialValue: recentActivitySync)
         let health = AccountHealthMonitor()
         _health = State(initialValue: health)
         ApplicationStartup.start(
-            favoritesSync: favoritesSync,
-            savedSearchSync: savedSearchSync,
-            preferenceSync: preferenceSync,
+            syncServices: ApplicationSyncServices(
+                favorites: favoritesSync,
+                savedSearches: savedSearchSync,
+                preferences: preferenceSync,
+                recentActivity: recentActivitySync
+            ),
             health: health,
             store: store
         )
