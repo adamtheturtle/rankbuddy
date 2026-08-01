@@ -168,8 +168,14 @@ extension LoadableList {
     func autoLoadServerSearchResults() async {
         guard isServerSearching, nextCursor != nil else { return }
 
+        let generation = loadGeneration
+        let searchToken = serverSearchToken
         isFilterLoading = true
-        defer { isFilterLoading = false }
+        defer {
+            if generation == loadGeneration, searchToken == serverSearchToken {
+                isFilterLoading = false
+            }
+        }
         var pagesLoadedThisSearch = 0
         while !Task.isCancelled,
               ListSearchPaging.shouldKeepLoading(
