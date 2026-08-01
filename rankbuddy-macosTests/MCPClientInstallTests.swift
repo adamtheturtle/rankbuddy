@@ -208,6 +208,28 @@ struct MCPClientInstallTests {
         #expect(result.contains("[mcp_servers.rankbuddy]\ncommand = \"new\""))
     }
 
+    @Test func `codex install ignores table text inside multiline strings`() throws {
+        let url = try temporaryFile(named: "config.toml")
+        let original = """
+        instructions = \"\"\"
+        [mcp_servers.rankbuddy]
+        command = \"not configuration\"
+        \"\"\"
+        [tools]
+        enabled = true
+
+        """
+        try original.write(to: url, atomically: true, encoding: .utf8)
+
+        try MCPClientInstall.upsertCodexServer(
+            into: url, client: .codex, command: "new", shouldReplace: { _ in true }
+        )
+
+        let result = try String(contentsOf: url, encoding: .utf8)
+        #expect(result.contains(original))
+        #expect(result.contains("[mcp_servers.rankbuddy]\ncommand = \"new\""))
+    }
+
     @Test func `codex install refuses unsafe existing declaration forms`() throws {
         for declaration in [
             #"mcp_servers.rankbuddy = { command = "old" }"#,

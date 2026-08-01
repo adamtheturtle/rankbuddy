@@ -355,13 +355,18 @@ nonisolated enum MCPClientInstall {
     }
 
     static func replacingCodexServer(in text: String, with block: String) -> String {
-        let lines = text.components(separatedBy: "\n")
         var result: [String] = []
         var skippingRankBuddyTable = false
         var insertedReplacement = false
         let targetPath = ["mcp_servers", serverName]
 
-        for rawLine in lines {
+        for sourceLine in tomlSourceLines(text) {
+            let rawLine = sourceLine.text
+            guard sourceLine.isStructural else {
+                if !skippingRankBuddyTable { result.append(rawLine) }
+                continue
+            }
+
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             if line.hasPrefix("["), let path = tomlHeaderKeyPath(line) {
                 let belongsToRankBuddy = path.count >= targetPath.count
@@ -429,11 +434,22 @@ nonisolated enum MCPClientInstall {
         case other
     }
 
+    private enum TOMLMultilineQuote: Equatable {
+        case basic
+        case literal
+    }
+
+    private struct TOMLSourceLine {
+        let text: String
+        let isStructural: Bool
+    }
+
     static func codexServerDeclaration(in text: String) -> CodexDeclaration {
         var currentTable: [String] = []
         var found = CodexDeclaration.notDeclared
 
-        for rawLine in text.components(separatedBy: "\n") {
+        for sourceLine in tomlSourceLines(text) where sourceLine.isStructural {
+            let rawLine = sourceLine.text
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             if line.isEmpty || line.hasPrefix("#") { continue }
 
@@ -463,6 +479,82 @@ nonisolated enum MCPClientInstall {
         }
 
         return found
+    }
+
+    private static func tomlSourceLines(_ text: String) -> [TOMLSourceLine] {
+        var multilineQuote: TOMLMultilineQuote?
+        return text.components(separatedBy: "\n").map { line in
+            let sourceLine = TOMLSourceLine(text: line, isStructural: multilineQuote == nil)
+            updateTOMLMultilineQuote(&multilineQuote, in: line)
+            return sourceLine
+        }
+    }
+
+    private static func updateTOMLMultilineQuote(_ multilineQuote: inout TOMLMultilineQuote?, in line: String) {
+        var index = line.startIndex
+        while index < line.endIndex {
+            if let active = multilineQuote {
+                let delimiter = active == .basic ? "\"\"\"" : "'''"
+                var searchStart = index
+                var closingRange: Range<String.Index>?
+                while let range = line.range(of: delimiter, range: searchStart ..< line.endIndex) {
+                    if active != .basic || !isEscaped(range.lowerBound, in: line) {
+                        closingRange = range
+                        break
+                    }
+                    searchStart = range.upperBound
+                }
+                guard let closingRange else { return }
+
+                multilineQuote = nil
+                index = closingRange.upperBound
+                continue
+            }
+
+            if line[index] == "#" { return }
+            if line[index...].hasPrefix("\"\"\"") {
+                multilineQuote = .basic
+                index = line.index(index, offsetBy: 3)
+            } else if line[index...].hasPrefix("'''") {
+                multilineQuote = .literal
+                index = line.index(index, offsetBy: 3)
+            } else if line[index] == "\"" || line[index] == "'" {
+                index = endOfTOMLQuotedKey(startingAt: index, in: line)
+            } else {
+                index = line.index(after: index)
+            }
+        }
+    }
+
+    private static func endOfTOMLQuotedKey(startingAt start: String.Index, in line: String) -> String.Index {
+        let quote = line[start]
+        var index = line.index(after: start)
+        var escaped = false
+        while index < line.endIndex {
+            let character = line[index]
+            index = line.index(after: index)
+            if quote == "\"", escaped {
+                escaped = false
+            } else if quote == "\"", character == "\\" {
+                escaped = true
+            } else if character == quote {
+                return index
+            }
+        }
+        return index
+    }
+
+    private static func isEscaped(_ index: String.Index, in text: String) -> Bool {
+        var cursor = index
+        var backslashes = 0
+        while cursor > text.startIndex {
+            let previous = text.index(before: cursor)
+            guard text[previous] == "\\" else { break }
+
+            backslashes += 1
+            cursor = previous
+        }
+        return backslashes.isMultiple(of: 2) == false
     }
 
     static func tomlBasicString(_ value: String) -> String {
