@@ -29,7 +29,7 @@ nonisolated struct AccountScoped<Item: Identifiable & Hashable & Sendable>: Iden
 /// `Codable` to satisfy `LoadableList`'s item bound (#102). Merged lists never persist a page —
 /// they pass no restoration key — so this conformance only ever type-checks; it never writes an
 /// account's token to disk.
-extension AccountScoped: Codable where Item: Codable {}
+nonisolated extension AccountScoped: Codable where Item: Codable {}
 
 /// One account omitted from a merged collection load.
 nonisolated struct MergedAccountFailure: Equatable {
