@@ -11,6 +11,49 @@ import Testing
 /// tests never touch the real defaults and stay isolated.
 @MainActor
 struct SavedSearchStoreTests {
+    @Test func `snapshot and adoption round trip all list scopes`() throws {
+        let sourceName = "saved-search-sync-source-\(UUID())"
+        let targetName = "saved-search-sync-target-\(UUID())"
+        let source = try #require(UserDefaults(suiteName: sourceName))
+        let target = try #require(UserDefaults(suiteName: targetName))
+        defer {
+            source.removePersistentDomain(forName: sourceName)
+            target.removePersistentDomain(forName: targetName)
+        }
+        SavedSearchStore.save(
+            [SavedSearch(name: "Backend", query: "swift", dateRange: nil)],
+            restorationKey: "selection.tests.account-a",
+            defaults: source
+        )
+        SavedSearchStore.save(
+            [SavedSearch(name: "Recent", query: "", dateRange: "today")],
+            restorationKey: "selection.questions.account-b",
+            defaults: source
+        )
+
+        let snapshot = SavedSearchStore.snapshot(defaults: source)
+        let modifiedAt = SavedSearchStore.modifiedAt(defaults: source)
+        SavedSearchStore.adopt(snapshot, modifiedAt: modifiedAt, defaults: target)
+
+        #expect(SavedSearchStore.snapshot(defaults: target) == snapshot)
+        #expect(abs(SavedSearchStore.modifiedAt(defaults: target).timeIntervalSince(modifiedAt)) < 0.001)
+    }
+
+    @Test func `adopting an empty snapshot propagates deletions`() throws {
+        let suiteName = "saved-search-sync-delete-\(UUID())"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        SavedSearchStore.save(
+            [SavedSearch(name: "Old", query: "stale", dateRange: nil)],
+            restorationKey: "selection.tests.account-a",
+            defaults: defaults
+        )
+
+        SavedSearchStore.adopt([:], modifiedAt: Date(), defaults: defaults)
+
+        #expect(SavedSearchStore.snapshot(defaults: defaults).isEmpty)
+    }
+
     private func makeDefaults() -> UserDefaults {
         // A unique suite per test, so the parallel suite can't cross-contaminate.
         UserDefaults(suiteName: "savedsearch.tests.\(UUID().uuidString)") ?? .standard

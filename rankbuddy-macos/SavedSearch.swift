@@ -108,6 +108,8 @@ nonisolated struct SavedSearch: Codable, Identifiable, Hashable {
 /// Per-list persistence for saved searches, scoped by the list's restoration key so each
 /// account/collection keeps its own (mirrors how favourites and filters are scoped).
 enum SavedSearchStore {
+    static let didChange = Notification.Name("RankBuddySavedSearchesDidChange")
+    static let modifiedAtKey = "savedsearch.modifiedAt"
     /// Per-list cap. The most recently saved searches are retained when older preferences exceed it.
     static let maximumCount = 20
 
@@ -128,6 +130,7 @@ enum SavedSearchStore {
             && (key.hasSuffix(suffix) || key.hasSuffix("\(suffix).unreadable-backup")) {
             defaults.removeObject(forKey: key)
         }
+        markChanged(defaults: defaults)
     }
 
     /// Loads the saved searches for a list, or an empty array when none/unreadable.
@@ -176,10 +179,50 @@ enum SavedSearchStore {
         let limited = Array(searches.suffix(maximumCount))
         guard !limited.isEmpty, let data = try? JSONEncoder().encode(limited) else {
             defaults.removeObject(forKey: key)
+            markChanged(defaults: defaults)
             return
         }
 
         defaults.set(data, forKey: key)
+        markChanged(defaults: defaults)
+    }
+
+    /// A complete, non-secret snapshot suitable for deterministic whole-set cloud sync.
+    static func snapshot(defaults: UserDefaults = .standard) -> [String: [SavedSearch]] {
+        var result: [String: [SavedSearch]] = [:]
+        for key in defaults.dictionaryRepresentation().keys
+            where key.hasPrefix("savedsearch.selection.") && !key.hasSuffix(".unreadable-backup") {
+            let restorationKey = String(key.dropFirst("savedsearch.".count))
+            let searches = load(restorationKey: restorationKey, defaults: defaults)
+            if !searches.isEmpty {
+                result[restorationKey] = searches
+            }
+        }
+        return result
+    }
+
+    static func adopt(_ snapshot: [String: [SavedSearch]], modifiedAt: Date, defaults: UserDefaults = .standard) {
+        for key in defaults.dictionaryRepresentation().keys
+            where key.hasPrefix("savedsearch.selection.") && !key.hasSuffix(".unreadable-backup") {
+            defaults.removeObject(forKey: key)
+        }
+        for (restorationKey, searches) in snapshot {
+            let limited = Array(searches.suffix(maximumCount))
+            if let data = try? JSONEncoder().encode(limited), !limited.isEmpty {
+                defaults.set(data, forKey: defaultsKey(for: restorationKey))
+            }
+        }
+        defaults.set(modifiedAt, forKey: modifiedAtKey)
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    static func modifiedAt(defaults: UserDefaults = .standard) -> Date {
+        defaults.object(forKey: modifiedAtKey) as? Date ?? .distantPast
+    }
+
+    private static func markChanged(defaults: UserDefaults) {
+        defaults.set(Date(), forKey: modifiedAtKey)
+        NotificationCenter.default.post(name: didChange, object: nil)
     }
 
     private static func validated(

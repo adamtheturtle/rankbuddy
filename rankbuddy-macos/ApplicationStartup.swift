@@ -25,12 +25,14 @@ enum ApplicationStartup {
 
     static func start(
         favoritesSync: FavoritesSyncCoordinator?,
+        savedSearchSync: SavedSearchSyncCoordinator?,
         health: AccountHealthMonitor,
         store: AccountStore
     ) {
         guard gate.claim() else { return }
 
         favoritesSync?.start()
+        savedSearchSync?.start()
         NetworkMonitor.shared.start()
         LivenessNotifier.shared.register()
         LivenessMonitor.shared.start(store: store)
