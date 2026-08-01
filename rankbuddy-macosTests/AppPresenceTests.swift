@@ -77,6 +77,42 @@ struct AppPresenceTests {
         #expect(AppPresence.dockOnly.matchingActualPolicy(.accessory) == .menuBarOnly)
     }
 
+    @Test func `startup reconciliation persists the policy that remains after rejection`() throws {
+        let suite = "app-presence-reconciliation-test"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        defaults.set(AppPresence.menuBarOnly.rawValue, forKey: AppPresence.defaultsKey)
+
+        let effective = AppPresence.menuBarOnly.applyDockVisibilityReconciling(
+            defaults: defaults,
+            currentPolicy: { .regular },
+            setPolicy: { _ in false },
+            activate: {}
+        )
+
+        #expect(effective == .both)
+        #expect(AppPresence.current(defaults: defaults) == .both)
+        defaults.removePersistentDomain(forName: suite)
+    }
+
+    @Test func `startup reconciliation preserves an accepted preference`() throws {
+        let suite = "app-presence-accepted-test"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        defaults.set(AppPresence.menuBarOnly.rawValue, forKey: AppPresence.defaultsKey)
+
+        let effective = AppPresence.menuBarOnly.applyDockVisibilityReconciling(
+            defaults: defaults,
+            currentPolicy: { .accessory },
+            setPolicy: { _ in true },
+            activate: {}
+        )
+
+        #expect(effective == .menuBarOnly)
+        #expect(AppPresence.current(defaults: defaults) == .menuBarOnly)
+        defaults.removePersistentDomain(forName: suite)
+    }
+
     @Test func `current defaults to both for an unset or unknown value`() throws {
         let defaults = try #require(UserDefaults(suiteName: "app-presence-test"))
         defaults.removePersistentDomain(forName: "app-presence-test")

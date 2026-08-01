@@ -34,6 +34,6 @@ enum ApplicationStartup {
         LivenessNotifier.shared.register()
         LivenessMonitor.shared.start(store: store)
         health.start(store: store)
-        _ = AppPresence.current().applyDockVisibility()
+        AppPresence.current().applyDockVisibilityReconciling()
     }
 }

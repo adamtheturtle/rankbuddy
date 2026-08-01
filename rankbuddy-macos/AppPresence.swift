@@ -84,4 +84,26 @@ enum AppPresence: String, CaseIterable, Identifiable {
         }
         return true
     }
+
+    /// Applies the saved presence during process startup and repairs persistence if AppKit
+    /// rejects the requested policy. Startup can run without a mounted window, so it cannot
+    /// rely on the Settings alert path to perform this reconciliation later.
+    @discardableResult
+    @MainActor
+    func applyDockVisibilityReconciling(
+        defaults: UserDefaults = .standard,
+        currentPolicy: () -> NSApplication.ActivationPolicy = { NSApplication.shared.activationPolicy() },
+        setPolicy: (NSApplication.ActivationPolicy) -> Bool = { NSApplication.shared.setActivationPolicy($0) },
+        activate: () -> Void = { AppActivator.bringToFront() }
+    ) -> Self {
+        guard !applyDockVisibility(
+            currentPolicy: currentPolicy,
+            setPolicy: setPolicy,
+            activate: activate
+        ) else { return self }
+
+        let restored = matchingActualPolicy(currentPolicy())
+        defaults.set(restored.rawValue, forKey: Self.defaultsKey)
+        return restored
+    }
 }
