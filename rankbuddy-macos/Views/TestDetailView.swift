@@ -35,6 +35,12 @@ struct TestDetailView: View {
     @State private var passwordRevealed = false
     @State private var commandOwner = UUID()
 
+    private enum DetailLoadResult {
+        case detail(TestDetail?, String?)
+        case inviters([TestInviter], String?)
+        case metadata(TestDetailMetadata?)
+    }
+
     private var displayedTest: Test {
         detailTest ?? test
     }
@@ -368,17 +374,39 @@ struct TestDetailView: View {
         inviterLoadError = nil
         passwordRevealed = false
         let metadataClient = HackerRankDetailMetadataClient(account: account)
-        async let loadedDetail = fetchDetail(account: account, testID: test.id)
-        async let loadedInviters = fetchInviters(account: account, testID: test.id)
-        async let loadedMetadata = try? metadataClient.test(id: test.id)
-        let loaded = await (loadedDetail, loadedInviters, loadedMetadata)
-        guard !Task.isCancelled, identity == requestIdentity else { return }
+        await withTaskGroup(of: DetailLoadResult.self) { group in
+            group.addTask {
+                let loaded = await fetchDetail(account: account, testID: test.id)
+                return .detail(loaded.detail, loaded.error)
+            }
+            group.addTask {
+                let loaded = await fetchInviters(account: account, testID: test.id)
+                return .inviters(loaded.items, loaded.error)
+            }
+            group.addTask {
+                await .metadata(try? metadataClient.test(id: test.id))
+            }
 
-        detail = loaded.0.detail
-        detailLoadError = loaded.0.error
-        inviters = loaded.1.items
-        inviterLoadError = loaded.1.error
-        detailTest = loaded.2?.applying(to: test)
+            for await result in group {
+                guard !Task.isCancelled, identity == requestIdentity else {
+                    group.cancelAll()
+                    return
+                }
+
+                switch result {
+                case let .detail(loaded, error):
+                    detail = loaded
+                    detailLoadError = error
+
+                case let .inviters(loaded, error):
+                    inviters = loaded
+                    inviterLoadError = error
+
+                case let .metadata(loaded):
+                    detailTest = loaded?.applying(to: test)
+                }
+            }
+        }
     }
 
     private func retryDetail(for identity: TestDetailRequestIdentity) async {
