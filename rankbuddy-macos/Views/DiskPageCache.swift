@@ -145,6 +145,13 @@ enum DiskPageCache {
         try? FileManager.default.removeItem(at: directory)
     }
 
+    /// Drops one test/restoration key without disturbing parallel consumers.
+    static func remove(for key: String) {
+        guard let url = fileURL(for: key) else { return }
+
+        try? FileManager.default.removeItem(at: url)
+    }
+
     /// Drops only files whose original restoration key belongs to `accountID`.
     static func clear(accountID: UUID) {
         guard let directory,

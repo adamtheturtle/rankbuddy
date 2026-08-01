@@ -98,9 +98,10 @@ enum RankBuddyDataRefresh {
     /// cache contract and error propagation can be tested without live HackerRank credentials.
     @discardableResult
     static func refresh(
+        clearCache: @MainActor () async -> Void = { await ListPageCache.clear() },
         fetchEntities: @MainActor () async throws -> [RankBuddyObjectEntity]
     ) async throws -> Int {
-        await ListPageCache.clear()
+        await clearCache()
         let entities = try await fetchEntities()
         return entities.count
     }

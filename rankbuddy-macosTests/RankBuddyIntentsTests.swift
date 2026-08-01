@@ -61,17 +61,20 @@ struct RankBuddyIntentsTests {
         await ListPageCache.store(items: ["stale"], cursor: "next", totalCount: 1, for: key)
         var cacheWasEmptyDuringFetch = false
 
-        let count = try await RankBuddyDataRefresh.refresh {
-            cacheWasEmptyDuringFetch = await ListPageCache.cached([String].self, for: key) == nil
-            return [
-                RankBuddyObjectEntity(
-                    collection: .tests,
-                    accountID: "account",
-                    itemID: "test",
-                    title: "Test"
-                )
-            ]
-        }
+        let count = try await RankBuddyDataRefresh.refresh(
+            clearCache: { await ListPageCache.remove(for: key) },
+            fetchEntities: {
+                cacheWasEmptyDuringFetch = await ListPageCache.cached([String].self, for: key) == nil
+                return [
+                    RankBuddyObjectEntity(
+                        collection: .tests,
+                        accountID: "account",
+                        itemID: "test",
+                        title: "Test"
+                    )
+                ]
+            }
+        )
 
         #expect(cacheWasEmptyDuringFetch)
         #expect(count == 1)

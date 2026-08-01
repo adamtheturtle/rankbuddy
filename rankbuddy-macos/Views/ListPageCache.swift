@@ -66,6 +66,12 @@ enum ListPageCache {
         await DiskPageCache.clear()
     }
 
+    /// Drops one cached page in both tiers.
+    static func remove(for key: String) async {
+        storage[key] = nil
+        await DiskPageCache.remove(for: key)
+    }
+
     /// Drops cached pages for one account while preserving every other tenant's snapshots.
     static func clear(accountID: UUID) async {
         storage = storage.filter { !cacheKey($0.key, belongsTo: accountID) }
