@@ -260,68 +260,78 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
 
     private var listColumn: some View {
         NavigationStack {
-            content
-                .navigationTitle(title)
-                // `.automatic`, not `.sidebar`: this list lives in the split view's detail
-                // column, where no sidebar location is in scope. `.sidebar` placement can't be
-                // realized here and logs a `sidebarPocket` "Invalid Configuration" fault (#77).
-                .searchable(text: $query, placement: .automatic, prompt: "Search \(title)")
-                // A customizable toolbar (#101): only the primary actions show by default; the rest
-                // are available via "Customize Toolbar…". Built in `LoadableList+Toolbar`.
-                .toolbar(id: "list") { customToolbar }
-                // Re-runs when the account-scoped key changes, clearing any stale restored
-                // pane before loading the new account's data (#19).
-                .task(id: restorationKey) { await reload() }
-                .task(id: autoRefreshSeconds) { await autoRefreshLoop() }
-                .task(id: dateRange) { await rollingDateFilterLoop() }
-                // While a client-side filter (search/facet/date) is active, page in more (capped)
-                // so the match isn't limited to the first page — see `LoadableList+Search` (#86).
-                .task(id: clientFilterToken) { await autoLoadWhileFiltering() }
-                // Server-side search (#104): reload as the query changes; no-op for client lists.
-                .task(id: serverSearchToken) { await reloadForServerSearch() }
-                .onChange(of: reloadToken) { Task { await reload() } }
-                .onAppear {
-                    restoreSort()
-                    loadSavedSearches()
-                    registerListCommands()
-                }
-                .onDisappear { commandContext.clearListActions() }
-                // Re-load the recall chips when the account-scoped key changes, so each account
-                // shows only its own saved searches (#25).
-                .onChange(of: restorationKey) {
-                    loadSavedSearches()
-                    restoreSort()
-                }
-                .onChange(of: sortSelection) { persistSort() }
-                .onChange(of: sortReversed) { persistSort() }
-                .onChange(of: query) {
-                    ListQuery.persistQuery(query, key: ListQuery.queryKey(restorationKey))
-                }
-                .onChange(of: dateRange) {
-                    ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
-                    // Server-side date filtering re-queries from page 1; client-side just
-                    // re-filters the loaded rows on the next `visibleItems` recompute (#86).
-                    if serverDateFiltering { Task { await reload() } }
-                }
-                .onChange(of: selectedFacets) {
-                    ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))
-                }
-                .onChange(of: clientFilterToken) {
-                    reconcileSelectionWithVisibleItems()
-                }
-                // Selecting a row (single-click) drives the detail pane and persists it (#53/#19).
-                .onChange(of: selection) {
-                    syncDetail()
-                    registerListCommands()
-                }
-                .onChange(of: selectedItems.map(\.id)) {
-                    registerListCommands()
-                }
-                // Reveal a deep-linked item when this list is already on screen (#122): a
-                // same-section favourite/Open-by-URL never changes `restorationKey`, so nothing
-                // else re-reads the persisted selection.
-                .onChange(of: deepLinkRouter.request) { Task { await consumeDeepLinkIfMatching() } }
+            listChangeObservers
         }
+    }
+
+    /// Kept separate from the change observers so Release builds do not have to infer one very
+    /// large nested SwiftUI modifier type.
+    private var listTaskContent: some View {
+        content
+            .navigationTitle(title)
+            // `.automatic`, not `.sidebar`: this list lives in the split view's detail
+            // column, where no sidebar location is in scope. `.sidebar` placement can't be
+            // realized here and logs a `sidebarPocket` "Invalid Configuration" fault (#77).
+            .searchable(text: $query, placement: .automatic, prompt: "Search \(title)")
+            // A customizable toolbar (#101): only the primary actions show by default; the rest
+            // are available via "Customize Toolbar…". Built in `LoadableList+Toolbar`.
+            .toolbar(id: "list") { customToolbar }
+            // Re-runs when the account-scoped key changes, clearing any stale restored
+            // pane before loading the new account's data (#19).
+            .task(id: restorationKey) { await reload() }
+            .task(id: autoRefreshSeconds) { await autoRefreshLoop() }
+            .task(id: dateRange) { await rollingDateFilterLoop() }
+            // While a client-side filter (search/facet/date) is active, page in more (capped)
+            // so the match isn't limited to the first page — see `LoadableList+Search` (#86).
+            .task(id: clientFilterToken) { await autoLoadWhileFiltering() }
+            // Server-side search (#104): reload as the query changes; no-op for client lists.
+            .task(id: serverSearchToken) { await reloadForServerSearch() }
+    }
+
+    private var listChangeObservers: some View {
+        listTaskContent
+            .onChange(of: reloadToken) { Task { await reload() } }
+            .onAppear {
+                restoreSort()
+                loadSavedSearches()
+                registerListCommands()
+            }
+            .onDisappear { commandContext.clearListActions() }
+            // Re-load the recall chips when the account-scoped key changes, so each account
+            // shows only its own saved searches (#25).
+            .onChange(of: restorationKey) {
+                loadSavedSearches()
+                restoreSort()
+            }
+            .onChange(of: sortSelection) { persistSort() }
+            .onChange(of: sortReversed) { persistSort() }
+            .onChange(of: query) {
+                ListQuery.persistQuery(query, key: ListQuery.queryKey(restorationKey))
+            }
+            .onChange(of: dateRange) {
+                ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
+                // Server-side date filtering re-queries from page 1; client-side just
+                // re-filters the loaded rows on the next `visibleItems` recompute (#86).
+                if serverDateFiltering { Task { await reload() } }
+            }
+            .onChange(of: selectedFacets) {
+                ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))
+            }
+            .onChange(of: clientFilterToken) {
+                reconcileSelectionWithVisibleItems()
+            }
+            // Selecting a row (single-click) drives the detail pane and persists it (#53/#19).
+            .onChange(of: selection) {
+                syncDetail()
+                registerListCommands()
+            }
+            .onChange(of: selectedItems.map(\.id)) {
+                registerListCommands()
+            }
+            // Reveal a deep-linked item when this list is already on screen (#122): a
+            // same-section favourite/Open-by-URL never changes `restorationKey`, so nothing
+            // else re-reads the persisted selection.
+            .onChange(of: deepLinkRouter.request) { Task { await consumeDeepLinkIfMatching() } }
     }
 
     private var detailColumn: some View {
