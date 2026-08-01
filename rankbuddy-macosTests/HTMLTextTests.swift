@@ -96,6 +96,8 @@ struct HTMLTextTests {
         let script = "<script>const example = '<ol><li>hidden</li></ol>';</script><p>shown</p>"
         #expect(HTMLFragmentSegment.segments(from: comment) == [.prose(comment)])
         #expect(HTMLFragmentSegment.segments(from: script) == [.prose(script)])
+        let unclosedScript = "<p>shown</p><script>const example = '<ol><li>hidden</li></ol>';"
+        #expect(HTMLFragmentSegment.segments(from: unclosedScript) == [.prose(unclosedScript)])
         #expect(HTMLFragmentSegment.segments(
             from: "<ol><li>shown</li><!-- <li>hidden</li> --></ol>"
         ) == [.orderedList(items: orderedItems(["shown"]), start: 1, step: 1, markerStyle: .decimal)])

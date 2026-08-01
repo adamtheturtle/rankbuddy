@@ -340,7 +340,11 @@ nonisolated enum HTMLFragmentSegment: Equatable {
     /// Replaces ignored HTML regions with equal-length whitespace so regex match offsets still
     /// map exactly onto the original source.
     private static func maskingIgnoredMarkup(in html: String) -> String {
-        let patterns = [#"(?s)<!--.*?-->"#, #"(?is)<(?:script|style)\b[^>]*>.*?</(?:script|style)\s*>"#]
+        let patterns = [
+            #"(?s)<!--.*?-->"#,
+            #"(?is)<(?:script|style)\b[^>]*>.*?</(?:script|style)\s*>"#,
+            #"(?is)<(?:script|style)\b[^>]*>.*\z"#
+        ]
         let masked = NSMutableString(string: html)
         for pattern in patterns {
             guard let expression = try? NSRegularExpression(pattern: pattern) else { continue }
