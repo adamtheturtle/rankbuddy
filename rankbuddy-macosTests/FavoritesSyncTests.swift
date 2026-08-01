@@ -247,4 +247,22 @@ struct FavoritesSyncTests {
             #expect(pushed?.favorites.map(\.itemID) == ["local"])
         }
     }
+
+    @Test func `a far future remote timestamp cannot replace offline local edits`() {
+        let favorites = FavoritesStore(defaults: defaults(#function), isTesting: true)
+        favorites.toggle(ref("local"))
+        let store = FakeStore()
+        store.setData(try? JSONEncoder().encode(FavoritesSyncPayload(
+            favorites: [ref("remote")],
+            modifiedAt: Date().addingTimeInterval(24 * 60 * 60)
+        )), forKey: FavoritesSyncCoordinator.key)
+
+        withCoordinator(favorites, store) { _ in
+            #expect(favorites.favorites.map(\.itemID) == ["local"])
+            let pushed = store.data(forKey: FavoritesSyncCoordinator.key)
+                .flatMap { try? JSONDecoder().decode(FavoritesSyncPayload.self, from: $0) }
+            #expect(pushed?.favorites.map(\.itemID) == ["local"])
+            #expect((pushed?.modifiedAt ?? .distantFuture) < Date().addingTimeInterval(5 * 60))
+        }
+    }
 }

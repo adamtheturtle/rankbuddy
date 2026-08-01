@@ -103,6 +103,7 @@ final class FavoritesSyncCoordinator {
     /// The shared key, identical to the local `FavoritesStore` storage key so a future
     /// migration stays trivial.
     static let key = "rankbuddy.favorites"
+    private static let maximumFutureSkew: TimeInterval = 5 * 60
     private static let logger = Logger(
         subsystem: "com.adamdangoor.rankbuddy",
         category: "favorites-sync"
@@ -155,7 +156,9 @@ final class FavoritesSyncCoordinator {
 
     private func externalChange() {
         availabilityChanged()
-        if isActive { adoptRemote(isExternalChange: true) }
+        if isActive {
+            adoptRemote(isExternalChange: true)
+        }
     }
 
     /// Adopts the remote favourites wholesale (last-writer-wins), guarded so it doesn't echo
@@ -182,6 +185,11 @@ final class FavoritesSyncCoordinator {
             remoteModifiedAt = isExternalChange ? Date() : .distantPast
         }
 
+        if remoteModifiedAt.timeIntervalSinceNow > Self.maximumFutureSkew {
+            Self.logger.error("Rejecting favourites payload with an implausible future timestamp")
+            pushLocal()
+            return
+        }
         if favorites.modifiedAt > remoteModifiedAt {
             pushLocal()
             return
