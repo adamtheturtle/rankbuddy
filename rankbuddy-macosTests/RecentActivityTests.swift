@@ -177,6 +177,10 @@ struct RecentActivityTests {
         #expect(item("i", .interviews, subtitle: "In progress").isActiveOrUpcoming)
         // Matching is case-insensitive and tolerant of the snake_case status.
         #expect(item("i", .interviews, subtitle: "in_progress").isActiveOrUpcoming)
+        #expect(item("i", .interviews, subtitle: "upcoming").isActiveOrUpcoming)
+        #expect(item("i", .interviews, subtitle: "LIVE").isActiveOrUpcoming)
+        #expect(item("i", .interviews, subtitle: "in-progress").isActiveOrUpcoming)
+        #expect(item("i", .interviews, subtitle: "ongoing").isActiveOrUpcoming)
     }
 
     @Test func `active or upcoming drops finished, archived, and questions`() {

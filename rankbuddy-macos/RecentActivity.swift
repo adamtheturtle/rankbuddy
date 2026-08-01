@@ -59,8 +59,9 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
             return true
 
         case .interviews:
-            return status == "active" || status == "scheduled"
-                || status == "in progress" || status == "in_progress"
+            guard let status else { return false }
+
+            return status == "active" || LivenessDigest.isNotificationEligible(status: status)
 
         default:
             return false
