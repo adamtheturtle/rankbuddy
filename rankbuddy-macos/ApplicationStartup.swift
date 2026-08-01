@@ -21,6 +21,7 @@ nonisolated struct ApplicationStartupGate {
 @MainActor
 enum ApplicationStartup {
     private static var gate = ApplicationStartupGate()
+    private static let presenceMonitor = AppPresenceMonitor()
 
     static func start(
         favoritesSync: FavoritesSyncCoordinator?,
@@ -34,6 +35,6 @@ enum ApplicationStartup {
         LivenessNotifier.shared.register()
         LivenessMonitor.shared.start(store: store)
         health.start(store: store)
-        AppPresence.current().applyDockVisibilityReconciling()
+        presenceMonitor.start()
     }
 }
