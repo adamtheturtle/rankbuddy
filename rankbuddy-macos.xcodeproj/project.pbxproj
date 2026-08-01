@@ -920,7 +920,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/HackerRankKit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.6.5;
+				version = 0.6.6;
 			};
 		};
 		66B000012FFF000000000021 /* XCRemoteSwiftPackageReference "WhatsNewKit" */ = {
