@@ -108,6 +108,17 @@ enum CandidateInviteValidation {
     }
 }
 
+nonisolated enum InviteTemplatePaging {
+    struct NoProgress: Error {}
+
+    static func next(_ cursor: String?, itemCount: Int, seen: inout Set<String>) throws -> String? {
+        guard let cursor else { return nil }
+        guard itemCount > 0, seen.insert(cursor).inserted else { throw NoProgress() }
+
+        return cursor
+    }
+}
+
 /// A sheet that invites a candidate to a test (#12) — the app's first write flow. Refreshes
 /// the list on success.
 struct InviteCandidateSheet: View {
@@ -290,11 +301,16 @@ struct InviteCandidateSheet: View {
         let client = HackerRankClient(account: account)
         var loaded: [InviteTemplate] = []
         var cursor: String?
+        var seenCursors: Set<String> = []
         do {
             repeat {
                 let page = try await client.inviteTemplatesPage(after: cursor)
                 loaded.append(contentsOf: page.items)
-                cursor = page.next
+                cursor = try InviteTemplatePaging.next(
+                    page.next,
+                    itemCount: page.items.count,
+                    seen: &seenCursors
+                )
             } while cursor != nil && loaded.count < 200
         } catch {
             // Leave whatever loaded; the picker simply doesn't render when empty.

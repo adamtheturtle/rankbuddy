@@ -13,6 +13,17 @@ import Testing
 /// with the canned created-candidate echo, and the bad-token account answers 401.
 @MainActor
 struct InviteCandidateTests {
+    @Test func `template pagination rejects empty and repeated pages`() throws {
+        var seen: Set<String> = []
+        #expect(try InviteTemplatePaging.next("c1", itemCount: 1, seen: &seen) == "c1")
+        #expect(throws: InviteTemplatePaging.NoProgress.self) {
+            try InviteTemplatePaging.next("c1", itemCount: 1, seen: &seen)
+        }
+        #expect(throws: InviteTemplatePaging.NoProgress.self) {
+            try InviteTemplatePaging.next("c2", itemCount: 0, seen: &seen)
+        }
+    }
+
     @Test func `invite text options enforce payload limits`() {
         #expect(CandidateInviteValidation.textIssue(.init(
             fullName: String(repeating: "x", count: 256),
