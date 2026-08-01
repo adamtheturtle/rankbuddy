@@ -177,10 +177,18 @@ struct RankBuddyToolProviderTests {
             TestCandidate.self,
             from: Data(#"{"id":"c1","email":"ada@example.com"}"#.utf8)
         )
-        let payload = RankBuddyToolProvider.candidatePayload(candidate)
+        let payload = try #require(RankBuddyToolProvider.candidatePayload(candidate))
 
         #expect(payload["score"] is NSNull)
         #expect(payload["score_available"] as? Bool == false)
+    }
+
+    @Test func `candidate payload rejects a blank identity`() throws {
+        let candidate = try JSONDecoder().decode(
+            TestCandidate.self,
+            from: Data(#"{"id":" ","email":"ada@example.com"}"#.utf8)
+        )
+        #expect(RankBuddyToolProvider.candidatePayload(candidate) == nil)
     }
 
     @Test func `an unknown tool is an error`() async {

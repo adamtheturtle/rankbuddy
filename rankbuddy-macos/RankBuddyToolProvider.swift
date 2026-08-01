@@ -430,9 +430,10 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return metadata
     }
 
-    nonisolated static func candidatePayload(_ candidate: TestCandidate) -> [String: Any] {
-        [
-            "id": candidate.id,
+    nonisolated static func candidatePayload(_ candidate: TestCandidate) -> [String: Any]? {
+        guard let id = validatedCreatedID(candidate.id) else { return nil }
+        return [
+            "id": id,
             "email": candidate.email,
             "name": candidate.fullName ?? "",
             "score": candidate.score.map { $0 as Any } ?? NSNull(),
@@ -498,7 +499,10 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
                 testID: testID,
                 after: cursor
             )
-            let items = page.items.map(Self.candidatePayload)
+            let items = page.items.compactMap(Self.candidatePayload)
+            guard items.count == page.items.count else {
+                return errorResult("HackerRank returned a candidate without a usable ID.")
+            }
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "test_id": testID, "candidates": items,
                 "next_cursor": page.next ?? NSNull()

@@ -93,7 +93,10 @@ extension RankBuddyToolProvider {
         do {
             let page = try await HackerRankClient(account: resolved)
                 .searchCandidates(testID: testID, query: query, after: cursor)
-            let items = page.items.map(Self.candidatePayload)
+            let items = page.items.compactMap(Self.candidatePayload)
+            guard items.count == page.items.count else {
+                return errorResult("HackerRank returned a candidate without a usable ID.")
+            }
             return jsonResult([
                 "account": resolved.label, "test_id": testID, "query": query, "matches": items,
                 "count": items.count, "has_more": page.next != nil,
