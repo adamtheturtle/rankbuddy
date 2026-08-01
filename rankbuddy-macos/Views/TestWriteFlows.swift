@@ -60,8 +60,9 @@ nonisolated enum TestDirtyField {
         current == (original ?? "") ? nil : current
     }
 
-    static func list(_ current: [String]?, original: [String]?) -> [String]? {
-        current == original ? nil : current
+    static func clearableList(_ current: [String]?, original: [String]?) -> [String]? {
+        let current = current ?? []
+        return current == (original ?? []) ? nil : current
     }
 
     static func needsNameRebase(edited: String, original: String) -> Bool {
@@ -188,8 +189,8 @@ struct TestEditorSheet: View {
                 instructions: TestDirtyField.text(instructions, original: test.instructions),
                 startTime: TestDirtyField.text(startTime, original: test.startTime),
                 endTime: TestDirtyField.text(endTime, original: test.endTime),
-                languages: TestDirtyField.list(languages, original: test.languages),
-                tags: TestDirtyField.list(tags, original: test.tags),
+                languages: TestDirtyField.clearableList(languages, original: test.languages),
+                tags: TestDirtyField.clearableList(tags, original: test.tags),
                 shuffleQuestions: TestBooleanEditing.updateValue(
                     shuffleQuestions,
                     changed: shuffleQuestionsChanged

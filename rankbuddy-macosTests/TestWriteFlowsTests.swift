@@ -47,7 +47,9 @@ struct TestWriteFlowsTests {
         #expect(TestDirtyField.scalar(120, original: 90) == 120)
         #expect(TestDirtyField.text("Old instructions", original: "Old instructions") == nil)
         #expect(TestDirtyField.text("New instructions", original: "Old instructions") == "New instructions")
-        #expect(TestDirtyField.list(["swift"], original: ["swift"]) == nil)
+        #expect(TestDirtyField.clearableList(["swift"], original: ["swift"]) == nil)
+        #expect(TestDirtyField.clearableList(nil, original: nil) == nil)
+        #expect(TestDirtyField.clearableList(nil, original: ["swift"])?.isEmpty == true)
         #expect(TestDirtyField.needsNameRebase(edited: "Old", original: "Old"))
         #expect(!TestDirtyField.needsNameRebase(edited: "Local", original: "Old"))
     }
