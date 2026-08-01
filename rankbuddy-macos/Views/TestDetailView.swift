@@ -17,6 +17,7 @@ struct TestDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.controlActiveState) private var controlActiveState
     @Environment(AppCommandContext.self) private var commandContext
     @State private var titleEditRequest = 0
     @State private var editorPresented = false
@@ -187,6 +188,11 @@ struct TestDetailView: View {
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onChange(of: scenePhase) { _, phase in
             if phase != .active {
+                passwordRevealed = false
+            }
+        }
+        .onChange(of: controlActiveState) { _, state in
+            if state != .key {
                 passwordRevealed = false
             }
         }
