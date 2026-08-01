@@ -18,14 +18,18 @@ struct LivenessDigestTests {
         return try JSONDecoder().decode(Interview.self, from: Data(json.utf8))
     }
 
-    @Test func `scheduled count ignores other states and is case-insensitive`() throws {
+    @Test func `scheduled count uses every normalized actionable status`() throws {
         let interviews = try [
             interview(id: "1", status: "scheduled"),
-            interview(id: "2", status: "Scheduled"),
-            interview(id: "3", status: "completed"),
-            interview(id: "4", status: "cancelled")
+            interview(id: "2", status: " Upcoming "),
+            interview(id: "3", status: "LIVE"),
+            interview(id: "4", status: "in_progress"),
+            interview(id: "5", status: "in-progress"),
+            interview(id: "6", status: "ongoing"),
+            interview(id: "7", status: "completed"),
+            interview(id: "8", status: "cancelled")
         ]
-        #expect(LivenessDigest.scheduledCount(interviews) == 2)
+        #expect(LivenessDigest.scheduledCount(interviews) == 6)
     }
 
     @Test func `an empty list has no scheduled interviews`() {

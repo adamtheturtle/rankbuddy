@@ -79,10 +79,10 @@ enum DockBadgeScope: String, CaseIterable, Identifiable {
 /// Pure derivations for the liveness sweep, kept apart from the timer/badge side effects so
 /// they're unit-testable.
 enum LivenessDigest {
-    /// The number of interviews currently in the "scheduled" (upcoming) state. Self-clearing:
-    /// the count falls as interviews complete, so the badge needs no read-tracking.
+    /// The number of interviews currently in an actionable state. Self-clearing: the count falls
+    /// as interviews complete, so the badge needs no read-tracking.
     static func scheduledCount(_ interviews: [Interview]) -> Int {
-        interviews.count(where: { $0.status.lowercased() == "scheduled" })
+        interviews.count(where: { isNotificationEligible(status: $0.status) })
     }
 
     /// The Dock badge label for a count: `nil` (no badge) at zero, otherwise the number.
