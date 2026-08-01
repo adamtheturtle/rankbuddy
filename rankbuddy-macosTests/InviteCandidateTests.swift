@@ -24,6 +24,17 @@ struct InviteCandidateTests {
         }
     }
 
+    @Test func `template pagination keeps the first unique stable identity`() {
+        let incoming = [(id: String?.some("a"), name: "First"), (id: "a", name: "Duplicate"),
+                        (id: nil, name: "Missing"), (id: "b", name: "Second")]
+        var loaded: [(id: String?, name: String)] = []
+        var seen: Set<String> = []
+
+        InviteTemplatePaging.appendUnique(incoming, to: &loaded, seenIDs: &seen, id: \.id)
+
+        #expect(loaded.map(\.name) == ["First", "Second"])
+    }
+
     @Test func `invite text options enforce payload limits`() {
         #expect(CandidateInviteValidation.textIssue(.init(
             fullName: String(repeating: "x", count: 256),

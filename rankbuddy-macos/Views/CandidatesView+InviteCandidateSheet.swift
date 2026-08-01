@@ -117,6 +117,19 @@ nonisolated enum InviteTemplatePaging {
 
         return cursor
     }
+
+    static func appendUnique<Item, ID: Hashable>(
+        _ incoming: [Item],
+        to loaded: inout [Item],
+        seenIDs: inout Set<ID>,
+        id: (Item) -> ID?
+    ) {
+        for item in incoming {
+            guard let itemID = id(item), seenIDs.insert(itemID).inserted else { continue }
+
+            loaded.append(item)
+        }
+    }
 }
 
 /// A sheet that invites a candidate to a test (#12) — the app's first write flow. Refreshes
@@ -302,10 +315,16 @@ struct InviteCandidateSheet: View {
         var loaded: [InviteTemplate] = []
         var cursor: String?
         var seenCursors: Set<String> = []
+        var seenTemplateIDs: Set<String> = []
         do {
             repeat {
                 let page = try await client.inviteTemplatesPage(after: cursor)
-                loaded.append(contentsOf: page.items)
+                InviteTemplatePaging.appendUnique(
+                    page.items,
+                    to: &loaded,
+                    seenIDs: &seenTemplateIDs,
+                    id: \.id
+                )
                 cursor = try InviteTemplatePaging.next(
                     page.next,
                     itemCount: page.items.count,
@@ -315,7 +334,7 @@ struct InviteCandidateSheet: View {
         } catch {
             // Leave whatever loaded; the picker simply doesn't render when empty.
         }
-        templates = loaded.filter { $0.id != nil }
+        templates = loaded
     }
 
     private func trimmed(_ value: String) -> String? {
