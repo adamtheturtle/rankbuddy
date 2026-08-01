@@ -7,10 +7,11 @@ import Foundation
 @testable import rankbuddy_macos
 import Testing
 
-/// `@MainActor` like `ListPageCacheTests`: both share the process-wide cache (the static store and
-/// the on-disk directory), so they must serialise on the main actor rather than interleave.
+/// Disk and memory cache checks share process-wide state. Keeping them in one serialized suite
+/// prevents a test from clearing another test's fixtures while it is suspended at an `await`.
+@Suite(.serialized)
 @MainActor
-struct DiskPageCacheTests {
+struct PageCacheTests {
     @Test func `stores and loads a first page from disk`() async {
         await DiskPageCache.clear()
         await DiskPageCache.store(items: ["a", "b"], cursor: "next", totalCount: nil, for: "disk.tests")

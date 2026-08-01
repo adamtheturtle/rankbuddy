@@ -7,8 +7,7 @@ import Foundation
 @testable import rankbuddy_macos
 import Testing
 
-@MainActor
-struct ListPageCacheTests {
+extension PageCacheTests {
     @Test func `stores and returns a first page by key`() async {
         await ListPageCache.clear()
         await ListPageCache.store(items: ["a", "b"], cursor: "next", totalCount: nil, for: "tests.acc")
