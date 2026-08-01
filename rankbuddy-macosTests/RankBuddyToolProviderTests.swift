@@ -560,6 +560,11 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.validatedPositiveID(42) == 42)
     }
 
+    @Test func `catalogue lists require usable resource ids`() {
+        #expect(RankBuddyToolProvider.allResourceIDsUsable(["test-1", " question-1 "]))
+        #expect(!RankBuddyToolProvider.allResourceIDsUsable(["test-1", " \n"]))
+    }
+
     @Test func `invite template lists omit addressless records`() throws {
         let missing = try JSONDecoder().decode(
             InviteTemplate.self, from: Data(#"{"name":"No ID"}"#.utf8)

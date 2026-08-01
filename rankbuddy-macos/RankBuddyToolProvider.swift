@@ -251,6 +251,10 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return id
     }
 
+    nonisolated static func allResourceIDsUsable(_ ids: [String]) -> Bool {
+        ids.allSatisfy { validatedCreatedID($0) != nil }
+    }
+
     nonisolated static func inviteTemplatePayload(_ template: InviteTemplate) -> [String: String]? {
         guard let id = validatedCreatedID(template.id) else { return nil }
         return [
@@ -448,7 +452,13 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         do {
             let page = try await HackerRankClient(account: resolved).testsPage(after: cursor)
-            let items = page.items.map { ["id": $0.id, "name": $0.name, "state": $0.state ?? ""] }
+            guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
+                return errorResult("HackerRank returned a test without a usable ID.")
+            }
+            let items = page.items.map {
+                ["id": $0.id.trimmingCharacters(in: .whitespacesAndNewlines),
+                 "name": $0.name, "state": $0.state ?? ""]
+            }
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "tests": items,
                 "next_cursor": page.next ?? NSNull()
@@ -464,7 +474,13 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         do {
             let page = try await HackerRankClient(account: resolved).questionsPage(after: cursor)
-            let items = page.items.map { ["id": $0.id, "name": $0.name, "type": $0.type] }
+            guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
+                return errorResult("HackerRank returned a question without a usable ID.")
+            }
+            let items = page.items.map {
+                ["id": $0.id.trimmingCharacters(in: .whitespacesAndNewlines),
+                 "name": $0.name, "type": $0.type]
+            }
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "questions": items,
                 "next_cursor": page.next ?? NSNull()
@@ -480,7 +496,13 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         do {
             let page = try await HackerRankClient(account: resolved).interviewsPage(after: cursor)
-            let items = page.items.map { ["id": $0.id, "title": $0.title ?? "", "status": $0.status] }
+            guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
+                return errorResult("HackerRank returned an interview without a usable ID.")
+            }
+            let items = page.items.map {
+                ["id": $0.id.trimmingCharacters(in: .whitespacesAndNewlines),
+                 "title": $0.title ?? "", "status": $0.status]
+            }
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "interviews": items,
                 "next_cursor": page.next ?? NSNull()
