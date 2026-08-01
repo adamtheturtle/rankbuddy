@@ -227,6 +227,13 @@ struct RankBuddyToolProviderTests {
         #expect(detail.contains("team_id: team-1"))
         #expect(detail.contains("user_id: user-2"))
 
+        let template = RankBuddyToolProvider.callDetail(
+            tool: "update_interview_template",
+            arguments: ["template_id": .int(42), "name": .string("Pairing")]
+        )
+        #expect(template.contains("template_id: 42"))
+        #expect(template.contains("name: Pairing"))
+
         let invite = RankBuddyToolProvider.callDetail(
             tool: "invite_candidate",
             arguments: [

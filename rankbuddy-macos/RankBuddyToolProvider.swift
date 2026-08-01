@@ -215,6 +215,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         "create_pad": ["account", "title"],
         "schedule_interview": ["account", "title", "candidate_email"],
         "delete_interview": ["account", "interview_id"],
+        "create_interview_template": ["account", "name"],
+        "update_interview_template": ["account", "template_id", "name"],
+        "delete_interview_template": ["account", "template_id"],
         "create_ats_codepair_invite": ["account", "candidate_id", "requisition_id", "title"],
         "create_ats_codescreen_invite": ["account", "test_id", "candidate_id", "requisition_id", "email"]
     ]
