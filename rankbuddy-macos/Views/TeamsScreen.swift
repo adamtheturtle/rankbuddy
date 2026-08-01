@@ -249,6 +249,11 @@ struct TeamMembersList: View {
     }
 }
 
+nonisolated struct TeamDetailIdentity: Hashable {
+    let accountID: UUID
+    let teamID: String
+}
+
 /// Detail for a single team. The title renames in place (#95's pattern) and the locations
 /// and departments save per field via `updateTeam` (#147); the rest stays read-only.
 struct TeamDetailView: View {
@@ -266,6 +271,10 @@ struct TeamDetailView: View {
     /// (possibly stale) row the list handed us.
     private var displayed: Team {
         current ?? team
+    }
+
+    private var detailIdentity: TeamDetailIdentity {
+        TeamDetailIdentity(accountID: account.id, teamID: team.id)
     }
 
     var body: some View {
@@ -310,6 +319,7 @@ struct TeamDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayed.name)
+        .onChange(of: detailIdentity) { resetForSelectedTeam() }
         .toolbar(id: "teamDetail") {
             ToolbarItem(id: "delete") {
                 Button(role: .destructive) {
@@ -360,10 +370,14 @@ struct TeamDetailView: View {
     /// Applies one field's update, then re-reads the team so the detail reflects the
     /// server's view (the write echo can be sparser than the full read).
     private func save(_ options: TeamUpdateOptions) async -> Bool {
+        let identity = detailIdentity
         let client = HackerRankClient(account: account)
         do {
-            let updated = try await client.updateTeam(id: team.id, options: options)
-            current = await (try? client.team(id: team.id)) ?? updated
+            let updated = try await client.updateTeam(id: identity.teamID, options: options)
+            let refreshed = await (try? client.team(id: identity.teamID)) ?? updated
+            guard identity == detailIdentity else { return false }
+
+            current = refreshed
             onChanged()
             return true
         } catch {
@@ -373,13 +387,23 @@ struct TeamDetailView: View {
     }
 
     private func deleteTeam() async {
+        let identity = detailIdentity
         do {
-            try await HackerRankClient(account: account).deleteTeam(id: team.id)
+            try await HackerRankClient(account: account).deleteTeam(id: identity.teamID)
+            guard identity == detailIdentity else { return }
+
             onChanged()
             dismiss()
         } catch {
             deleteError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    private func resetForSelectedTeam() {
+        current = nil
+        deletePresented = false
+        deleteError = nil
+        editError = nil
     }
 }
 
