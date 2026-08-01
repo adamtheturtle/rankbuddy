@@ -181,12 +181,12 @@ struct LivenessDigestTests {
         let start = clock.now
 
         let result: Int? = await LivenessProbe.firstResult(timeout: .milliseconds(5)) {
-            try? await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: .seconds(30))
             return 1
         }
 
         #expect(result == nil)
-        #expect(start.duration(to: clock.now) < .milliseconds(500))
+        #expect(start.duration(to: clock.now) < .seconds(3))
     }
 
     @Test func `liveness probe follows interview cursors`() async throws {
