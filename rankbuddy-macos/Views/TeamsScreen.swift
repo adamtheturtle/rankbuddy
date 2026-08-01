@@ -228,11 +228,19 @@ struct TeamMembersList: View {
     }
 
     private var removalDialogPresented: Binding<Bool> {
-        Binding(get: { memberPendingRemoval != nil }, set: { if !$0 { memberPendingRemoval = nil } })
+        Binding(get: { memberPendingRemoval != nil }, set: {
+            if !$0 {
+                memberPendingRemoval = nil
+            }
+        })
     }
 
     private var removalErrorPresented: Binding<Bool> {
-        Binding(get: { removalError != nil }, set: { if !$0 { removalError = nil } })
+        Binding(get: { removalError != nil }, set: {
+            if !$0 {
+                removalError = nil
+            }
+        })
     }
 
     private func beginRemoval(_ member: User) {
@@ -267,6 +275,7 @@ struct TeamDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var deletePresented = false
     @State private var deleteError: String?
+    @State private var deletingIdentity: TeamDetailIdentity?
     @State private var current: Team?
     @State private var editError: String?
 
@@ -278,6 +287,10 @@ struct TeamDetailView: View {
 
     private var detailIdentity: TeamDetailIdentity {
         TeamDetailIdentity(accountID: account.id, teamID: team.id)
+    }
+
+    private var isDeleting: Bool {
+        deletingIdentity == detailIdentity
     }
 
     var body: some View {
@@ -331,6 +344,7 @@ struct TeamDetailView: View {
                     Label("Delete", systemImage: "trash")
                 }
                 .help("Delete this team")
+                .disabled(isDeleting)
             }
             .defaultCustomization(.hidden)
         }
@@ -338,6 +352,7 @@ struct TeamDetailView: View {
             Button("Delete Team", role: .destructive) {
                 Task { await deleteTeam() }
             }
+            .disabled(isDeleting)
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This deletes the team on HackerRank. This can’t be undone.")
@@ -355,11 +370,19 @@ struct TeamDetailView: View {
     }
 
     private var deleteErrorPresented: Binding<Bool> {
-        Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
+        Binding(get: { deleteError != nil }, set: {
+            if !$0 {
+                deleteError = nil
+            }
+        })
     }
 
     private var editErrorPresented: Binding<Bool> {
-        Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
+        Binding(get: { editError != nil }, set: {
+            if !$0 {
+                editError = nil
+            }
+        })
     }
 
     /// "a, b, c" → ["a", "b", "c"]; nil when the field is cleared entirely.
@@ -391,6 +414,14 @@ struct TeamDetailView: View {
 
     private func deleteTeam() async {
         let identity = detailIdentity
+        guard deletingIdentity != identity else { return }
+
+        deletingIdentity = identity
+        defer {
+            if deletingIdentity == identity {
+                deletingIdentity = nil
+            }
+        }
         do {
             try await HackerRankClient(account: account).deleteTeam(id: identity.teamID)
             guard identity == detailIdentity else { return }
