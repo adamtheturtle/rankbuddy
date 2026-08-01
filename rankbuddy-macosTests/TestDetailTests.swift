@@ -12,6 +12,17 @@ import Testing
 /// client method that fetches it through the demo server.
 @MainActor
 struct TestDetailTests {
+    @Test func `inviter pagination rejects empty and repeated pages`() throws {
+        var seen: Set<String> = []
+        #expect(try TestInviterPaging.next("c1", itemCount: 1, seen: &seen) == "c1")
+        #expect(throws: TestInviterPaging.NoProgress.self) {
+            try TestInviterPaging.next("c1", itemCount: 1, seen: &seen)
+        }
+        #expect(throws: TestInviterPaging.NoProgress.self) {
+            try TestInviterPaging.next("c2", itemCount: 0, seen: &seen)
+        }
+    }
+
     private func makeClient() -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: Account.demoToken))
     }

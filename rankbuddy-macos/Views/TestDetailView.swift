@@ -7,6 +7,21 @@ import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 
+nonisolated enum TestInviterPaging {
+    struct NoProgress: LocalizedError {
+        var errorDescription: String? {
+            "Inviter loading stopped because HackerRank repeated or stalled a page. Retry to check again."
+        }
+    }
+
+    static func next(_ cursor: String?, itemCount: Int, seen: inout Set<String>) throws -> String? {
+        guard let cursor else { return nil }
+        guard itemCount > 0, seen.insert(cursor).inserted else { throw NoProgress() }
+
+        return cursor
+    }
+}
+
 // swiftlint:disable file_length
 // swiftlint:disable:next type_body_length
 struct TestDetailView: View {
@@ -437,11 +452,25 @@ struct TestDetailView: View {
     }
 
     private func fetchInviters(account: Account, testID: String) async -> (items: [TestInviter], error: String?) {
+        var loaded: [TestInviter] = []
+        var seenIDs: Set<TestInviter.ID> = []
+        var seenCursors: Set<String> = []
+        var cursor: String?
         do {
-            let items = try await HackerRankClient(account: account).testInviters(testID: testID).items
-            return (items, nil)
+            repeat {
+                let page = try await HackerRankClient(account: account).testInviters(testID: testID, after: cursor)
+                for inviter in page.items where seenIDs.insert(inviter.id).inserted {
+                    loaded.append(inviter)
+                }
+                cursor = try TestInviterPaging.next(
+                    page.next,
+                    itemCount: page.items.count,
+                    seen: &seenCursors
+                )
+            } while cursor != nil
+            return (loaded, nil)
         } catch {
-            return ([], (error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            return (loaded, (error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
         }
     }
 
