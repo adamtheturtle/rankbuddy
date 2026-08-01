@@ -80,7 +80,9 @@ extension Color {
     /// malformed input, so a bad stored value simply falls back to the default tint.
     nonisolated init?(accountHex hex: String) {
         var string = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if string.hasPrefix("#") { string.removeFirst() }
+        if string.hasPrefix("#") {
+            string.removeFirst()
+        }
         guard string.count == 6, let value = Int(string, radix: 16) else { return nil }
 
         self.init(

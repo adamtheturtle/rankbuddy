@@ -484,7 +484,11 @@ struct InlineEditableText: View {
     }
 
     private var conflictPresented: Binding<Bool> {
-        Binding(get: { conflictMessage != nil }, set: { if !$0 { conflictMessage = nil } })
+        Binding(get: { conflictMessage != nil }, set: {
+            if !$0 {
+                conflictMessage = nil
+            }
+        })
     }
 
     private func saveDraft() async {
@@ -537,7 +541,9 @@ struct EditableNumberRow: View {
                     .focused($isFocused)
                     .onSubmit { Task { await save() } }
                     .onChange(of: isFocused) { _, focused in
-                        if !focused { Task { await save() } }
+                        if !focused {
+                            Task { await save() }
+                        }
                     }
                 if isSaving {
                     ProgressView().controlSize(.small)

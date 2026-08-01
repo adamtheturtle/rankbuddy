@@ -14,8 +14,12 @@ import Testing
 struct TestWindowStatusTests {
     private func test(start: String? = nil, end: String? = nil) throws -> HackerRankKit.Test {
         var fields = [#""id":"t1""#, #""name":"T""#]
-        if let start { fields.append("\"start_time\":\"\(start)\"") }
-        if let end { fields.append("\"end_time\":\"\(end)\"") }
+        if let start {
+            fields.append("\"start_time\":\"\(start)\"")
+        }
+        if let end {
+            fields.append("\"end_time\":\"\(end)\"")
+        }
         let json = "{\(fields.joined(separator: ","))}"
         return try JSONDecoder().decode(HackerRankKit.Test.self, from: Data(json.utf8))
     }

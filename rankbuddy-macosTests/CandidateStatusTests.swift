@@ -15,8 +15,12 @@ import Testing
 struct CandidateStatusTests {
     private func candidate(status: Int? = nil, atsState: Int? = nil) throws -> TestCandidate {
         var fields = [#""id":"c1""#, #""email":"c@x.com""#]
-        if let status { fields.append("\"status\":\(status)") }
-        if let atsState { fields.append("\"ats_state\":\(atsState)") }
+        if let status {
+            fields.append("\"status\":\(status)")
+        }
+        if let atsState {
+            fields.append("\"ats_state\":\(atsState)")
+        }
         let json = "{\(fields.joined(separator: ","))}"
         return try JSONDecoder().decode(TestCandidate.self, from: Data(json.utf8))
     }

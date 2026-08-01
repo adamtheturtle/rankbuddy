@@ -46,43 +46,50 @@ nonisolated enum MCPClientInstall {
         Task { @MainActor in
             let accessing = folder.startAccessingSecurityScopedResource()
             defer {
-                if accessing { folder.stopAccessingSecurityScopedResource() }
+                if accessing {
+                    folder.stopAccessingSecurityScopedResource()
+                }
                 didFinish()
             }
 
-            do {
-                let url = try await runFileOperation {
-                    let configFolder = try configurationFolder(
-                        granted: folder,
-                        preferred: spec.preferred,
-                        fallback: spec.fallback
-                    )
-                    return configFolder.appendingPathComponent(spec.fileName)
-                }
-                let alreadyPresent = try await runFileOperation {
-                    try serverAlreadyPresent(at: url, isTOML: spec.isTOML)
-                }
-                guard !alreadyPresent || confirmUpdate(client) else { return }
+            await performInstall(client, command: command, folder: folder, spec: spec)
+        }
+    }
 
-                try await runFileOperation {
-                    if spec.isTOML {
-                        try upsertCodexServer(
-                            into: url, client: client, command: command,
-                            shouldReplace: { _ in true }
-                        )
-                    } else {
-                        try mergeJSONServer(
-                            into: url, client: client, command: command,
-                            shouldReplace: { _ in true }
-                        )
-                    }
-                }
-                recordInstalledCommand(command, for: client)
-                let title = alreadyPresent ? "Updated \(client.displayName)" : "Added to \(client.displayName)"
-                showAlert(.informational, title, client.restartHint)
-            } catch {
-                showAlert(.warning, "Couldn't update \(client.displayName)", error.localizedDescription)
+    @MainActor
+    private static func performInstall(_ client: MCPClient, command: String, folder: URL, spec: ConfigSpec) async {
+        do {
+            let url = try await runFileOperation {
+                let configFolder = try configurationFolder(
+                    granted: folder,
+                    preferred: spec.preferred,
+                    fallback: spec.fallback
+                )
+                return configFolder.appendingPathComponent(spec.fileName)
             }
+            let alreadyPresent = try await runFileOperation {
+                try serverAlreadyPresent(at: url, isTOML: spec.isTOML)
+            }
+            guard !alreadyPresent || confirmUpdate(client) else { return }
+
+            try await runFileOperation {
+                if spec.isTOML {
+                    try upsertCodexServer(
+                        into: url, client: client, command: command,
+                        shouldReplace: { _ in true }
+                    )
+                } else {
+                    try mergeJSONServer(
+                        into: url, client: client, command: command,
+                        shouldReplace: { _ in true }
+                    )
+                }
+            }
+            recordInstalledCommand(command, for: client)
+            let title = alreadyPresent ? "Updated \(client.displayName)" : "Added to \(client.displayName)"
+            showAlert(.informational, title, client.restartHint)
+        } catch {
+            showAlert(.warning, "Couldn't update \(client.displayName)", error.localizedDescription)
         }
     }
 
@@ -224,7 +231,9 @@ nonisolated enum MCPClientInstall {
                 servers = [:]
             }
             let alreadyPresent = servers[serverName] != nil
-            if alreadyPresent, !shouldReplace(client) { return }
+            if alreadyPresent, !shouldReplace(client) {
+                return
+            }
 
             servers[serverName] = ["command": command, "args": ["--mcp"]]
             root["mcpServers"] = servers
@@ -323,8 +332,12 @@ nonisolated enum MCPClientInstall {
                 bodyError = error
             }
         }
-        if let bodyError { throw bodyError }
-        if let coordinationError { throw coordinationError }
+        if let bodyError {
+            throw bodyError
+        }
+        if let coordinationError {
+            throw coordinationError
+        }
     }
 
     /// Atomic replacement must target a symlink's destination; writing atomically to the link
@@ -363,7 +376,9 @@ nonisolated enum MCPClientInstall {
         for sourceLine in tomlSourceLines(text) {
             let rawLine = sourceLine.text
             guard sourceLine.isStructural else {
-                if !skippingRankBuddyTable { result.append(rawLine) }
+                if !skippingRankBuddyTable {
+                    result.append(rawLine)
+                }
                 continue
             }
 
@@ -451,7 +466,9 @@ nonisolated enum MCPClientInstall {
         for sourceLine in tomlSourceLines(text) where sourceLine.isStructural {
             let rawLine = sourceLine.text
             let line = rawLine.trimmingCharacters(in: .whitespaces)
-            if line.isEmpty || line.hasPrefix("#") { continue }
+            if line.isEmpty || line.hasPrefix("#") {
+                continue
+            }
 
             if line.hasPrefix("[") {
                 let isArrayOfTables = line.hasPrefix("[[")
@@ -511,7 +528,9 @@ nonisolated enum MCPClientInstall {
                 continue
             }
 
-            if line[index] == "#" { return }
+            if line[index] == "#" {
+                return
+            }
             if line[index...].hasPrefix("\"\"\"") {
                 multilineQuote = .basic
                 index = line.index(index, offsetBy: 3)

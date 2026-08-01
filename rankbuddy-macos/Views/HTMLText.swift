@@ -258,7 +258,9 @@ nonisolated enum HTMLFragmentSegment: Equatable {
                     ))
                 }
             } else if !token.hasSuffix("/>") {
-                if depth == 0 { opening = range }
+                if depth == 0 {
+                    opening = range
+                }
                 depth += 1
             }
         }
@@ -291,7 +293,9 @@ nonisolated enum HTMLFragmentSegment: Equatable {
         while index < html.endIndex {
             let character = html[index]
             if let activeQuote = currentQuote {
-                if character == activeQuote { currentQuote = nil }
+                if character == activeQuote {
+                    currentQuote = nil
+                }
             } else if character == "\"" || character == "'" {
                 currentQuote = character
             } else if character == ">" {

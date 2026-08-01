@@ -355,15 +355,27 @@ struct TestDetailView: View {
     }
 
     private var deleteErrorPresented: Binding<Bool> {
-        Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
+        Binding(get: { deleteError != nil }, set: {
+            if !$0 {
+                deleteError = nil
+            }
+        })
     }
 
     private var archiveErrorPresented: Binding<Bool> {
-        Binding(get: { archiveError != nil }, set: { if !$0 { archiveError = nil } })
+        Binding(get: { archiveError != nil }, set: {
+            if !$0 {
+                archiveError = nil
+            }
+        })
     }
 
     private var renameErrorPresented: Binding<Bool> {
-        Binding(get: { renameError != nil }, set: { if !$0 { renameError = nil } })
+        Binding(get: { renameError != nil }, set: {
+            if !$0 {
+                renameError = nil
+            }
+        })
     }
 
     private func registerDetailCommands() {

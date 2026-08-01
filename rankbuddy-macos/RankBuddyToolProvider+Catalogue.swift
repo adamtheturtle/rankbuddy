@@ -35,7 +35,9 @@ extension RankBuddyToolProvider {
             var schema: [String: Any] = [
                 "type": "object", "properties": properties, "additionalProperties": false
             ]
-            if !required.isEmpty { schema["required"] = required }
+            if !required.isEmpty {
+                schema["required"] = required
+            }
             return [
                 "name": name, "description": description,
                 "annotations": ["readOnlyHint": true], "inputSchema": schema

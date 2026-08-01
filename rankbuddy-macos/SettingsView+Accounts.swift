@@ -143,7 +143,9 @@ struct AccountsSettingsView: View {
         } else if addingNew {
             AccountEditor(existing: nil, embedded: true) { savedID in
                 addingNew = false
-                if let savedID { selectedID = savedID }
+                if let savedID {
+                    selectedID = savedID
+                }
             } onDirtyChange: { editorIsDirty = $0 }
         } else if let account = selectedAccount {
             VStack(spacing: 0) {
@@ -231,14 +233,22 @@ struct AccountsSettingsView: View {
     private var removalAlertPresented: Binding<Bool> {
         Binding(
             get: { accountPendingRemoval != nil },
-            set: { if !$0 { accountPendingRemoval = nil } }
+            set: {
+                if !$0 {
+                    accountPendingRemoval = nil
+                }
+            }
         )
     }
 
     private var discardAlertPresented: Binding<Bool> {
         Binding(
             get: { pendingEditorTransition != nil },
-            set: { if !$0 { pendingEditorTransition = nil } }
+            set: {
+                if !$0 {
+                    pendingEditorTransition = nil
+                }
+            }
         )
     }
 

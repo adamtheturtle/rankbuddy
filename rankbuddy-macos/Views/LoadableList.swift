@@ -318,7 +318,9 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 ListQuery.persistRange(dateRange, key: ListQuery.filterKey(restorationKey))
                 // Server-side date filtering re-queries from page 1; client-side just
                 // re-filters the loaded rows on the next `visibleItems` recompute (#86).
-                if serverDateFiltering { Task { await reload() } }
+                if serverDateFiltering {
+                    Task { await reload() }
+                }
             }
             .onChange(of: selectedFacets) {
                 ListQuery.persistFacets(selectedFacets, key: ListQuery.facetsKey(restorationKey))

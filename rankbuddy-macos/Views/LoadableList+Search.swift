@@ -164,7 +164,9 @@ extension LoadableList {
             pagesLoadedThisFilter += 1
             // A duplicate-only page can advance the cursor without increasing the merged row
             // count. Cursor advancement is therefore the authoritative progress signal.
-            if nextCursor == cursorBeforeLoad { break }
+            if nextCursor == cursorBeforeLoad {
+                break
+            }
         }
     }
 
@@ -188,7 +190,9 @@ extension LoadableList {
             let cursorBeforeLoad = nextCursor
             await loadMore()
             pagesLoadedThisScan += 1
-            if nextCursor == cursorBeforeLoad { break }
+            if nextCursor == cursorBeforeLoad {
+                break
+            }
         }
     }
 }

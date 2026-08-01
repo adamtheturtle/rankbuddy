@@ -38,7 +38,9 @@ struct MergedLoaderTests {
         let bad = account("Bad")
         do {
             _ = try await MergedLoader.firstPages(accounts: [bad, good]) { acct in
-                if acct.id == bad.id { throw Boom() }
+                if acct.id == bad.id {
+                    throw Boom()
+                }
                 return [Item(id: "ok")]
             }
             Issue.record("Expected a partial merged page")

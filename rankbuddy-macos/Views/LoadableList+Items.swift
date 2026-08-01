@@ -26,8 +26,12 @@ nonisolated enum ListSort {
         items.sorted { lhs, rhs in
             let lhsMissing = isMissing(lhs)
             let rhsMissing = isMissing(rhs)
-            if lhsMissing != rhsMissing { return !lhsMissing }
-            if lhsMissing { return false }
+            if lhsMissing != rhsMissing {
+                return !lhsMissing
+            }
+            if lhsMissing {
+                return false
+            }
             return reversed ? forward(rhs, lhs) : forward(lhs, rhs)
         }
     }
@@ -188,7 +192,9 @@ extension LoadableList {
             let countBeforeLoad = items.count
             await loadMore()
             pagesLoadedThisSearch += 1
-            if items.count == countBeforeLoad { break }
+            if items.count == countBeforeLoad {
+                break
+            }
         }
     }
 

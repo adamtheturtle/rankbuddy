@@ -60,7 +60,9 @@ enum BrowserSettings {
 
         private nonisolated static func displayName(for appURL: URL) -> String {
             var name = FileManager.default.displayName(atPath: appURL.path)
-            if name.hasSuffix(".app") { name.removeLast(4) }
+            if name.hasSuffix(".app") {
+                name.removeLast(4)
+            }
             return name
         }
     }
@@ -74,13 +76,17 @@ enum BrowserSettings {
     /// The browsers registered to open http(s) URLs, sorted by name.
     @MainActor
     static func installedBrowsers() -> [Browser] {
-        if let cachedInstalledBrowsers { return cachedInstalledBrowsers }
+        if let cachedInstalledBrowsers {
+            return cachedInstalledBrowsers
+        }
 
         let browsers = NSWorkspace.shared.urlsForApplications(toOpen: sampleURL)
             .compactMap(Browser.init(appURL:))
             // De-dupe by bundle id (an app can appear once per registered scheme).
             .reduce(into: [Browser]()) { acc, browser in
-                if !acc.contains(where: { $0.bundleID == browser.bundleID }) { acc.append(browser) }
+                if !acc.contains(where: { $0.bundleID == browser.bundleID }) {
+                    acc.append(browser)
+                }
             }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         cachedInstalledBrowsers = browsers

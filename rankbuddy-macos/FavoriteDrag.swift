@@ -88,7 +88,9 @@ enum FavoriteDragLifecycle {
     static let onBegan: (NSDraggingSession) -> Void = { session in
         let canFavorite = session.draggingPasteboard
             .canReadItem(withDataConformingToTypes: [UTType.rankBuddyFavorite.identifier])
-        if canFavorite { FavoriteDragMonitor.shared.isDragging = true }
+        if canFavorite {
+            FavoriteDragMonitor.shared.isDragging = true
+        }
     }
 
     /// The drag dropped or was cancelled: collapse the revealed drop zone again.

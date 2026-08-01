@@ -134,7 +134,11 @@ extension LoadableList {
     }
 
     var isLoading: Bool {
-        if case .loading = phase { true } else { false }
+        if case .loading = phase {
+            true
+        } else {
+            false
+        }
     }
 
     /// Double-click / Return on a row: opens the item in its own window when the screen supports

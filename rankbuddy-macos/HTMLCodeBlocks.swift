@@ -65,7 +65,9 @@ nonisolated enum HTMLCodeBlocks {
         while index < html.endIndex {
             let character = html[index]
             if let activeQuote = quote {
-                if character == activeQuote { quote = nil }
+                if character == activeQuote {
+                    quote = nil
+                }
             } else if character == "\"" || character == "'" {
                 quote = character
             } else if character == ">" {

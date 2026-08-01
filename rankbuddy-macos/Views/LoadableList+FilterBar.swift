@@ -144,7 +144,9 @@ extension LoadableList {
                     Toggle(isOn: facetBinding(facet.id, option)) { Text(option) }
                 }
                 if nextCursor != nil {
-                    if !options.isEmpty { Divider() }
+                    if !options.isEmpty {
+                        Divider()
+                    }
                     Button {
                         Task { await discoverMoreValues(for: facet) }
                     } label: {
@@ -169,8 +171,12 @@ extension LoadableList {
             await loadMore()
             pagesScanned += 1
             let updated = Set(ListQuery.facetOptions(facet, in: items))
-            if !updated.subtracting(existing).isEmpty { return }
-            if items.count == countBefore || loadMoreError != nil { return }
+            if !updated.subtracting(existing).isEmpty {
+                return
+            }
+            if items.count == countBefore || loadMoreError != nil {
+                return
+            }
         }
     }
 
@@ -192,7 +198,11 @@ extension LoadableList {
             get: { selectedFacets[facetID]?.contains(option) ?? false },
             set: { isOn in
                 var set = selectedFacets[facetID] ?? []
-                if isOn { set.insert(option) } else { set.remove(option) }
+                if isOn {
+                    set.insert(option)
+                } else {
+                    set.remove(option)
+                }
                 selectedFacets[facetID] = set
             }
         )

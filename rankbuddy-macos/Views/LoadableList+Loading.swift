@@ -19,7 +19,9 @@ extension LoadableList {
         partialLoadWarning = nil
         loadedCursors = []
         query = ListQuery.restoredQuery(key: ListQuery.queryKey(restorationKey))
-        if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
+        if filterDate != nil {
+            dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey))
+        }
         if !facets.isEmpty {
             selectedFacets = ListQuery.restoredFacets(
                 key: ListQuery.facetsKey(restorationKey),
@@ -82,7 +84,9 @@ extension LoadableList {
         defer {
             if generation == loadGeneration {
                 isBackgroundRefreshing = false
-                if isServerFilterReload { isFilterLoading = false }
+                if isServerFilterReload {
+                    isFilterLoading = false
+                }
             }
         }
 
@@ -138,7 +142,9 @@ extension LoadableList {
     var cacheKey: String? {
         guard let restorationKey, !isServerSearching else { return nil }
 
-        if serverDateFiltering, dateRange != nil { return nil }
+        if serverDateFiltering, dateRange != nil {
+            return nil
+        }
 
         return restorationKey
     }
@@ -287,16 +293,22 @@ extension LoadableList {
     /// rows, pages in more (bounded by `searchPageCap`, mirroring the filter auto-load) until it
     /// appears or the list is exhausted; a still-missing item leaves the list untouched.
     private func revealItem(id: String) async -> Bool {
-        if select(id: id) { return true }
+        if select(id: id) {
+            return true
+        }
 
         var pagesLoadedThisReveal = 0
         while nextCursor != nil, pagesLoadedThisReveal < searchPageCap {
             let countBeforeLoad = items.count
             await loadMore()
             pagesLoadedThisReveal += 1
-            if select(id: id) { return true }
+            if select(id: id) {
+                return true
+            }
             // Stop if a load made no progress (e.g. it failed and exposed a retry).
-            if items.count == countBeforeLoad { return false }
+            if items.count == countBeforeLoad {
+                return false
+            }
         }
         return false
     }

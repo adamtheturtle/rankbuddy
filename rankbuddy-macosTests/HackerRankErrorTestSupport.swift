@@ -1,5 +1,10 @@
-import Testing
+//
+//  HackerRankErrorTestSupport.swift
+//  rankbuddy-macosTests
+//
+
 @testable import rankbuddy_macos
+import Testing
 
 func expectUnauthorized(_ operation: () async throws -> Void) async {
     do {

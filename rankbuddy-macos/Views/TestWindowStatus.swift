@@ -32,8 +32,12 @@ extension Test {
         let end = DisplayFormat.parseDate(endTime)
         guard start != nil || end != nil else { return nil }
 
-        if let start, now < start { return .upcoming }
-        if let end, now >= end { return .closed }
+        if let start, now < start {
+            return .upcoming
+        }
+        if let end, now >= end {
+            return .closed
+        }
         return .open
     }
 

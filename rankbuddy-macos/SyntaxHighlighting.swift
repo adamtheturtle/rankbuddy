@@ -243,7 +243,9 @@ nonisolated struct SyntaxHighlighter {
             }
             // A bare delimiter that never closes on its line is not a string (e.g. an apostrophe
             // in prose) — bail so it stays plain.
-            if !rule.allowsNewline, code[end] == "\n" { return nil }
+            if !rule.allowsNewline, code[end] == "\n" {
+                return nil
+            }
 
             code.formIndex(after: &end)
         }
@@ -311,7 +313,9 @@ nonisolated struct SyntaxHighlighter {
         // A number must not start in the middle of an identifier (e.g. the `2` in `utf8`).
         if start > code.startIndex {
             let previous = code[code.index(before: start)]
-            if previous.isLetter || previous == "_" { return nil }
+            if previous.isLetter || previous == "_" {
+                return nil
+            }
         }
 
         var end = code.index(after: start)

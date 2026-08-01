@@ -337,7 +337,9 @@ struct QuestionReport: View {
     """#
     let candidate = try? JSONDecoder().decode(TestCandidate.self, from: Data(json.utf8))
     return ScrollView {
-        if let candidate { CandidateReport(candidate: candidate) }
+        if let candidate {
+            CandidateReport(candidate: candidate)
+        }
     }
     .frame(width: 540, height: 600)
 }

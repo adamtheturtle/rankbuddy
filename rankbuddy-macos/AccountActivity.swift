@@ -36,38 +36,36 @@ struct AccountActivityView: View {
     }
 
     var body: some View {
-        Group {
-            if let account = activityAccount {
-                VStack(spacing: 0) {
-                    accountPicker(selectedAccount: account)
-                    Divider()
-                    stateView(account: account)
-                }
-                .task(id: account.id) { await reload(account: account) }
-                .toolbar {
-                    ToolbarItem {
-                        Button {
-                            Task { await reload(account: account) }
-                        } label: {
-                            Label("Refresh", systemImage: "arrow.clockwise")
-                        }
-                        .help("Refresh Account Activity")
-                        .disabled(phase == .loading)
-                    }
-                }
-                .focusedSceneValue(
-                    \.accountActivityRefresh,
-                    AccountActivityRefreshAction(isEnabled: phase != .loading) {
-                        Task { await reload(account: account) }
-                    }
-                )
-            } else {
-                ContentUnavailableView(
-                    "No Account",
-                    systemImage: "person.crop.circle.badge.questionmark",
-                    description: Text("Add an account to see its activity.")
-                )
+        if let account = activityAccount {
+            VStack(spacing: 0) {
+                accountPicker(selectedAccount: account)
+                Divider()
+                stateView(account: account)
             }
+            .task(id: account.id) { await reload(account: account) }
+            .toolbar {
+                ToolbarItem {
+                    Button {
+                        Task { await reload(account: account) }
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    .help("Refresh Account Activity")
+                    .disabled(phase == .loading)
+                }
+            }
+            .focusedSceneValue(
+                \.accountActivityRefresh,
+                AccountActivityRefreshAction(isEnabled: phase != .loading) {
+                    Task { await reload(account: account) }
+                }
+            )
+        } else {
+            ContentUnavailableView(
+                "No Account",
+                systemImage: "person.crop.circle.badge.questionmark",
+                description: Text("Add an account to see its activity.")
+            )
         }
     }
 

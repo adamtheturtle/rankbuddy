@@ -110,7 +110,9 @@ struct CommandEditableTitle: View {
                 .onSubmit { Task { await commit() } }
                 .onExitCommand { cancelEditing() }
                 .onChange(of: fieldFocused) { _, focused in
-                    if !focused, isEditing { Task { await commit() } }
+                    if !focused, isEditing {
+                        Task { await commit() }
+                    }
                 }
 
             if isSaving {
@@ -132,7 +134,11 @@ struct CommandEditableTitle: View {
     private var conflictPresented: Binding<Bool> {
         Binding(
             get: { conflictMessage != nil },
-            set: { if !$0 { conflictMessage = nil } }
+            set: {
+                if !$0 {
+                    conflictMessage = nil
+                }
+            }
         )
     }
 

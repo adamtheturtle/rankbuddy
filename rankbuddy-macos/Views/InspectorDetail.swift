@@ -65,7 +65,9 @@ extension Test {
                 tint: .accentColor
             ))
         }
-        if let window = windowBadge(now: now) { badges.append(window) }
+        if let window = windowBadge(now: now) {
+            badges.append(window)
+        }
         if enableProctoring == true {
             badges.append(StatusBadge(text: "Proctored", systemImage: "eye.fill", tint: .purple))
         }
@@ -187,7 +189,9 @@ extension TestCandidate {
         if let pipeline = pipelineStatusLabel {
             badges.append(StatusBadge(text: pipeline, systemImage: "arrow.right.circle", tint: .blue))
         }
-        if let integrity = integrityBadge { badges.append(integrity) }
+        if let integrity = integrityBadge {
+            badges.append(integrity)
+        }
         return badges
     }
 }

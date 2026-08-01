@@ -197,7 +197,11 @@ private extension SettingsView {
     }
 
     var loginItemErrorPresented: Binding<Bool> {
-        Binding(get: { loginItemError != nil }, set: { if !$0 { loginItemError = nil } })
+        Binding(get: { loginItemError != nil }, set: {
+            if !$0 {
+                loginItemError = nil
+            }
+        })
     }
 
     /// The "Launch at login" state, with the system as the source of truth: `get` reads the

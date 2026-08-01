@@ -60,7 +60,9 @@ extension SettingsView {
 
             Toggle("Notify me about new interviews", isOn: $notifyNewInterviews)
                 .onChange(of: notifyNewInterviews) { _, enabled in
-                    if enabled { LivenessNotifier.shared.requestAuthorization() }
+                    if enabled {
+                        LivenessNotifier.shared.requestAuthorization()
+                    }
                 }
                 .disabled(!backgroundUpdates)
 

@@ -55,7 +55,11 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     func callTool(_ name: String, arguments: [String: Value]?) async -> CallTool.Result {
         let startedAt = Date()
-        let account: String? = if case let .string(value)? = arguments?["account"] { value } else { nil }
+        let account: String? = if case let .string(value)? = arguments?["account"] {
+            value
+        } else {
+            nil
+        }
         let accountHasWrongType = arguments?["account"] != nil && account == nil
         let resolvedAccount: String? = if name == "list_accounts" || accountHasWrongType {
             nil

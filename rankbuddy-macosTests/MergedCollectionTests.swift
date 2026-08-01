@@ -56,7 +56,9 @@ struct MergedCollectionTests {
     @Test func `firstPages reports the failed account alongside successful rows`() async {
         do {
             _ = try await MergedLoader.firstPages(accounts: [work, personal]) { account in
-                if account.label == "Work" { throw LoadFailure() }
+                if account.label == "Work" {
+                    throw LoadFailure()
+                }
                 return [Row(id: "p1")]
             }
             Issue.record("Expected a partial merged page")
