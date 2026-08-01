@@ -35,6 +35,15 @@ struct RankBuddyToolProviderTests {
         #expect(page.next == nil)
     }
 
+    @Test func `bounded search continues after a duplicate-only page`() {
+        var progress = BoundedSearchProgress<String>()
+        _ = progress.accept(["one"], next: "page-2", id: { $0 })
+        let duplicatePage = progress.accept(["one"], next: "page-3", id: { $0 })
+
+        #expect(duplicatePage.items.isEmpty)
+        #expect(duplicatePage.next == "page-3")
+    }
+
     private func provider() -> RankBuddyToolProvider {
         RankBuddyToolProvider(makeStore: {
             AccountStore.rankBuddy(isTesting: true, seed: [Account(label: "Demo", token: Account.demoToken)])

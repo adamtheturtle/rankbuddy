@@ -632,7 +632,7 @@ nonisolated struct BoundedSearchProgress<ID: Hashable> {
         id: (Item) -> ID
     ) -> (items: [Item], next: String?) {
         let unique = items.filter { seenIDs.insert(id($0)).inserted }
-        guard !unique.isEmpty, let next, seenCursors.insert(next).inserted else {
+        guard let next, seenCursors.insert(next).inserted else {
             return (unique, nil)
         }
 
