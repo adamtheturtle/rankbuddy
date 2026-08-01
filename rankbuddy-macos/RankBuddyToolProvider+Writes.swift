@@ -1194,9 +1194,14 @@ extension RankBuddyToolProvider {
         guard templateID > 0 else { return errorResult("`template_id` must be greater than zero.") }
 
         let name = Self.normalizedOptionalString(stringArgument(arguments, "name"))
-        let title = Self.normalizedOptionalString(stringArgument(arguments, "title"))
-        let description = Self.normalizedOptionalString(stringArgument(arguments, "description"))
-        guard name != nil || title != nil || description != nil else {
+        if arguments?["name"] != nil, name == nil {
+            return errorResult("`name` must not be empty.")
+        }
+        let title = stringArgument(arguments, "title")?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let description = stringArgument(arguments, "description")?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard arguments?["name"] != nil || arguments?["title"] != nil || arguments?["description"] != nil else {
             return errorResult("At least one of `name`, `title`, or `description` must be provided.")
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }

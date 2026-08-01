@@ -990,6 +990,16 @@ struct RankBuddyToolProviderTests {
         #expect(text(noChange).contains("At least one"))
     }
 
+    @Test func `update_interview_template accepts explicit text clears`() async {
+        for key in ["title", "description"] {
+            let result = await writeProvider().callTool(
+                "update_interview_template",
+                arguments: ["template_id": .int(1), key: .string("  \n")]
+            )
+            #expect(result.isError != true)
+        }
+    }
+
     @Test func `delete_interview_template requires a positive id`() async {
         let result = await writeProvider().callTool(
             "delete_interview_template",
