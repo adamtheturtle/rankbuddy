@@ -96,10 +96,10 @@ extension LoadableList {
             || (appliesDateFilterLocally && filterDate != nil && dateRange != nil)
     }
 
-    /// The `.task(id:)` token that reloads a server-search list when its query changes (#104).
-    /// Empty for client-side lists, so their reload task never fires.
-    var serverSearchToken: String {
-        serverSearch == nil ? "" : trimmedQuery
+    /// The `.task(id:)` token that reloads a server-search list when its query or any locally
+    /// applied filter changes. Facets and date ranges may require scanning later search pages.
+    var serverSearchToken: ClientFilterToken? {
+        serverSearch == nil ? nil : clientFilterToken
     }
 
     /// Loads one page, routing through the server-side search loader when a query is active
