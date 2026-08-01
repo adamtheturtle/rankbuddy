@@ -71,6 +71,18 @@ struct QuestionEditValidationTests {
         #expect(CodeStubValidation.duplicateParameterName(in: [parameters[0]]) == nil)
     }
 
+    @Test func `generated stubs require portable identifiers`() {
+        for accepted in ["solve", "_value", "value2"] {
+            #expect(CodeStubValidation.isPortableIdentifier(accepted))
+        }
+        for rejected in ["", "2value", "two words", "value-name", "résultat"] {
+            #expect(!CodeStubValidation.isPortableIdentifier(rejected))
+        }
+
+        let parameters = [CodeStubParameter(name: "bad name", type: "int")]
+        #expect(CodeStubValidation.invalidParameterIdentifier(in: parameters) == "bad name")
+    }
+
     @Test func `generated stub parameters reject malformed entries`() {
         #expect(CodeStubValidation.malformedParameter(in: "") == nil)
         #expect(CodeStubValidation.malformedParameter(in: "counts: int[], target") == "target")

@@ -75,6 +75,11 @@ struct GenerateCodeStubsSheet: View {
             errorMessage = "Function name must not be blank."
             return
         }
+        guard CodeStubValidation.isPortableIdentifier(normalizedFunctionName) else {
+            errorMessage = "Function name must start with a letter or underscore "
+                + "and contain only letters, numbers, and underscores."
+            return
+        }
 
         if let malformed = CodeStubValidation.malformedParameter(in: parameters) {
             errorMessage = "Parameter “\(malformed)” must use name: type format."
@@ -82,6 +87,10 @@ struct GenerateCodeStubsSheet: View {
         }
 
         let parsed = parsedParameters
+        if let invalid = CodeStubValidation.invalidParameterIdentifier(in: parsed) {
+            errorMessage = "Parameter name “\(invalid)” is not a valid identifier."
+            return
+        }
         if let duplicate = CodeStubValidation.duplicateParameterName(in: parsed) {
             errorMessage = "Parameter name “\(duplicate)” is repeated."
             return
@@ -258,6 +267,23 @@ nonisolated enum CodeStubValidation {
         return parameters?.lazy.map(\.name).first { name in
             !seen.insert(name.folding(options: .caseInsensitive, locale: .current)).inserted
         }
+    }
+
+    static func invalidParameterIdentifier(in parameters: [CodeStubParameter]?) -> String? {
+        parameters?.lazy.map(\.name).first { !isPortableIdentifier($0) }
+    }
+
+    static func isPortableIdentifier(_ value: String) -> Bool {
+        let scalars = value.unicodeScalars
+        guard let first = scalars.first, isASCIILetter(first) || first.value == 95 else { return false }
+
+        return scalars.dropFirst().allSatisfy {
+            isASCIILetter($0) || (48 ... 57).contains($0.value) || $0.value == 95
+        }
+    }
+
+    private static func isASCIILetter(_ scalar: Unicode.Scalar) -> Bool {
+        (65 ... 90).contains(scalar.value) || (97 ... 122).contains(scalar.value)
     }
 
     static func generationBoundsIssue(
