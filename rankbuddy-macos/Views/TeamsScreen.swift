@@ -8,6 +8,9 @@ import FastList
 import HackerRankKit
 import SwiftUI
 
+// The screen and its tightly coupled team detail share private helpers in this file.
+// swiftlint:disable file_length
+
 /// The Teams section: the organisation's teams, with read-only detail (#36) and a
 /// "New Team" write action (#59).
 struct TeamsScreen: View {
