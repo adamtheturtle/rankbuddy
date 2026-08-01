@@ -342,20 +342,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             .onChange(of: deepLinkRouter.request) { Task { await consumeDeepLinkIfMatching() } }
     }
 
-    private var detailColumn: some View {
-        NavigationStack {
-            if let detailItem {
-                detail(detailItem)
-            } else {
-                CompactStateView(
-                    title: "No Selection",
-                    systemImage: "square.righthalf.filled",
-                    message: "Select a row in \(title) to inspect its details."
-                )
-            }
-        }
-    }
-
     /// Where the free-scroll anchor is remembered (#19), or `nil` when persistence is off.
     /// Internal so the loading extension's restoration can read it.
     var scrollDefaultsKey: String? {
@@ -495,5 +481,21 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
         // Anchor the facet bar + list to the top of the column (matters for the filtered-empty
         // state, whose placeholder would otherwise float in the vertical centre) (#111).
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+}
+
+private extension LoadableList {
+    var detailColumn: some View {
+        NavigationStack {
+            if let detailItem {
+                detail(detailItem)
+            } else {
+                CompactStateView(
+                    title: "No Selection",
+                    systemImage: "square.righthalf.filled",
+                    message: "Select a row in \(title) to inspect its details."
+                )
+            }
+        }
     }
 }
