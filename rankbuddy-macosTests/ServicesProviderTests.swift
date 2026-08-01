@@ -11,36 +11,53 @@ import Testing
 @MainActor
 struct ServicesProviderTests {
     @Test func `a recognised URL resolves against the current account`() {
-        let target = ServicesProvider.target(for: "https://www.hackerrank.com/x/tests/t1", currentAccountID: "ACC")
+        let account = Account(label: "Work", token: "token")
+        let target = ServicesProvider.target(
+            for: "https://www.hackerrank.com/x/tests/t1",
+            currentAccountID: account.id.uuidString,
+            accounts: [account]
+        )
         #expect(target?.collection == .tests)
-        #expect(target?.accountID == "ACC")
+        #expect(target?.accountID == account.id.uuidString)
         #expect(target?.itemID == "t1")
     }
 
     @Test func `it resolves to nil without an account or without a recognised URL`() {
         // No current account.
-        #expect(ServicesProvider.target(for: "https://host/x/tests/t1", currentAccountID: nil) == nil)
+        #expect(ServicesProvider.target(
+            for: "https://host/x/tests/t1", currentAccountID: nil, accounts: []
+        ) == nil)
         // A bare id can't be typed without the chooser, so the Service ignores it.
-        #expect(ServicesProvider.target(for: "bare-id", currentAccountID: "ACC") == nil)
-        #expect(ServicesProvider.target(for: "not-a-url/tests/t1", currentAccountID: "ACC") == nil)
+        let account = Account(label: "Work", token: "token")
+        #expect(ServicesProvider.target(
+            for: "bare-id", currentAccountID: account.id.uuidString, accounts: [account]
+        ) == nil)
+        #expect(ServicesProvider.target(
+            for: "not-a-url/tests/t1", currentAccountID: account.id.uuidString, accounts: [account]
+        ) == nil)
     }
 
     @Test func `service resolution explains every rejected input`() {
         #expect(ServicesProvider.resolve(
             text: nil,
-            currentAccountID: "ACC"
+            currentAccountID: "ACC",
+            accounts: []
         ) == .failure(.missingText))
         #expect(ServicesProvider.resolve(
             text: " \n ",
-            currentAccountID: "ACC"
+            currentAccountID: "ACC",
+            accounts: []
         ) == .failure(.missingText))
         #expect(ServicesProvider.resolve(
             text: "https://www.hackerrank.com/x/tests/t1",
-            currentAccountID: nil
+            currentAccountID: nil,
+            accounts: []
         ) == .failure(.missingAccount))
+        let account = Account(label: "Work", token: "token")
         #expect(ServicesProvider.resolve(
             text: "not a HackerRank URL",
-            currentAccountID: "ACC"
+            currentAccountID: account.id.uuidString,
+            accounts: [account]
         ) == .failure(.unsupportedURL))
     }
 
@@ -58,10 +75,27 @@ struct ServicesProviderTests {
         let target = ServicesProvider.target(
             for: "https://hiring.example.org/x/questions/q1",
             currentAccountID: account.id.uuidString,
+            accounts: [account],
             allowedHosts: hosts
         )
 
         #expect(target?.collection == .questions)
         #expect(target?.itemID == "q1")
+    }
+
+    @Test func `a malformed or stale current account is rejected`() {
+        let account = Account(label: "Work", token: "token")
+        let url = "https://www.hackerrank.com/x/tests/t1"
+
+        #expect(ServicesProvider.resolve(
+            text: url,
+            currentAccountID: "not-a-uuid",
+            accounts: [account]
+        ) == .failure(.missingAccount))
+        #expect(ServicesProvider.resolve(
+            text: url,
+            currentAccountID: UUID().uuidString,
+            accounts: [account]
+        ) == .failure(.missingAccount))
     }
 }

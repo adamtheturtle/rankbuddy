@@ -39,11 +39,17 @@ final class ServicesProvider: NSObject {
     ) {
         let text = pasteboard.string(forType: .string)
         let currentID = UserDefaults.standard.string(forKey: AccountStore.currentIDDefaultsKey)
+        let accounts = SharedAccountStore.resolve().accounts
         let allowedHosts = Self.allowedHosts(
             currentAccountID: currentID,
-            accounts: SharedAccountStore.resolve().accounts
+            accounts: accounts
         )
-        switch Self.resolve(text: text, currentAccountID: currentID, allowedHosts: allowedHosts) {
+        switch Self.resolve(
+            text: text,
+            currentAccountID: currentID,
+            accounts: accounts,
+            allowedHosts: allowedHosts
+        ) {
         case let .success(target):
             Task { @MainActor in Self.open(target) }
 
@@ -59,20 +65,30 @@ final class ServicesProvider: NSObject {
     static func target(
         for text: String,
         currentAccountID: String?,
+        accounts: [Account],
         allowedHosts: Set<String> = HackerRankLink.defaultAllowedHosts
     ) -> ServiceTarget? {
-        try? resolve(text: text, currentAccountID: currentAccountID, allowedHosts: allowedHosts).get()
+        try? resolve(
+            text: text,
+            currentAccountID: currentAccountID,
+            accounts: accounts,
+            allowedHosts: allowedHosts
+        ).get()
     }
 
     static func resolve(
         text: String?,
         currentAccountID: String?,
+        accounts: [Account],
         allowedHosts: Set<String> = HackerRankLink.defaultAllowedHosts
     ) -> Result<ServiceTarget, ServiceResolutionError> {
         guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return .failure(.missingText)
         }
-        guard let accountID = currentAccountID else {
+        guard let accountID = currentAccountID,
+              let encodedID = UUID(uuidString: accountID),
+              accounts.contains(where: { $0.id == encodedID })
+        else {
             return .failure(.missingAccount)
         }
         guard let parsed = HackerRankLink.parseAbsoluteWebURL(text, allowedHosts: allowedHosts) else {
@@ -102,7 +118,12 @@ final class ServicesProvider: NSObject {
         let currentID = UserDefaults.standard.string(forKey: AccountStore.currentIDDefaultsKey)
         let store = SharedAccountStore.resolve()
         let allowedHosts = allowedHosts(currentAccountID: currentID, accounts: store.accounts)
-        guard let target = target(for: text, currentAccountID: currentID, allowedHosts: allowedHosts) else { return }
+        guard let target = target(
+            for: text,
+            currentAccountID: currentID,
+            accounts: store.accounts,
+            allowedHosts: allowedHosts
+        ) else { return }
 
         open(target)
     }
