@@ -78,6 +78,13 @@ struct MarkdownExportTests {
         #expect(!html.contains(prose))
     }
 
+    @Test func `ignored HTML is removed before visible text is bounded`() {
+        let stylesheet = String(repeating: "x", count: MarkdownExport.Limits.proseCharacters + 1)
+        let html = MarkdownExport.plainText(fromHTML: "<style>\(stylesheet)</style><p>Useful prose</p>")
+
+        #expect(html == "Useful prose")
+    }
+
     @Test func `suggested export filenames are path-safe`() {
         #expect(FileExport.sanitizedSuggestedName("Team/Question: Report.md") == "Team-Question- Report.md")
         #expect(FileExport.sanitizedSuggestedName("...") == "Export")

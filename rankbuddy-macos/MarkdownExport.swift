@@ -45,13 +45,13 @@ enum MarkdownExport {
     /// with their contents — HackerRank prefixes problem statements with a large CSS block, and
     /// sometimes sends *only* that block, which should read as empty rather than as a wall of CSS.
     nonisolated static func plainText(fromHTML html: String) -> String {
-        let bounded = boundedText(html, maximumCharacters: Limits.proseCharacters)
+        let content = html.replacingOccurrences(
+            of: "(?is)<(style|script)\\b[^>]*>.*?</\\1>",
+            with: "",
+            options: .regularExpression
+        )
+        let bounded = boundedText(content, maximumCharacters: Limits.proseCharacters)
         let text = bounded.text
-            .replacingOccurrences(
-                of: "(?is)<(style|script)\\b[^>]*>.*?</\\1>",
-                with: "",
-                options: .regularExpression
-            )
             .replacingOccurrences(of: "(?i)<br\\s*/?>", with: "\n", options: .regularExpression)
             .replacingOccurrences(
                 of: "(?i)</(?:p|div|li|h[1-6]|tr)\\s*>",
