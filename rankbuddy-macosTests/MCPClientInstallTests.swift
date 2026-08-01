@@ -268,30 +268,64 @@ struct MCPClientInstallTests {
         defer { try? FileManager.default.removeItem(at: directory) }
         let oldCommand = directory.appendingPathComponent("old-rankbuddy")
         let currentCommand = directory.appendingPathComponent("RankBuddy")
+        let config = directory.appendingPathComponent("config.toml")
         for url in [oldCommand, currentCommand] {
             _ = FileManager.default.createFile(atPath: url.path, contents: Data())
             try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
         }
+        try MCPClientInstall.codexServerBlock(command: currentCommand.path)
+            .write(to: config, atomically: true, encoding: .utf8)
 
         MCPClientInstall.recordInstalledCommand(oldCommand.path, for: .codex, defaults: defaults)
         #expect(MCPClientInstall.needsRepair(
             .codex,
             currentCommand: currentCommand.path,
-            defaults: defaults
+            defaults: defaults,
+            configURL: config
         ))
 
         MCPClientInstall.recordInstalledCommand(currentCommand.path, for: .codex, defaults: defaults)
         #expect(!MCPClientInstall.needsRepair(
             .codex,
             currentCommand: currentCommand.path,
-            defaults: defaults
+            defaults: defaults,
+            configURL: config
         ))
 
         try FileManager.default.removeItem(at: currentCommand)
         #expect(MCPClientInstall.needsRepair(
             .codex,
             currentCommand: currentCommand.path,
-            defaults: defaults
+            defaults: defaults,
+            configURL: config
+        ))
+    }
+
+    @Test func `deleted or edited client configuration requires repair`() throws {
+        let defaults = freshDefaults()
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let command = directory.appendingPathComponent("RankBuddy")
+        let config = directory.appendingPathComponent("mcp.json")
+        _ = FileManager.default.createFile(atPath: command.path, contents: Data())
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: command.path)
+        MCPClientInstall.recordInstalledCommand(command.path, for: .cursor, defaults: defaults)
+
+        let valid = #"{"mcpServers":{"rankbuddy":{"command":"\#(command.path)","args":["--mcp"]}}}"#
+        try valid.write(to: config, atomically: true, encoding: .utf8)
+        #expect(!MCPClientInstall.needsRepair(
+            .cursor, currentCommand: command.path, defaults: defaults, configURL: config
+        ))
+
+        try #"{"mcpServers":{"rankbuddy":{"command":"other","args":["--mcp"]}}}"#
+            .write(to: config, atomically: true, encoding: .utf8)
+        #expect(MCPClientInstall.needsRepair(
+            .cursor, currentCommand: command.path, defaults: defaults, configURL: config
+        ))
+
+        try FileManager.default.removeItem(at: config)
+        #expect(MCPClientInstall.needsRepair(
+            .cursor, currentCommand: command.path, defaults: defaults, configURL: config
         ))
     }
 

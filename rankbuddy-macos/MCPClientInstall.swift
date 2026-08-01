@@ -87,13 +87,30 @@ enum MCPClientInstall {
         _ client: MCPClient,
         currentCommand: String,
         defaults: UserDefaults = .standard,
-        fileManager: FileManager = .default
+        fileManager: FileManager = .default,
+        configURL: URL? = nil
     ) -> Bool {
         guard let installed = defaults.string(forKey: installedCommandKey(for: client)) else {
             return false
         }
+        guard installed == currentCommand, fileManager.isExecutableFile(atPath: installed) else {
+            return true
+        }
 
-        return installed != currentCommand || !fileManager.isExecutableFile(atPath: installed)
+        let spec = spec(for: client)
+        guard let url = configURL ?? spec.preferred?.appendingPathComponent(spec.fileName) else {
+            return true
+        }
+        do {
+            if spec.isTOML {
+                try verifyCodexConfig(at: url, command: currentCommand)
+            } else {
+                try verifyJSONConfig(at: url, command: currentCommand)
+            }
+            return false
+        } catch {
+            return true
+        }
     }
 
     private static func installedCommandKey(for client: MCPClient) -> String {
