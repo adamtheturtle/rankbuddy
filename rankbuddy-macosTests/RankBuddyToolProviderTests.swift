@@ -539,6 +539,12 @@ struct RankBuddyToolProviderTests {
         ) == "https://example.com/primary.pdf")
     }
 
+    @Test func `invite template response ids must be usable`() {
+        #expect(RankBuddyToolProvider.validatedCreatedID(nil) == nil)
+        #expect(RankBuddyToolProvider.validatedCreatedID(" \n") == nil)
+        #expect(RankBuddyToolProvider.validatedCreatedID(" template-1 ") == "template-1")
+    }
+
     @Test func `delete_test rejects a whitespace-only target`() async {
         let result = await writeProvider().callTool("delete_test", arguments: ["test_id": .string(" \n\t ")])
         #expect(result.isError == true)

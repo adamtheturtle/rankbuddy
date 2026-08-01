@@ -529,10 +529,13 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         do {
             let template = try await HackerRankClient(account: resolved).inviteTemplate(id: templateID)
+            guard let responseID = Self.validatedCreatedID(template.id) else {
+                return errorResult("HackerRank returned an invite template without a usable ID.")
+            }
             return jsonResult([
                 "account": resolved.label,
                 "template": [
-                    "id": template.id ?? templateID,
+                    "id": responseID,
                     "name": template.name ?? "",
                     "subject": template.subject ?? "",
                     "body": template.body ?? "",
