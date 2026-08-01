@@ -385,9 +385,9 @@ struct TeamDetailView: View {
         })
     }
 
-    /// "a, b, c" → ["a", "b", "c"]; nil when the field is cleared entirely.
-    private static func splitList(_ text: String) -> [String]? {
-        TeamFieldValidation.normalizedList(text)
+    /// "a, b, c" → ["a", "b", "c"]; an explicit empty array clears the field.
+    private static func splitList(_ text: String) -> [String] {
+        TeamFieldValidation.normalizedList(text) ?? []
     }
 
     /// Applies one field's update, then re-reads the team so the detail reflects the
