@@ -282,6 +282,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard case let .int(templateID)? = arguments?["template_id"] else {
                 return missingArgument("template_id")
             }
+            guard templateID > 0 else {
+                return errorResult("`template_id` must be greater than zero.")
+            }
 
             return await getInterviewTemplate(templateID: templateID, account: account)
 

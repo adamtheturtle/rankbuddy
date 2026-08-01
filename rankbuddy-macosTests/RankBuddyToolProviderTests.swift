@@ -547,6 +547,16 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("template_id"))
     }
 
+    @Test func `get_interview_template rejects nonpositive ids`() async {
+        for id in [0, -1] {
+            let result = await provider().callTool(
+                "get_interview_template", arguments: ["template_id": .int(id)]
+            )
+            #expect(result.isError == true)
+            #expect(text(result).contains("template_id"))
+        }
+    }
+
     @Test func `search_candidates rejects a whitespace-only test id`() async {
         let result = await provider().callTool(
             "search_candidates",
