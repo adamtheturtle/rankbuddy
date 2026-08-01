@@ -1257,6 +1257,16 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("At least one"))
     }
 
+    @Test func `update_team accepts empty collections as clears`() async {
+        for key in ["locations", "departments"] {
+            let result = await writeProvider().callTool(
+                "update_team",
+                arguments: ["team_id": .string("team-1"), key: .array([])]
+            )
+            #expect(result.isError != true)
+        }
+    }
+
     @Test func `update_team rejects a blank target id`() async {
         let result = await writeProvider().callTool(
             "update_team",

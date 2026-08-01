@@ -919,8 +919,8 @@ extension RankBuddyToolProvider {
         let name = Self.normalizedOptionalString(rawName)
         let recruiterCap = intArgument(arguments, "recruiter_cap")
         let developerCap = intArgument(arguments, "developer_cap")
-        let locations = stringArrayArgument(arguments, "locations")
-        let departments = stringArrayArgument(arguments, "departments")
+        let locations = stringArrayArgument(arguments, "locations", preservingEmpty: true)
+        let departments = stringArrayArgument(arguments, "departments", preservingEmpty: true)
         guard rawName == nil || name != nil else { return errorResult("`name` must not be empty.") }
         guard inviteAs.map(allowedInviteRoles.contains) ?? true else {
             return errorResult("`invite_as` must be recruiter, interviewer, or developer.")
