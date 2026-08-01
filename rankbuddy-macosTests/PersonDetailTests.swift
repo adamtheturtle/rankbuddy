@@ -41,8 +41,9 @@ struct PersonDetailTests {
     @Test func `missing role remains distinct from recruiter`() {
         #expect(PersonRoleEditing.selection(for: nil).isEmpty)
         #expect(PersonRoleEditing.selection(for: "recruiter") == "recruiter")
-        #expect(PersonRoleEditing.options.first?.0.isEmpty == true)
-        #expect(PersonRoleEditing.options.contains { $0.0 == "recruiter" })
+        #expect(PersonRoleEditing.options(for: nil).first?.0.isEmpty == true)
+        #expect(PersonRoleEditing.options(for: "recruiter").contains { $0.0 == "recruiter" })
+        #expect(!PersonRoleEditing.options(for: "recruiter").map(\.0).contains(""))
     }
 
     @Test func `user update overlays preserve rich detail`() {

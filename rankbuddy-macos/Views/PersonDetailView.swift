@@ -44,8 +44,10 @@ enum PersonRoleEditing {
         role ?? ""
     }
 
-    static let options = [("", "Not assigned")] +
-        organisationUserRoles.map { ($0, DisplayFormat.enumLabel($0)) }
+    static func options(for role: String?) -> [(String, String)] {
+        let roles = organisationUserRoles.map { ($0, DisplayFormat.enumLabel($0)) }
+        return role == nil ? [("", "Not assigned")] + roles : roles
+    }
 }
 
 nonisolated struct PersonTeamResolutionKey: Hashable {
@@ -205,7 +207,7 @@ struct PersonDetailView: View {
         EditablePickerRow(
             label: "Role",
             value: PersonRoleEditing.selection(for: displayed.role),
-            options: PersonRoleEditing.options
+            options: PersonRoleEditing.options(for: displayed.role)
         ) { newValue in
             await save(UserUpdateOptions(role: newValue))
         }
