@@ -211,9 +211,9 @@ enum MarkdownExport {
                 ("Skills", formattedList(question.skills))
             ]),
             section("Options", report.options.indices.map {
-                ("Option \($0 + 1)", report.optionLabel(at: $0))
+                ("Option \($0 + 1)", plainText(fromHTML: report.optionLabel(at: $0)))
             }),
-            textSection("Correct answer", report.correctAnswer),
+            textSection("Correct answer", report.correctAnswer.map(plainText(fromHTML:))),
             textSection("Internal notes", report.internalNotes.map(plainText(fromHTML:))),
             textSection("Tags", question.tags.flatMap { $0.isEmpty ? nil : $0.joined(separator: ", ") }),
             textSection("Problem statement", question.problemStatement.map(plainText(fromHTML:)))

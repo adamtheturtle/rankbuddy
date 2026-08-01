@@ -182,7 +182,7 @@ struct MarkdownExportTests {
         let detail = try JSONDecoder().decode(
             QuestionDetail.self,
             from: Data(
-                #"{"options":["JOIN","SELECT"],"answer":"JOIN","internal_notes":"<p>Use joins.</p>"}"#.utf8
+                #"{"options":["<b>JOIN</b>","SELECT &amp; PROJECT"],"answer":"<b>JOIN</b>","internal_notes":"<p>Use joins.</p>"}"#.utf8
             )
         )
 
@@ -198,5 +198,7 @@ struct MarkdownExportTests {
         #expect(!hidden.contains("correct"))
         #expect(revealed.contains("- **Option 1:** JOIN \\(correct\\)"))
         #expect(revealed.contains("## Correct answer\nJOIN"))
+        #expect(revealed.contains("- **Option 2:** SELECT & PROJECT"))
+        #expect(!revealed.contains("<b>"))
     }
 }
