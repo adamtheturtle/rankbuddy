@@ -38,18 +38,28 @@ nonisolated struct RowTransfer {
     /// A compact plain-text fallback for TextEdit, Notes, Slack, and similar targets.
     var plainText: String {
         var lines = [title]
-        if let subtitle, !subtitle.isEmpty { lines.append(subtitle) }
-        if let url { lines.append(url.absoluteString) }
+        if let subtitle, !subtitle.isEmpty {
+            lines.append(subtitle)
+        }
+        if let url {
+            lines.append(url.absoluteString)
+        }
         return lines.joined(separator: "\n")
     }
 
     /// A tab-delimited row for spreadsheet-like targets. Falls back to public text pieces when
     /// the caller did not provide explicit fields.
     var tabularRow: [String] {
-        if !fields.isEmpty { return fields.map(\.1) }
+        if !fields.isEmpty {
+            return fields.map(\.1)
+        }
         var values = [title]
-        if let subtitle, !subtitle.isEmpty { values.append(subtitle) }
-        if let url { values.append(url.absoluteString) }
+        if let subtitle, !subtitle.isEmpty {
+            values.append(subtitle)
+        }
+        if let url {
+            values.append(url.absoluteString)
+        }
         return values
     }
 
@@ -79,6 +89,14 @@ nonisolated struct RowTransfer {
         // bridged NSString/NSURL casts here are load-bearing rather than avoidable.
         // swiftlint:disable:next legacy_objc_type
         let provider = NSItemProvider(object: plainText(rows) as NSString)
+        let text = plainText(rows)
+        provider.registerDataRepresentation(
+            forTypeIdentifier: UTType.plainText.identifier,
+            visibility: .all
+        ) { completion in
+            completion(Data(text.utf8), nil)
+            return nil
+        }
         if rows.contains(where: { !$0.fields.isEmpty }) {
             let tsv = tabularText(rows)
             provider.registerDataRepresentation(
@@ -122,7 +140,9 @@ nonisolated struct RowTransfer {
         if let url {
             item.setString(url.absoluteString, forType: .URL)
         }
-        if let favoriteRef, let data = try? JSONEncoder().encode(favoriteRef) {
+        if let favoriteRef,
+           let favoriteItem = FavoritePasteboard.item(for: favoriteRef),
+           let data = favoriteItem.data(forType: NSPasteboard.PasteboardType(UTType.rankBuddyFavorite.identifier)) {
             item.setData(data, forType: NSPasteboard.PasteboardType(UTType.rankBuddyFavorite.identifier))
         }
         return item
