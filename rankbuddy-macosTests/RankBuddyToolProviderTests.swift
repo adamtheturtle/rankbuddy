@@ -914,6 +914,19 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `update_candidate rejects malformed tag elements`() async {
+        let result = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "candidate_id": .string("candidate-1"),
+                "tags": .array([.string("priority"), .int(7)])
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("tags"))
+    }
+
     @Test func `update_candidate rejects blank target ids`() async {
         let blankTest = await writeProvider().callTool(
             "update_candidate",

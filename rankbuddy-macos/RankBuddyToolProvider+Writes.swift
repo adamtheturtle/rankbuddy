@@ -487,6 +487,9 @@ extension RankBuddyToolProvider {
         let validTo = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_to"))
         let atsState = intArgument(arguments, "ats_state")
         if let error = Self.candidateWindowError(from: validFrom, until: validTo) { return errorResult(error) }
+        if hasInvalidStringArrayElements(arguments, "tags") {
+            return errorResult("`tags` must contain only non-empty strings.")
+        }
         guard atsState.map({ CandidateATSState(rawValue: $0) != nil }) ?? true else {
             return errorResult("`ats_state` must be a documented HackerRank ATS state from 0 to 22.")
         }
