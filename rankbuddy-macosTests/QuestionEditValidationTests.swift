@@ -3,8 +3,8 @@
 //  rankbuddy-macosTests
 //
 
-@testable import rankbuddy_macos
 import HackerRankKit
+@testable import rankbuddy_macos
 import Testing
 
 @MainActor

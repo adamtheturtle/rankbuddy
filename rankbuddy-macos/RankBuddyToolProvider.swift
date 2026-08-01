@@ -173,6 +173,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     static func wrongTypedBooleanArgument(in arguments: [String: Value]?, toolName: String) -> String? {
         guard let arguments else { return nil }
+
         let descriptor = (descriptors + writeDescriptors).first { $0["name"] as? String == toolName }
         let schema = descriptor?["inputSchema"] as? [String: Any]
         let properties = schema?["properties"] as? [String: Any]
@@ -180,12 +181,14 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard let property = properties?[key] as? [String: Any],
                   property["type"] as? String == "boolean" else { return false }
             guard case .bool = arguments[key] else { return true }
+
             return false
         }
     }
 
     static func wrongTypedIntegerArgument(in arguments: [String: Value]?, toolName: String) -> String? {
         guard let arguments else { return nil }
+
         let descriptor = (descriptors + writeDescriptors).first { $0["name"] as? String == toolName }
         let schema = descriptor?["inputSchema"] as? [String: Any]
         let properties = schema?["properties"] as? [String: Any]
@@ -193,6 +196,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard let property = properties?[key] as? [String: Any],
                   property["type"] as? String == "integer" else { return false }
             guard case .int = arguments[key] else { return true }
+
             return false
         }
     }
@@ -285,6 +289,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     nonisolated static func validatedPositiveID(_ id: Int?) -> Int? {
         guard let id, id > 0 else { return nil }
+
         return id
     }
 
@@ -294,6 +299,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     nonisolated static func inviteTemplatePayload(_ template: InviteTemplate) -> [String: String]? {
         guard let id = validatedCreatedID(template.id) else { return nil }
+
         return [
             "id": id,
             "name": template.name ?? "",
@@ -304,6 +310,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     nonisolated static func interviewTemplatePayload(_ template: InterviewTemplate) -> [String: Any]? {
         guard let id = validatedPositiveID(template.id) else { return nil }
+
         return [
             "id": id,
             "name": template.name ?? "",
@@ -324,6 +331,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard let testID = Self.normalizedOptionalString(rawTestID) else {
                 return errorResult("`test_id` must not be empty.")
             }
+
             let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
             guard arguments?["cursor"] == nil || cursor != nil else {
                 return errorResult("`cursor` must not be empty.")
@@ -418,17 +426,22 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard access.map({ ["company", "private"].contains($0) }) ?? true else {
                 return errorResult("`access` must be company or private.")
             }
+
             let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
             guard arguments?["cursor"] == nil || cursor != nil else {
                 return errorResult("`cursor` must not be empty.")
             }
+
             return await listInviteTemplates(cursor: cursor, access: access, account: account)
+
         case "list_interview_templates":
             let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
             guard arguments?["cursor"] == nil || cursor != nil else {
                 return errorResult("`cursor` must not be empty.")
             }
+
             return await listInterviewTemplates(cursor: cursor, account: account)
+
         default:
             return errorResult("Unknown tool: \(name)")
         }
@@ -481,6 +494,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
     nonisolated static func candidatePayload(_ candidate: TestCandidate) -> [String: Any]? {
         guard let id = validatedCreatedID(candidate.id) else { return nil }
+
         return [
             "id": id,
             "email": candidate.email,
@@ -500,6 +514,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
                 return errorResult("HackerRank returned a test without a usable ID.")
             }
+
             let items = page.items.map {
                 ["id": $0.id.trimmingCharacters(in: .whitespacesAndNewlines),
                  "name": $0.name, "state": $0.state ?? ""]
@@ -522,6 +537,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
                 return errorResult("HackerRank returned a question without a usable ID.")
             }
+
             let items = page.items.map {
                 ["id": $0.id.trimmingCharacters(in: .whitespacesAndNewlines),
                  "name": $0.name, "type": $0.type]
@@ -544,6 +560,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
                 return errorResult("HackerRank returned an interview without a usable ID.")
             }
+
             let items = page.items.map {
                 ["id": $0.id.trimmingCharacters(in: .whitespacesAndNewlines),
                  "title": $0.title ?? "", "status": $0.status]
@@ -570,6 +587,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard items.count == page.items.count else {
                 return errorResult("HackerRank returned a candidate without a usable ID.")
             }
+
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "test_id": testID, "candidates": items,
                 "next_cursor": page.next ?? NSNull()
@@ -591,6 +609,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard let url = Self.candidateReportURL(primary: pdf.url, fallback: pdf.pdfURL) else {
                 return errorResult("HackerRank returned no usable candidate report PDF URL.")
             }
+
             return jsonResult([
                 "account": resolved.label,
                 "test_id": testID,
@@ -629,6 +648,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard let responseID = Self.validatedCreatedID(template.id) else {
                 return errorResult("HackerRank returned an invite template without a usable ID.")
             }
+
             return jsonResult([
                 "account": resolved.label,
                 "template": [
@@ -669,6 +689,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             guard let responseID = Self.validatedPositiveID(template.id) else {
                 return errorResult("HackerRank returned an interview template without a usable ID.")
             }
+
             return jsonResult([
                 "account": resolved.label,
                 "template": [

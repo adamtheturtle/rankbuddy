@@ -10,7 +10,7 @@ import MCPKit
 /// shape its client expects and where its logs live, so the MCP settings pane shows a tab per
 /// assistant instead of only the Claude-Desktop JSON. The shared snippet builder is buddy-kit's
 /// `MCPKit.MCPClient` (#647); RankBuddy keeps its own location/troubleshooting copy below.
-nonisolated enum MCPClient: String, CaseIterable, Identifiable, Sendable {
+nonisolated enum MCPClient: String, CaseIterable, Identifiable {
     case claudeDesktop
     case claudeCode
     case codex

@@ -1495,7 +1495,7 @@ struct RankBuddyToolProviderTests {
             "update_interview_template",
             arguments: [
                 "template_id": .int(1),
-                "description": .string(String(repeating: "d", count: 10_001))
+                "description": .string(String(repeating: "d", count: 10001))
             ]
         )
         for result in [create, update] {

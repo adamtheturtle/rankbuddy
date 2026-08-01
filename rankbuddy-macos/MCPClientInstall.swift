@@ -17,7 +17,7 @@ import Foundation
 nonisolated enum MCPClientInstall {
     private static let serverName = "rankbuddy"
 
-    private struct ConfigSpec: Sendable {
+    private struct ConfigSpec {
         let preferred: URL?
         let fallback: URL?
         let fileName: String
@@ -95,6 +95,7 @@ nonisolated enum MCPClientInstall {
     private nonisolated static func serverAlreadyPresent(at url: URL, isTOML: Bool) throws -> Bool {
         if isTOML {
             guard FileManager.default.fileExists(atPath: url.path) else { return false }
+
             let text = try String(contentsOf: url, encoding: .utf8)
             return codexServerDeclaration(in: text) != .notDeclared
         }
@@ -106,6 +107,7 @@ nonisolated enum MCPClientInstall {
                 errorDescription: "The existing “mcpServers” value isn’t a JSON object. No file was changed."
             )
         }
+
         return object[serverName] != nil
     }
 
@@ -136,6 +138,7 @@ nonisolated enum MCPClientInstall {
         guard let url = configURL ?? spec.preferred?.appendingPathComponent(spec.fileName) else {
             return true
         }
+
         do {
             if spec.isTOML {
                 try verifyCodexConfig(at: url, command: currentCommand)

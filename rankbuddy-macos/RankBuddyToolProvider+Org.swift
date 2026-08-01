@@ -53,6 +53,7 @@ extension RankBuddyToolProvider {
             guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
                 return errorResult("HackerRank returned a user without a usable ID.")
             }
+
             let items = page.items.map {
                 ["id": $0.id.trimmingCharacters(in: .whitespacesAndNewlines),
                  "email": $0.email, "name": $0.displayName, "role": $0.role ?? ""]
@@ -75,6 +76,7 @@ extension RankBuddyToolProvider {
             guard Self.allResourceIDsUsable(page.items.map(\.id)) else {
                 return errorResult("HackerRank returned a team without a usable ID.")
             }
+
             let items = page.items.map { team in
                 [
                     "id": team.id.trimmingCharacters(in: .whitespacesAndNewlines), "name": team.name,

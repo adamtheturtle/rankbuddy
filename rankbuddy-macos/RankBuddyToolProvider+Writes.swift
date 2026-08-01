@@ -12,7 +12,7 @@ import MCPKit
 nonisolated enum InterviewTemplateValidation {
     static let maxNameLength = 255
     static let maxTitleLength = 255
-    static let maxDescriptionLength = 10_000
+    static let maxDescriptionLength = 10000
 
     static func textIssue(name: String?, title: String?, description: String?) -> String? {
         if let name, name.count > maxNameLength {
@@ -531,6 +531,7 @@ extension RankBuddyToolProvider {
         guard evaluatorEmail.map(EmailValidation.isLikelyValid) ?? true else {
             return errorResult("`evaluator_email` must be a valid email address.")
         }
+
         if let issue = CandidateInviteValidation.textIssue(.init(
             fullName: fullName,
             tags: tags,
@@ -706,6 +707,7 @@ extension RankBuddyToolProvider {
         guard rawRole == nil || role.map(allowedRoles.contains) == true else {
             return errorResult("`role` must be recruiter, developer, or interviewer.")
         }
+
         if let issue = UserNameValidation.issue(firstName: firstName ?? "", lastName: lastName) {
             return errorResult(issue)
         }
@@ -780,6 +782,7 @@ extension RankBuddyToolProvider {
         else {
             return errorResult("`type` must be coding, mcq, or subjective.")
         }
+
         let status = Self.normalizedOptionalString(stringArgument(arguments, "status"))?.lowercased()
         guard arguments?["status"] == nil || status.flatMap(QuestionLifecycleStatus.init(rawValue:)) != nil else {
             return errorResult("`status` must be active or archived.")
@@ -790,6 +793,7 @@ extension RankBuddyToolProvider {
         guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
             return errorResult("`recommended_duration` must be zero or greater.")
         }
+
         if let error = questionListValidationError(arguments) { return errorResult(error) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
@@ -831,6 +835,7 @@ extension RankBuddyToolProvider {
         guard rawType == nil || type.map(Self.supportedQuestionTypes.contains) == true else {
             return errorResult("`type` must be coding, mcq, or subjective.")
         }
+
         let status = Self.normalizedOptionalString(stringArgument(arguments, "status"))?.lowercased()
         guard arguments?["status"] == nil || status.flatMap(QuestionLifecycleStatus.init(rawValue:)) != nil else {
             return errorResult("`status` must be active or archived.")
@@ -841,6 +846,7 @@ extension RankBuddyToolProvider {
         guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
             return errorResult("`recommended_duration` must be zero or greater.")
         }
+
         if let error = questionUpdateValidationError(arguments, name: name) { return errorResult(error) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
@@ -1254,6 +1260,7 @@ extension RankBuddyToolProvider {
         guard let name = Self.normalizedOptionalString(rawName) else {
             return errorResult("`name` must not be empty.")
         }
+
         let title = Self.normalizedOptionalString(stringArgument(arguments, "title"))
         let description = Self.normalizedOptionalString(stringArgument(arguments, "description"))
         if let issue = InterviewTemplateValidation.textIssue(
@@ -1296,6 +1303,7 @@ extension RankBuddyToolProvider {
         guard arguments?["name"] != nil || arguments?["title"] != nil || arguments?["description"] != nil else {
             return errorResult("At least one of `name`, `title`, or `description` must be provided.")
         }
+
         if let issue = InterviewTemplateValidation.textIssue(
             name: name, title: title, description: description
         ) { return errorResult(issue) }

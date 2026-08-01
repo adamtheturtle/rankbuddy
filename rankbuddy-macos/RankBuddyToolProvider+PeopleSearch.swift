@@ -97,6 +97,7 @@ extension RankBuddyToolProvider {
             guard items.count == page.items.count else {
                 return errorResult("HackerRank returned a candidate without a usable ID.")
             }
+
             return jsonResult([
                 "account": resolved.label, "test_id": testID, "query": query, "matches": items,
                 "count": items.count, "has_more": page.next != nil,
