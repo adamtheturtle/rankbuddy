@@ -521,7 +521,7 @@ private extension AccountEditor {
 
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func validate() async {
-        if let demo = Account.DemoMagicKey(typedToken: token) {
+        if existing == nil, let demo = Account.DemoMagicKey(typedToken: token) {
             let demoID: Account.ID? = switch demo {
             case .mockData:
                 store.addDemoIfMissing()
