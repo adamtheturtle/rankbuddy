@@ -78,6 +78,17 @@ extension AccountStore {
     /// Service, #46) can resolve "the current account" without a store reference.
     static let currentIDDefaultsKey = "rankbuddy.currentAccountID"
 
+    /// Repairs a missing or stale selection when there is only one possible account.
+    ///
+    /// This can happen when an older persisted current-account identifier outlives the
+    /// account it referenced. Single-account surfaces have no account switcher, so recover
+    /// the only useful selection automatically.
+    func selectSoleAccountIfNeeded() {
+        guard accounts.count == 1, currentAccount == nil, let account = accounts.first else { return }
+
+        currentAccountID = account.id
+    }
+
     /// Adds the mock-data demo account if needed, selects it, and returns its id.
     func addDemoIfMissing() -> UUID? {
         if !accounts.contains(where: { $0.isMock && !$0.isBadKeyDemo }) {

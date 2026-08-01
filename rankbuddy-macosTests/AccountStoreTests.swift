@@ -217,6 +217,30 @@ struct AccountStoreTests {
         #expect(store.currentAccountID == first.id)
     }
 
+    @Test func `a sole account repairs a stale current selection`() {
+        let account = Account(label: "Work", token: "t")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [account])
+        store.currentAccountID = UUID()
+
+        store.selectSoleAccountIfNeeded()
+
+        #expect(store.currentAccountID == account.id)
+        #expect(store.currentAccount?.id == account.id)
+    }
+
+    @Test func `multiple accounts do not replace a stale current selection`() {
+        let first = Account(label: "Work", token: "t1")
+        let second = Account(label: "EU", token: "t2")
+        let staleID = UUID()
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [first, second])
+        store.currentAccountID = staleID
+
+        store.selectSoleAccountIfNeeded()
+
+        #expect(store.currentAccountID == staleID)
+        #expect(store.currentAccount == nil)
+    }
+
     @Test func `update replaces an account in place`() {
         let account = Account(label: "Work", token: "t1")
         let store = AccountStore.rankBuddy(isTesting: true, seed: [account])

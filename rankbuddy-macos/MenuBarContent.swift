@@ -29,14 +29,15 @@ struct MenuBarContent: View {
     @State private var padError: String?
 
     var body: some View {
-        Group {
-            menuItems
-        }
-        .alert("Couldn’t Create Pad", isPresented: padErrorPresented) {
-            Button("OK") { padError = nil }
-        } message: {
-            Text(padError ?? "")
-        }
+        menuItems
+            .alert("Couldn’t Create Pad", isPresented: padErrorPresented) {
+                Button("OK") { padError = nil }
+            } message: {
+                Text(padError ?? "")
+            }
+            .task(id: store.accounts.map(\.id)) {
+                store.selectSoleAccountIfNeeded()
+            }
     }
 
     @ViewBuilder private var menuItems: some View {
@@ -104,7 +105,7 @@ struct MenuBarContent: View {
             }
         } else if store.accounts.count == 1 {
             // A single account: a plain, non-interactive label is enough.
-            Text("Account: \(store.currentAccount?.label ?? "")")
+            Text("Account: \(store.currentAccount?.label ?? store.accounts[0].label)")
         } else {
             // Multiple accounts: show the current target (or the merged view) and let the user
             // switch — including to the combined "All Accounts" view — mirroring PadBuddy's
@@ -146,7 +147,9 @@ struct MenuBarContent: View {
             Divider()
             Section("Create") {
                 Button {
-                    if let account = writableAccount { Task { await createPad(in: account) } }
+                    if let account = writableAccount {
+                        Task { await createPad(in: account) }
+                    }
                 } label: {
                     Label("New Pad…", systemImage: "bolt")
                 }
@@ -271,7 +274,11 @@ struct MenuBarContent: View {
     private var padErrorPresented: Binding<Bool> {
         Binding(
             get: { padError != nil },
-            set: { if !$0 { padError = nil } }
+            set: {
+                if !$0 {
+                    padError = nil
+                }
+            }
         )
     }
 
