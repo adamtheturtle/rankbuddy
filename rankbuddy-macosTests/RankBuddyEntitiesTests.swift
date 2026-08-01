@@ -13,6 +13,7 @@ import Testing
 /// Coverage for the App Entities / Spotlight routing (#24): the composite-id round-trip and
 /// that opening an entity writes the same per-account selection key the lists restore from.
 @MainActor
+@Suite(.serialized)
 struct RankBuddyEntitiesTests {
     @Test func `spotlight replacement requires every collection snapshot`() {
         let complete = RankBuddyObjectEntityQuery.AccountSnapshot(
