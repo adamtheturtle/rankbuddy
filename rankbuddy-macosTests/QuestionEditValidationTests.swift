@@ -139,9 +139,9 @@ struct QuestionEditValidationTests {
     }
 
     @Test func `testcases require meaningful content`() {
-        #expect(!TestcaseValidation.hasContent(["", " ", "\n", "", ""], isSample: false))
-        #expect(TestcaseValidation.hasContent(["", "1 2", "", "", ""], isSample: false))
-        #expect(TestcaseValidation.hasContent(["", "", "", "", ""], isSample: true))
+        #expect(!TestcaseValidation.hasContent(input: "", output: " \n"))
+        #expect(TestcaseValidation.hasContent(input: "1 2", output: ""))
+        #expect(TestcaseValidation.hasContent(input: "", output: "42"))
     }
 
     @Test func `question authoring payloads enforce size and list bounds`() {

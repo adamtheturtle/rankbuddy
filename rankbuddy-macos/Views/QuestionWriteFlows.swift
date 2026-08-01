@@ -151,7 +151,7 @@ struct AddTestcaseSheet: View {
     @State private var mutationTask: Task<Void, Never>?
 
     private var hasContent: Bool {
-        TestcaseValidation.hasContent([name, input, output, score, explanation], isSample: isSample)
+        TestcaseValidation.hasContent(input: input, output: output)
     }
 
     private var payloadIssue: String? {
@@ -228,7 +228,7 @@ struct AddTestcaseSheet: View {
             return
         }
         guard hasContent else {
-            errorMessage = "Enter testcase content before adding it."
+            errorMessage = "Enter testcase input or expected output before adding it."
             return
         }
         guard TestcaseValidation.isValidScore(score) else {
@@ -270,8 +270,8 @@ nonisolated enum TestcaseValidation {
     static let maxDataLength = 1_000_000
     static let maxExplanationLength = 100_000
 
-    static func hasContent(_ values: [String], isSample: Bool) -> Bool {
-        values.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } || isSample
+    static func hasContent(input: String, output: String) -> Bool {
+        [input, output].contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
     static func isValidScore(_ score: String) -> Bool {
