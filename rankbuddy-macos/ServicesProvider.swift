@@ -31,7 +31,7 @@ final class ServicesProvider: NSObject {
     /// The service handler named by the Info.plist `NSMessage`. Reads the selected text from the
     /// service pasteboard and opens it. The `NSString` pointer is required by the service
     /// bridging signature.
-    @objc func openInRankBuddy(
+    @MainActor @objc func openInRankBuddy(
         _ pasteboard: NSPasteboard,
         userData _: String?,
         // swiftlint:disable:next legacy_objc_type
@@ -39,7 +39,11 @@ final class ServicesProvider: NSObject {
     ) {
         let text = pasteboard.string(forType: .string)
         let currentID = UserDefaults.standard.string(forKey: AccountStore.currentIDDefaultsKey)
-        switch Self.resolve(text: text, currentAccountID: currentID) {
+        let allowedHosts = Self.allowedHosts(
+            currentAccountID: currentID,
+            accounts: SharedAccountStore.resolve().accounts
+        )
+        switch Self.resolve(text: text, currentAccountID: currentID, allowedHosts: allowedHosts) {
         case let .success(target):
             Task { @MainActor in Self.open(target) }
 
@@ -52,13 +56,18 @@ final class ServicesProvider: NSObject {
     /// The deep-link target for selected `text` given the current account, or `nil` when it
     /// can't be resolved (not a recognised HackerRank URL, or no current account). Pure, so
     /// it's unit-testable.
-    static func target(for text: String, currentAccountID: String?) -> ServiceTarget? {
-        try? resolve(text: text, currentAccountID: currentAccountID).get()
+    static func target(
+        for text: String,
+        currentAccountID: String?,
+        allowedHosts: Set<String> = HackerRankLink.defaultAllowedHosts
+    ) -> ServiceTarget? {
+        try? resolve(text: text, currentAccountID: currentAccountID, allowedHosts: allowedHosts).get()
     }
 
     static func resolve(
         text: String?,
-        currentAccountID: String?
+        currentAccountID: String?,
+        allowedHosts: Set<String> = HackerRankLink.defaultAllowedHosts
     ) -> Result<ServiceTarget, ServiceResolutionError> {
         guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return .failure(.missingText)
@@ -66,7 +75,7 @@ final class ServicesProvider: NSObject {
         guard let accountID = currentAccountID else {
             return .failure(.missingAccount)
         }
-        guard let parsed = HackerRankLink.parseAbsoluteWebURL(text) else {
+        guard let parsed = HackerRankLink.parseAbsoluteWebURL(text, allowedHosts: allowedHosts) else {
             return .failure(.unsupportedURL)
         }
 
@@ -77,11 +86,23 @@ final class ServicesProvider: NSObject {
         ))
     }
 
+    static func allowedHosts(currentAccountID: String?, accounts: [Account]) -> Set<String> {
+        var hosts = HackerRankLink.defaultAllowedHosts
+        if let currentAccountID,
+           let id = UUID(uuidString: currentAccountID),
+           let host = accounts.first(where: { $0.id == id })?.baseURL.host {
+            hosts.insert(host)
+        }
+        return hosts
+    }
+
     /// Resolves and opens the selected text against the current account, bringing the app forward.
     @MainActor
     static func open(_ text: String) {
         let currentID = UserDefaults.standard.string(forKey: AccountStore.currentIDDefaultsKey)
-        guard let target = target(for: text, currentAccountID: currentID) else { return }
+        let store = SharedAccountStore.resolve()
+        let allowedHosts = allowedHosts(currentAccountID: currentID, accounts: store.accounts)
+        guard let target = target(for: text, currentAccountID: currentID, allowedHosts: allowedHosts) else { return }
 
         open(target)
     }

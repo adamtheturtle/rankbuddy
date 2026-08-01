@@ -3,6 +3,7 @@
 //  rankbuddy-macosTests
 //
 
+import Foundation
 @testable import rankbuddy_macos
 import Testing
 
@@ -41,5 +42,26 @@ struct ServicesProviderTests {
             text: "not a HackerRank URL",
             currentAccountID: "ACC"
         ) == .failure(.unsupportedURL))
+    }
+
+    @Test func `the configured current account host is allowed`() {
+        let account = Account(
+            label: "Enterprise",
+            token: "token",
+            baseURL: URL(string: "https://hiring.example.org") ?? Account.defaultBaseURL
+        )
+        let hosts = ServicesProvider.allowedHosts(
+            currentAccountID: account.id.uuidString,
+            accounts: [account]
+        )
+
+        let target = ServicesProvider.target(
+            for: "https://hiring.example.org/x/questions/q1",
+            currentAccountID: account.id.uuidString,
+            allowedHosts: hosts
+        )
+
+        #expect(target?.collection == .questions)
+        #expect(target?.itemID == "q1")
     }
 }
