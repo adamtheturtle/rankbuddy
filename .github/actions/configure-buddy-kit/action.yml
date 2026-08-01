@@ -20,7 +20,12 @@ runs:
         printf '%s\n' "$BUDDY_KIT_DEPLOY_KEY" > "$key_path"
         chmod 600 "$key_path"
         ssh-keyscan -H github.com >> "$HOME/.ssh/known_hosts"
+        eval "$(ssh-agent -s)"
+        ssh-add "$key_path"
+        printf 'SSH_AUTH_SOCK=%s\n' "$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+        printf 'SSH_AGENT_PID=%s\n' "$SSH_AGENT_PID" >> "$GITHUB_ENV"
         git config --global core.sshCommand "ssh -i $key_path -o IdentitiesOnly=yes"
         git config --global \
           url."git@github.com:adamtheturtle/buddy-kit.git".insteadOf \
           "https://github.com/adamtheturtle/buddy-kit"
+        git ls-remote git@github.com:adamtheturtle/buddy-kit.git HEAD >/dev/null
