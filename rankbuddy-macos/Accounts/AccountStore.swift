@@ -94,7 +94,9 @@ extension AccountStore {
     /// account it referenced. Single-account surfaces have no account switcher, so recover
     /// the only useful selection automatically.
     func selectSoleAccountIfNeeded() {
-        guard accounts.count == 1, currentAccount == nil, let account = accounts.first else { return }
+        guard accounts.count == 1, let account = accounts.first,
+              currentAccountID != account.id
+        else { return }
 
         currentAccountID = account.id
     }

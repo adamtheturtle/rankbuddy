@@ -243,7 +243,7 @@ struct AccountStoreTests {
         store.selectSoleAccountIfNeeded()
 
         #expect(store.currentAccountID == staleID)
-        #expect(store.currentAccount == nil)
+        #expect(store.currentAccount == first)
     }
 
     @Test func `update replaces an account in place`() {
