@@ -246,6 +246,7 @@ final class FavoritesStore {
         favorites = []
         hasUnreadableData = false
         showsRecoveryAlert = false
+        defaults.removeObject(forKey: Self.recoveryKey)
         persist()
     }
 

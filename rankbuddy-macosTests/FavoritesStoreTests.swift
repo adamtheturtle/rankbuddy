@@ -149,7 +149,7 @@ struct FavoritesStoreTests {
         #expect(!store.hasUnreadableData)
         store.add(ref())
         #expect(store.favorites == [ref()])
-        #expect(defaults.data(forKey: FavoritesStore.recoveryKey) == corrupt)
+        #expect(defaults.data(forKey: FavoritesStore.recoveryKey) == nil)
     }
 
     @Test func `a testing store ignores persisted favourites`() {
