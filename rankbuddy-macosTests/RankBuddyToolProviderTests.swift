@@ -552,6 +552,17 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.validatedPositiveID(42) == 42)
     }
 
+    @Test func `invite template lists omit addressless records`() throws {
+        let missing = try JSONDecoder().decode(
+            InviteTemplate.self, from: Data(#"{"name":"No ID"}"#.utf8)
+        )
+        let valid = try JSONDecoder().decode(
+            InviteTemplate.self, from: Data(#"{"id":" template-1 ","name":"Ready"}"#.utf8)
+        )
+        #expect(RankBuddyToolProvider.inviteTemplatePayload(missing) == nil)
+        #expect(RankBuddyToolProvider.inviteTemplatePayload(valid)?["id"] == "template-1")
+    }
+
     @Test func `delete_test rejects a whitespace-only target`() async {
         let result = await writeProvider().callTool("delete_test", arguments: ["test_id": .string(" \n\t ")])
         #expect(result.isError == true)

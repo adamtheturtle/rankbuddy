@@ -251,6 +251,16 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return id
     }
 
+    nonisolated static func inviteTemplatePayload(_ template: InviteTemplate) -> [String: String]? {
+        guard let id = validatedCreatedID(template.id) else { return nil }
+        return [
+            "id": id,
+            "name": template.name ?? "",
+            "subject": template.subject ?? "",
+            "access": template.access ?? ""
+        ]
+    }
+
     private func invalidSearchQuery() -> CallTool.Result {
         errorResult("`query` must contain non-whitespace text.")
     }
@@ -517,9 +527,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         do {
             let page = try await HackerRankClient(account: resolved).inviteTemplatesPage(access: access)
-            let items = page.items.map {
-                ["id": $0.id ?? "", "name": $0.name ?? "", "subject": $0.subject ?? "", "access": $0.access ?? ""]
-            }
+            let items = page.items.compactMap(Self.inviteTemplatePayload)
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "templates": items
             ]) { _, value in value })
