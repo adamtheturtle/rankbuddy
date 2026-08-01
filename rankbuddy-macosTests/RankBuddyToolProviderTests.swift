@@ -159,6 +159,7 @@ struct RankBuddyToolProviderTests {
         #expect(body.contains("\"candidates\""))
         #expect(body.contains("\"returned_count\""))
         #expect(!body.contains("\"count\""))
+        #expect(body.contains("\"next_cursor\":null"))
     }
 
     @Test func `candidate payload preserves an unavailable score`() throws {

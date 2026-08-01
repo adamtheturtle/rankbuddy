@@ -451,7 +451,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             let items = page.items.map(Self.candidatePayload)
             return jsonResult(pageMetadata(page).merging([
                 "account": resolved.label, "test_id": testID, "candidates": items,
-                "next_cursor": page.next ?? ""
+                "next_cursor": page.next ?? NSNull()
             ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list candidates: \(error.localizedDescription)")
