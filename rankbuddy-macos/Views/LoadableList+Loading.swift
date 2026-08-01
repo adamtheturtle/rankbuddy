@@ -20,7 +20,12 @@ extension LoadableList {
         loadedCursors = []
         query = ListQuery.restoredQuery(key: ListQuery.queryKey(restorationKey))
         if filterDate != nil { dateRange = ListQuery.restoredRange(key: ListQuery.filterKey(restorationKey)) }
-        if !facets.isEmpty { selectedFacets = ListQuery.restoredFacets(key: ListQuery.facetsKey(restorationKey)) }
+        if !facets.isEmpty {
+            selectedFacets = ListQuery.restoredFacets(
+                key: ListQuery.facetsKey(restorationKey),
+                validIDs: Set(facets.map(\.id))
+            )
+        }
         let requestCacheKey = cacheKey
 
         let isServerFilterReload = serverDateFiltering && dateRange != nil

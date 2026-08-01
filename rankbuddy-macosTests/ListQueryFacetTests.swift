@@ -116,4 +116,16 @@ struct ListQueryFacetTests {
         ListQuery.persistFacets(["status": []], key: key, defaults: defaults)
         #expect(ListQuery.restoredFacets(key: key, defaults: defaults).isEmpty)
     }
+
+    @Test func `restoration removes and rewrites unknown facet identifiers`() throws {
+        let defaults = try #require(UserDefaults(suiteName: "facet-tests-\(#function)"))
+        defer { defaults.removePersistentDomain(forName: "facet-tests-\(#function)") }
+        let key = ListQuery.facetsKey("tests.acc")
+        ListQuery.persistFacets(["status": ["Active"], "removed": ["Hidden"]], key: key, defaults: defaults)
+
+        let restored = ListQuery.restoredFacets(key: key, validIDs: ["status"], defaults: defaults)
+
+        #expect(restored == ["status": ["Active"]])
+        #expect(ListQuery.restoredFacets(key: key, defaults: defaults) == restored)
+    }
 }
