@@ -207,6 +207,24 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `write boolean arguments reject wrong JSON types`() async {
+        let sendEmail = await writeProvider().callTool(
+            "invite_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "email": .string("ada@example.com"),
+                "send_email": .string("false")
+            ]
+        )
+        let companyAdmin = await writeProvider().callTool(
+            "update_user",
+            arguments: ["user_id": .string("user-1"), "company_admin": .int(0)]
+        )
+        for result in [sendEmail, companyAdmin] {
+            #expect(result.isError == true)
+            #expect(text(result).contains("boolean"))
+        }
+    }
+
     @Test func `advertised tools are recognized for activity logging`() {
         #expect(RankBuddyToolProvider.isKnownTool("list_tests"))
         #expect(RankBuddyToolProvider.isKnownTool("update_test"))

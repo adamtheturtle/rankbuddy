@@ -67,6 +67,8 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             errorResult("Unknown tool: \(name)")
         } else if let unknown = Self.unknownArgument(in: arguments, toolName: name) {
             errorResult("Unknown argument “\(unknown)” for tool \(name).")
+        } else if let wrongBoolean = Self.wrongTypedBooleanArgument(in: arguments, toolName: name) {
+            errorResult("`\(wrongBoolean)` must be a boolean.")
         } else if accountHasWrongType {
             errorResult("`account` must be a string.")
         } else if let accountError {
@@ -165,6 +167,19 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         let properties = schema?["properties"] as? [String: Any]
         let allowed = Set(properties?.keys.map(\.self) ?? [])
         return arguments.keys.sorted().first { !allowed.contains($0) }
+    }
+
+    static func wrongTypedBooleanArgument(in arguments: [String: Value]?, toolName: String) -> String? {
+        guard let arguments else { return nil }
+        let descriptor = (descriptors + writeDescriptors).first { $0["name"] as? String == toolName }
+        let schema = descriptor?["inputSchema"] as? [String: Any]
+        let properties = schema?["properties"] as? [String: Any]
+        return arguments.keys.sorted().first { key in
+            guard let property = properties?[key] as? [String: Any],
+                  property["type"] as? String == "boolean" else { return false }
+            guard case .bool = arguments[key] else { return true }
+            return false
+        }
     }
 
     /// A short, human-readable summary of a tool call's arguments, for the activity log (#52).
