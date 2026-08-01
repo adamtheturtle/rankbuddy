@@ -235,17 +235,13 @@ nonisolated enum HTMLFragmentSegment: Equatable {
     /// parent's content range. Ignored markup has already been replaced with equal-length spaces,
     /// so every range maps directly back to the original HTML.
     private static func balancedElements(named name: String, in html: String) -> [ElementRanges] {
-        let pattern = #"(?is)</?"# + NSRegularExpression.escapedPattern(for: name) + #"\b[^>]*>"#
-        guard let expression = try? NSRegularExpression(pattern: pattern) else { return [] }
-
         // swiftlint:disable:next legacy_objc_type
         let source = html as NSString
-        let matches = expression.matches(in: html, range: NSRange(location: 0, length: source.length))
         var result: [ElementRanges] = []
         var depth = 0
         var opening: NSRange?
-        for match in matches {
-            let token = source.substring(with: match.range)
+        for range in elementTagRanges(named: name, in: html) {
+            let token = source.substring(with: range)
             if token.hasPrefix("</") {
                 guard depth > 0 else { continue }
 
@@ -255,18 +251,55 @@ nonisolated enum HTMLFragmentSegment: Equatable {
                     result.append(ElementRanges(
                         full: NSRange(
                             location: opening.location,
-                            length: match.range.location + match.range.length - opening.location
+                            length: range.location + range.length - opening.location
                         ),
                         attributes: attributeRange(tag: name, opening: opening),
-                        content: NSRange(location: contentStart, length: match.range.location - contentStart)
+                        content: NSRange(location: contentStart, length: range.location - contentStart)
                     ))
                 }
             } else if !token.hasSuffix("/>") {
-                if depth == 0 { opening = match.range }
+                if depth == 0 { opening = range }
                 depth += 1
             }
         }
         return result
+    }
+
+    /// Scans complete tags while respecting quoted attributes, so markup-looking text inside an
+    /// attribute value is never treated as a structural element.
+    private static func elementTagRanges(named name: String, in html: String) -> [NSRange] {
+        var ranges: [NSRange] = []
+        var index = html.startIndex
+        while let opening = html[index...].firstIndex(of: "<") {
+            guard let closing = tagClosingBracket(in: html, after: opening) else { break }
+
+            let end = html.index(after: closing)
+            let body = html[html.index(after: opening) ..< closing]
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let candidate = body.hasPrefix("/") ? body.dropFirst() : body[...]
+            if candidate.prefix(while: \.isLetter).lowercased() == name.lowercased() {
+                ranges.append(NSRange(opening ..< end, in: html))
+            }
+            index = end
+        }
+        return ranges
+    }
+
+    private static func tagClosingBracket(in html: String, after opening: String.Index) -> String.Index? {
+        var currentQuote: Character?
+        var index = html.index(after: opening)
+        while index < html.endIndex {
+            let character = html[index]
+            if let activeQuote = currentQuote {
+                if character == activeQuote { currentQuote = nil }
+            } else if character == "\"" || character == "'" {
+                currentQuote = character
+            } else if character == ">" {
+                return index
+            }
+            html.formIndex(after: &index)
+        }
+        return nil
     }
 
     private static func attributeRange(tag name: String, opening: NSRange) -> NSRange {

@@ -101,6 +101,15 @@ struct HTMLTextTests {
         ) == [.orderedList(items: orderedItems(["shown"]), start: 1, step: 1, markerStyle: .decimal)])
     }
 
+    @Test func `ordered-list markup inside an attribute is ignored`() {
+        let html = #"<div data-example="<ol>">text</div><ol><li>Real</li></ol>"#
+
+        #expect(HTMLFragmentSegment.segments(from: html) == [
+            .prose(#"<div data-example="<ol>">text</div>"#),
+            .orderedList(items: orderedItems(["Real"]), start: 1, step: 1, markerStyle: .decimal)
+        ])
+    }
+
     @Test func `reversed ordered lists count down from their effective start`() {
         #expect(HTMLFragmentSegment.segments(
             from: "<ol reversed><li>three</li><li>two</li><li>one</li></ol>"
