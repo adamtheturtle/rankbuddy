@@ -58,7 +58,7 @@ extension QuestionDetailView {
             if let answer = detail?.answer, !answer.isEmpty {
                 Section("Answer") {
                     if answerRevealed {
-                        Text(answer).textSelection(.enabled)
+                        HTMLText(html: answer).textSelection(.enabled)
                     } else {
                         Button {
                             answerRevealed = true
