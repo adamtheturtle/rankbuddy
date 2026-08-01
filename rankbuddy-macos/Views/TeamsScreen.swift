@@ -387,10 +387,7 @@ struct TeamDetailView: View {
 
     /// "a, b, c" → ["a", "b", "c"]; nil when the field is cleared entirely.
     private static func splitList(_ text: String) -> [String]? {
-        let parts = text.split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        return parts.isEmpty ? nil : parts
+        TeamFieldValidation.normalizedList(text)
     }
 
     /// Applies one field's update, then re-reads the team so the detail reflects the

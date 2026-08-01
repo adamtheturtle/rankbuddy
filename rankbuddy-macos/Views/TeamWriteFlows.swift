@@ -14,6 +14,16 @@ nonisolated enum TeamNameValidation {
     }
 }
 
+nonisolated enum TeamFieldValidation {
+    static func normalizedList(_ value: String) -> [String]? {
+        var seen: Set<String> = []
+        let values = value.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert(ListQuery.normalizedFacetValue($0)).inserted }
+        return values.isEmpty ? nil : values
+    }
+}
+
 /// A sheet that creates a team (`POST /teams`, #59) — a write flow. Refreshes the list on success.
 struct CreateTeamSheet: View {
     let account: Account

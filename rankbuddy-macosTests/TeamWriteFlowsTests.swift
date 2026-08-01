@@ -18,6 +18,13 @@ struct TeamWriteFlowsTests {
         #expect(!TeamNameValidation.isValid(String(repeating: "x", count: 256)))
     }
 
+    @Test func `team lists preserve first spelling and remove logical duplicates`() {
+        #expect(TeamFieldValidation.normalizedList(
+            " London, london, LONDON, New York, new york "
+        ) == ["London", "New York"])
+        #expect(TeamFieldValidation.normalizedList(" , ") == nil)
+    }
+
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
         HackerRankClient(account: Account(label: "Demo", token: token))
     }
