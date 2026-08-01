@@ -29,6 +29,7 @@ struct RankBuddyApp: App {
     /// Mirrors favourites to iCloud when the capability is present; nil in demo mode (#22).
     @State private var favoritesSync: FavoritesSyncCoordinator?
     @State private var savedSearchSync: SavedSearchSyncCoordinator?
+    @State private var preferenceSync: PreferenceSyncCoordinator?
     /// The user's chosen appearance (General settings), applied to the main window.
     @AppStorage(AppAppearance.defaultsKey) private var appearance: AppAppearance = .system
     /// Where the app shows itself — Dock, Menu Bar, or both (#66). Drives the activation policy
@@ -68,11 +69,16 @@ struct RankBuddyApp: App {
             ? nil
             : SavedSearchSyncCoordinator(store: CloudSyncKeyValueStore(key: SavedSearchSyncCoordinator.key))
         _savedSearchSync = State(initialValue: savedSearchSync)
+        let preferenceSync = isDemo
+            ? nil
+            : PreferenceSyncCoordinator(store: CloudSyncKeyValueStore(key: PreferenceSyncCoordinator.key))
+        _preferenceSync = State(initialValue: preferenceSync)
         let health = AccountHealthMonitor()
         _health = State(initialValue: health)
         ApplicationStartup.start(
             favoritesSync: favoritesSync,
             savedSearchSync: savedSearchSync,
+            preferenceSync: preferenceSync,
             health: health,
             store: store
         )

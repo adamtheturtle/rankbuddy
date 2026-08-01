@@ -26,6 +26,7 @@ enum ApplicationStartup {
     static func start(
         favoritesSync: FavoritesSyncCoordinator?,
         savedSearchSync: SavedSearchSyncCoordinator?,
+        preferenceSync: PreferenceSyncCoordinator?,
         health: AccountHealthMonitor,
         store: AccountStore
     ) {
@@ -33,6 +34,7 @@ enum ApplicationStartup {
 
         favoritesSync?.start()
         savedSearchSync?.start()
+        preferenceSync?.start()
         NetworkMonitor.shared.start()
         LivenessNotifier.shared.register()
         LivenessMonitor.shared.start(store: store)
