@@ -158,13 +158,21 @@ enum SavedSearchStore {
             return try? JSONDecoder().decode(SavedSearch.self, from: recordData)
         }
         let valid = validated(recovered, restorationKey: restorationKey, defaults: defaults)
-        save(valid, restorationKey: restorationKey, defaults: defaults)
+        save(valid, restorationKey: restorationKey, defaults: defaults, retireRecovery: false)
         return valid
     }
 
     /// Persists the saved searches for a list, removing the key entirely when empty.
-    static func save(_ searches: [SavedSearch], restorationKey: String, defaults: UserDefaults = .standard) {
+    static func save(
+        _ searches: [SavedSearch],
+        restorationKey: String,
+        defaults: UserDefaults = .standard,
+        retireRecovery: Bool = true
+    ) {
         let key = defaultsKey(for: restorationKey)
+        if retireRecovery {
+            defaults.removeObject(forKey: recoveryKey(for: restorationKey))
+        }
         let limited = Array(searches.suffix(maximumCount))
         guard !limited.isEmpty, let data = try? JSONEncoder().encode(limited) else {
             defaults.removeObject(forKey: key)

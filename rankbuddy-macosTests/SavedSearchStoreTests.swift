@@ -112,6 +112,20 @@ struct SavedSearchStoreTests {
         #expect(SavedSearchStore.load(restorationKey: "tests.acc1", defaults: defaults).count == 1)
     }
 
+    @Test func `successful replacement retires recovery data`() {
+        let defaults = makeDefaults()
+        let restorationKey = "tests.acc"
+        defaults.set(Data("old".utf8), forKey: SavedSearchStore.recoveryKey(for: restorationKey))
+
+        SavedSearchStore.save(
+            [SavedSearch(name: "Replacement", query: "swift", dateRange: nil)],
+            restorationKey: restorationKey,
+            defaults: defaults
+        )
+
+        #expect(defaults.data(forKey: SavedSearchStore.recoveryKey(for: restorationKey)) == nil)
+    }
+
     @Test func `saving an empty list clears the key`() {
         let defaults = makeDefaults()
         SavedSearchStore.save(
