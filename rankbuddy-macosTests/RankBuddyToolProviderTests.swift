@@ -873,7 +873,20 @@ struct RankBuddyToolProviderTests {
             ]
         )
         #expect(result.isError == true)
-        #expect(text(result).contains("before"))
+        #expect(text(result).contains("later"))
+    }
+
+    @Test func `update_candidate rejects a zero-length invite window`() async {
+        let result = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "invite_valid_from": .string("2030-07-02T14:00:00Z"),
+                "invite_valid_to": .string("2030-07-02T14:00:00Z")
+            ]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("later"))
     }
 
     @Test func `update_candidate requires at least one changed field`() async {

@@ -186,8 +186,8 @@ extension RankBuddyToolProvider {
         let toDate = until.flatMap(formatter.date(from:))
         if from != nil, fromDate == nil { return "`invite_valid_from` must be ISO-8601." }
         if until != nil, toDate == nil { return "`invite_valid_to` must be ISO-8601." }
-        if let fromDate, let toDate, toDate < fromDate {
-            return "`invite_valid_to` must not be before `invite_valid_from`."
+        if let fromDate, let toDate, toDate <= fromDate {
+            return "`invite_valid_to` must be later than `invite_valid_from`."
         }
         return nil
     }
