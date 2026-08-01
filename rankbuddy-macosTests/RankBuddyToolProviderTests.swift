@@ -1281,6 +1281,15 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("question_id"))
     }
 
+    @Test func `update_question rejects a blank replacement name`() async {
+        let result = await writeProvider().callTool(
+            "update_question",
+            arguments: ["question_id": .string("question-1"), "name": .string(" \n")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("name"))
+    }
+
     @Test func `update_team rejects an unsupported invite role`() async {
         let result = await writeProvider().callTool(
             "update_team",

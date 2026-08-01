@@ -772,6 +772,8 @@ extension RankBuddyToolProvider {
             return errorResult("At least one question field must be provided.")
         }
 
+        let rawName = stringArgument(arguments, "name")
+        let name = Self.normalizedOptionalString(rawName)
         let rawType = stringArgument(arguments, "type")
         let type = Self.normalizedOptionalString(rawType)?.lowercased()
         guard rawType == nil || type.map(Self.supportedQuestionTypes.contains) == true else {
@@ -787,13 +789,13 @@ extension RankBuddyToolProvider {
         guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
             return errorResult("`recommended_duration` must be zero or greater.")
         }
-        if let error = questionListValidationError(arguments) { return errorResult(error) }
+        if let error = questionUpdateValidationError(arguments, name: name) { return errorResult(error) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
             let written = try await HackerRankClient(account: resolved).updateQuestion(
                 questionID: questionID,
-                name: stringArgument(arguments, "name"),
+                name: name,
                 type: type,
                 options: questionWriteOptions(arguments, status: status)
             )
@@ -827,6 +829,14 @@ extension RankBuddyToolProvider {
             return "`\(key)` must contain only non-empty strings."
         }
         return nil
+    }
+
+    private func questionUpdateValidationError(
+        _ arguments: [String: Value]?,
+        name: String?
+    ) -> String? {
+        if arguments?["name"] != nil, name == nil { return "`name` must not be empty." }
+        return questionListValidationError(arguments)
     }
 
     private func doubleArgument(_ arguments: [String: Value]?, _ key: String) -> Double? {
