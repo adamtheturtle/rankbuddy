@@ -7,7 +7,7 @@ import Foundation
 import OSLog
 
 nonisolated struct RecentActivitySyncPayload: Codable {
-    let itemsByAccount: [UUID: [RecentItem]]
+    let itemsByAccount: [String: [RecentItem]]
     let modifiedAt: Date
 }
 
@@ -23,14 +23,24 @@ final class RecentActivitySyncCoordinator {
     private let store: KeyValueSyncStore
     private let recents: RecentActivityStore
     private let accountIDs: () -> Set<UUID>
+    private let localToCloudAccountID: (UUID) -> String?
+    private let cloudToLocalAccountID: (String) -> UUID?
     private var observer: Task<Void, Never>?
     private var isAdopting = false
     private var isActive = false
 
-    init(store: KeyValueSyncStore, recents: RecentActivityStore = .shared, accountIDs: @escaping () -> Set<UUID>) {
+    init(
+        store: KeyValueSyncStore,
+        recents: RecentActivityStore = .shared,
+        accountIDs: @escaping () -> Set<UUID>,
+        localToCloudAccountID: @escaping (UUID) -> String? = { Optional($0).map(\.uuidString) },
+        cloudToLocalAccountID: @escaping (String) -> UUID? = { UUID(uuidString: $0) }
+    ) {
         self.store = store
         self.recents = recents
         self.accountIDs = accountIDs
+        self.localToCloudAccountID = localToCloudAccountID
+        self.cloudToLocalAccountID = cloudToLocalAccountID
     }
 
     deinit { observer?.cancel() }
@@ -46,10 +56,12 @@ final class RecentActivitySyncCoordinator {
         availabilityChanged()
     }
 
-    private func snapshot() -> [UUID: [RecentItem]] {
+    private func snapshot() -> [String: [RecentItem]] {
         Dictionary(uniqueKeysWithValues: accountIDs().compactMap { accountID in
             let items = recents.recentAll(account: accountID)
-            return items.isEmpty ? nil : (accountID, items)
+            guard !items.isEmpty, let cloudID = localToCloudAccountID(accountID) else { return nil }
+
+            return (cloudID, items)
         })
     }
 
@@ -80,7 +92,13 @@ final class RecentActivitySyncCoordinator {
         guard localDate <= payload.modifiedAt else { pushLocal(); return }
 
         let validIDs = accountIDs()
-        let filtered = payload.itemsByAccount.filter { validIDs.contains($0.key) }
+        let filtered: [UUID: [RecentItem]] = Dictionary(
+            uniqueKeysWithValues: payload.itemsByAccount.compactMap { cloudID, items in
+                guard let localID = cloudToLocalAccountID(cloudID), validIDs.contains(localID) else { return nil }
+
+                return (localID, items)
+            }
+        )
         isAdopting = true
         recents.adopt(filtered, accountIDs: validIDs)
         UserDefaults.standard.set(payload.modifiedAt, forKey: RecentActivityStore.modifiedAtKey)

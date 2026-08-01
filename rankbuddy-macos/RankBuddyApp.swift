@@ -103,7 +103,13 @@ struct RankBuddyApp: App {
             ),
             recentActivity: RecentActivitySyncCoordinator(
                 store: CloudSyncKeyValueStore(key: RecentActivitySyncCoordinator.key),
-                accountIDs: { Set(store.accounts.map(\.id)) }
+                accountIDs: { Set(store.accounts.map(\.id)) },
+                localToCloudAccountID: { localID in
+                    store.accounts.first { $0.id == localID }?.cloudIdentity
+                },
+                cloudToLocalAccountID: { cloudID in
+                    store.accounts.first { $0.cloudIdentity == cloudID || $0.id.uuidString == cloudID }?.id
+                }
             )
         )
     }
