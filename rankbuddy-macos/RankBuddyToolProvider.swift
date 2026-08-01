@@ -424,7 +424,11 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             }
             return await listInviteTemplates(cursor: cursor, access: access, account: account)
         case "list_interview_templates":
-            return await listInterviewTemplates(account: account)
+            let cursor = Self.normalizedOptionalString(stringArgument(arguments, "cursor"))
+            guard arguments?["cursor"] == nil || cursor != nil else {
+                return errorResult("`cursor` must not be empty.")
+            }
+            return await listInterviewTemplates(cursor: cursor, account: account)
         default:
             return errorResult("Unknown tool: \(name)")
         }
@@ -641,14 +645,15 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
     }
 
     @MainActor
-    private func listInterviewTemplates(account: String?) async -> CallTool.Result {
+    private func listInterviewTemplates(cursor: String?, account: String?) async -> CallTool.Result {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let page = try await HackerRankClient(account: resolved).interviewTemplatesPage()
+            let page = try await HackerRankClient(account: resolved).interviewTemplatesPage(after: cursor)
             let items = page.items.compactMap(Self.interviewTemplatePayload)
             return jsonResult(pageMetadata(page).merging([
-                "account": resolved.label, "templates": items
+                "account": resolved.label, "templates": items,
+                "next_cursor": page.next ?? NSNull()
             ]) { _, value in value })
         } catch {
             return errorResult("Couldn't list interview templates: \(error.localizedDescription)")

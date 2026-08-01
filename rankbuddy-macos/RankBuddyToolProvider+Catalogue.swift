@@ -96,7 +96,10 @@ extension RankBuddyToolProvider {
                                   "account": account],
                      required: ["template_id"]),
             readOnly("list_interview_templates", "List interview templates.",
-                     properties: ["account": account]),
+                     properties: [
+                         "cursor": string("Opaque next_cursor from the preceding page."),
+                         "account": account
+                     ]),
             readOnly("get_interview_template", "Get an interview template.",
                      properties: ["template_id": ["type": "integer", "description": "The template id."],
                                   "account": account],
