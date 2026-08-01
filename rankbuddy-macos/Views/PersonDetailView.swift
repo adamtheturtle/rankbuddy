@@ -53,6 +53,11 @@ nonisolated struct PersonTeamResolutionKey: Hashable {
     let teamIDs: [String]
 }
 
+nonisolated struct PersonDetailIdentity: Hashable {
+    let accountID: UUID?
+    let userID: String
+}
+
 /// Detail for a single user. With an account it is editable in place — name, role, and
 /// admin flags save per field (PadBuddy's pad-detail Properties pattern) — and offers a
 /// destructive Lock User action; without one it stays read-only (#147).
@@ -86,6 +91,10 @@ struct PersonDetailView: View {
 
     private var teamResolutionKey: PersonTeamResolutionKey {
         PersonTeamResolutionKey(accountID: account?.id, teamIDs: teamIDs)
+    }
+
+    private var detailIdentity: PersonDetailIdentity {
+        PersonDetailIdentity(accountID: account?.id, userID: user.id)
     }
 
     private var displayedTeams: String? {
@@ -140,6 +149,7 @@ struct PersonDetailView: View {
         .task(id: teamResolutionKey) {
             await resolveTeamNames()
         }
+        .onChange(of: detailIdentity) { resetForSelectedUser() }
         .toolbar(id: "personDetail") {
             ToolbarItem(id: "lock") {
                 if account != nil {
@@ -206,10 +216,14 @@ struct PersonDetailView: View {
     private func save(_ options: UserUpdateOptions) async -> Bool {
         guard let account else { return false }
 
+        let identity = detailIdentity
         let client = HackerRankClient(account: account)
         do {
-            let updated = try await client.updateUser(id: displayed.id, options: options)
-            current = await (try? client.user(id: displayed.id)) ?? updated
+            let updated = try await client.updateUser(id: identity.userID, options: options)
+            let refreshed = await (try? client.user(id: identity.userID)) ?? updated
+            guard identity == detailIdentity else { return false }
+
+            current = refreshed
             onChanged()
             return true
         } catch {
@@ -221,12 +235,18 @@ struct PersonDetailView: View {
     private func lock() async {
         guard let account, canLock else { return }
 
+        let identity = detailIdentity
         let client = HackerRankClient(account: account)
         do {
-            _ = try await client.lockUser(id: displayed.id)
+            _ = try await client.lockUser(id: identity.userID)
+            guard identity == detailIdentity else { return }
+
             wasLocked = true
             do {
-                current = try await client.user(id: displayed.id)
+                let refreshed = try await client.user(id: identity.userID)
+                guard identity == detailIdentity else { return }
+
+                current = refreshed
             } catch {
                 editError = "The user was locked, but their latest details couldn’t be refreshed."
             }
@@ -242,8 +262,13 @@ struct PersonDetailView: View {
             return
         }
 
+        let resolutionKey = teamResolutionKey
         isResolvingTeams = true
-        defer { isResolvingTeams = false }
+        defer {
+            if resolutionKey == teamResolutionKey {
+                isResolvingTeams = false
+            }
+        }
 
         let ids = teamIDs
         let wantedIDs = Set(ids)
@@ -261,10 +286,25 @@ struct PersonDetailView: View {
                 cursor = PersonTeamResolution.unseenCursor(page.next, seen: &seenCursors)
             } while cursor != nil && namesByID.count < wantedIDs.count
 
+            guard resolutionKey == teamResolutionKey, !Task.isCancelled else {
+                return
+            }
+
             resolvedTeamNames = PersonTeamResolution.labels(ids: ids, namesByID: namesByID)
         } catch {
+            guard resolutionKey == teamResolutionKey, !Task.isCancelled else { return }
+
             resolvedTeamNames = PersonTeamResolution.labels(ids: ids, namesByID: namesByID)
         }
+    }
+
+    private func resetForSelectedUser() {
+        current = nil
+        wasLocked = false
+        editError = nil
+        lockPresented = false
+        resolvedTeamNames = nil
+        isResolvingTeams = false
     }
 }
 
