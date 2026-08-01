@@ -12,6 +12,7 @@ import SwiftUI
 /// straight to the matching test, question, or interview. Mirrors PadBuddy's "Open Pad by URL".
 enum HackerRankLink {
     static let defaultAllowedHosts: Set<String> = ["hackerrank.com", "www.hackerrank.com"]
+    static let maxOpaqueIDLength = 255
     private static let collections: [String: FavoriteCollection] = [
         "tests": .tests, "questions": .questions, "interviews": .interviews
     ]
@@ -49,12 +50,23 @@ enum HackerRankLink {
         for (index, segment) in segments.enumerated() {
             if let collection = collections[segment.lowercased()], index + 1 < segments.count {
                 let id = segments[index + 1]
-                if !id.isEmpty {
+                if isValidOpaqueID(id) {
                     return (collection, id)
                 }
             }
         }
         return nil
+    }
+
+    /// Backend IDs are opaque but must remain safe to persist and route. This matches the MCP
+    /// prompt boundary so every user-controlled identifier has the same bounded alphabet.
+    static func isValidOpaqueID(_ value: String) -> Bool {
+        let allowed = CharacterSet(
+            charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._:-"
+        )
+        return !value.isEmpty
+            && value.count <= maxOpaqueIDLength
+            && value.unicodeScalars.allSatisfy(allowed.contains)
     }
 }
 
@@ -114,6 +126,7 @@ struct OpenLinkSheet: View {
         }
         // A hosted URL that failed parsing must not be reinterpreted as a bare opaque id.
         guard URLComponents(string: trimmed)?.host == nil else { return nil }
+        guard HackerRankLink.isValidOpaqueID(trimmed) else { return nil }
 
         return (collection, trimmed)
     }

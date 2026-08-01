@@ -55,6 +55,14 @@ struct HackerRankLinkTests {
         #expect(HackerRankLink.parse(input) == nil)
     }
 
+    @Test func `opaque IDs are bounded and reject unsafe characters`() {
+        #expect(HackerRankLink.isValidOpaqueID("test_1:revision-2.0"))
+        #expect(!HackerRankLink.isValidOpaqueID("line\nbreak"))
+        #expect(!HackerRankLink.isValidOpaqueID("contains/slash"))
+        #expect(!HackerRankLink.isValidOpaqueID(String(repeating: "x", count: 256)))
+        #expect(HackerRankLink.parse("https://hackerrank.com/x/tests/line%0Abreak") == nil)
+    }
+
     @Test(arguments: [
         "https://evil.example/tests/some-id",
         "https://hackerrank.com.evil.example/tests/some-id",
