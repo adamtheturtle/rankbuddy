@@ -530,7 +530,7 @@ extension RankBuddyToolProvider {
             return jsonResult([
                 "account": resolved.label,
                 "updated_candidate": [
-                    "id": updated.id,
+                    "id": Self.validatedResultID(updated.id, fallback: candidateID),
                     "email": updated.email,
                     "name": updated.fullName ?? ""
                 ]
@@ -697,7 +697,11 @@ extension RankBuddyToolProvider {
             )
             return jsonResult([
                 "account": resolved.label,
-                "updated_user": ["id": updated.id, "email": updated.email, "name": updated.displayName]
+                "updated_user": [
+                    "id": Self.validatedResultID(updated.id, fallback: userID),
+                    "email": updated.email,
+                    "name": updated.displayName
+                ]
             ])
         } catch {
             return errorResult("Couldn't update user: \(error.localizedDescription)")
@@ -995,10 +999,9 @@ extension RankBuddyToolProvider {
                     departments: departments
                 )
             )
-            return jsonResult([
-                "account": resolved.label,
-                "updated_team": ["id": updated.id, "name": updated.name]
-            ])
+            let updatedID = Self.validatedResultID(updated.id, fallback: teamID)
+            return jsonResult(["account": resolved.label,
+                               "updated_team": ["id": updatedID, "name": updated.name]])
         } catch {
             return errorResult("Couldn't update team: \(error.localizedDescription)")
         }

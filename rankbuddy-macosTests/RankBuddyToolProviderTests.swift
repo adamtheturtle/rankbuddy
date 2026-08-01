@@ -1412,6 +1412,13 @@ struct RankBuddyToolProviderTests {
         ) == "question-2")
     }
 
+    @Test func `update results fall back from blank response ids`() {
+        for target in ["candidate-1", "user-1", "team-1"] {
+            #expect(RankBuddyToolProvider.validatedResultID("", fallback: target) == target)
+            #expect(RankBuddyToolProvider.validatedResultID(" \n", fallback: target) == target)
+        }
+    }
+
     @Test func `update_question rejects unsupported types`() async {
         let result = await writeProvider().callTool(
             "update_question",
