@@ -197,10 +197,7 @@ struct CandidateDetailView: View {
 
     /// "a, b, c" → ["a", "b", "c"]; nil when the field is cleared entirely.
     private static func splitList(_ text: String) -> [String]? {
-        let parts = text.split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        return parts.isEmpty ? nil : parts
+        CandidateInviteValidation.normalizedTags(text)
     }
 
     /// Applies one field's update, then re-reads the candidate so the detail reflects the
