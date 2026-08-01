@@ -256,7 +256,14 @@ nonisolated enum TestScheduleValidation {
 
     private static func normalizedDate(_ value: String) -> Date? {
         let value = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        return value.isEmpty ? nil : ISO8601DateFormatter().date(from: value)
+        guard !value.isEmpty else { return nil }
+
+        if let date = ISO8601DateFormatter().date(from: value) {
+            return date
+        }
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: value)
     }
 }
 
