@@ -1095,6 +1095,16 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.hasUserUpdate(["company_admin": .bool(false)]))
     }
 
+    @Test func `update_user accepts explicit optional text clears`() async {
+        for key in ["last_name", "country", "phone"] {
+            let result = await writeProvider().callTool(
+                "update_user",
+                arguments: ["user_id": .string("user-1"), key: .string("  \n")]
+            )
+            #expect(result.isError != true)
+        }
+    }
+
     @Test func `update_user rejects a blank target id`() async {
         let result = await writeProvider().callTool(
             "update_user",

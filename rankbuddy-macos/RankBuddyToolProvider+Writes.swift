@@ -223,12 +223,16 @@ extension RankBuddyToolProvider {
     }
 
     nonisolated static func hasUserUpdate(_ arguments: [String: Value]?) -> Bool {
-        let textKeys = ["first_name", "last_name", "country", "role", "phone"]
-        if textKeys.contains(where: { key in
+        let requiredTextKeys = ["first_name", "role"]
+        if requiredTextKeys.contains(where: { key in
             guard case let .string(value)? = arguments?[key] else { return false }
 
             return normalizedOptionalString(value) != nil
         }) { return true }
+        let clearableTextKeys = ["last_name", "country", "phone"]
+        if clearableTextKeys.contains(where: { if case .string? = arguments?[$0] { return true }; return false }) {
+            return true
+        }
         let integerKeys = [
             "questions_permission", "tests_permission", "interviews_permission", "candidates_permission",
             "shared_questions_permission", "shared_tests_permission",
