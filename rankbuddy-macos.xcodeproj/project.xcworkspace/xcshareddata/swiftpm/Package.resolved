@@ -1,5 +1,5 @@
 {
-  "originHash" : "840fc8c77184d112622a203503476a168f75191b7d14c7215b38606b0a0d1bc0",
+  "originHash" : "a0e12773478be52d2fbc841aa69456b8684518a98d5062e040a889b1759654d9",
   "pins" : [
     {
       "identity" : "buddy-kit",
@@ -43,7 +43,7 @@
       "location" : "https://github.com/adamtheturtle/HackerRankKit",
       "state" : {
         "revision" : "44d8f03e82b193f6b8d2607f589f6162193f7c1c",
-        "version" : "0.5.1"
+        "version" : "0.6.1"
       }
     },
     {
@@ -56,12 +56,21 @@
       }
     },
     {
+      "identity" : "mcpclientinstall",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/MCPClientInstall",
+      "state" : {
+        "revision" : "c0e93a3e5b73be91a39af93a361a1c54d72bcc66",
+        "version" : "0.2.2"
+      }
+    },
+    {
       "identity" : "mcpkit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/MCPKit/",
       "state" : {
-        "revision" : "29cd39ff8d7d15e024807a634ab1efb51ea9005c",
-        "version" : "0.1.0"
+        "revision" : "0175b55503e78730523b98a0a743452efbb97f99",
+        "version" : "0.2.3"
       }
     },
     {
@@ -170,6 +179,15 @@
       "state" : {
         "revision" : "b5544ba79a70a0cb3563e75bf26dc198d6b40ed3",
         "version" : "1.7.4"
+      }
+    },
+    {
+      "identity" : "swift-toml",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mattt/swift-toml.git",
+      "state" : {
+        "revision" : "827506c90475e82d5a7f191f950fb3025cbdc0d6",
+        "version" : "2.0.0"
       }
     },
     {

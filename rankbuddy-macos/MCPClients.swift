@@ -4,12 +4,13 @@
 //
 
 import Foundation
-import MCPKit
+import enum MCPClientInstall.MCPDesktopClient
+import struct MCPClientInstall.MCPServerSpec
 
 /// The assistants RankBuddy gives MCP setup instructions for (#74). Each carries the config
 /// shape its client expects and where its logs live, so the MCP settings pane shows a tab per
-/// assistant instead of only the Claude-Desktop JSON. The shared snippet builder is buddy-kit's
-/// `MCPKit.MCPClient` (#647); RankBuddy keeps its own location/troubleshooting copy below.
+/// assistant instead of only the Claude-Desktop JSON. MCPClientInstall supplies the shared
+/// `MCPDesktopClient` catalogue; RankBuddy keeps its own troubleshooting copy below.
 nonisolated enum MCPClient: String, CaseIterable, Identifiable {
     case claudeDesktop
     case claudeCode
@@ -20,8 +21,8 @@ nonisolated enum MCPClient: String, CaseIterable, Identifiable {
         rawValue
     }
 
-    /// The buddy-kit client this maps to, for the shared display name and config-snippet builder.
-    var buddyClient: MCPKit.MCPClient {
+    /// The shared client catalogue entry this maps to for config-snippet generation.
+    var buddyClient: MCPDesktopClient {
         switch self {
         case .claudeDesktop: .claudeDesktop
         case .claudeCode: .claudeCode
@@ -61,10 +62,13 @@ nonisolated enum MCPClient: String, CaseIterable, Identifiable {
     }
 
     /// The ready-to-use configuration (or command) for this client, for the given server
-    /// launch `command` (RankBuddy's own executable path). Delegates to buddy-kit's shared
-    /// `configSnippet` (#647) so the JSON/command/TOML builders live in one place.
+    /// launch `command` (RankBuddy's own executable path). Configuration-file snippets delegate
+    /// to MCPClientInstall; Claude Code's documented CLI registration remains a shell command.
     func configText(command: String, serverName: String = "rankbuddy") -> String {
-        buddyClient.configSnippet(command: command, serverName: serverName)
+        if self == .claudeCode {
+            return "claude mcp add \(serverName) -- \"\(command)\" --mcp"
+        }
+        return buddyClient.configSnippet(for: server(command: command, name: serverName))
     }
 
     /// The config file the one-click installer updates, also shown in the manual fallback.
@@ -107,9 +111,13 @@ nonisolated enum MCPClient: String, CaseIterable, Identifiable {
     func manualConfigText(command: String, serverName: String = "rankbuddy") -> String {
         switch self {
         case .claudeCode:
-            MCPKit.MCPClient.claudeDesktop.configSnippet(command: command, serverName: serverName)
+            buddyClient.configSnippet(for: server(command: command, name: serverName))
         default:
             configText(command: command, serverName: serverName)
         }
+    }
+
+    private func server(command: String, name: String) -> MCPServerSpec {
+        MCPServerSpec(name: name, command: command)
     }
 }
