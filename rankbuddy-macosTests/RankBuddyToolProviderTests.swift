@@ -41,6 +41,7 @@ struct RankBuddyToolProviderTests {
         let duplicatePage = progress.accept(["one"], next: "page-3", id: { $0 })
 
         #expect(duplicatePage.items.isEmpty)
+        #expect(duplicatePage.scanned == 1)
         #expect(duplicatePage.next == "page-3")
     }
 

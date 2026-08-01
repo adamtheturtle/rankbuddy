@@ -616,6 +616,12 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
 // MARK: - Search
 
+nonisolated struct BoundedSearchPage<Item> {
+    let items: [Item]
+    let scanned: Int
+    let next: String?
+}
+
 nonisolated struct BoundedSearchProgress<ID: Hashable> {
     private var seenIDs: Set<ID> = []
     private var seenCursors: Set<String> = []
@@ -630,13 +636,13 @@ nonisolated struct BoundedSearchProgress<ID: Hashable> {
         _ items: [Item],
         next: String?,
         id: (Item) -> ID
-    ) -> (items: [Item], next: String?) {
+    ) -> BoundedSearchPage<Item> {
         let unique = items.filter { seenIDs.insert(id($0)).inserted }
         guard let next, seenCursors.insert(next).inserted else {
-            return (unique, nil)
+            return BoundedSearchPage(items: unique, scanned: items.count, next: nil)
         }
 
-        return (unique, next)
+        return BoundedSearchPage(items: unique, scanned: items.count, next: next)
     }
 }
 
@@ -661,7 +667,7 @@ extension RankBuddyToolProvider {
         repeat {
             let result = try await page(cursor)
             let accepted = progress.accept(result.items, next: result.next, id: id)
-            scanned += accepted.items.count
+            scanned += accepted.scanned
             matches += accepted.items.filter { text($0).localizedCaseInsensitiveContains(query) }
             cursor = accepted.next
             pages += 1
