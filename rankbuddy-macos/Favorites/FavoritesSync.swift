@@ -112,6 +112,8 @@ final class FavoritesSyncCoordinator {
     private let favorites: FavoritesStore
     private let store: KeyValueSyncStore
     private let validAccountIDs: () -> Set<String>
+    private let localToCloudAccountID: (String) -> String?
+    private let cloudToLocalAccountID: (String) -> String?
     private var isAdopting = false
     private var isActive = false
     private var isStarted = false
@@ -119,11 +121,15 @@ final class FavoritesSyncCoordinator {
     init(
         favorites: FavoritesStore,
         store: KeyValueSyncStore,
-        validAccountIDs: @escaping () -> Set<String>
+        validAccountIDs: @escaping () -> Set<String>,
+        localToCloudAccountID: @escaping (String) -> String? = { Optional($0) },
+        cloudToLocalAccountID: @escaping (String) -> String? = { Optional($0) }
     ) {
         self.favorites = favorites
         self.store = store
         self.validAccountIDs = validAccountIDs
+        self.localToCloudAccountID = localToCloudAccountID
+        self.cloudToLocalAccountID = cloudToLocalAccountID
     }
 
     /// Whether sync is active (the backing store is usable).
@@ -177,7 +183,18 @@ final class FavoritesSyncCoordinator {
             }
 
             let validIDs = validAccountIDs()
-            remote = decoded.filter { validIDs.contains($0.accountID) }
+            remote = decoded.compactMap { favorite in
+                guard let localID = cloudToLocalAccountID(favorite.accountID), validIDs.contains(localID) else {
+                    return nil
+                }
+
+                return FavoriteRef(
+                    accountID: localID,
+                    collection: favorite.collection,
+                    itemID: favorite.itemID,
+                    title: favorite.title
+                )
+            }
             remoteModifiedAt = payload?.modifiedAt ?? .distantPast
             needsRemoteRepair = remote != decoded
         } else {
@@ -199,7 +216,7 @@ final class FavoritesSyncCoordinator {
         favorites.adopt(remote, modifiedAt: remoteModifiedAt)
         if needsRemoteRepair,
            let data = try? JSONEncoder().encode(FavoritesSyncPayload(
-               favorites: remote,
+               favorites: cloudFavorites(from: remote),
                modifiedAt: remoteModifiedAt
            )) {
             store.setData(data, forKey: Self.key)
@@ -210,14 +227,28 @@ final class FavoritesSyncCoordinator {
     /// Pushes the current local favourites to the store, unless this change came from adopting
     /// a remote one or the store is unavailable.
     func pushLocal() {
+        let cloudFavorites = cloudFavorites(from: favorites.favorites)
         guard !isAdopting, store.isAvailable,
               let data = try? JSONEncoder().encode(FavoritesSyncPayload(
-                  favorites: favorites.favorites,
+                  favorites: cloudFavorites,
                   modifiedAt: favorites.modifiedAt
               ))
         else { return }
 
         store.setData(data, forKey: Self.key)
         store.synchronize()
+    }
+
+    private func cloudFavorites(from localFavorites: [FavoriteRef]) -> [FavoriteRef] {
+        localFavorites.compactMap { favorite -> FavoriteRef? in
+            guard let cloudID = localToCloudAccountID(favorite.accountID) else { return nil }
+
+            return FavoriteRef(
+                accountID: cloudID,
+                collection: favorite.collection,
+                itemID: favorite.itemID,
+                title: favorite.title
+            )
+        }
     }
 }

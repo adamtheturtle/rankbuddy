@@ -4,6 +4,7 @@
 //
 
 import BuddyAppKit
+import CryptoKit
 import Foundation
 
 /// A HackerRank for Work account: a personal access token plus an optional
@@ -137,6 +138,17 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     /// A canonical server identity for duplicate detection and cache invalidation.
     var serverIdentity: String {
         Self.serverIdentity(of: baseURL)
+    }
+
+    /// A deterministic, non-secret cross-device identity for synchronizing account-scoped user
+    /// state without putting the token or email itself in iCloud. The validated current-user email
+    /// distinguishes accounts on the same HackerRank host; legacy accounts fall back to their
+    /// normalized label until identity discovery succeeds.
+    var cloudIdentity: String {
+        let owner = userEmail?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let fallback = label.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let source = "\(serverIdentity)|\(owner?.isEmpty == false ? owner ?? fallback : fallback)"
+        return SHA256.hash(data: Data(source.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     static func serverIdentity(of url: URL) -> String {

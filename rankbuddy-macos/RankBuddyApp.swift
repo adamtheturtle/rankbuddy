@@ -63,7 +63,14 @@ struct RankBuddyApp: App {
             : FavoritesSyncCoordinator(
                 favorites: favorites,
                 store: CloudSyncKeyValueStore(key: FavoritesSyncCoordinator.key),
-                validAccountIDs: { Set(store.accounts.map(\.id.uuidString)) }
+                validAccountIDs: { Set(store.accounts.map(\.id.uuidString)) },
+                localToCloudAccountID: { localID in
+                    store.accounts.first { $0.id.uuidString == localID }?.cloudIdentity
+                },
+                cloudToLocalAccountID: { cloudID in
+                    store.accounts.first { $0.cloudIdentity == cloudID || $0.id.uuidString == cloudID }?
+                        .id.uuidString
+                }
             )
         _favoritesSync = State(initialValue: favoritesSync)
         let savedSearchSync = isDemo
