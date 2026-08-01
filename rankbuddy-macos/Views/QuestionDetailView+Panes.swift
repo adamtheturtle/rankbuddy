@@ -41,11 +41,16 @@ extension QuestionDetailView {
             if let detail, !detail.options.isEmpty {
                 Section("Options") {
                     ForEach(Array(detail.options.enumerated()), id: \.offset) { index, option in
-                        Label(option, systemImage: isCorrect(option) ? "checkmark.circle.fill" : "circle")
-                            .foregroundStyle(isCorrect(option) ? Color.green : Color.primary)
-                            .symbolRenderingMode(.hierarchical)
-                            .accessibilityLabel(isCorrect(option) ? "\(option), correct answer" : option)
-                            .id(index)
+                        let optionText = MarkdownExport.plainText(fromHTML: option)
+                        Label {
+                            HTMLText(html: option)
+                        } icon: {
+                            Image(systemName: isCorrect(option) ? "checkmark.circle.fill" : "circle")
+                        }
+                        .foregroundStyle(isCorrect(option) ? Color.green : Color.primary)
+                        .symbolRenderingMode(.hierarchical)
+                        .accessibilityLabel(isCorrect(option) ? "\(optionText), correct answer" : optionText)
+                        .id(index)
                     }
                 }
             }
