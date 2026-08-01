@@ -4,6 +4,7 @@
 //
 
 @testable import rankbuddy_macos
+import HackerRankKit
 import Testing
 
 @MainActor
@@ -63,8 +64,8 @@ struct QuestionEditValidationTests {
 
     @Test func `generated stub parameter names must be unique`() {
         let parameters = [
-            GenerateCodeStubsBody.Parameter(name: "value", type: "int"),
-            GenerateCodeStubsBody.Parameter(name: "Value", type: "string")
+            CodeStubParameter(name: "value", type: "int"),
+            CodeStubParameter(name: "Value", type: "string")
         ]
         #expect(CodeStubValidation.duplicateParameterName(in: parameters) == "Value")
         #expect(CodeStubValidation.duplicateParameterName(in: [parameters[0]]) == nil)

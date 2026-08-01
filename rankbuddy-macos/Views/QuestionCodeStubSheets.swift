@@ -88,7 +88,7 @@ struct GenerateCodeStubsSheet: View {
         do {
             _ = try await HackerRankClient(account: account).generateCodeStubs(
                 questionID: questionID,
-                body: GenerateCodeStubsBody(
+                options: CodeStubGenerationOptions(
                     functionName: normalizedFunctionName,
                     returnType: nonBlank(returnType),
                     parameters: parsed,
@@ -103,8 +103,8 @@ struct GenerateCodeStubsSheet: View {
 
     /// "counts: int[], target: int" → [(counts, int[]), (target, int)]; malformed pairs are
     /// dropped rather than failing the whole request.
-    private var parsedParameters: [GenerateCodeStubsBody.Parameter]? {
-        let pairs = parameters.split(separator: ",").compactMap { pair -> GenerateCodeStubsBody.Parameter? in
+    private var parsedParameters: [CodeStubParameter]? {
+        let pairs = parameters.split(separator: ",").compactMap { pair -> CodeStubParameter? in
             let parts = pair.split(separator: ":", maxSplits: 1)
             guard parts.count == 2 else { return nil }
 
@@ -112,7 +112,7 @@ struct GenerateCodeStubsSheet: View {
             let type = parts[1].trimmingCharacters(in: .whitespaces)
             guard !name.isEmpty, !type.isEmpty else { return nil }
 
-            return GenerateCodeStubsBody.Parameter(name: name, type: type)
+            return CodeStubParameter(name: name, type: type)
         }
         return pairs.isEmpty ? nil : pairs
     }
@@ -191,9 +191,7 @@ struct CustomCodeStubSheet: View {
         do {
             _ = try await HackerRankClient(account: account).updateCustomCodeStubs(
                 questionID: questionID,
-                body: CustomCodeStubsBody(stubs: [
-                    .init(language: normalizedLanguage, code: code)
-                ])
+                stubs: [QuestionCodeStub(language: normalizedLanguage, code: code)]
             )
             dismiss()
         } catch {
@@ -221,7 +219,7 @@ nonisolated enum CodeStubValidation {
         return nil
     }
 
-    static func duplicateParameterName(in parameters: [GenerateCodeStubsBody.Parameter]?) -> String? {
+    static func duplicateParameterName(in parameters: [CodeStubParameter]?) -> String? {
         var seen: Set<String> = []
         return parameters?.lazy.map(\.name).first { name in
             !seen.insert(name.folding(options: .caseInsensitive, locale: .current)).inserted
@@ -235,43 +233,5 @@ nonisolated enum CodeStubValidation {
 
     static func hasSource(_ code: String) -> Bool {
         !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-}
-
-// These mirror HackerRankKit's typed requests (which land in a future Kit release); Kit
-// 0.4.0's codestub endpoints accept any `Encodable` body. Synthesized encoding omits
-// `nil` fields, so only the fields the user filled in are sent.
-
-/// The body for `PUT /questions/{id}/generate`.
-nonisolated struct GenerateCodeStubsBody: Encodable {
-    nonisolated struct Parameter: Encodable {
-        let name: String
-        let type: String
-    }
-
-    var functionName: String?
-    var returnType: String?
-    var parameters: [Parameter]?
-    var languages: [String]?
-
-    enum CodingKeys: String, CodingKey {
-        case functionName = "function_name"
-        case returnType = "return_type"
-        case parameters
-        case languages
-    }
-}
-
-/// The body for `PUT /questions/{id}/custom_codestubs`.
-nonisolated struct CustomCodeStubsBody: Encodable {
-    nonisolated struct Stub: Encodable {
-        let language: String
-        let code: String
-    }
-
-    var stubs: [Stub]
-
-    enum CodingKeys: String, CodingKey {
-        case stubs = "custom_codestubs"
     }
 }

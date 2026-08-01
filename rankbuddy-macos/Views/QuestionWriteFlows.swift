@@ -218,13 +218,13 @@ struct AddTestcaseSheet: View {
         do {
             _ = try await HackerRankClient(account: account).addTestcase(
                 questionID: questionID,
-                body: TestcaseBody(
-                    name: nonBlank(name),
+                options: QuestionTestcaseOptions(
+                    explanation: nonBlank(explanation),
                     input: nonBlank(input),
                     output: nonBlank(output),
-                    score: Int(score.trimmingCharacters(in: .whitespacesAndNewlines)),
+                    name: nonBlank(name),
                     sample: isSample,
-                    explanation: nonBlank(explanation)
+                    score: Int(score.trimmingCharacters(in: .whitespacesAndNewlines))
                 )
             )
             onAdded()
@@ -252,20 +252,6 @@ nonisolated enum TestcaseValidation {
 
         return [input, output].contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
-}
-
-// These mirror HackerRankKit's typed requests (which land in a future Kit release); Kit
-// 0.4.0's testcase/codestub endpoints accept any `Encodable` body. Synthesized encoding
-// omits `nil` fields, so only the fields the user filled in are sent.
-
-/// The body for `POST /questions/{id}/testcases`.
-nonisolated struct TestcaseBody: Encodable {
-    var name: String?
-    var input: String?
-    var output: String?
-    var score: Int?
-    var sample: Bool?
-    var explanation: String?
 }
 
 // MARK: - Shared field helpers

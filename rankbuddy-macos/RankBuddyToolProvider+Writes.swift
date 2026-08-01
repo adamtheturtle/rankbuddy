@@ -9,12 +9,6 @@ import HackerRankKit
 import MCP
 import MCPKit
 
-private struct InterviewTemplateWriteBody: Encodable {
-    let name: String?
-    let title: String?
-    let description: String?
-}
-
 // Write dispatch stays centralized so tool schemas and handlers remain aligned.
 // swiftlint:disable file_length
 
@@ -100,7 +94,11 @@ extension RankBuddyToolProvider {
         return nil
     }
 
-    private func stringArrayArgument(_ arguments: [String: Value]?, _ key: String) -> [String]? {
+    private func stringArrayArgument(
+        _ arguments: [String: Value]?,
+        _ key: String,
+        preservingEmpty: Bool = false
+    ) -> [String]? {
         if case let .array(values)? = arguments?[key] {
             let strings = values.compactMap { value -> String? in
                 guard case let .string(text) = value else { return nil }
@@ -108,7 +106,7 @@ extension RankBuddyToolProvider {
                 return text
             }
             let result = Self.normalizedStringList(strings)
-            return result.isEmpty ? nil : result
+            return result.isEmpty && !preservingEmpty ? nil : result
         }
 
         if let text = stringArgument(arguments, key) {
@@ -206,11 +204,7 @@ extension RankBuddyToolProvider {
         }) { return true }
         if case .int? = arguments?["ats_state"] { return true }
         if case .bool? = arguments?["accept_result_updates"] { return true }
-        if case let .array(values)? = arguments?["tags"] {
-            return values.contains { if case let .string(value) = $0 { return normalizedOptionalString(value) != nil }
-                return false
-            }
-        }
+        if case .array? = arguments?["tags"] { return true }
         if case let .string(value)? = arguments?["tags"] { return !normalizedStringList([value]).isEmpty }
         return false
     }
@@ -512,7 +506,7 @@ extension RankBuddyToolProvider {
                     testFinishURL: finishURL,
                     testResultURL: resultURL,
                     acceptResultUpdates: boolArgument(arguments, "accept_result_updates"),
-                    tags: stringArrayArgument(arguments, "tags")
+                    tags: stringArrayArgument(arguments, "tags", preservingEmpty: true)
                 )
             )
             return jsonResult([
@@ -1171,7 +1165,7 @@ extension RankBuddyToolProvider {
 
         do {
             let template = try await HackerRankClient(account: resolved).createInterviewTemplate(
-                body: InterviewTemplateWriteBody(
+                options: InterviewTemplateWriteOptions(
                     name: name,
                     title: Self.normalizedOptionalString(stringArgument(arguments, "title")),
                     description: Self.normalizedOptionalString(stringArgument(arguments, "description"))
@@ -1209,7 +1203,7 @@ extension RankBuddyToolProvider {
         do {
             let template = try await HackerRankClient(account: resolved).updateInterviewTemplate(
                 id: templateID,
-                body: InterviewTemplateWriteBody(name: name, title: title, description: description)
+                options: InterviewTemplateWriteOptions(name: name, title: title, description: description)
             )
             return interviewTemplateResult(template, account: resolved.label)
         } catch {

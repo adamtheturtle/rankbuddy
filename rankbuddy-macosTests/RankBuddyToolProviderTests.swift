@@ -887,6 +887,18 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.hasCandidateUpdate(["accept_result_updates": .bool(false)]))
     }
 
+    @Test func `update_candidate accepts an empty tag list as a clear`() async {
+        let result = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("t1"),
+                "candidate_id": .string("candidate-1"),
+                "tags": .array([])
+            ]
+        )
+        #expect(result.isError != true)
+    }
+
     @Test func `update_candidate rejects blank target ids`() async {
         let blankTest = await writeProvider().callTool(
             "update_candidate",

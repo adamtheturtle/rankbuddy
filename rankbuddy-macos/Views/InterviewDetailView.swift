@@ -89,7 +89,7 @@ struct InterviewDetailView: View {
         guard canEdit else { return nil }
 
         return { newTitle in
-            guard await update(InterviewUpdateBody(title: newTitle)) else { return false }
+            guard await update(InterviewUpdateOptions(title: newTitle)) else { return false }
 
             editedTitle = newTitle
             return true
@@ -113,7 +113,7 @@ struct InterviewDetailView: View {
                     }
 
                     let value = Self.iso8601.string(from: newDate)
-                    guard await update(InterviewUpdateBody(from: value)) else { return false }
+                    guard await update(InterviewUpdateOptions(from: value)) else { return false }
 
                     editedScheduledFrom = value
                     return true
@@ -127,7 +127,7 @@ struct InterviewDetailView: View {
                     }
 
                     let value = Self.iso8601.string(from: newDate)
-                    guard await update(InterviewUpdateBody(endsAt: value)) else { return false }
+                    guard await update(InterviewUpdateOptions(to: value)) else { return false }
 
                     editedScheduledTo = value
                     return true
@@ -173,7 +173,7 @@ struct InterviewDetailView: View {
             if canEdit {
                 Section("Notes") {
                     InlineEditableText(text: displayNotes, placeholder: "Add notes") { newNotes in
-                        guard await update(InterviewUpdateBody(notes: newNotes)) else { return false }
+                        guard await update(InterviewUpdateOptions(notes: newNotes)) else { return false }
 
                         editedNotes = newNotes
                         return true
@@ -325,11 +325,11 @@ struct InterviewDetailView: View {
 
     /// Applies one field's update, then re-reads the detail so the scheduled window and any
     /// other server-derived fields reflect the write.
-    private func update(_ body: InterviewUpdateBody) async -> Bool {
+    private func update(_ options: InterviewUpdateOptions) async -> Bool {
         guard !store.isMergedView, let account = store.currentAccount else { return false }
 
         do {
-            _ = try await HackerRankClient(account: account).updateInterview(id: interview.id, body: body)
+            _ = try await HackerRankClient(account: account).updateInterview(id: interview.id, options: options)
             if let refreshed = try? await HackerRankClient(account: account).interview(id: interview.id) {
                 detail = refreshed
             }
@@ -488,23 +488,6 @@ struct InterviewDetailView: View {
 }
 
 // swiftlint:enable type_body_length
-
-/// The `PUT /interviews/{id}` body. Mirrors HackerRankKit's typed request (which lands in a
-/// future Kit release); Kit 0.4.0's `updateInterview` accepts any `Encodable` body, and the
-/// synthesized encoding omits `nil` fields so each save sends only the field it changes.
-nonisolated struct InterviewUpdateBody: Encodable {
-    var title: String?
-    var from: String?
-    var endsAt: String?
-    var notes: String?
-
-    enum CodingKeys: String, CodingKey {
-        case title
-        case from
-        case endsAt = "to"
-        case notes
-    }
-}
 
 /// One message in the interview transcript, styled to distinguish the candidate from the
 /// interviewers (#103).
