@@ -10,6 +10,18 @@ import Testing
 
 @MainActor
 struct SpotlightKeywordSourceTests {
+    @Test func `account invalidation retires only its captured enrichment generation`() {
+        var generations = SpotlightEnrichmentGeneration()
+        let first = generations.token(for: "account-a")
+        let other = generations.token(for: "account-b")
+
+        generations.invalidate(accountID: "account-a")
+
+        #expect(!generations.isCurrent(first, for: "account-a"))
+        #expect(generations.isCurrent(other, for: "account-b"))
+        #expect(generations.isCurrent(generations.token(for: "account-a"), for: "account-a"))
+    }
+
     private func decode<T: Decodable>(_ type: T.Type, _ json: String) throws -> T {
         try JSONDecoder().decode(type, from: Data(json.utf8))
     }

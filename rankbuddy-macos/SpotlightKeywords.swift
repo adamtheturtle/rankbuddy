@@ -26,6 +26,22 @@ struct EnrichableEntity {
     let keywordSource: String
 }
 
+nonisolated struct SpotlightEnrichmentGeneration {
+    private var values: [String: UInt] = [:]
+
+    func token(for accountID: String) -> UInt {
+        values[accountID, default: 0]
+    }
+
+    func isCurrent(_ token: UInt, for accountID: String) -> Bool {
+        token == self.token(for: accountID)
+    }
+
+    mutating func invalidate(accountID: String) {
+        values[accountID, default: 0] &+= 1
+    }
+}
+
 nonisolated enum SpotlightEnrichmentRetry {
     static let maximumAttempts = 3
 
@@ -99,6 +115,11 @@ enum SpotlightKeywordSource {
 /// pass, and a graceful no-op when Apple's on-device model is unavailable.
 @MainActor
 enum SpotlightKeywordEnricher {
+    private struct Pending {
+        let enrichable: EnrichableEntity
+        let generation: UInt
+    }
+
     /// Whether the on-device model is ready, so the pass is skipped entirely otherwise.
     static var isAvailable: Bool {
         SpotlightKeywordGenerator.isAvailable
@@ -116,7 +137,8 @@ enum SpotlightKeywordEnricher {
     private static var failures: [String: (attempts: Int, nextEligibleDate: Date)] = [:]
     /// New requests coalesce here while a model generation is in flight. Keying by entity id
     /// keeps repeated suggestion batches from duplicating expensive work.
-    private static var pendingByID: [String: EnrichableEntity] = [:]
+    private static var pendingByID: [String: Pending] = [:]
+    private static var generations = SpotlightEnrichmentGeneration()
     /// Guards the single queue consumer when the system asks for suggestions in quick succession.
     private static var isEnriching = false
 
@@ -143,7 +165,10 @@ enum SpotlightKeywordEnricher {
             )
         }
         for enrichable in bounded {
-            pendingByID[enrichable.entity.id] = enrichable
+            pendingByID[enrichable.entity.id] = Pending(
+                enrichable: enrichable,
+                generation: generations.token(for: enrichable.entity.accountID)
+            )
         }
         guard !isEnriching else { return }
 
@@ -151,10 +176,15 @@ enum SpotlightKeywordEnricher {
         defer { isEnriching = false }
 
         let index = CSSearchableIndex(name: RankBuddySpotlightIndex.name)
-        while let (id, enrichable) = pendingByID.first {
+        while let (id, pending) = pendingByID.first {
             pendingByID[id] = nil
             inFlightIDs.insert(id)
+            let enrichable = pending.enrichable
             let keywords = await SpotlightKeywordGenerator.keywords(from: enrichable.keywordSource)
+            guard generations.isCurrent(pending.generation, for: enrichable.entity.accountID) else {
+                inFlightIDs.remove(id)
+                continue
+            }
             guard !keywords.isEmpty else {
                 inFlightIDs.remove(id)
                 recordFailure(for: id)
@@ -172,6 +202,15 @@ enum SpotlightKeywordEnricher {
             }
             inFlightIDs.remove(id)
         }
+    }
+
+    /// Invalidates queued and suspended generations before account-scoped index deletion. A
+    /// suspended model response observes the bumped token and cannot re-index the stale entity.
+    static func invalidate(accountID: UUID) {
+        let accountID = accountID.uuidString
+        generations.invalidate(accountID: accountID)
+        pendingByID = pendingByID.filter { $0.value.enrichable.entity.accountID != accountID }
+        enrichedIDs = enrichedIDs.filter { RankBuddyObjectEntity(id: $0)?.accountID != accountID }
     }
 
     private static func shouldQueue(_ enrichable: EnrichableEntity, now: Date) -> Bool {

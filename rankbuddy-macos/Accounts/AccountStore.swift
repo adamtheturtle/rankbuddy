@@ -144,6 +144,7 @@ extension AccountStore {
                 SavedSearchStore.clear(accountID: account.id)
                 ListQuery.clear(accountID: account.id)
                 Task {
+                    SpotlightKeywordEnricher.invalidate(accountID: account.id)
                     await ListPageCache.clear(accountID: account.id)
                     await RankBuddySpotlightIndex.remove(accountID: account.id)
                 }
@@ -156,6 +157,7 @@ extension AccountStore {
                 SavedSearchStore.clear(accountID: account.id)
                 ListQuery.clear(accountID: account.id)
                 Task {
+                    SpotlightKeywordEnricher.invalidate(accountID: account.id)
                     await ListPageCache.clear(accountID: account.id)
                     await RankBuddySpotlightIndex.remove(accountID: account.id)
                 }
