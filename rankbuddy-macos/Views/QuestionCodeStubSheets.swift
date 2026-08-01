@@ -19,6 +19,7 @@ struct GenerateCodeStubsSheet: View {
     @State private var languages = ""
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -49,20 +50,24 @@ struct GenerateCodeStubsSheet: View {
             .navigationTitle("Generate Code Stubs")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button("Generate") { Task { await generate() } }
+                        Button("Generate") { mutationTask = Task { await generate() } }
                             .disabled(nonBlank(functionName) == nil)
                     }
                 }
             }
         }
         .frame(width: 480, height: errorMessage == nil ? 320 : 400)
+        .interactiveDismissDisabled(isSending)
+        .onDisappear { mutationTask?.cancel() }
     }
 
     private func generate() async {
@@ -128,6 +133,7 @@ struct CustomCodeStubSheet: View {
     @State private var code = ""
     @State private var isSending = false
     @State private var errorMessage: String?
+    @State private var mutationTask: Task<Void, Never>?
 
     private var canSave: Bool {
         CodeStubValidation.normalizedLanguage(language) != nil && CodeStubValidation.hasSource(code)
@@ -159,20 +165,24 @@ struct CustomCodeStubSheet: View {
             .navigationTitle("Set Custom Code Stub")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSending)
+                    Button("Cancel") {
+                        mutationTask?.cancel()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if isSending {
                         ProgressView().controlSize(.small)
                     } else {
-                        Button("Save") { Task { await save() } }
+                        Button("Save") { mutationTask = Task { await save() } }
                             .disabled(!canSave)
                     }
                 }
             }
         }
         .frame(width: 480, height: errorMessage == nil ? 420 : 500)
+        .interactiveDismissDisabled(isSending)
+        .onDisappear { mutationTask?.cancel() }
     }
 
     private func save() async {
