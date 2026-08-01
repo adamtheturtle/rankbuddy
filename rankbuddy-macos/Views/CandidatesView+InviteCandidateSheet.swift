@@ -141,7 +141,8 @@ struct InviteCandidateSheet: View {
     }
 
     private var isEmailValid: Bool {
-        EmailValidation.isLikelyValid(email)
+        trimmedEmail.count <= CandidateInviteValidation.maxEmailLength
+            && EmailValidation.isLikelyValid(trimmedEmail)
     }
 
     private var evaluatorEmailValid: Bool {
