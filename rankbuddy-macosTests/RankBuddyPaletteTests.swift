@@ -114,10 +114,16 @@ struct RankBuddyPaletteTests {
         ))
 
         let box = SectionBox()
-        let results = staticCandidates(
+        let defaults = try #require(UserDefaults(suiteName: #function))
+        defaults.removePersistentDomain(forName: #function)
+        let router = DeepLinkRouter()
+        let results = RankBuddyPalette.staticCandidates(
             store: store,
             favorites: favorites,
-            selection: makeBinding(box)
+            selection: makeBinding(box),
+            openSettings: {},
+            deepLinkDefaults: defaults,
+            deepLinkRouter: router
         )
 
         let favorite = try #require(results.first { $0.title == "Two Sum" })
@@ -125,10 +131,10 @@ struct RankBuddyPaletteTests {
         favorite.action()
         #expect(box.value == .questions)
         // Routing writes the per-account selection key the Questions list restores from.
-        #expect(UserDefaults.standard.string(forKey: "selection.questions.\(account.id)") == "q42")
+        #expect(defaults.string(forKey: "selection.questions.\(account.id)") == "q42")
         // The live request reaches a Questions list that was already mounted.
-        #expect(DeepLinkRouter.shared.request?.key == "selection.questions.\(account.id)")
-        #expect(DeepLinkRouter.shared.request?.itemID == "q42")
+        #expect(router.request?.key == "selection.questions.\(account.id)")
+        #expect(router.request?.itemID == "q42")
     }
 
     @Test func `favourites contribute nothing when there are none`() {

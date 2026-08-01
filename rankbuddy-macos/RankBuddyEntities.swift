@@ -299,7 +299,9 @@ enum RankBuddyDeepLink {
         collection: FavoriteCollection,
         accountID: String,
         itemID: String,
-        store: AccountStore = SharedAccountStore.resolve()
+        store: AccountStore = SharedAccountStore.resolve(),
+        defaults: UserDefaults = .standard,
+        router: DeepLinkRouter = .shared
     ) -> Bool {
         guard let encodedID = UUID(uuidString: accountID),
               store.accounts.contains(where: { $0.id == encodedID })
@@ -307,13 +309,13 @@ enum RankBuddyDeepLink {
 
         store.showAllAccounts = false
         store.currentAccountID = encodedID
-        UserDefaults.standard.set(itemID, forKey: selectionKey(collection: collection, accountID: accountID))
-        UserDefaults.standard.set(collection.section.rawValue, forKey: "selectedSection")
+        defaults.set(itemID, forKey: selectionKey(collection: collection, accountID: accountID))
+        defaults.set(collection.section.rawValue, forKey: "selectedSection")
         // Poke the router so a list that is *already on screen* (e.g. clicking a favourite for the
         // section you're already viewing) jumps to the item immediately (#122). A cold launch or a
         // cross-section switch is still served by the UserDefaults restore above, which runs when
         // the target list mounts and loads.
-        DeepLinkRouter.shared.open(
+        router.open(
             key: selectionKey(collection: collection, accountID: accountID),
             itemID: itemID
         )

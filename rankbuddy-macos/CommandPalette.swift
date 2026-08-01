@@ -50,7 +50,9 @@ enum RankBuddyPalette {
         store: AccountStore,
         favorites: FavoritesStore,
         selection: Binding<SidebarSection>,
-        openSettings: @escaping @MainActor () -> Void
+        openSettings: @escaping @MainActor () -> Void,
+        deepLinkDefaults: UserDefaults = .standard,
+        deepLinkRouter: DeepLinkRouter = .shared
     ) -> [PaletteResult] {
         var results: [PaletteResult] = []
 
@@ -68,7 +70,12 @@ enum RankBuddyPalette {
         // group — when there are none (#25).
         if let account = store.currentAccount {
             results.append(contentsOf: favoriteCandidates(
-                account: account, favorites: favorites, selection: selection
+                account: account,
+                store: store,
+                favorites: favorites,
+                selection: selection,
+                defaults: deepLinkDefaults,
+                router: deepLinkRouter
             ))
         }
 
@@ -102,10 +109,14 @@ enum RankBuddyPalette {
     /// The current account's favourites as palette results, routed by writing the same
     /// per-account selection key the list restores from, then switching to that section (#25).
     @MainActor
+    // swiftlint:disable:next function_parameter_count
     private static func favoriteCandidates(
         account: Account,
+        store: AccountStore,
         favorites: FavoritesStore,
-        selection: Binding<SidebarSection>
+        selection: Binding<SidebarSection>,
+        defaults: UserDefaults,
+        router: DeepLinkRouter
     ) -> [PaletteResult] {
         favorites.favorites(accountID: account.id.uuidString).map { favorite in
             PaletteResult(
@@ -118,7 +129,10 @@ enum RankBuddyPalette {
                 RankBuddyDeepLink.open(
                     collection: favorite.collection,
                     accountID: favorite.accountID,
-                    itemID: favorite.itemID
+                    itemID: favorite.itemID,
+                    store: store,
+                    defaults: defaults,
+                    router: router
                 )
                 selection.wrappedValue = favorite.collection.section
             }
