@@ -85,6 +85,42 @@ struct QuestionEditValidationTests {
         #expect(parameters?.first?.type == "int")
     }
 
+    @Test func `code stub requests enforce product bounds`() {
+        let oversized = String(repeating: "x", count: CodeStubValidation.maxFieldLength + 1)
+        let tooManyParameters = Array(
+            repeating: CodeStubParameter(name: "value", type: "int"),
+            count: CodeStubValidation.maxParameters + 1
+        )
+        let tooManyLanguages = Array(repeating: "swift", count: CodeStubValidation.maxLanguages + 1)
+
+        #expect(CodeStubValidation.generationBoundsIssue(
+            functionName: oversized,
+            returnType: nil,
+            parameters: nil,
+            languages: nil
+        ) != nil)
+        #expect(CodeStubValidation.generationBoundsIssue(
+            functionName: "solve",
+            returnType: nil,
+            parameters: tooManyParameters,
+            languages: nil
+        ) != nil)
+        #expect(CodeStubValidation.generationBoundsIssue(
+            functionName: "solve",
+            returnType: nil,
+            parameters: nil,
+            languages: tooManyLanguages
+        ) != nil)
+        #expect(CodeStubValidation.customStubBoundsIssue(
+            language: "swift",
+            code: String(repeating: "x", count: CodeStubValidation.maxSourceLength + 1)
+        ) != nil)
+        #expect(CodeStubValidation.customStubBoundsIssue(
+            language: "swift",
+            code: String(repeating: "x", count: CodeStubValidation.maxSourceLength)
+        ) == nil)
+    }
+
     @Test func `blank function names normalize to nil`() {
         #expect(nonBlank(" \n\t ") == nil)
         #expect(nonBlank(" solve \n") == "solve")

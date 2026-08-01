@@ -86,6 +86,16 @@ struct GenerateCodeStubsSheet: View {
             errorMessage = "Parameter name “\(duplicate)” is repeated."
             return
         }
+        let parsedLanguages = splitList(languages)
+        if let issue = CodeStubValidation.generationBoundsIssue(
+            functionName: normalizedFunctionName,
+            returnType: nonBlank(returnType),
+            parameters: parsed,
+            languages: parsedLanguages
+        ) {
+            errorMessage = issue
+            return
+        }
 
         isSending = true
         errorMessage = nil
@@ -97,7 +107,7 @@ struct GenerateCodeStubsSheet: View {
                     functionName: normalizedFunctionName,
                     returnType: nonBlank(returnType),
                     parameters: parsed,
-                    languages: splitList(languages)
+                    languages: parsedLanguages
                 )
             )
             dismiss()
@@ -185,6 +195,11 @@ struct CustomCodeStubSheet: View {
             return
         }
 
+        if let issue = CodeStubValidation.customStubBoundsIssue(language: normalizedLanguage, code: code) {
+            errorMessage = issue
+            return
+        }
+
         isSending = true
         errorMessage = nil
         defer { isSending = false }
@@ -203,6 +218,11 @@ struct CustomCodeStubSheet: View {
 // MARK: - Request bodies
 
 nonisolated enum CodeStubValidation {
+    static let maxFieldLength = 255
+    static let maxParameters = 100
+    static let maxLanguages = 100
+    static let maxSourceLength = 1_000_000
+
     static func parsedParameters(in text: String) -> [CodeStubParameter]? {
         let pairs = text.split(separator: ",").compactMap { pair -> CodeStubParameter? in
             let parts = pair.split(separator: ":", maxSplits: 1)
@@ -238,6 +258,45 @@ nonisolated enum CodeStubValidation {
         return parameters?.lazy.map(\.name).first { name in
             !seen.insert(name.folding(options: .caseInsensitive, locale: .current)).inserted
         }
+    }
+
+    static func generationBoundsIssue(
+        functionName: String,
+        returnType: String?,
+        parameters: [CodeStubParameter]?,
+        languages: [String]?
+    ) -> String? {
+        if functionName.count > maxFieldLength {
+            return "Function name is too long (maximum 255 characters)."
+        }
+        if let returnType, returnType.count > maxFieldLength {
+            return "Return type is too long (maximum 255 characters)."
+        }
+        if let parameters, parameters.count > maxParameters {
+            return "Use at most 100 parameters."
+        }
+        if let parameter = parameters?.first(where: {
+            $0.name.count > maxFieldLength || $0.type.count > maxFieldLength
+        }) {
+            return "Parameter “\(parameter.name)” has a name or type longer than 255 characters."
+        }
+        if let languages, languages.count > maxLanguages {
+            return "Use at most 100 languages."
+        }
+        if languages?.contains(where: { $0.count > maxFieldLength }) == true {
+            return "Language names must be at most 255 characters."
+        }
+        return nil
+    }
+
+    static func customStubBoundsIssue(language: String, code: String) -> String? {
+        if language.count > maxFieldLength {
+            return "Language must be at most 255 characters."
+        }
+        if code.count > maxSourceLength {
+            return "Stub code must be at most 1,000,000 characters."
+        }
+        return nil
     }
 
     static func normalizedLanguage(_ language: String) -> String? {
