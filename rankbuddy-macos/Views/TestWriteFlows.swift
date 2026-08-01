@@ -85,7 +85,9 @@ struct TestEditorSheet: View {
     }
 
     private var isEditing: Bool {
-        if case .edit = mode { return true }
+        if case .edit = mode {
+            return true
+        }
         return false
     }
 
@@ -231,8 +233,8 @@ nonisolated enum TestScheduleValidation {
         if !endTime.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, end == nil {
             return "End time must be an ISO-8601 timestamp."
         }
-        if let start, let end, end < start {
-            return "End time must not be before start time."
+        if let start, let end, end <= start {
+            return "End time must be after start time."
         }
         return nil
     }

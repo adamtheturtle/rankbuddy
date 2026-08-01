@@ -40,6 +40,10 @@ struct TestWriteFlowsTests {
             startTime: "2026-08-02T09:00:00Z",
             endTime: "2026-08-01T09:00:00Z"
         ) != nil)
+        #expect(TestScheduleValidation.error(
+            startTime: "2026-08-01T09:00:00Z",
+            endTime: "2026-08-01T09:00:00Z"
+        ) != nil)
     }
 
     private func makeClient(token: String = Account.demoToken) -> HackerRankClient {
