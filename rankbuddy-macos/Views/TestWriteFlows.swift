@@ -45,6 +45,12 @@ nonisolated enum TestAssessmentValidation {
     }
 }
 
+nonisolated enum TestBooleanEditing {
+    static func updateValue(_ value: Bool, changed: Bool) -> Bool? {
+        changed ? value : nil
+    }
+}
+
 /// Whether the test editor is creating a new test or editing an existing assessment.
 enum TestEditorMode {
     case create
@@ -69,6 +75,8 @@ struct TestEditorSheet: View {
     @State private var tags: String
     @State private var shuffleQuestions: Bool
     @State private var enableProctoring: Bool
+    @State private var shuffleQuestionsChanged: Bool
+    @State private var enableProctoringChanged: Bool
     @State private var isSending = false
     @State private var errorMessage: String?
     @State private var mutationTask: Task<Void, Never>?
@@ -89,6 +97,8 @@ struct TestEditorSheet: View {
             _tags = State(initialValue: "")
             _shuffleQuestions = State(initialValue: false)
             _enableProctoring = State(initialValue: false)
+            _shuffleQuestionsChanged = State(initialValue: true)
+            _enableProctoringChanged = State(initialValue: true)
 
         case let .edit(test):
             _name = State(initialValue: test.name)
@@ -101,6 +111,8 @@ struct TestEditorSheet: View {
             _tags = State(initialValue: test.tags?.joined(separator: ", ") ?? "")
             _shuffleQuestions = State(initialValue: test.shuffleQuestions ?? false)
             _enableProctoring = State(initialValue: test.enableProctoring ?? false)
+            _shuffleQuestionsChanged = State(initialValue: false)
+            _enableProctoringChanged = State(initialValue: false)
         }
     }
 
@@ -128,8 +140,14 @@ struct TestEditorSheet: View {
             endTime: endTime,
             languages: commaSeparated(languages),
             tags: commaSeparated(tags),
-            shuffleQuestions: shuffleQuestions,
-            enableProctoring: enableProctoring
+            shuffleQuestions: TestBooleanEditing.updateValue(
+                shuffleQuestions,
+                changed: shuffleQuestionsChanged
+            ),
+            enableProctoring: TestBooleanEditing.updateValue(
+                enableProctoring,
+                changed: enableProctoringChanged
+            )
         )
     }
 
@@ -158,7 +176,9 @@ struct TestEditorSheet: View {
                     TextField("Allowed languages (comma-separated)", text: $languages)
                     TextField("Tags (comma-separated)", text: $tags)
                     Toggle("Shuffle questions", isOn: $shuffleQuestions)
+                        .onChange(of: shuffleQuestions) { _, _ in shuffleQuestionsChanged = true }
                     Toggle("Enable proctoring", isOn: $enableProctoring)
+                        .onChange(of: enableProctoring) { _, _ in enableProctoringChanged = true }
                 }
 
                 Section("Schedule") {

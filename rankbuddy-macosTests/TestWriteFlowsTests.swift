@@ -35,6 +35,13 @@ struct TestWriteFlowsTests {
         #expect(TestAssessmentValidation.error(duration: "30", cutoffScore: "1000001") != nil)
     }
 
+    @Test func `unchanged assessment booleans stay absent from updates`() {
+        #expect(TestBooleanEditing.updateValue(false, changed: false) == nil)
+        #expect(TestBooleanEditing.updateValue(true, changed: false) == nil)
+        #expect(TestBooleanEditing.updateValue(false, changed: true) == false)
+        #expect(TestBooleanEditing.updateValue(true, changed: true) == true)
+    }
+
     @Test func `assessment schedule accepts an ordered ISO window`() {
         #expect(TestScheduleValidation.error(
             startTime: "2026-08-01T09:00:00Z",
