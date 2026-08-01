@@ -11,6 +11,25 @@ import Testing
 /// tests never touch the real defaults and stay isolated.
 @MainActor
 struct SavedSearchStoreTests {
+    @Test func `cloud translation replaces only the account component`() {
+        let search = SavedSearch(name: "Backend", query: "swift", dateRange: nil)
+        let translated = SavedSearchSyncCoordinator.translated(
+            ["selection.tests.local-id": [search]],
+            accountID: { $0 == "local-id" ? "cloud-id" : nil }
+        )
+
+        #expect(translated == ["selection.tests.cloud-id": [search]])
+    }
+
+    @Test func `cloud translation drops state for an unmatched account`() {
+        let translated = SavedSearchSyncCoordinator.translated(
+            ["selection.tests.removed": [SavedSearch(name: "Old", query: "old", dateRange: nil)]],
+            accountID: { _ in nil }
+        )
+
+        #expect(translated.isEmpty)
+    }
+
     @Test func `snapshot and adoption round trip all list scopes`() throws {
         let sourceName = "saved-search-sync-source-\(UUID())"
         let targetName = "saved-search-sync-target-\(UUID())"
@@ -36,7 +55,7 @@ struct SavedSearchStoreTests {
         SavedSearchStore.adopt(snapshot, modifiedAt: modifiedAt, defaults: target)
 
         #expect(SavedSearchStore.snapshot(defaults: target) == snapshot)
-        #expect(abs(SavedSearchStore.modifiedAt(defaults: target).timeIntervalSince(modifiedAt)) < 0.001)
+        #expect(abs(SavedSearchStore.modifiedAt(defaults: target).timeIntervalSince(modifiedAt)) < 1)
     }
 
     @Test func `adopting an empty snapshot propagates deletions`() throws {

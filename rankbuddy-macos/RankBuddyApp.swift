@@ -56,49 +56,55 @@ struct RankBuddyApp: App {
         // Demo mode keeps favourites in-memory so it never reads or writes real favourites.
         let favorites = FavoritesStore(isTesting: isDemo)
         _favorites = State(initialValue: favorites)
-        // Sync real favourites to iCloud (gated on the capability inside the coordinator);
-        // demo mode stays local-only.
-        let favoritesSync = isDemo
-            ? nil
-            : FavoritesSyncCoordinator(
-                favorites: favorites,
-                store: CloudSyncKeyValueStore(key: FavoritesSyncCoordinator.key),
-                validAccountIDs: { Set(store.accounts.map(\.id.uuidString)) },
-                localToCloudAccountID: { localID in
-                    store.accounts.first { $0.id.uuidString == localID }?.cloudIdentity
-                },
-                cloudToLocalAccountID: { cloudID in
-                    store.accounts.first { $0.cloudIdentity == cloudID || $0.id.uuidString == cloudID }?
-                        .id.uuidString
-                }
-            )
-        _favoritesSync = State(initialValue: favoritesSync)
-        let savedSearchSync = isDemo
-            ? nil
-            : SavedSearchSyncCoordinator(store: CloudSyncKeyValueStore(key: SavedSearchSyncCoordinator.key))
-        _savedSearchSync = State(initialValue: savedSearchSync)
-        let preferenceSync = isDemo
-            ? nil
-            : PreferenceSyncCoordinator(store: CloudSyncKeyValueStore(key: PreferenceSyncCoordinator.key))
-        _preferenceSync = State(initialValue: preferenceSync)
-        let recentActivitySync = isDemo
-            ? nil
-            : RecentActivitySyncCoordinator(
-                store: CloudSyncKeyValueStore(key: RecentActivitySyncCoordinator.key),
-                accountIDs: { Set(store.accounts.map(\.id)) }
-            )
-        _recentActivitySync = State(initialValue: recentActivitySync)
+        let syncServices = Self.makeSyncServices(isDemo: isDemo, store: store, favorites: favorites)
+        _favoritesSync = State(initialValue: syncServices.favorites)
+        _savedSearchSync = State(initialValue: syncServices.savedSearches)
+        _preferenceSync = State(initialValue: syncServices.preferences)
+        _recentActivitySync = State(initialValue: syncServices.recentActivity)
         let health = AccountHealthMonitor()
         _health = State(initialValue: health)
         ApplicationStartup.start(
-            syncServices: ApplicationSyncServices(
-                favorites: favoritesSync,
-                savedSearches: savedSearchSync,
-                preferences: preferenceSync,
-                recentActivity: recentActivitySync
-            ),
+            syncServices: syncServices,
             health: health,
             store: store
+        )
+    }
+
+    private static func makeSyncServices(
+        isDemo: Bool,
+        store: AccountStore,
+        favorites: FavoritesStore
+    ) -> ApplicationSyncServices {
+        guard !isDemo else {
+            return ApplicationSyncServices(favorites: nil, savedSearches: nil, preferences: nil, recentActivity: nil)
+        }
+
+        let localToCloud: (String) -> String? = { localID in
+            store.accounts.first { $0.id.uuidString == localID }?.cloudIdentity
+        }
+        let cloudToLocal: (String) -> String? = { cloudID in
+            store.accounts.first { $0.cloudIdentity == cloudID || $0.id.uuidString == cloudID }?.id.uuidString
+        }
+        return ApplicationSyncServices(
+            favorites: FavoritesSyncCoordinator(
+                favorites: favorites,
+                store: CloudSyncKeyValueStore(key: FavoritesSyncCoordinator.key),
+                validAccountIDs: { Set(store.accounts.map(\.id.uuidString)) },
+                localToCloudAccountID: localToCloud,
+                cloudToLocalAccountID: cloudToLocal
+            ),
+            savedSearches: SavedSearchSyncCoordinator(
+                store: CloudSyncKeyValueStore(key: SavedSearchSyncCoordinator.key),
+                localToCloudAccountID: localToCloud,
+                cloudToLocalAccountID: cloudToLocal
+            ),
+            preferences: PreferenceSyncCoordinator(
+                store: CloudSyncKeyValueStore(key: PreferenceSyncCoordinator.key)
+            ),
+            recentActivity: RecentActivitySyncCoordinator(
+                store: CloudSyncKeyValueStore(key: RecentActivitySyncCoordinator.key),
+                accountIDs: { Set(store.accounts.map(\.id)) }
+            )
         )
     }
 

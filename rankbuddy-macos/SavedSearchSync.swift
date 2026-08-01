@@ -22,13 +22,22 @@ final class SavedSearchSyncCoordinator {
 
     private let store: KeyValueSyncStore
     private let defaults: UserDefaults
+    private let localToCloudAccountID: (String) -> String?
+    private let cloudToLocalAccountID: (String) -> String?
     private var observer: Task<Void, Never>?
     private var isAdopting = false
     private var isActive = false
 
-    init(store: KeyValueSyncStore, defaults: UserDefaults = .standard) {
+    init(
+        store: KeyValueSyncStore,
+        defaults: UserDefaults = .standard,
+        localToCloudAccountID: @escaping (String) -> String? = { Optional($0) },
+        cloudToLocalAccountID: @escaping (String) -> String? = { Optional($0) }
+    ) {
         self.store = store
         self.defaults = defaults
+        self.localToCloudAccountID = localToCloudAccountID
+        self.cloudToLocalAccountID = cloudToLocalAccountID
     }
 
     deinit { observer?.cancel() }
@@ -72,7 +81,11 @@ final class SavedSearchSyncCoordinator {
         }
 
         isAdopting = true
-        SavedSearchStore.adopt(payload.searches, modifiedAt: payload.modifiedAt, defaults: defaults)
+        SavedSearchStore.adopt(
+            Self.translated(payload.searches, accountID: cloudToLocalAccountID),
+            modifiedAt: payload.modifiedAt,
+            defaults: defaults
+        )
         isAdopting = false
     }
 
@@ -80,12 +93,28 @@ final class SavedSearchSyncCoordinator {
         guard !isAdopting, store.isAvailable else { return }
 
         let payload = SavedSearchSyncPayload(
-            searches: SavedSearchStore.snapshot(defaults: defaults),
+            searches: Self.translated(
+                SavedSearchStore.snapshot(defaults: defaults),
+                accountID: localToCloudAccountID
+            ),
             modifiedAt: SavedSearchStore.modifiedAt(defaults: defaults)
         )
         guard let data = try? JSONEncoder().encode(payload) else { return }
 
         store.setData(data, forKey: Self.key)
         store.synchronize()
+    }
+
+    static func translated(
+        _ snapshot: [String: [SavedSearch]],
+        accountID transform: (String) -> String?
+    ) -> [String: [SavedSearch]] {
+        Dictionary(uniqueKeysWithValues: snapshot.compactMap { key, searches in
+            var parts = key.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+            guard let sourceID = parts.last, let targetID = transform(sourceID) else { return nil }
+
+            parts[parts.count - 1] = targetID
+            return (parts.joined(separator: "."), searches)
+        })
     }
 }
