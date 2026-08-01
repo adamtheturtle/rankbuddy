@@ -246,9 +246,13 @@ extension LoadableList {
     /// Persists the current top row as the free-scroll anchor for restoration (#19). Load-more
     /// is driven separately by `onReachEnd` (the bottom of the viewport), not from here.
     func persistScrollAnchor(_ topID: Item.ID?) {
-        guard let scrollDefaultsKey, let topID else { return }
+        guard let scrollDefaultsKey else { return }
 
-        UserDefaults.standard.set(String(describing: topID), forKey: scrollDefaultsKey)
+        if let topID {
+            UserDefaults.standard.set(String(describing: topID), forKey: scrollDefaultsKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: scrollDefaultsKey)
+        }
     }
 
     /// Remembers the item shown in the detail pane so it is reselected on relaunch (#19).
