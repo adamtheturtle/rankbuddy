@@ -140,6 +140,12 @@ struct AuditLogTests {
         )
     }
 
+    @Test func `pagination detects direct and multi-page cursor cycles`() {
+        #expect(AccountActivityView.hasCursorCycle(next: "c1", requested: "c1", previouslyLoaded: []))
+        #expect(AccountActivityView.hasCursorCycle(next: "c1", requested: "c2", previouslyLoaded: ["c1"]))
+        #expect(!AccountActivityView.hasCursorCycle(next: "c3", requested: "c2", previouslyLoaded: ["c1"]))
+    }
+
     // MARK: - Display helpers
 
     @Test func `headline summarises the action, type, and id`() throws {

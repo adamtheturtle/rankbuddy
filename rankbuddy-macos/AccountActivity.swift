@@ -21,6 +21,7 @@ struct AccountActivityView: View {
     @State private var isLoadingMore = false
     @State private var loadMoreError: String?
     @State private var reloadGeneration = 0
+    @State private var loadedCursors: Set<String> = []
 
     private enum Phase: Equatable {
         case loading
@@ -162,6 +163,7 @@ struct AccountActivityView: View {
         let generation = reloadGeneration
         phase = .loading
         loadMoreError = nil
+        loadedCursors = []
         do {
             let page = try await HackerRankClient(account: account).auditLogPage()
             guard Self.isCurrentRequest(
@@ -206,6 +208,11 @@ struct AccountActivityView: View {
                 currentCursor: nextCursor
             ) else { return }
 
+            if Self.hasCursorCycle(next: page.next, requested: cursor, previouslyLoaded: loadedCursors) {
+                loadMoreError = "The server repeated an earlier page. Refresh to check again."
+                return
+            }
+            loadedCursors.insert(cursor)
             entries = Self.mergedEntries(entries, with: page.items)
             nextCursor = page.next
         } catch {
@@ -264,6 +271,10 @@ struct AccountActivityView: View {
             generation: request.generation,
             currentGeneration: currentGeneration
         ) && request.cursor == currentCursor
+    }
+
+    static func hasCursorCycle(next: String?, requested: String, previouslyLoaded: Set<String>) -> Bool {
+        next == requested || next.map(previouslyLoaded.contains) == true
     }
 }
 
