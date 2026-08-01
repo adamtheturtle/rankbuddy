@@ -1328,6 +1328,20 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `update_team rejects malformed collection elements`() async {
+        for key in ["locations", "departments"] {
+            let result = await writeProvider().callTool(
+                "update_team",
+                arguments: [
+                    "team_id": .string("team-1"),
+                    key: .array([.string("London"), .int(7)])
+                ]
+            )
+            #expect(result.isError == true)
+            #expect(text(result).contains(key))
+        }
+    }
+
     @Test func `update_team rejects a blank target id`() async {
         let result = await writeProvider().callTool(
             "update_team",

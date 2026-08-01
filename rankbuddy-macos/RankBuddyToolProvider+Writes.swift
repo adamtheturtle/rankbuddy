@@ -946,6 +946,9 @@ extension RankBuddyToolProvider {
         let developerCap = intArgument(arguments, "developer_cap")
         let locations = stringArrayArgument(arguments, "locations", preservingEmpty: true)
         let departments = stringArrayArgument(arguments, "departments", preservingEmpty: true)
+        for key in ["locations", "departments"] where hasInvalidStringArrayElements(arguments, key) {
+            return errorResult("`\(key)` must contain only non-empty strings.")
+        }
         guard rawName == nil || name != nil else { return errorResult("`name` must not be empty.") }
         guard inviteAs.map(allowedInviteRoles.contains) ?? true else {
             return errorResult("`invite_as` must be recruiter, interviewer, or developer.")
