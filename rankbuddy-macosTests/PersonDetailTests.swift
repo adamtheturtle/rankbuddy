@@ -61,9 +61,11 @@ struct PersonDetailTests {
             lastActivityTime: "2026-01-01T00:00:00Z"
         )
 
-        let updated = user.applying(UserUpdateOptions(lastName: "Byron", teamAdmin: true))
+        let options = UserUpdateOptions(lastName: "", teamAdmin: true)
+        let updated = user.applying(options)
 
-        #expect(updated.lastName == "Byron")
+        #expect(options.lastName?.isEmpty == true)
+        #expect(updated.lastName?.isEmpty == true)
         #expect(updated.teamAdmin == true)
         #expect(updated.email == user.email)
         #expect(updated.firstName == user.firstName)

@@ -7,7 +7,11 @@ nonisolated enum UserNameValidation {
     static let maxLength = 255
 
     static func firstNameIssue(_ value: String) -> String? {
-        value.count > maxLength ? "First name can be at most \(maxLength) characters." : nil
+        if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "First name is required."
+        }
+
+        return value.count > maxLength ? "First name can be at most \(maxLength) characters." : nil
     }
 
     static func lastNameIssue(_ value: String?) -> String? {
