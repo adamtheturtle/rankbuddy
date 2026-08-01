@@ -14,6 +14,10 @@ import Testing
 @MainActor
 struct CreateUserTests {
     @Test func `user names respect API limits`() {
+        #expect(UserNameValidation.firstNameIssue(String(repeating: "x", count: 255)) == nil)
+        #expect(UserNameValidation.firstNameIssue(String(repeating: "x", count: 256)) != nil)
+        #expect(UserNameValidation.lastNameIssue(String(repeating: "x", count: 255)) == nil)
+        #expect(UserNameValidation.lastNameIssue(String(repeating: "x", count: 256)) != nil)
         #expect(UserNameValidation.issue(
             firstName: String(repeating: "x", count: 256),
             lastName: nil

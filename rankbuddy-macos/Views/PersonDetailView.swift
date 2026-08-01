@@ -189,9 +189,17 @@ struct PersonDetailView: View {
     @ViewBuilder
     private var editableRows: some View {
         EditableTextRow(label: "First name", value: displayed.firstName ?? "") { newValue in
+            if let issue = UserNameValidation.firstNameIssue(newValue) {
+                editError = issue
+                return false
+            }
             await save(UserUpdateOptions(firstName: newValue))
         }
         EditableTextRow(label: "Last name", value: displayed.lastName ?? "") { newValue in
+            if let issue = UserNameValidation.lastNameIssue(newValue) {
+                editError = issue
+                return false
+            }
             await save(UserUpdateOptions(lastName: newValue))
         }
         EditablePickerRow(
