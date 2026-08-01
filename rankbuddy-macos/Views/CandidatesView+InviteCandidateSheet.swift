@@ -21,9 +21,9 @@ enum CandidateInviteValidation {
 
     /// One day is a generous accommodation ceiling while preventing accidental pasted magnitudes.
     static let additionalTimeRange = 0 ... 1440
-    static let maxFullNameLength = 255
-    static let maxTagLength = 100
-    static let maxTagCount = 50
+    nonisolated static let maxFullNameLength = 255
+    nonisolated static let maxTagLength = 100
+    nonisolated static let maxTagCount = 50
     static let maxEmailLength = 320
     static let maxIdentifierLength = 255
     static let maxSubjectLength = 255

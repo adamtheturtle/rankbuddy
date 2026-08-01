@@ -1504,6 +1504,27 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `update_candidate enforces invite name and tag limits`() async {
+        let longName = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "full_name": .string(String(repeating: "n", count: 256))
+            ]
+        )
+        let longTag = await writeProvider().callTool(
+            "update_candidate",
+            arguments: [
+                "test_id": .string("test-1"), "candidate_id": .string("candidate-1"),
+                "tags": .array([.string(String(repeating: "t", count: 101))])
+            ]
+        )
+        for result in [longName, longTag] {
+            #expect(result.isError == true)
+            #expect(text(result).contains("at most") || text(result).contains("exceeds"))
+        }
+    }
+
     @Test func `update_question rejects unsupported types`() async {
         let result = await writeProvider().callTool(
             "update_question",

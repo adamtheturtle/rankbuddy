@@ -512,6 +512,9 @@ extension RankBuddyToolProvider {
         let validFrom = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_from"))
         let validTo = Self.normalizedOptionalString(stringArgument(arguments, "invite_valid_to"))
         let atsState = intArgument(arguments, "ats_state")
+        let fullName = stringArgument(arguments, "full_name")?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let tags = stringArrayArgument(arguments, "tags", preservingEmpty: true)
         if let error = Self.candidateWindowError(from: validFrom, until: validTo) { return errorResult(error) }
         if hasInvalidStringArrayElements(arguments, "tags") {
             return errorResult("`tags` must contain only non-empty strings.")
@@ -528,6 +531,17 @@ extension RankBuddyToolProvider {
         guard evaluatorEmail.map(EmailValidation.isLikelyValid) ?? true else {
             return errorResult("`evaluator_email` must be a valid email address.")
         }
+        if let issue = CandidateInviteValidation.textIssue(.init(
+            fullName: fullName,
+            tags: tags,
+            evaluatorEmail: nil,
+            emailSubject: nil,
+            emailMessage: nil,
+            atsCandidateID: nil,
+            atsRequisitionID: nil
+        )) {
+            return errorResult(issue)
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -535,7 +549,7 @@ extension RankBuddyToolProvider {
                 testID: testID,
                 candidateID: candidateID,
                 options: CandidateUpdateOptions(
-                    fullName: stringArgument(arguments, "full_name"),
+                    fullName: fullName,
                     atsState: atsState,
                     inviteValidFrom: validFrom,
                     inviteValidTo: validTo,
@@ -543,7 +557,7 @@ extension RankBuddyToolProvider {
                     testFinishURL: finishURL,
                     testResultURL: resultURL,
                     acceptResultUpdates: boolArgument(arguments, "accept_result_updates"),
-                    tags: stringArrayArgument(arguments, "tags", preservingEmpty: true)
+                    tags: tags
                 )
             )
             return jsonResult([
@@ -1554,7 +1568,8 @@ extension RankBuddyToolProvider {
                   properties: [
                       "test_id": string("The test's id."),
                       "candidate_id": string("The candidate's id."),
-                      "full_name": string("Candidate name."),
+                      "full_name": string("Candidate name.",
+                                          maxLength: CandidateInviteValidation.maxFullNameLength),
                       "ats_state": integer("HackerRank ATS state code (0–22).", minimum: 0, maximum: 22),
                       "invite_valid_from": string("ISO-8601 timestamp before which the invite is inactive."),
                       "invite_valid_to": string("ISO-8601 timestamp after which the invite expires."),
@@ -1562,7 +1577,9 @@ extension RankBuddyToolProvider {
                       "test_finish_url": string("URL to send the candidate to after finishing."),
                       "test_result_url": string("Result/report callback or redirect URL."),
                       "accept_result_updates": boolean("Accept downstream result update notifications."),
-                      "tags": ["type": "array", "items": ["type": "string"],
+                      "tags": ["type": "array", "maxItems": CandidateInviteValidation.maxTagCount,
+                               "items": ["type": "string",
+                                         "maxLength": CandidateInviteValidation.maxTagLength],
                                "description": "Candidate tags; a comma-separated string is also accepted."],
                       "account": account
                   ],
