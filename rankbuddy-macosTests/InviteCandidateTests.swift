@@ -92,13 +92,8 @@ struct InviteCandidateTests {
     }
 
     @Test func `inviting against the bad-key account surfaces the server's 401`() async {
-        do {
+        await expectUnauthorized {
             _ = try await HackerRankClient(account: .badKeyDemo).inviteCandidate(testID: "t1", email: "new@example.com")
-            Issue.record("expected an unauthorized error")
-        } catch let error as HackerRankError {
-            #expect(error.isUnauthorized)
-        } catch {
-            Issue.record("expected HackerRankError, got \(error)")
         }
     }
 

@@ -20,13 +20,15 @@ struct AccountHealthMonitorTests {
 
     @Test func `a rejected token flags the account, a good one clears it`() async {
         let monitor = AccountHealthMonitor()
+        let store = store(token: Account.badKeyDemoToken)
 
         // The bad-key demo 401s → flagged.
-        await monitor.check(store: store(token: Account.badKeyDemoToken))
+        await monitor.check(store: store)
         #expect(monitor.isUnauthorized(id))
 
         // The same account id with a working token → the flag clears.
-        await monitor.check(store: store(token: Account.demoToken))
+        store.accounts[0].token = Account.demoToken
+        await monitor.check(store: store)
         #expect(!monitor.isUnauthorized(id))
     }
 

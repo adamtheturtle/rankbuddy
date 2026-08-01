@@ -86,11 +86,11 @@ struct InterviewWriteFlowsTests {
 
     @Test func `interview writes against the bad-key account surface the server's 401`() async {
         let client = HackerRankClient(account: .badKeyDemo)
-        await #expect(throws: HackerRankError.self) {
-            try await client.createPad(title: "Nope")
+        await expectUnauthorized {
+            _ = try await client.createPad(title: "Nope")
         }
-        await #expect(throws: HackerRankError.self) {
-            try await client.scheduleInterview(title: "Nope", from: Date(timeIntervalSince1970: 0))
+        await expectUnauthorized {
+            _ = try await client.scheduleInterview(title: "Nope", from: Date(timeIntervalSince1970: 0))
         }
     }
 }

@@ -41,7 +41,9 @@ final class AccountHealthMonitor {
     /// Builds (once) the wrapped monitor bound to this store. The probe and the unauthorized
     /// classifier are the app-specific closures the generic monitor takes.
     private func monitor(for store: AccountStore) -> BuddyAppKit.AccountHealthMonitor<UUID> {
-        if let monitor { return monitor }
+        if let monitor {
+            return monitor
+        }
 
         let monitor = BuddyAppKit.AccountHealthMonitor<UUID>(
             accountToCheck: { [weak store] in
@@ -55,9 +57,7 @@ final class AccountHealthMonitor {
                 try await HackerRankClient(account: account).validateToken()
             },
             isUnauthorized: { error in
-                guard case let HackerRankError.http(status, _) = error else { return false }
-
-                return status == 401 || status == 403
+                hackerRankHTTPStatus(error).map { [401, 403].contains($0) } ?? false
             }
         )
         self.monitor = monitor

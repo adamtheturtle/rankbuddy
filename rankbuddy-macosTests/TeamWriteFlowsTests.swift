@@ -47,11 +47,11 @@ struct TeamWriteFlowsTests {
 
     @Test func `team writes against the bad-key account surface the server's 401`() async {
         let client = HackerRankClient(account: .badKeyDemo)
-        await #expect(throws: HackerRankError.self) {
-            try await client.createTeam(name: "Nope")
+        await expectUnauthorized {
+            _ = try await client.createTeam(name: "Nope")
         }
-        await #expect(throws: HackerRankError.self) {
-            try await client.removeTeamMember(teamID: "tm1", userID: "u2")
+        await expectUnauthorized {
+            _ = try await client.removeTeamMember(teamID: "tm1", userID: "u2")
         }
     }
 }

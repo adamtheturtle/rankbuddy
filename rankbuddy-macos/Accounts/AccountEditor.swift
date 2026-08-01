@@ -344,7 +344,9 @@ struct AccountEditor: View {
     }
 
     private var isValidated: Bool {
-        if case .valid = validation { return true }
+        if case .valid = validation {
+            return true
+        }
         return false
     }
 
@@ -361,7 +363,9 @@ struct AccountEditor: View {
     }
 
     private var defaultLabel: String {
-        if !trimmedEmail.isEmpty { return trimmedEmail }
+        if !trimmedEmail.isEmpty {
+            return trimmedEmail
+        }
         let baseURL = URL(string: trimmedOverride) ?? Account.defaultBaseURL
         return baseURL.host() ?? "HackerRank"
     }
@@ -647,9 +651,7 @@ private extension AccountEditor {
     }
 
     func isUnauthorized(_ error: any Error) -> Bool {
-        guard case let HackerRankError.http(status, _) = error else { return false }
-
-        return status == 401 || status == 403
+        hackerRankHTTPStatus(error).map { [401, 403].contains($0) } ?? false
     }
 
     func friendlyValidationMessage(for error: any Error) -> String {

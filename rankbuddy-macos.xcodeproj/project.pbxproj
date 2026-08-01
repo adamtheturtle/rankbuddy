@@ -11,7 +11,6 @@
 		66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D162FEB0FB800352492 /* BuddyDesignSystem */; };
 		66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
 		6638044A2FF64E51004A9FCE /* MCPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 663804492FF64E51004A9FCE /* MCPKit */; };
-		66C000012FFF000000000001 /* MCPClientInstall in Frameworks */ = {isa = PBXBuildFile; productRef = 66C000012FFF000000000011 /* MCPClientInstall */; };
 		663804522FF65BBB004A9FCE /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 663804512FF65BBB004A9FCE /* AsyncAlgorithms */; };
 		6676A0A82FEEB2410023907A /* FastList in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0A72FEEB2410023907A /* FastList */; };
 		6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AA2FEEB24F0023907A /* Sparkle */; };
@@ -24,11 +23,14 @@
 		66AE79D82FFE6843003A66B1 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
 		66B000012FFF000000000001 /* WhatsNewKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000011 /* WhatsNewKit */; };
 		66B000012FFF000000000002 /* SafeURLKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000012 /* SafeURLKit */; };
+		66B000012FFF000000000003 /* WhatsNewKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000011 /* WhatsNewKit */; };
+		66B000012FFF000000000004 /* SafeURLKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000012 /* SafeURLKit */; };
+		66C000012FFF000000000001 /* MCPClientInstall in Frameworks */ = {isa = PBXBuildFile; productRef = 66C000012FFF000000000011 /* MCPClientInstall */; };
+		66C000012FFF000000000002 /* MCPClientInstall in Frameworks */ = {isa = PBXBuildFile; productRef = 66C000012FFF000000000011 /* MCPClientInstall */; };
 		780000000000000000000001 /* BuddyAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D142FEB0FB800352492 /* BuddyAppKit */; };
 		780000000000000000000002 /* BuddyDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D162FEB0FB800352492 /* BuddyDesignSystem */; };
 		780000000000000000000003 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
 		780000000000000000000004 /* MCPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 663804492FF64E51004A9FCE /* MCPKit */; };
-		66C000012FFF000000000002 /* MCPClientInstall in Frameworks */ = {isa = PBXBuildFile; productRef = 66C000012FFF000000000011 /* MCPClientInstall */; };
 		780000000000000000000005 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 663804512FF65BBB004A9FCE /* AsyncAlgorithms */; };
 		780000000000000000000007 /* FastList in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0A72FEEB2410023907A /* FastList */; };
 		780000000000000000000008 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 6676A0AD2FEEB2710023907A /* MCP */; };
@@ -36,8 +38,6 @@
 		78000000000000000000000A /* PrintableView in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79CD2FFE5C93003A66B1 /* PrintableView */; };
 		78000000000000000000000B /* HackerRankKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D12FFE6820003A66B1 /* HackerRankKit */; };
 		78000000000000000000000C /* HackerRankKitMock in Frameworks */ = {isa = PBXBuildFile; productRef = 66AE79D32FFE6820003A66B1 /* HackerRankKitMock */; };
-		66B000012FFF000000000003 /* WhatsNewKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000011 /* WhatsNewKit */; };
-		66B000012FFF000000000004 /* SafeURLKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66B000012FFF000000000012 /* SafeURLKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -875,14 +875,6 @@
 				minimumVersion = 1.1.5;
 			};
 		};
-		66C000012FFF000000000021 /* XCRemoteSwiftPackageReference "MCPClientInstall" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/adamtheturtle/MCPClientInstall";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.2;
-			};
-		};
 		6676A0A62FEEB2410023907A /* XCRemoteSwiftPackageReference "FastList" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/adamtheturtle/FastList";
@@ -928,7 +920,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/HackerRankKit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.6.2;
+				version = 0.6.5;
 			};
 		};
 		66B000012FFF000000000021 /* XCRemoteSwiftPackageReference "WhatsNewKit" */ = {
@@ -945,6 +937,14 @@
 			requirement = {
 				kind = exactVersion;
 				version = 0.1.1;
+			};
+		};
+		66C000012FFF000000000021 /* XCRemoteSwiftPackageReference "MCPClientInstall" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamtheturtle/MCPClientInstall";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.2.2;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -974,11 +974,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
 			productName = AsyncAlgorithms;
-		};
-		66C000012FFF000000000011 /* MCPClientInstall */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 66C000012FFF000000000021 /* XCRemoteSwiftPackageReference "MCPClientInstall" */;
-			productName = MCPClientInstall;
 		};
 		6676A0A72FEEB2410023907A /* FastList */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1029,6 +1024,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 66B000012FFF000000000022 /* XCRemoteSwiftPackageReference "SafeURLKit" */;
 			productName = SafeURLKit;
+		};
+		66C000012FFF000000000011 /* MCPClientInstall */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66C000012FFF000000000021 /* XCRemoteSwiftPackageReference "MCPClientInstall" */;
+			productName = MCPClientInstall;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

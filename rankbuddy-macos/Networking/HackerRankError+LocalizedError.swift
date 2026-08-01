@@ -6,6 +6,21 @@
 import Foundation
 import HackerRankKit
 
+/// Reads an HTTP status even when the live and mock static products supplied distinct copies of
+/// the Swift enum metadata. HackerRankKit's CustomNSError domain and code form the stable bridge.
+nonisolated func hackerRankHTTPStatus(_ error: any Error) -> Int? {
+    if case let HackerRankError.http(status, _) = error {
+        return status
+    }
+
+    let bridged = error as NSError
+    guard bridged.domain == HackerRankError.errorDomain, (100 ... 599).contains(bridged.code) else {
+        return nil
+    }
+
+    return bridged.code
+}
+
 /// `HackerRankKit` keeps `HackerRankError` presentation-free (it only conforms to
 /// `CustomStringConvertible`). The app supplies the localized, user-facing copy by
 /// conforming it to `LocalizedError` here, so `(error as? LocalizedError)?.errorDescription`
@@ -57,7 +72,9 @@ extension HackerRankError: @retroactive LocalizedError {
 
         var messages: [String] = []
         for key in ["message", "error"] {
-            if let text = object[key] as? String { messages.append(text) }
+            if let text = object[key] as? String {
+                messages.append(text)
+            }
         }
         messages.append(contentsOf: errorFieldMessages(object["errors"]))
 
