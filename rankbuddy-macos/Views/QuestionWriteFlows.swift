@@ -48,6 +48,11 @@ struct NewQuestionSheet: View {
             Form {
                 Section {
                     TextField("Name", text: $name)
+                    if let nameIssue = QuestionCreationValidation.nameIssue(trimmedName) {
+                        Text(nameIssue)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                     Picker("Type", selection: $type) {
                         ForEach(questionTypes, id: \.self) { Text(DisplayFormat.enumLabel($0)).tag($0) }
                     }
@@ -85,7 +90,10 @@ struct NewQuestionSheet: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Button("Create") { mutationTask = Task { await create() } }
-                            .disabled(trimmedName.isEmpty || payloadIssue != nil)
+                            .disabled(
+                                trimmedName.isEmpty || QuestionCreationValidation.nameIssue(trimmedName) != nil
+                                    || payloadIssue != nil
+                            )
                             .help(trimmedName.isEmpty ? "Enter a name to create a question" : "Create question")
                     }
                 }
@@ -96,6 +104,10 @@ struct NewQuestionSheet: View {
     }
 
     private func create() async {
+        if let nameIssue = QuestionCreationValidation.nameIssue(trimmedName) {
+            errorMessage = nameIssue
+            return
+        }
         if let payloadIssue {
             errorMessage = payloadIssue
             return

@@ -20,6 +20,12 @@ nonisolated enum QuestionEditValidation {
 }
 
 nonisolated enum QuestionCreationValidation {
+    static let maxNameLength = 255
+
+    static func nameIssue(_ name: String) -> String? {
+        name.count > maxNameLength ? "Question name can be at most 255 characters." : nil
+    }
+
     static func isValidDurationText(_ text: String) -> Bool {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return normalized.isEmpty || Int(normalized).map { $0 >= 0 } == true

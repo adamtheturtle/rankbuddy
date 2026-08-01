@@ -9,6 +9,11 @@ import Testing
 
 @MainActor
 struct QuestionEditValidationTests {
+    @Test func `question creation names respect the API limit`() {
+        #expect(QuestionCreationValidation.nameIssue(String(repeating: "x", count: 255)) == nil)
+        #expect(QuestionCreationValidation.nameIssue(String(repeating: "x", count: 256)) != nil)
+    }
+
     @Test func `max score rejects non-finite numbers`() {
         #expect(QuestionEditValidation.maxScore(from: "10.5") == 10.5)
         #expect(QuestionEditValidation.maxScore(from: "nan") == nil)
