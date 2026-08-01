@@ -321,7 +321,10 @@ extension RankBuddyToolProvider {
 
     @MainActor
     private func archiveTestTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
-        guard let testID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+        guard let rawTestID = stringArgument(arguments, "test_id") else { return missingArgument("test_id") }
+        guard let testID = Self.normalizedOptionalString(rawTestID) else {
+            return errorResult("`test_id` must not be empty.")
+        }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
