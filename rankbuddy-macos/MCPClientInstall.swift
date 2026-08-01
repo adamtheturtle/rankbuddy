@@ -14,10 +14,10 @@ import Foundation
 // swiftlint:disable file_length
 
 // swiftlint:disable:next type_body_length
-enum MCPClientInstall {
+nonisolated enum MCPClientInstall {
     private static let serverName = "rankbuddy"
 
-    private struct ConfigSpec {
+    private struct ConfigSpec: Sendable {
         let preferred: URL?
         let fallback: URL?
         let fileName: String
@@ -26,7 +26,11 @@ enum MCPClientInstall {
     }
 
     @MainActor
-    static func install(_ client: MCPClient, command: String) {
+    static func install(
+        _ client: MCPClient,
+        command: String,
+        didFinish: @escaping @MainActor () -> Void = {}
+    ) {
         guard let command = MCPSetup.resolvedCommand(executablePath: command) else {
             showAlert(.warning, "Couldn’t Configure \(client.displayName)", "RankBuddy’s executable is unavailable.")
             return
@@ -39,40 +43,70 @@ enum MCPClientInstall {
             message: spec.message
         ) else { return }
 
-        let accessing = folder.startAccessingSecurityScopedResource()
-        defer { if accessing { folder.stopAccessingSecurityScopedResource() } }
+        Task { @MainActor in
+            let accessing = folder.startAccessingSecurityScopedResource()
+            defer {
+                if accessing { folder.stopAccessingSecurityScopedResource() }
+                didFinish()
+            }
 
-        do {
-            let configFolder = try configurationFolder(
-                granted: folder,
-                preferred: spec.preferred,
-                fallback: spec.fallback
-            )
-            let url = configFolder.appendingPathComponent(spec.fileName)
-            let didUpdate: (String, String) -> Void = { title, message in
+            do {
+                let url = try await runFileOperation {
+                    let configFolder = try configurationFolder(
+                        granted: folder,
+                        preferred: spec.preferred,
+                        fallback: spec.fallback
+                    )
+                    return configFolder.appendingPathComponent(spec.fileName)
+                }
+                let alreadyPresent = try await runFileOperation {
+                    try serverAlreadyPresent(at: url, isTOML: spec.isTOML)
+                }
+                guard !alreadyPresent || confirmUpdate(client) else { return }
+
+                try await runFileOperation {
+                    if spec.isTOML {
+                        try upsertCodexServer(
+                            into: url, client: client, command: command,
+                            shouldReplace: { _ in true }
+                        )
+                    } else {
+                        try mergeJSONServer(
+                            into: url, client: client, command: command,
+                            shouldReplace: { _ in true }
+                        )
+                    }
+                }
                 recordInstalledCommand(command, for: client)
-                Task { @MainActor in showAlert(.informational, title, message) }
+                let title = alreadyPresent ? "Updated \(client.displayName)" : "Added to \(client.displayName)"
+                showAlert(.informational, title, client.restartHint)
+            } catch {
+                showAlert(.warning, "Couldn't update \(client.displayName)", error.localizedDescription)
             }
-            if spec.isTOML {
-                try upsertCodexServer(
-                    into: url,
-                    client: client,
-                    command: command,
-                    shouldReplace: confirmUpdate,
-                    didUpdate: didUpdate
-                )
-            } else {
-                try mergeJSONServer(
-                    into: url,
-                    client: client,
-                    command: command,
-                    shouldReplace: confirmUpdate,
-                    didUpdate: didUpdate
-                )
-            }
-        } catch {
-            showAlert(.warning, "Couldn't update \(client.displayName)", error.localizedDescription)
         }
+    }
+
+    nonisolated static func runFileOperation<Result: Sendable>(
+        _ operation: @escaping @Sendable () throws -> Result
+    ) async throws -> Result {
+        try await Task.detached(operation: operation).value
+    }
+
+    private nonisolated static func serverAlreadyPresent(at url: URL, isTOML: Bool) throws -> Bool {
+        if isTOML {
+            guard FileManager.default.fileExists(atPath: url.path) else { return false }
+            let text = try String(contentsOf: url, encoding: .utf8)
+            return codexServerDeclaration(in: text) != .notDeclared
+        }
+
+        let root = try existingJSON(data: existingData(at: url))
+        guard let servers = root["mcpServers"] else { return false }
+        guard let object = servers as? [String: Any] else {
+            throw ConfigVerificationError(
+                errorDescription: "The existing “mcpServers” value isn’t a JSON object. No file was changed."
+            )
+        }
+        return object[serverName] != nil
     }
 
     static func recordInstalledCommand(
@@ -83,6 +117,7 @@ enum MCPClientInstall {
         defaults.set(command, forKey: installedCommandKey(for: client))
     }
 
+    @MainActor
     static func needsRepair(
         _ client: MCPClient,
         currentCommand: String,

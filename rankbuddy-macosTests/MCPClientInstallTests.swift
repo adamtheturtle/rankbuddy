@@ -329,6 +329,13 @@ struct MCPClientInstallTests {
         ))
     }
 
+    @Test func `installer file work runs away from the main thread`() async throws {
+        let ranOnMainThread = try await MCPClientInstall.runFileOperation {
+            Thread.isMainThread
+        }
+        #expect(!ranOnMainThread)
+    }
+
     private func temporaryFile(named name: String) throws -> URL {
         try temporaryDirectory().appendingPathComponent(name)
     }

@@ -55,8 +55,9 @@ struct MCPInstallTabs: View {
         Button {
             guard let command else { return }
 
-            MCPClientInstall.install(client, command: command)
-            installRevision += 1
+            MCPClientInstall.install(client, command: command) {
+                installRevision += 1
+            }
         } label: {
             Label(
                 "\(needsRepair ? "Repair" : "Add to") \(client.displayName)",
