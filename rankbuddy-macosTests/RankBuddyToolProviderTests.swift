@@ -1190,6 +1190,25 @@ struct RankBuddyToolProviderTests {
         #expect(text(updated).contains("recommended_duration"))
     }
 
+    @Test func `question writes reject unsupported lifecycle statuses`() async {
+        let create = await writeProvider().callTool(
+            "create_question",
+            arguments: [
+                "name": .string("Two Sum"),
+                "type": .string("coding"),
+                "status": .string("published")
+            ]
+        )
+        let update = await writeProvider().callTool(
+            "update_question",
+            arguments: ["question_id": .string("question-1"), "status": .string("draft")]
+        )
+        for result in [create, update] {
+            #expect(result.isError == true)
+            #expect(text(result).contains("status"))
+        }
+    }
+
     @Test func `update_question rejects unsupported types`() async {
         let result = await writeProvider().callTool(
             "update_question",

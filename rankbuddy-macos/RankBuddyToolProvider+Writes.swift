@@ -724,6 +724,10 @@ extension RankBuddyToolProvider {
         else {
             return errorResult("`type` must be coding, mcq, or subjective.")
         }
+        let status = Self.normalizedOptionalString(stringArgument(arguments, "status"))?.lowercased()
+        guard arguments?["status"] == nil || status.flatMap(QuestionLifecycleStatus.init(rawValue:)) != nil else {
+            return errorResult("`status` must be active or archived.")
+        }
         guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
             return errorResult("`max_score` must be a finite number of zero or greater.")
         }
@@ -736,7 +740,7 @@ extension RankBuddyToolProvider {
             let written = try await HackerRankClient(account: resolved).createQuestion(
                 name: name,
                 type: type,
-                options: questionWriteOptions(arguments)
+                options: questionWriteOptions(arguments, status: status)
             )
             guard let questionID = Self.validatedCreatedID(written.id) else {
                 return errorResult("HackerRank created the question but returned no question ID.")
@@ -768,6 +772,10 @@ extension RankBuddyToolProvider {
         guard rawType == nil || type.map(Self.supportedQuestionTypes.contains) == true else {
             return errorResult("`type` must be coding, mcq, or subjective.")
         }
+        let status = Self.normalizedOptionalString(stringArgument(arguments, "status"))?.lowercased()
+        guard arguments?["status"] == nil || status.flatMap(QuestionLifecycleStatus.init(rawValue:)) != nil else {
+            return errorResult("`status` must be active or archived.")
+        }
         guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
             return errorResult("`max_score` must be a finite number of zero or greater.")
         }
@@ -781,7 +789,7 @@ extension RankBuddyToolProvider {
                 questionID: questionID,
                 name: stringArgument(arguments, "name"),
                 type: type,
-                options: questionWriteOptions(arguments)
+                options: questionWriteOptions(arguments, status: status)
             )
             return jsonResult([
                 "account": resolved.label,
@@ -796,9 +804,9 @@ extension RankBuddyToolProvider {
         }
     }
 
-    private func questionWriteOptions(_ arguments: [String: Value]?) -> QuestionWriteOptions {
+    private func questionWriteOptions(_ arguments: [String: Value]?, status: String?) -> QuestionWriteOptions {
         QuestionWriteOptions(
-            status: stringArgument(arguments, "status"),
+            status: status,
             languages: stringArrayArgument(arguments, "languages"),
             problemStatement: stringArgument(arguments, "problem_statement"),
             recommendedDuration: intArgument(arguments, "recommended_duration"),
@@ -1551,7 +1559,10 @@ extension RankBuddyToolProvider {
                   properties: [
                       "name": string("The question's name.", minLength: 1),
                       "type": string("Question type.", allowedValues: Self.supportedQuestionTypes),
-                      "status": string("Question lifecycle status."),
+                      "status": string(
+                          "Question lifecycle status.",
+                          allowedValues: QuestionLifecycleStatus.allCases.map(\.rawValue)
+                      ),
                       "languages": ["type": "array", "items": ["type": "string"],
                                     "description": "Allowed languages; a comma-separated string is also accepted."],
                       "problem_statement": string("Problem statement, typically Markdown or HTML."),
@@ -1572,7 +1583,10 @@ extension RankBuddyToolProvider {
                       "question_id": string("The question's id."),
                       "name": string("The question's name."),
                       "type": string("Question type.", allowedValues: Self.supportedQuestionTypes),
-                      "status": string("Question lifecycle status."),
+                      "status": string(
+                          "Question lifecycle status.",
+                          allowedValues: QuestionLifecycleStatus.allCases.map(\.rawValue)
+                      ),
                       "languages": ["type": "array", "items": ["type": "string"],
                                     "description": "Allowed languages; a comma-separated string is also accepted."],
                       "problem_statement": string("Problem statement, typically Markdown or HTML."),
