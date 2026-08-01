@@ -130,8 +130,10 @@ struct NewPadSheet: View {
         do {
             let created = try await HackerRankClient(account: account)
                 .createPad(title: requestTitle)
-            let destination = try padDestinationURL(rawURL: created.url, isMock: account.isMock)
             onCreated()
+            // Creation is already committed at this point. A missing/invalid navigation URL must
+            // not leave the sheet offering a duplicate-producing retry.
+            let destination = try? padDestinationURL(rawURL: created.url, isMock: account.isMock)
             if let destination {
                 BrowserSettings.open(destination)
             }
