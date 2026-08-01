@@ -41,6 +41,10 @@ struct MarkdownExportTests {
         #expect(MarkdownExport.plainText(fromHTML: html) == "Hello\nWorld\nAgain")
     }
 
+    @Test func `literal comparisons are not mistaken for HTML tags`() {
+        #expect(MarkdownExport.plainText(fromHTML: "a < b and b > c") == "a < b and b > c")
+    }
+
     @Test func `inline field values are single-line and bounded`() {
         let oversized = String(repeating: "x", count: MarkdownExport.Limits.inlineCharacters + 1)
         let markdown = MarkdownExport.section("Candidate\nForged", [("Name", "Ada\n- forged"), ("Bio", oversized)])

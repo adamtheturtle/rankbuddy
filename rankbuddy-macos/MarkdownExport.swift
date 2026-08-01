@@ -51,14 +51,14 @@ enum MarkdownExport {
             options: .regularExpression
         )
         let bounded = boundedText(content, maximumCharacters: Limits.proseCharacters)
-        let text = bounded.text
+        let withBreaks = bounded.text
             .replacingOccurrences(of: "(?i)<br\\s*/?>", with: "\n", options: .regularExpression)
             .replacingOccurrences(
                 of: "(?i)</(?:p|div|li|h[1-6]|tr)\\s*>",
                 with: "\n",
                 options: .regularExpression
             )
-            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        let text = HTMLCodeBlocks.stripTags(withBreaks)
         let decoded = decodeHTMLEntitiesOnce(text)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return bounded.omitted ? decoded + "\n\nContent truncated for export." : decoded

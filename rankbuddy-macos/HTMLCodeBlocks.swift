@@ -193,7 +193,10 @@ nonisolated enum HTMLCodeBlocks {
         let closing = trimmed.hasPrefix("/")
         let body = closing ? trimmed.dropFirst() : trimmed[...]
         let name = body.prefix(while: \.isLetter).lowercased()
-        let known = ["b", "br", "code", "div", "em", "i", "p", "span", "strong"]
+        let known = [
+            "a", "b", "blockquote", "br", "code", "div", "em", "h1", "h2", "h3", "h4", "h5", "h6",
+            "i", "li", "ol", "p", "span", "strong", "table", "tbody", "td", "th", "thead", "tr", "ul"
+        ]
         guard known.contains(name) else { return nil }
 
         let remainder = body.dropFirst(name.count).trimmingCharacters(in: .whitespacesAndNewlines)
