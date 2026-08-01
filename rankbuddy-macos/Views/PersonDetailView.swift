@@ -78,6 +78,7 @@ struct PersonDetailView: View {
     @State private var editError: String?
     @State private var lockPresented = false
     @State private var wasLocked = false
+    @State private var isLocking = false
 
     /// The freshest copy of the user: server echoes from per-field saves overlay the
     /// (possibly stale) row the list handed us.
@@ -114,7 +115,8 @@ struct PersonDetailView: View {
     }
 
     private var canLock: Bool {
-        !wasLocked && UserLockAvailability.canLock(status: displayed.status, activated: displayed.activated)
+        !isLocking && !wasLocked
+            && UserLockAvailability.canLock(status: displayed.status, activated: displayed.activated)
     }
 
     var body: some View {
@@ -170,7 +172,7 @@ struct PersonDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Lock User", role: .destructive) {
-                Task { await lock() }
+                beginLock()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -233,9 +235,17 @@ struct PersonDetailView: View {
     }
 
     private func lock() async {
-        guard let account, canLock else { return }
+        guard let account else {
+            isLocking = false
+            return
+        }
 
         let identity = detailIdentity
+        defer {
+            if identity == detailIdentity {
+                isLocking = false
+            }
+        }
         let client = HackerRankClient(account: account)
         do {
             _ = try await client.lockUser(id: identity.userID)
@@ -254,6 +264,13 @@ struct PersonDetailView: View {
         } catch {
             editError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    private func beginLock() {
+        guard canLock else { return }
+
+        isLocking = true
+        Task { await lock() }
     }
 
     private func resolveTeamNames() async {
@@ -303,6 +320,7 @@ struct PersonDetailView: View {
         wasLocked = false
         editError = nil
         lockPresented = false
+        isLocking = false
         resolvedTeamNames = nil
         isResolvingTeams = false
     }
