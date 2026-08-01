@@ -716,6 +716,7 @@ extension RankBuddyToolProvider {
     // MARK: - Questions
 
     @MainActor
+    // swiftlint:disable:next cyclomatic_complexity
     private func createQuestionTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
         guard let rawType = stringArgument(arguments, "type") else { return missingArgument("type") }
@@ -737,6 +738,7 @@ extension RankBuddyToolProvider {
         guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
             return errorResult("`recommended_duration` must be zero or greater.")
         }
+        if let error = questionListValidationError(arguments) { return errorResult(error) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -785,6 +787,7 @@ extension RankBuddyToolProvider {
         guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
             return errorResult("`recommended_duration` must be zero or greater.")
         }
+        if let error = questionListValidationError(arguments) { return errorResult(error) }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
@@ -817,6 +820,13 @@ extension RankBuddyToolProvider {
             maxScore: doubleArgument(arguments, "max_score"),
             skills: stringArrayArgument(arguments, "skills")
         )
+    }
+
+    private func questionListValidationError(_ arguments: [String: Value]?) -> String? {
+        for key in ["languages", "tags", "skills"] where hasInvalidStringArrayElements(arguments, key) {
+            return "`\(key)` must contain only non-empty strings."
+        }
+        return nil
     }
 
     private func doubleArgument(_ arguments: [String: Value]?, _ key: String) -> Double? {

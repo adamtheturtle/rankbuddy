@@ -1222,6 +1222,20 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `question writes reject malformed list elements`() async {
+        for key in ["languages", "tags", "skills"] {
+            let result = await writeProvider().callTool(
+                "update_question",
+                arguments: [
+                    "question_id": .string("question-1"),
+                    key: .array([.string("valid"), .bool(true)])
+                ]
+            )
+            #expect(result.isError == true)
+            #expect(text(result).contains(key))
+        }
+    }
+
     @Test func `update_question rejects unsupported types`() async {
         let result = await writeProvider().callTool(
             "update_question",
