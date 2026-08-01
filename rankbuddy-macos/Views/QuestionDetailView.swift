@@ -30,12 +30,14 @@ struct QuestionDetailView: View {
     @State var answerRevealed = false
     @State private var deletePresented = false
     @State private var deleteError: String?
+    @State private var isDeletingQuestion = false
     @State var editError: String?
     @State private var detailQuestion: Question?
     /// Local field overlay for saved edits; fresh server metadata remains the underlying model.
     @State private var editOverlay = QuestionEditOverlay()
     @State private var addTestcasePresented = false
     @State private var deleteTestcasesPresented = false
+    @State private var isDeletingTestcases = false
     @State private var generateStubsPresented = false
     @State private var customStubPresented = false
     @State private var commandOwner = UUID()
@@ -168,7 +170,7 @@ struct QuestionDetailView: View {
                     Label("Delete", systemImage: "trash")
                 }
                 .help("Delete this question")
-                .disabled(owningAccount == nil)
+                .disabled(owningAccount == nil || isDeletingQuestion)
             }
             .defaultCustomization(.hidden)
         }
@@ -176,6 +178,7 @@ struct QuestionDetailView: View {
             Button("Delete Question", role: .destructive) {
                 Task { await deleteQuestion() }
             }
+            .disabled(isDeletingQuestion)
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This deletes the question on HackerRank. This can’t be undone.")
@@ -213,6 +216,7 @@ struct QuestionDetailView: View {
             Button("Delete All Testcases", role: .destructive) {
                 Task { await deleteAllTestcases() }
             }
+            .disabled(isDeletingTestcases)
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This removes every testcase from “\(displayed.name)” on HackerRank. This can’t be undone.")
@@ -280,6 +284,7 @@ extension QuestionDetailView {
             } label: {
                 Label("Delete All Testcases…", systemImage: "trash")
             }
+            .disabled(isDeletingTestcases)
         }
     }
 
@@ -311,7 +316,10 @@ extension QuestionDetailView {
     }
 
     private func deleteAllTestcases() async {
-        guard let account = owningAccount else { return }
+        guard !isDeletingTestcases, let account = owningAccount else { return }
+
+        isDeletingTestcases = true
+        defer { isDeletingTestcases = false }
 
         do {
             _ = try await HackerRankClient(account: account).deleteAllTestcases(questionID: question.id)
@@ -321,7 +329,10 @@ extension QuestionDetailView {
     }
 
     private func deleteQuestion() async {
-        guard let account = owningAccount else { return }
+        guard !isDeletingQuestion, let account = owningAccount else { return }
+
+        isDeletingQuestion = true
+        defer { isDeletingQuestion = false }
 
         do {
             try await HackerRankClient(account: account).deleteQuestion(questionID: question.id)
