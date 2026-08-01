@@ -86,12 +86,14 @@ extension LoadableList {
             guard generation == loadGeneration else { return }
 
             items = page.items
-            onItemsLoaded(page.items)
+            if !isServerSearching {
+                onItemsLoaded(page.items)
+            }
             nextCursor = page.next
             totalCount = page.totalCount
             phase = .loaded
             backgroundRefreshError = nil
-            await cacheFirstPage(page, for: requestCacheKey)
+            await cacheFirstPage(page, for: isServerSearching ? nil : requestCacheKey)
             guard generation == loadGeneration else { return }
 
             refreshDetailIfPresent(in: items)
@@ -106,7 +108,9 @@ extension LoadableList {
             if let partial = error as? PartialMergedPage<Item> {
                 let page = partial.page
                 items = page.items
-                onItemsLoaded(page.items)
+                if !isServerSearching {
+                    onItemsLoaded(page.items)
+                }
                 nextCursor = page.next
                 totalCount = page.totalCount
                 phase = .loaded
