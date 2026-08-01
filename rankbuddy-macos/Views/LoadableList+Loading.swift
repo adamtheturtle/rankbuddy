@@ -131,7 +131,7 @@ extension LoadableList {
     /// The cache key for this section's first page, or `nil` when caching would be wrong: no
     /// restoration scope, or a server-side date range is narrowing the "first page" (#102).
     var cacheKey: String? {
-        guard let restorationKey else { return nil }
+        guard let restorationKey, !isServerSearching else { return nil }
 
         if serverDateFiltering, dateRange != nil { return nil }
 
