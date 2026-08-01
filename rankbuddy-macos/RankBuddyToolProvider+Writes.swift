@@ -686,6 +686,7 @@ extension RankBuddyToolProvider {
     }
 
     @MainActor
+    // swiftlint:disable:next function_body_length
     private func updateUserTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawUserID = stringArgument(arguments, "user_id") else { return missingArgument("user_id") }
         guard let userID = Self.normalizedOptionalString(rawUserID) else {
@@ -697,9 +698,16 @@ extension RankBuddyToolProvider {
 
         let rawRole = stringArgument(arguments, "role")
         let role = Self.normalizedOptionalString(rawRole)?.lowercased()
+        let firstName = stringArgument(arguments, "first_name")?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let lastName = stringArgument(arguments, "last_name")?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         let allowedRoles = ["recruiter", "developer", "interviewer"]
         guard rawRole == nil || role.map(allowedRoles.contains) == true else {
             return errorResult("`role` must be recruiter, developer, or interviewer.")
+        }
+        if let issue = UserNameValidation.issue(firstName: firstName ?? "", lastName: lastName) {
+            return errorResult(issue)
         }
 
         if let invalidKey = Self.invalidUserPermissionKey(arguments) {
@@ -711,8 +719,8 @@ extension RankBuddyToolProvider {
             let updated = try await HackerRankClient(account: resolved).updateUser(
                 id: userID,
                 options: UserUpdateOptions(
-                    firstName: stringArgument(arguments, "first_name"),
-                    lastName: stringArgument(arguments, "last_name"),
+                    firstName: firstName,
+                    lastName: lastName,
                     country: stringArgument(arguments, "country"),
                     role: role,
                     phone: stringArgument(arguments, "phone"),
@@ -1597,8 +1605,10 @@ extension RankBuddyToolProvider {
             write("create_user", "Create an organisation user.",
                   properties: [
                       "email": string("The user's email.", minLength: 1, format: "email"),
-                      "first_name": string("The user's first name.", minLength: 1),
-                      "last_name": string("Last name (optional)."),
+                      "first_name": string("The user's first name.", minLength: 1,
+                                           maxLength: UserNameValidation.maxLength),
+                      "last_name": string("Last name (optional).",
+                                          maxLength: UserNameValidation.maxLength),
                       "role": string(
                           "Role: recruiter, developer, or interviewer.",
                           allowedValues: ["recruiter", "developer", "interviewer"]
@@ -1613,8 +1623,10 @@ extension RankBuddyToolProvider {
             write("update_user", "Update an organisation user.",
                   properties: [
                       "user_id": string("The user's id."),
-                      "first_name": string("The user's first name."),
-                      "last_name": string("The user's last name."),
+                      "first_name": string("The user's first name.",
+                                           maxLength: UserNameValidation.maxLength),
+                      "last_name": string("The user's last name.",
+                                          maxLength: UserNameValidation.maxLength),
                       "country": string("Country."),
                       "role": string(
                           "Role: recruiter, developer, or interviewer.",

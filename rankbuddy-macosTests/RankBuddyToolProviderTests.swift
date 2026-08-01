@@ -1525,6 +1525,20 @@ struct RankBuddyToolProviderTests {
         }
     }
 
+    @Test func `update_user enforces shared name limits`() async {
+        for key in ["first_name", "last_name"] {
+            let result = await writeProvider().callTool(
+                "update_user",
+                arguments: [
+                    "user_id": .string("user-1"),
+                    key: .string(String(repeating: "n", count: 256))
+                ]
+            )
+            #expect(result.isError == true)
+            #expect(text(result).contains("at most"))
+        }
+    }
+
     @Test func `update_question rejects unsupported types`() async {
         let result = await writeProvider().callTool(
             "update_question",
