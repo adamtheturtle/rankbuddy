@@ -246,6 +246,11 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             .first
     }
 
+    nonisolated static func validatedPositiveID(_ id: Int?) -> Int? {
+        guard let id, id > 0 else { return nil }
+        return id
+    }
+
     private func invalidSearchQuery() -> CallTool.Result {
         errorResult("`query` must contain non-whitespace text.")
     }
@@ -575,10 +580,13 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
 
         do {
             let template = try await HackerRankClient(account: resolved).interviewTemplate(id: templateID)
+            guard let responseID = Self.validatedPositiveID(template.id) else {
+                return errorResult("HackerRank returned an interview template without a usable ID.")
+            }
             return jsonResult([
                 "account": resolved.label,
                 "template": [
-                    "id": template.id ?? templateID,
+                    "id": responseID,
                     "name": template.name ?? "",
                     "title": template.title ?? "",
                     "description": template.description ?? ""
