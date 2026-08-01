@@ -32,6 +32,10 @@ struct MarkdownExportTests {
         #expect(MarkdownExport.plainText(fromHTML: "&amp;lt;tag&amp;gt;") == "&lt;tag&gt;")
     }
 
+    @Test func `decimal and hexadecimal HTML entities are decoded`() {
+        #expect(MarkdownExport.plainText(fromHTML: "&#169; &#60; &#x1F600;") == "© < 😀")
+    }
+
     @Test func `HTML blocks and breaks retain text boundaries`() {
         let html = "<p>Hello</p><p>World<br>Again</p>"
         #expect(MarkdownExport.plainText(fromHTML: html) == "Hello\nWorld\nAgain")

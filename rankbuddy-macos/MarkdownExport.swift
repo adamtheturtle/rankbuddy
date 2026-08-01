@@ -65,23 +65,7 @@ enum MarkdownExport {
     }
 
     private nonisolated static func decodeHTMLEntitiesOnce(_ text: String) -> String {
-        let replacements = [
-            "&amp;": "&", "&lt;": "<", "&gt;": ">", "&#39;": "'",
-            "&quot;": "\"", "&nbsp;": " "
-        ]
-        guard let expression = try? NSRegularExpression(
-            pattern: "&(?:amp|lt|gt|quot|nbsp|#39);"
-        ) else { return text }
-
-        let mutable = NSMutableString(string: text)
-        let range = NSRange(location: 0, length: mutable.length)
-        for match in expression.matches(in: text, range: range).reversed() {
-            let entity = mutable.substring(with: match.range)
-            if let replacement = replacements[entity] {
-                mutable.replaceCharacters(in: match.range, with: replacement)
-            }
-        }
-        return mutable as String
+        HTMLCodeBlocks.decodeEntities(text)
     }
 
     nonisolated static func boundedText(_ text: String, maximumCharacters: Int) -> (text: String, omitted: Bool) {
