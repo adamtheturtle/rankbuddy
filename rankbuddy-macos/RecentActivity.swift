@@ -53,7 +53,9 @@ nonisolated struct RecentItem: Codable, Hashable, Identifiable {
         case .tests:
             guard status == "active" else { return false }
 
-            if let end = Self.parseWindowDate(endTime), now >= end { return false }
+            if let end = Self.parseWindowDate(endTime), now >= end {
+                return false
+            }
             return true
 
         case .interviews:
@@ -91,6 +93,10 @@ nonisolated struct RecentMenuRow: Identifiable {
 
     let item: RecentItem
     let id: Identity
+
+    var accountID: UUID {
+        id.accountID
+    }
 
     init(item: RecentItem, accountID: UUID) {
         self.item = item
@@ -145,6 +151,15 @@ nonisolated struct RecentActivityStore {
         FavoriteCollection.allCases
             .flatMap { recent($0, account: account) }
             .sorted { ($0.lastSeenAt ?? .distantPast) > ($1.lastSeenAt ?? .distantPast) }
+    }
+
+    /// All cached rows for a set of accounts, retaining each item's owner for deep links.
+    func recentAll(accounts: [UUID]) -> [RecentMenuRow] {
+        accounts
+            .flatMap { accountID in
+                recentAll(account: accountID).map { RecentMenuRow(item: $0, accountID: accountID) }
+            }
+            .sorted { ($0.item.lastSeenAt ?? .distantPast) > ($1.item.lastSeenAt ?? .distantPast) }
     }
 
     /// Removes every recent-activity snapshot belonging to an account.

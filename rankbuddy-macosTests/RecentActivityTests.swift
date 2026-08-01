@@ -118,6 +118,29 @@ struct RecentActivityTests {
         #expect(store.recentAll(account: account).map(\.id) == ["interview", "test"])
     }
 
+    @Test func `recentAll across accounts preserves owners and global ordering`() {
+        let store = store(#function)
+        let accountA = UUID()
+        let accountB = UUID()
+        store.record(
+            [RecentItem(collection: .tests, id: "older", title: "Older", subtitle: nil,
+                        lastSeenAt: Date(timeIntervalSince1970: 100))],
+            for: .tests,
+            account: accountA
+        )
+        store.record(
+            [RecentItem(collection: .tests, id: "newer", title: "Newer", subtitle: nil,
+                        lastSeenAt: Date(timeIntervalSince1970: 200))],
+            for: .tests,
+            account: accountB
+        )
+
+        let rows = store.recentAll(accounts: [accountA, accountB])
+
+        #expect(rows.map(\.item.id) == ["newer", "older"])
+        #expect(rows.map(\.accountID) == [accountB, accountA])
+    }
+
     @Test func `is scoped by account`() {
         let store = store(#function)
         let accountA = UUID()

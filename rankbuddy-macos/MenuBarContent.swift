@@ -94,6 +94,13 @@ struct MenuBarContent: View {
         return store.currentAccount
     }
 
+    private var activityRows: [RecentMenuRow] {
+        let accountIDs = store.isMergedView
+            ? store.accounts.map(\.id)
+            : [store.currentAccount?.id].compactMap(\.self)
+        return RecentActivityStore.shared.recentAll(accounts: accountIDs)
+    }
+
     /// Surfaces which account the menu's actions target, with an understandable state for
     /// the no-account and multi-account cases.
     @ViewBuilder private var accountSection: some View {
@@ -194,12 +201,12 @@ struct MenuBarContent: View {
     /// network work (#23). Suppressed when the Recent section is already filtered to active items
     /// (the `activeOnly` toggle), so the two don't render an identical list twice.
     @ViewBuilder private var activeSection: some View {
-        if !activeOnly, let account = store.currentAccount, displayedRecentCount > 0 {
-            let active = RecentActivityStore.shared.recentAll(account: account.id).filter(\.isActiveOrUpcoming)
+        if !activeOnly, displayedRecentCount > 0 {
+            let active = activityRows.filter(\.item.isActiveOrUpcoming)
             if !active.isEmpty {
                 Divider()
                 Section("Active & Upcoming") {
-                    itemRows(active, account: account) { _ in "dot.radiowaves.left.and.right" }
+                    itemRows(active) { _ in "dot.radiowaves.left.and.right" }
                 }
             }
         }
@@ -208,13 +215,12 @@ struct MenuBarContent: View {
     /// Recent items the current account has listed, read from the on-disk cache the main
     /// window populates — no second network stack (#23). Hidden when there's nothing cached.
     @ViewBuilder private var recentSection: some View {
-        if let account = store.currentAccount, displayedRecentCount > 0 {
-            let cached = RecentActivityStore.shared.recentAll(account: account.id)
-            let recents = cached.filter { $0.isIncludedInRecentSection(activeOnly: activeOnly) }
+        if displayedRecentCount > 0 {
+            let recents = activityRows.filter { $0.item.isIncludedInRecentSection(activeOnly: activeOnly) }
             if !recents.isEmpty {
                 Divider()
                 Section(activeOnly ? "Active & Upcoming" : "Recent") {
-                    itemRows(recents, account: account) { $0.collection.systemImage }
+                    itemRows(recents) { $0.collection.systemImage }
                 }
             }
         }
@@ -224,19 +230,15 @@ struct MenuBarContent: View {
     /// line (mirroring PadBuddy). Each row deep-links to the item in-app and brings the window
     /// forward. `icon` picks the SF Symbol per item so the active and recent sections can differ.
     @ViewBuilder private func itemRows(
-        _ items: [RecentItem],
-        account: Account,
+        _ rows: [RecentMenuRow],
         icon: @escaping (RecentItem) -> String
     ) -> some View {
-        let rows = items.prefix(displayedRecentCount).map {
-            RecentMenuRow(item: $0, accountID: account.id)
-        }
-        ForEach(rows) { row in
+        ForEach(rows.prefix(displayedRecentCount)) { row in
             let item = row.item
             Button {
                 RankBuddyDeepLink.open(
                     collection: item.collection,
-                    accountID: account.id.uuidString,
+                    accountID: row.accountID.uuidString,
                     itemID: item.id
                 )
                 showMainWindow()
@@ -244,8 +246,8 @@ struct MenuBarContent: View {
                 Label(item.title, systemImage: icon(item))
             }
         }
-        if items.count > displayedRecentCount {
-            Text("…\(items.count - displayedRecentCount) more")
+        if rows.count > displayedRecentCount {
+            Text("…\(rows.count - displayedRecentCount) more")
                 .foregroundStyle(.secondary)
         }
     }
