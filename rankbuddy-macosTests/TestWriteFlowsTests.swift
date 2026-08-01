@@ -52,6 +52,11 @@ struct TestWriteFlowsTests {
         #expect(!TestDirtyField.needsNameRebase(edited: "Local", original: "Old"))
     }
 
+    @Test func `assessment lists deduplicate while preserving first spelling`() {
+        #expect(TestListEditing.values(from: " Swift, swift, python, SWIFT ") == ["Swift", "python"])
+        #expect(TestListEditing.values(from: " , \n") == nil)
+    }
+
     @Test func `assessment schedule accepts an ordered ISO window`() {
         #expect(TestScheduleValidation.error(
             startTime: "2026-08-01T09:00:00Z",

@@ -69,6 +69,18 @@ nonisolated enum TestDirtyField {
     }
 }
 
+nonisolated enum TestListEditing {
+    static func values(from text: String) -> [String]? {
+        var seen: Set<String> = []
+        let values = text.split(separator: ",").map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }.filter { !$0.isEmpty }.filter {
+            seen.insert($0.folding(options: .caseInsensitive, locale: .current)).inserted
+        }
+        return values.isEmpty ? nil : values
+    }
+}
+
 /// Whether the test editor is creating a new test or editing an existing assessment.
 enum TestEditorMode {
     case create
@@ -152,8 +164,8 @@ struct TestEditorSheet: View {
     private var options: TestWriteOptions {
         let duration = Int(duration.trimmingCharacters(in: .whitespacesAndNewlines))
         let cutoffScore = Int(cutoffScore.trimmingCharacters(in: .whitespacesAndNewlines))
-        let languages = commaSeparated(languages)
-        let tags = commaSeparated(tags)
+        let languages = TestListEditing.values(from: languages)
+        let tags = TestListEditing.values(from: tags)
 
         switch mode {
         case .create:
@@ -309,13 +321,6 @@ struct TestEditorSheet: View {
             cursor = next
         }
         throw TestEditRebaseError.testNotFound
-    }
-
-    private func commaSeparated(_ value: String) -> [String]? {
-        let values = value.split(separator: ",").map {
-            $0.trimmingCharacters(in: .whitespacesAndNewlines)
-        }.filter { !$0.isEmpty }
-        return values.isEmpty ? nil : values
     }
 }
 
