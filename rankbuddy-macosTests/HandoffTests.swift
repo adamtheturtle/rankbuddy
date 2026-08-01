@@ -72,6 +72,20 @@ struct HandoffTests {
         #expect(target?.itemID == "q7")
     }
 
+    @Test func `configure does not advertise an untrusted browser fallback`() {
+        let activity = NSUserActivity(activityType: RankBuddyUserActivity.activityType)
+        let foreignURL = URL(string: "https://attacker.example/interview/i1")
+
+        RankBuddyUserActivity.configure(
+            activity,
+            ref: .init(collection: .interviews, accountID: accountID, itemID: "i1"),
+            title: "Interview",
+            webURL: foreignURL
+        )
+
+        #expect(activity.webpageURL == nil)
+    }
+
     @Test func `target requires a bounded UUID account and control-free item id`() {
         func info(accountID: String, itemID: String) -> [AnyHashable: Any] {
             [

@@ -81,7 +81,7 @@ enum RankBuddyUserActivity {
         // Handoff + Spotlight eligibility via buddy-kit's shared `applyBuddyHandoffFlags` (#645),
         // now `nonisolated` (buddy-kit 0.11.0 / #5) so this `nonisolated` builder can call it.
         activity.applyBuddyHandoffFlags()
-        activity.webpageURL = webURL
+        activity.webpageURL = webURL.flatMap { isTrustedFallbackURL($0) ? $0 : nil }
         activity.userInfo = [
             Key.collection: ref.collection.rawValue,
             Key.accountID: ref.accountID,
