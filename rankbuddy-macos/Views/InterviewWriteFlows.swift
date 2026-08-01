@@ -13,7 +13,9 @@ struct MissingPadURL: LocalizedError {
 }
 
 nonisolated func padDestinationURL(rawURL: String?, isMock: Bool) throws -> URL? {
-    if isMock { return nil }
+    if isMock {
+        return nil
+    }
     guard let rawURL, let url = URL.remoteWebURL(from: rawURL) else {
         throw MissingPadURL()
     }
@@ -39,15 +41,25 @@ nonisolated enum InterviewScheduleValidation {
     static let maxEmailLength = 320
     static let maxNotesLength = 10000
 
+    static func titleIssue(_ title: String) -> String? {
+        title.count > maxTitleLength ? "Title can be at most \(maxTitleLength) characters." : nil
+    }
+
+    static func notesIssue(_ notes: String?) -> String? {
+        guard let notes, notes.count > maxNotesLength else { return nil }
+
+        return "Notes can be at most \(maxNotesLength.formatted()) characters."
+    }
+
     static func textIssue(title: String, candidateEmail: String?, notes: String?) -> String? {
-        if title.count > maxTitleLength {
-            return "Title can be at most \(maxTitleLength) characters."
+        if let issue = titleIssue(title) {
+            return issue
         }
         if let candidateEmail, candidateEmail.count > maxEmailLength {
             return "Candidate email can be at most \(maxEmailLength) characters."
         }
-        if let notes, notes.count > maxNotesLength {
-            return "Notes can be at most \(maxNotesLength.formatted()) characters."
+        if let issue = notesIssue(notes) {
+            return issue
         }
         return nil
     }

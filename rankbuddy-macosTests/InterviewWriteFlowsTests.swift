@@ -31,6 +31,10 @@ struct InterviewWriteFlowsTests {
             candidateEmail: nil,
             notes: String(repeating: "x", count: 10001)
         )?.contains("Notes") == true)
+        #expect(InterviewScheduleValidation.titleIssue(String(repeating: "x", count: 256)) != nil)
+        #expect(InterviewScheduleValidation.titleIssue(String(repeating: "x", count: 255)) == nil)
+        #expect(InterviewScheduleValidation.notesIssue(String(repeating: "x", count: 10001)) != nil)
+        #expect(InterviewScheduleValidation.notesIssue(String(repeating: "x", count: 10000)) == nil)
     }
 
     @Test func `scheduled interviews require a future start`() {

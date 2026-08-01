@@ -89,6 +89,10 @@ struct InterviewDetailView: View {
         guard canEdit else { return nil }
 
         return { newTitle in
+            if let issue = InterviewScheduleValidation.titleIssue(newTitle) {
+                editError = issue
+                return false
+            }
             guard await update(InterviewUpdateOptions(title: newTitle)) else { return false }
 
             editedTitle = newTitle
@@ -173,6 +177,10 @@ struct InterviewDetailView: View {
             if canEdit {
                 Section("Notes") {
                     InlineEditableText(text: displayNotes, placeholder: "Add notes") { newNotes in
+                        if let issue = InterviewScheduleValidation.notesIssue(newNotes) {
+                            editError = issue
+                            return false
+                        }
                         guard await update(InterviewUpdateOptions(notes: newNotes)) else { return false }
 
                         editedNotes = newNotes
@@ -303,11 +311,19 @@ struct InterviewDetailView: View {
     }
 
     private var deleteErrorPresented: Binding<Bool> {
-        Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })
+        Binding(get: { deleteError != nil }, set: {
+            if !$0 {
+                deleteError = nil
+            }
+        })
     }
 
     private var editErrorPresented: Binding<Bool> {
-        Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })
+        Binding(get: { editError != nil }, set: {
+            if !$0 {
+                editError = nil
+            }
+        })
     }
 
     @ViewBuilder
