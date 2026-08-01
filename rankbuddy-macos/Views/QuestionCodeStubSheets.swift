@@ -109,17 +109,7 @@ struct GenerateCodeStubsSheet: View {
     /// "counts: int[], target: int" → [(counts, int[]), (target, int)]; malformed pairs are
     /// dropped rather than failing the whole request.
     private var parsedParameters: [CodeStubParameter]? {
-        let pairs = parameters.split(separator: ",").compactMap { pair -> CodeStubParameter? in
-            let parts = pair.split(separator: ":", maxSplits: 1)
-            guard parts.count == 2 else { return nil }
-
-            let name = parts[0].trimmingCharacters(in: .whitespaces)
-            let type = parts[1].trimmingCharacters(in: .whitespaces)
-            guard !name.isEmpty, !type.isEmpty else { return nil }
-
-            return CodeStubParameter(name: name, type: type)
-        }
-        return pairs.isEmpty ? nil : pairs
+        CodeStubValidation.parsedParameters(in: parameters)
     }
 }
 
@@ -213,6 +203,20 @@ struct CustomCodeStubSheet: View {
 // MARK: - Request bodies
 
 nonisolated enum CodeStubValidation {
+    static func parsedParameters(in text: String) -> [CodeStubParameter]? {
+        let pairs = text.split(separator: ",").compactMap { pair -> CodeStubParameter? in
+            let parts = pair.split(separator: ":", maxSplits: 1)
+            guard parts.count == 2 else { return nil }
+
+            let name = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            let type = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty, !type.isEmpty else { return nil }
+
+            return CodeStubParameter(name: name, type: type)
+        }
+        return pairs.isEmpty ? nil : pairs
+    }
+
     static func malformedParameter(in text: String) -> String? {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
 

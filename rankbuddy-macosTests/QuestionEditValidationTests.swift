@@ -78,6 +78,13 @@ struct QuestionEditValidationTests {
         #expect(CodeStubValidation.malformedParameter(in: "counts: int[], target: int") == nil)
     }
 
+    @Test func `generated stub parameters trim newlines from request values`() {
+        let parameters = CodeStubValidation.parsedParameters(in: "\n name\n: \nint\n")
+
+        #expect(parameters?.first?.name == "name")
+        #expect(parameters?.first?.type == "int")
+    }
+
     @Test func `blank function names normalize to nil`() {
         #expect(nonBlank(" \n\t ") == nil)
         #expect(nonBlank(" solve \n") == "solve")
