@@ -856,7 +856,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/buddy-kit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.16.13;
+				version = 0.17.0;
 			};
 		};
 		663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */ = {
@@ -864,7 +864,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/MCPKit/";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.3;
+				minimumVersion = 0.4.0;
 			};
 		};
 		663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
@@ -880,7 +880,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/FastList";
 			requirement = {
 				kind = exactVersion;
-				version = 0.8.0;
+				version = 0.8.1;
 			};
 		};
 		6676A0A92FEEB24F0023907A /* XCRemoteSwiftPackageReference "Sparkle" */ = {
@@ -888,7 +888,7 @@
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.9.3;
+				minimumVersion = 2.9.5;
 			};
 		};
 		6676A0AC2FEEB2710023907A /* XCRemoteSwiftPackageReference "swift-sdk" */ = {
@@ -904,7 +904,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/CommandPaletteKit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.2.1;
+				version = 0.2.2;
 			};
 		};
 		66AE79CC2FFE5C93003A66B1 /* XCRemoteSwiftPackageReference "PrintableView" */ = {
@@ -912,7 +912,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/PrintableView";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.2;
+				minimumVersion = 0.3.0;
 			};
 		};
 		66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */ = {
@@ -936,7 +936,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/SafeURLKit.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.1.1;
+				version = 0.1.2;
 			};
 		};
 		66C000012FFF000000000021 /* XCRemoteSwiftPackageReference "MCPClientInstall" */ = {
@@ -944,7 +944,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/MCPClientInstall";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.2;
+				minimumVersion = 0.3.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

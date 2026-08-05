@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/buddy-kit",
       "state" : {
-        "revision" : "c6a62ad4b155a780ef4f4acff626cf650a22cf17",
-        "version" : "0.16.13"
+        "revision" : "b9ce49caadb2064800caa97a6949690aff095be0",
+        "version" : "0.17.0"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/CommandPaletteKit",
       "state" : {
-        "revision" : "01b6b48c490f9dfdffb6a6175d3b206a88bd015a",
-        "version" : "0.2.1"
+        "revision" : "6ae9771116cc4e93f2d35ce6d8c808c75212505d",
+        "version" : "0.2.2"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/FastList",
       "state" : {
-        "revision" : "bbcb9d47be99e0c0d584fc7b3e29fa5bd31a5ee0",
-        "version" : "0.8.0"
+        "revision" : "70af3e42f353b92643ca87093d86ba5c1bc8f743",
+        "version" : "0.8.1"
       }
     },
     {
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/MCPClientInstall",
       "state" : {
-        "revision" : "c0e93a3e5b73be91a39af93a361a1c54d72bcc66",
-        "version" : "0.2.2"
+        "revision" : "0b4772a2bc7c5cbf71a8b441e0ad56c53fc246ba",
+        "version" : "0.3.1"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/MCPKit/",
       "state" : {
-        "revision" : "0175b55503e78730523b98a0a743452efbb97f99",
-        "version" : "0.2.3"
+        "revision" : "24cc180b954ecaf8078e93ea3a12dacd7004e2a7",
+        "version" : "0.4.0"
       }
     },
     {
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/PrintableView",
       "state" : {
-        "revision" : "4c8da3f1a66c16a0e80da1c103f66a171fb08435",
-        "version" : "0.1.2"
+        "revision" : "8cb4a2ee0e043193129f9236a31061b3660032f0",
+        "version" : "0.3.0"
       }
     },
     {
@@ -96,8 +96,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/SafeURLKit.git",
       "state" : {
-        "revision" : "f71fa0333026fcd3ee357f86154997eea3b31a50",
-        "version" : "0.1.1"
+        "revision" : "115cca1b70d9da5f3487eac1f7aeba2360737fd0",
+        "version" : "0.1.2"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle",
       "state" : {
-        "revision" : "b6496a74a087257ef5e6da1c5b29a447a60f5bd7",
-        "version" : "2.9.4"
+        "revision" : "79bc9e872948e47877e76f194cb0c8e0412b0b90",
+        "version" : "2.9.5"
       }
     },
     {
