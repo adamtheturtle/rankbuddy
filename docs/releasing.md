@@ -31,12 +31,16 @@ version=1.0.0
 build="$(git rev-list --count HEAD)"
 scripts/validate-release-version.sh "$version" "$build" "v$version"
 
-xcodebuild build \
+scripts/run-xcodebuild.sh ReleaseBuild.log build \
+  -quiet \
+  -showBuildTimingSummary \
   -project rankbuddy-macos.xcodeproj \
   -scheme rankbuddy-macos \
   -configuration Release \
   -destination 'generic/platform=macOS' \
   -derivedDataPath DerivedData-Release \
+  -resultBundlePath ReleaseBuild.xcresult \
+  -onlyUsePackageVersionsFromResolvedFile \
   MARKETING_VERSION="$version" \
   CURRENT_PROJECT_VERSION="$build" \
   CODE_SIGN_IDENTITY=- \

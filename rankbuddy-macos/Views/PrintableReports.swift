@@ -3,6 +3,7 @@
 //  rankbuddy-macos
 //
 
+import AppKit
 import BuddyDesignSystem
 import HackerRankKit
 import PrintableView
@@ -16,7 +17,11 @@ import SwiftUI
 
 @MainActor
 func printReport(_ report: some View, jobTitle: String) {
-    printDocument(report, jobTitle: jobTitle)
+    printDocument(report, jobTitle: jobTitle) { error in
+        let alert = NSAlert(error: error)
+        alert.messageText = "Couldn’t Print Report"
+        alert.runModal()
+    }
 }
 
 /// A toolbar button that prints (or saves as PDF) the supplied report, bound to ⌘P.

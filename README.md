@@ -52,17 +52,24 @@ configured live accounts continue using their authenticated network sessions.
 
 ## Development
 
+- **Preflight:** run `./scripts/preflight.sh` before pushing. It resolves the
+  committed package graph, lints, checks formatting, builds the macOS app, runs
+  the parallel Fast test plan, and checks staged and unstaged patches for
+  whitespace errors. Full logs and result bundles are retained under `.context/`.
+
 - **Build:** open `rankbuddy-macos.xcodeproj` in Xcode and build the `rankbuddy-macos`
   scheme, or run the project's build via the Xcode tooling.
 - **Lint** (matching CI):
 
   ```sh
-  swiftformat . --lint     # formatting (SwiftFormat owns formatting)
-  swiftlint --strict       # correctness (SwiftLint owns correctness)
+  swiftformat . --lint --config .swiftformat  # formatting; ignore parent configs
+  swiftlint lint --strict  # fast correctness rules
   periphery scan --strict  # unused code (nightly/manual CI)
   ```
 
   Configuration lives in `.swiftformat`, `.swiftlint.yml`, and `.periphery.yml`.
+  Analyzer-only SwiftLint rules run in CI against the compiler log captured from
+  a clean macOS build; listing them in `.swiftlint.yml` alone does not enforce them.
 
 - **Release type-check budget:** Release builds pass
   `-warn-long-expression-type-checking=250` and

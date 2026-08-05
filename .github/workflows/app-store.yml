@@ -44,13 +44,28 @@ jobs:
       - name: Build unsigned App Store product
         run: |
           set -euo pipefail
-          xcodebuild build \
+          scripts/run-xcodebuild.sh AppStoreBuild.log build \
+            -quiet \
+            -showBuildTimingSummary \
             -project rankbuddy-macos.xcodeproj \
             -scheme RankBuddy-AppStore \
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -derivedDataPath DerivedData-AppStore \
+            -resultBundlePath AppStoreBuild.xcresult \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload failed build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-store-validation-diagnostics
+          path: |
+            AppStoreBuild.log
+            AppStoreBuild.xcresult
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Reject direct-download updater code
         run: |
@@ -129,12 +144,16 @@ jobs:
           set -euo pipefail
           build="$(git rev-list --count HEAD)"
           scripts/validate-release-version.sh "$MARKETING_VERSION" "$build" "v$MARKETING_VERSION"
-          xcodebuild archive \
+          scripts/run-xcodebuild.sh AppStoreArchive.log archive \
+            -quiet \
+            -showBuildTimingSummary \
             -project rankbuddy-macos.xcodeproj \
             -scheme RankBuddy-AppStore \
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -archivePath "$RUNNER_TEMP/RankBuddy.xcarchive" \
+            -resultBundlePath AppStoreArchive.xcresult \
+            -onlyUsePackageVersionsFromResolvedFile \
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$build" \
             CODE_SIGN_STYLE=Manual \
@@ -169,7 +188,8 @@ jobs:
           /usr/libexec/PlistBuddy \
             -c "Add :provisioningProfiles:com.adamdangoor.rankbuddy string $PROFILE_NAME" \
             "$export_options"
-          xcodebuild -exportArchive \
+          scripts/run-xcodebuild.sh AppStoreExport.log -exportArchive \
+            -quiet \
             -archivePath "$RUNNER_TEMP/RankBuddy.xcarchive" \
             -exportPath "$RUNNER_TEMP/RankBuddy-AppStore" \
             -exportOptionsPlist "$export_options" \
@@ -177,3 +197,15 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Upload failed archive diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-store-archive-diagnostics
+          path: |
+            AppStoreArchive.log
+            AppStoreArchive.xcresult
+            AppStoreExport.log
+          if-no-files-found: warn
+          retention-days: 14

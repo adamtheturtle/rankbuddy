@@ -53,6 +53,7 @@ included:
   - rankbuddy-macosUITests
 
 excluded:
+  - .context
   - build_release    # SPM checkouts / build output
   - DerivedData
 
@@ -147,9 +148,8 @@ opt_in_rules:
   - xct_specific_matcher
   - yoda_condition
 
-# Analyzer-only rules. These require a compiler log and run under
-# `swiftlint analyze`, not plain `swiftlint lint`. The CI lint gate doesn't run
-# them, but listing them here documents intent and lets a local `analyze` use them.
+# Analyzer-only rules. CI feeds these the unsuppressed compiler log from its
+# macOS build; plain `swiftlint lint` cannot enforce them.
 analyzer_rules:
   - capture_variable
   - typesafe_array_init
