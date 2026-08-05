@@ -856,7 +856,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/buddy-kit";
 			requirement = {
 				kind = exactVersion;
-				version = 0.17.0;
+				version = 0.18.0;
 			};
 		};
 		663804482FF64E51004A9FCE /* XCRemoteSwiftPackageReference "MCPKit" */ = {
@@ -864,7 +864,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/MCPKit/";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.4.0;
+				minimumVersion = 0.5.0;
 			};
 		};
 		663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
@@ -880,7 +880,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/FastList";
 			requirement = {
 				kind = exactVersion;
-				version = 0.8.1;
+				version = 0.9.0;
 			};
 		};
 		6676A0A92FEEB24F0023907A /* XCRemoteSwiftPackageReference "Sparkle" */ = {
@@ -912,7 +912,7 @@
 			repositoryURL = "https://github.com/adamtheturtle/PrintableView";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.3.0;
+				minimumVersion = 0.4.0;
 			};
 		};
 		66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */ = {
