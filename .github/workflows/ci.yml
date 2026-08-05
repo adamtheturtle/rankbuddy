@@ -55,9 +55,8 @@ jobs:
 
   # Lint any standalone shell scripts. actionlint only covers shell embedded in
   # workflow `run:` blocks, so scripts under the repo would otherwise go
-  # unchecked. shellcheck is preinstalled on the runner. The repo has no scripts
-  # yet, so the step finds them dynamically and no-ops cleanly when there are none
-  # rather than erroring on a missing path.
+  # unchecked. shellcheck is preinstalled on the runner; scripts are discovered
+  # dynamically so additions automatically join the gate.
   shellcheck:
     name: Lint shell scripts
     runs-on: ubuntu-latest
@@ -142,7 +141,7 @@ jobs:
           unzip -o -q swiftformat.zip
           chmod +x swiftformat_linux
           ./swiftformat_linux --version
-          ./swiftformat_linux . --lint --reporter github-actions-log
+          ./swiftformat_linux . --lint --config .swiftformat --reporter github-actions-log
 
   swift-package-tests:
     name: Standalone Swift package tests
@@ -184,6 +183,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # The analyzer ratchets unused imports in files changed by this commit.
+          fetch-depth: 2
 
       - name: Configure buddy-kit access
         uses: ./.github/actions/configure-buddy-kit
@@ -197,16 +199,49 @@ jobs:
 
       - name: Build Debug
         run: |
-          set -o pipefail
-          xcodebuild build \
+          set -euo pipefail
+          # SwiftLint needs the unsuppressed compiler invocations. The wrapper
+          # keeps them in the log without flooding the Actions console.
+          scripts/run-xcodebuild.sh PRBuild.log build \
+            -showBuildTimingSummary \
             -project rankbuddy-macos.xcodeproj \
             -scheme rankbuddy-macos \
             -configuration Debug \
             -destination 'platform=macOS' \
             -derivedDataPath DerivedData-PR \
+            -resultBundlePath PRBuild.xcresult \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Install SwiftLint analyzer
+        env:
+          SWIFTLINT_VERSION: 0.63.3
+        run: |
+          set -euo pipefail
+          curl -sSfL -o swiftlint.zip \
+            "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/portable_swiftlint.zip"
+          unzip -o -q swiftlint.zip
+          chmod +x swiftlint
+          ./swiftlint version
+
+      - name: SwiftLint analyzer rules
+        run: |
+          set -euo pipefail
+          SWIFTLINT_BIN="$PWD/swiftlint" \
+            scripts/run-swiftlint-analyzer.sh PRBuild.log
+
+      - name: Upload failed build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-build-diagnostics
+          path: |
+            PRBuild.log
+            PRBuild.xcresult
+          if-no-files-found: warn
+          retention-days: 14
 
   full-tests:
     name: Full tests
@@ -242,8 +277,10 @@ jobs:
 
       - name: Test Full plan
         run: |
-          set -o pipefail
-          xcodebuild test \
+          set -euo pipefail
+          scripts/run-xcodebuild.sh FullTests.log test \
+            -quiet \
+            -showBuildTimingSummary \
             -project rankbuddy-macos.xcodeproj \
             -scheme rankbuddy-macos \
             -testPlan Full \
@@ -251,6 +288,7 @@ jobs:
             -destination 'platform=macOS' \
             -derivedDataPath DerivedData-Full \
             -resultBundlePath Full.xcresult \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
@@ -260,7 +298,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: full-tests-xcresult
-          path: Full.xcresult
+          path: |
+            Full.xcresult
+            FullTests.log
           if-no-files-found: ignore
 
   release-build:
@@ -287,14 +327,17 @@ jobs:
 
       - name: Build Release
         run: |
-          set -o pipefail
-          xcodebuild build \
+          set -euo pipefail
+          scripts/run-xcodebuild.sh ReleaseBuild.log build \
+            -quiet \
+            -showBuildTimingSummary \
             -project rankbuddy-macos.xcodeproj \
             -scheme rankbuddy-macos \
             -configuration Release \
             -destination 'platform=macOS' \
             -derivedDataPath DerivedData-Release \
             -resultBundlePath Release.xcresult \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
@@ -304,7 +347,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-build-xcresult
-          path: Release.xcresult
+          path: |
+            Release.xcresult
+            ReleaseBuild.log
           if-no-files-found: ignore
 
   tsan-tests:
@@ -331,8 +376,10 @@ jobs:
 
       - name: Test TSan plan
         run: |
-          set -o pipefail
-          xcodebuild test \
+          set -euo pipefail
+          scripts/run-xcodebuild.sh TSanTests.log test \
+            -quiet \
+            -showBuildTimingSummary \
             -project rankbuddy-macos.xcodeproj \
             -scheme rankbuddy-macos \
             -testPlan TSan \
@@ -340,6 +387,7 @@ jobs:
             -destination 'platform=macOS' \
             -derivedDataPath DerivedData-TSan \
             -resultBundlePath TSan.xcresult \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
@@ -349,7 +397,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: tsan-tests-xcresult
-          path: TSan.xcresult
+          path: |
+            TSan.xcresult
+            TSanTests.log
           if-no-files-found: ignore
 
   # Dead-code detection (#21). Periphery compiles the app, so it stays on the

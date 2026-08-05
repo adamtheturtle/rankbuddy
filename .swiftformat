@@ -3,7 +3,8 @@
 # Pairs with .swiftlint.yml: SwiftFormat owns *formatting*, SwiftLint owns
 # *correctness*. The two are kept non-overlapping so they never fight.
 #
-# Enforced in CI via `swiftformat . --lint` (see .github/workflows/ci.yml).
+# Enforced in CI via `swiftformat . --lint --config .swiftformat` so a parent
+# checkout cannot silently alter or exclude this repository.
 
 --swiftversion 6.2
 
@@ -26,4 +27,4 @@
 --disable wrapMultilineStatementBraces
 
 # Leave build output and SPM checkouts untouched.
---exclude build_release,DerivedData
+--exclude .context,build_release,DerivedData

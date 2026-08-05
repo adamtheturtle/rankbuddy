@@ -10,6 +10,7 @@ DerivedData/
 build/
 build_release/
 *.xcresult
+.context/
 
 # Node tooling for the website (docs/). package-lock.json IS committed (below);
 # the installed tree is not.

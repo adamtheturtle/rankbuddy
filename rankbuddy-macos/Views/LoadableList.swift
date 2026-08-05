@@ -455,8 +455,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 // FastList hosts each row in a recycled NSHostingView, so toggling a favourite
                 // doesn't re-render the star on its own — the star only turns yellow once the
                 // cell is rebuilt. Keying the list on the current favourites forces that rebuild
-                // the moment the set changes, matching PadBuddy's `.reloadID` (#41).
-                .reloadID(favoritesReloadID)
+                // the moment the set changes, matching PadBuddy's row-content identity (#41).
+                .rowContentID(favoritesReloadID)
                 .onTopRowChange { persistScrollAnchor($0) }
                 // Load-more keys off the *bottom* of the viewport (FastList #1, shipped in 0.3.0),
                 // so it fires on any window size, never stranding a list on its first page (#85).

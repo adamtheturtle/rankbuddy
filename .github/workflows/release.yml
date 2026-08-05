@@ -57,12 +57,16 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           build="$(git rev-list --count HEAD)"
           scripts/validate-release-version.sh "$version" "$build" "$GITHUB_REF_NAME"
-          xcodebuild build \
+          scripts/run-xcodebuild.sh ReleaseBuild.log build \
+            -quiet \
+            -showBuildTimingSummary \
             -project rankbuddy-macos.xcodeproj \
             -scheme rankbuddy-macos \
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -derivedDataPath DerivedData-Release \
+            -resultBundlePath ReleaseBuild.xcresult \
+            -onlyUsePackageVersionsFromResolvedFile \
             MARKETING_VERSION="$version" \
             CURRENT_PROJECT_VERSION="$build" \
             INFOPLIST_KEY_SUFeedURL="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/appcast.xml" \
@@ -70,6 +74,17 @@ jobs:
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload failed build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-build-diagnostics
+          path: |
+            ReleaseBuild.log
+            ReleaseBuild.xcresult
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Import signing certificate
         uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466

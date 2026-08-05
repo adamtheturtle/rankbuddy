@@ -230,13 +230,15 @@ nonisolated enum MCPActivityLog {
         }
     }
 
-    /// Coordinates the GUI and every `--mcp` subprocess through a sidecar advisory lock. The
-    /// lock file is never removed, so deleting/recreating the JSONL file cannot split lockers
-    /// across different inodes. Failure is closed: no file operation runs without coordination.
+    /// Coordinates multi-step operations in the GUI and every `--mcp` subprocess through a
+    /// sidecar advisory lock. This intentionally differs from MCPKit's adjacent `.lock`, which
+    /// serializes each JSONL operation: reusing that name here would recursively acquire the
+    /// same `flock` through a second descriptor and deadlock. The generation lock is never
+    /// removed, so deleting/recreating the JSONL file cannot split lockers across inodes.
     private static func withLock<Result>(for url: URL, mode: Int32, operation: () -> Result) -> Result? {
         let directory = url.deletingLastPathComponent()
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let lockURL = url.appendingPathExtension("lock")
+        let lockURL = url.appendingPathExtension("generation.lock")
         let descriptor = open(lockURL.path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
         guard descriptor >= 0 else { return nil }
 
