@@ -257,7 +257,7 @@ jobs:
 
       - name: Upload Full test result
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: full-tests-xcresult
           path: Full.xcresult
@@ -301,7 +301,7 @@ jobs:
 
       - name: Upload Release build result
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-build-xcresult
           path: Release.xcresult
@@ -346,7 +346,7 @@ jobs:
 
       - name: Upload TSan test result
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tsan-tests-xcresult
           path: TSan.xcresult
