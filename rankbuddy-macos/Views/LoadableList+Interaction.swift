@@ -61,7 +61,7 @@ extension LoadableList {
         }
     }
 
-    /// A change token over the current favourites, used as the FastList `reloadID` so the star
+    /// A change token over the current favourites, used as the FastList `rowContentID` so the star
     /// column rebuilds (and turns yellow) the instant an item is pinned or unpinned. Sorted so the
     /// token is order-independent — only membership changes trigger a reload, not reordering.
     var favoritesReloadID: FavoritesReloadIdentity {
