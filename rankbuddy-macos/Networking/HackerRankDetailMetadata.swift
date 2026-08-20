@@ -116,7 +116,7 @@ nonisolated struct TestDetailMetadata: Decodable {
     var cutoffScore: Int?
     var tags: [String]?
     var library: String?
-    var role: String?
+    var roleIDs: [String]?
     var skills: [String]?
     var type: String?
     var questions: [String]?
@@ -141,7 +141,7 @@ nonisolated struct TestDetailMetadata: Decodable {
         case cutoffScore = "cutoff_score"
         case tags
         case library
-        case role
+        case roleIDs = "role_ids"
         case skills
         case type
         case questions
@@ -151,31 +151,55 @@ nonisolated struct TestDetailMetadata: Decodable {
     }
 
     func applying(to test: Test) -> Test {
-        Test(
+        let mergedName = name ?? test.name
+        let mergedUniqueID = uniqueID ?? test.uniqueID
+        let mergedStartTime = startTime ?? test.startTime
+        let mergedEndTime = endTime ?? test.endTime
+        let mergedDuration = duration ?? test.duration
+        let mergedOwner = owner ?? test.owner
+        let mergedInstructions = instructions ?? test.instructions
+        let mergedStarred = starred ?? test.starred
+        let mergedCreatedAt = createdAt ?? test.createdAt
+        let mergedState = state ?? test.state
+        let mergedLocked = locked ?? test.locked
+        let mergedDraft = draft ?? test.draft
+        let mergedLanguages = languages ?? test.languages
+        let mergedCutoffScore = cutoffScore ?? test.cutoffScore
+        let mergedTags = tags ?? test.tags
+        let mergedLibrary = library ?? test.library
+        let mergedRoleIDs = roleIDs ?? test.roleIDs
+        let mergedSkills = skills ?? test.skills
+        let mergedType = type ?? test.type
+        let mergedQuestions = questions ?? test.questions
+        let mergedShuffleQuestions = shuffleQuestions ?? test.shuffleQuestions
+        let mergedEnableProctoring = enableProctoring ?? test.enableProctoring
+        let mergedSections = sections ?? test.sections
+
+        return Test(
             id: test.id,
-            uniqueID: uniqueID ?? test.uniqueID,
-            name: name ?? test.name,
-            startTime: startTime ?? test.startTime,
-            endTime: endTime ?? test.endTime,
-            duration: duration ?? test.duration,
-            owner: owner ?? test.owner,
-            instructions: instructions ?? test.instructions,
-            starred: starred ?? test.starred,
-            createdAt: createdAt ?? test.createdAt,
-            state: state ?? test.state,
-            locked: locked ?? test.locked,
-            draft: draft ?? test.draft,
-            languages: languages ?? test.languages,
-            cutoffScore: cutoffScore ?? test.cutoffScore,
-            tags: tags ?? test.tags,
-            library: library ?? test.library,
-            role: role ?? test.role,
-            skills: skills ?? test.skills,
-            type: type ?? test.type,
-            questions: questions ?? test.questions,
-            shuffleQuestions: shuffleQuestions ?? test.shuffleQuestions,
-            enableProctoring: enableProctoring ?? test.enableProctoring,
-            sections: sections ?? test.sections
+            uniqueID: mergedUniqueID,
+            name: mergedName,
+            startTime: mergedStartTime,
+            endTime: mergedEndTime,
+            duration: mergedDuration,
+            owner: mergedOwner,
+            instructions: mergedInstructions,
+            starred: mergedStarred,
+            createdAt: mergedCreatedAt,
+            state: mergedState,
+            locked: mergedLocked,
+            draft: mergedDraft,
+            languages: mergedLanguages,
+            cutoffScore: mergedCutoffScore,
+            tags: mergedTags,
+            roleIDs: mergedRoleIDs,
+            library: mergedLibrary,
+            skills: mergedSkills,
+            type: mergedType,
+            questions: mergedQuestions,
+            sections: mergedSections,
+            shuffleQuestions: mergedShuffleQuestions,
+            enableProctoring: mergedEnableProctoring
         )
     }
 }

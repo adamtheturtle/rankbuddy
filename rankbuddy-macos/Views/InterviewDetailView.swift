@@ -539,8 +539,8 @@ struct TranscriptMessageRow: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(isCandidate ? Color.accentColor : Color.secondary)
                 Spacer()
-                if let timestamp = message.timestamp {
-                    Text(Date(timeIntervalSince1970: TimeInterval(timestamp)), style: .time)
+                if let sentAt = message.sentAt {
+                    Text(sentAt, style: .time)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -558,7 +558,7 @@ struct TranscriptMessageRow: View {
 #Preview("Transcript") {
     let json = #"""
     {"messages":[
-      {"messageId":"m1","author":"Ian Interviewer","candidate":false,"timestamp":1746450000,
+      {"messageId":"m1","author":"Ian Interviewer","candidate":false,"timestamp":1746450000000,
        "text":"Welcome! Let's start with a brief warm-up question."}
     ]}
     """#

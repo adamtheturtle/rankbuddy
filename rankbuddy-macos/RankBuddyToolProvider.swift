@@ -308,7 +308,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
             "id": id,
             "name": template.name ?? "",
             "subject": template.subject ?? "",
-            "access": template.access ?? ""
+            "content": template.content ?? ""
         ]
     }
 
@@ -318,9 +318,13 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return [
             "id": id,
             "name": template.name ?? "",
-            "title": template.title ?? "",
-            "description": template.description ?? ""
-        ]
+            "status": template.status ?? NSNull(),
+            "created_at": template.createdAt ?? "",
+            "roles": template.roles ?? [],
+            "team_share": template.teamShare ?? NSNull(),
+            "questions": template.questions ?? [],
+            "scorecard": template.scorecard ?? NSNull()
+        ] as [String: Any]
     }
 
     private func invalidSearchQuery() -> CallTool.Result {
@@ -659,8 +663,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
                     "id": responseID,
                     "name": template.name ?? "",
                     "subject": template.subject ?? "",
-                    "body": template.body ?? "",
-                    "access": template.access ?? ""
+                    "content": template.content ?? ""
                 ]
             ])
         } catch {
@@ -699,8 +702,12 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
                 "template": [
                     "id": responseID,
                     "name": template.name ?? "",
-                    "title": template.title ?? "",
-                    "description": template.description ?? ""
+                    "status": template.status ?? NSNull(),
+                    "created_at": template.createdAt ?? "",
+                    "roles": template.roles ?? [],
+                    "team_share": template.teamShare ?? NSNull(),
+                    "questions": template.questions ?? [],
+                    "scorecard": template.scorecard ?? NSNull()
                 ] as [String: Any]
             ])
         } catch {

@@ -19,7 +19,7 @@ struct QuestionDetailTests {
     @Test func `question detail decodes through the client`() async throws {
         let detail = try await makeClient().question(id: "q3")
         #expect(detail.options == ["INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL OUTER JOIN"])
-        #expect(detail.answer == "INNER JOIN")
+        #expect(detail.answer == .option(2))
         #expect(detail.internalNotes?.isEmpty == false)
         #expect(detail.hasContent)
     }
@@ -51,11 +51,10 @@ struct QuestionDetailTests {
         let question = try JSONDecoder().decode(Question.self, from: Data(json.utf8))
         let updated = question.applying(
             name: nil,
-            QuestionWriteOptions(languages: [], tags: [], skills: [])
+            QuestionWriteOptions(languages: [], tags: [])
         )
 
         #expect(updated.languages?.isEmpty == true)
-        #expect(updated.skills?.isEmpty == true)
         #expect(updated.tags?.isEmpty == true)
     }
 
@@ -67,17 +66,17 @@ struct QuestionDetailTests {
         var overlay = QuestionEditOverlay()
         overlay.merge(
             name: nil,
-            options: QuestionWriteOptions(clearsRecommendedDuration: true, clearsMaxScore: true)
+            options: QuestionWriteOptions(clearsRecommendedDuration: true)
         )
 
         let cleared = overlay.applying(to: question)
         #expect(cleared.recommendedDuration == nil)
-        #expect(cleared.maxScore == nil)
+        #expect(cleared.maxScore == 100)
 
-        overlay.merge(name: nil, options: QuestionWriteOptions(recommendedDuration: 45, maxScore: 80))
+        overlay.merge(name: nil, options: QuestionWriteOptions(recommendedDuration: 45))
         let replaced = overlay.applying(to: question)
         #expect(replaced.recommendedDuration == 45)
-        #expect(replaced.maxScore == 80)
+        #expect(replaced.maxScore == 100)
     }
 
     @Test func `edit overlay preserves newer unedited metadata`() throws {

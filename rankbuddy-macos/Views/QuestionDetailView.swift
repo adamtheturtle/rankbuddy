@@ -329,24 +329,23 @@ extension QuestionDetailView {
     }
 
     private func deleteQuestion() async {
-        guard !isDeletingQuestion, let account = owningAccount else { return }
+        guard !isDeletingQuestion else { return }
 
         isDeletingQuestion = true
         defer { isDeletingQuestion = false }
 
-        do {
-            try await HackerRankClient(account: account).deleteQuestion(questionID: question.id)
-            onChanged()
-            dismiss()
-        } catch {
-            deleteError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
+        deleteError = "HackerRank no longer exposes an API to delete questions."
     }
 
     /// Whether an option matches the (revealed) correct answer, so it can be ticked in the list.
     /// Only highlights once the answer has been revealed, keeping the answer hidden by default.
     func isCorrect(_ option: String) -> Bool {
-        answerRevealed && detail?.answer == option
+        guard answerRevealed,
+              let answer = detail?.answer,
+              let options = detail?.options,
+              let index = options.firstIndex(of: option) else { return false }
+
+        return answer.indices.contains(index + 1)
     }
 
     private func registerDetailCommands() {

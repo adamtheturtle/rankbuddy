@@ -55,10 +55,13 @@ extension QuestionDetailView {
                 }
             }
 
-            if let answer = detail?.answer, !answer.isEmpty {
+            if let answerText = QuestionReportData.correctAnswerText(
+                from: detail?.answer,
+                options: detail?.options ?? []
+            ), !answerText.isEmpty {
                 Section("Answer") {
                     if answerRevealed {
-                        HTMLText(html: answer).textSelection(.enabled)
+                        Text(answerText).textSelection(.enabled)
                     } else {
                         Button {
                             answerRevealed = true
@@ -70,7 +73,8 @@ extension QuestionDetailView {
                 }
             }
 
-            if detail?.options.isEmpty != false, detail?.answer?.isEmpty != false {
+            if detail?.options.isEmpty != false,
+               QuestionReportData.correctAnswerText(from: detail?.answer, options: detail?.options ?? []) == nil {
                 ContentUnavailableView(
                     "No Answer Available",
                     systemImage: "checkmark.seal",

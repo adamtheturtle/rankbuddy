@@ -340,9 +340,9 @@ struct CreateUserSheet: View {
             try await HackerRankClient(account: account).createUser(
                 email: trimmedEmail,
                 firstName: trimmedFirstName,
-                lastName: trimmedLastName,
                 role: role,
-                teamIDs: [selectedTeamID]
+                teamIDs: [selectedTeamID],
+                lastName: trimmedLastName
             )
             onCreated()
             dismiss()

@@ -63,7 +63,7 @@ struct NewQuestionSheet: View {
                 }
 
                 Section("Problem statement") {
-                    TextField("Problem statement", text: $problemStatement, prompt: Text("Optional"), axis: .vertical)
+                    TextField("Problem statement", text: $problemStatement, prompt: Text("Required"), axis: .vertical)
                         .lineLimit(4 ... 12)
                         .labelsHidden()
                 }
@@ -92,7 +92,7 @@ struct NewQuestionSheet: View {
                         Button("Create") { mutationTask = Task { await create() } }
                             .disabled(
                                 trimmedName.isEmpty || QuestionCreationValidation.nameIssue(trimmedName) != nil
-                                    || payloadIssue != nil
+                                    || payloadIssue != nil || nonBlank(problemStatement) == nil
                             )
                             .help(trimmedName.isEmpty ? "Enter a name to create a question" : "Create question")
                     }
@@ -112,12 +112,12 @@ struct NewQuestionSheet: View {
             errorMessage = payloadIssue
             return
         }
-        guard QuestionCreationValidation.isValidDurationText(duration) else {
-            errorMessage = "Recommended duration must be a whole number of zero or more minutes."
+        guard let problemStatement = nonBlank(problemStatement) else {
+            errorMessage = "Problem statement is required."
             return
         }
-        guard QuestionCreationValidation.isValidMaxScoreText(maxScore) else {
-            errorMessage = "Max score must be a finite number of zero or greater."
+        guard let recommendedDuration = QuestionCreationValidation.duration(from: duration) else {
+            errorMessage = "Recommended duration must be a whole number of zero or more minutes."
             return
         }
 
@@ -128,12 +128,11 @@ struct NewQuestionSheet: View {
             _ = try await HackerRankClient(account: account).createQuestion(
                 name: trimmedName,
                 type: type,
+                problemStatement: problemStatement,
+                recommendedDuration: recommendedDuration,
                 options: QuestionWriteOptions(
                     languages: splitList(languages),
-                    problemStatement: nonBlank(problemStatement),
-                    recommendedDuration: QuestionCreationValidation.duration(from: duration),
-                    tags: splitList(tags),
-                    maxScore: QuestionCreationValidation.maxScore(from: maxScore)
+                    tags: splitList(tags)
                 )
             )
             onCreated()

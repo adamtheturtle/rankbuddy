@@ -260,7 +260,7 @@ struct ScheduleInterviewSheet: View {
             try await HackerRankClient(account: account).scheduleInterview(
                 title: trimmedTitle,
                 from: date,
-                candidateEmail: normalizedCandidateEmail,
+                candidate: normalizedCandidateEmail.map { InterviewCandidate(email: $0) },
                 notes: notes
             )
             onScheduled()

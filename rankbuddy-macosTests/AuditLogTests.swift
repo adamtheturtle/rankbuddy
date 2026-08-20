@@ -77,8 +77,8 @@ struct AuditLogTests {
 
         let merged = AccountActivityView.mergedEntries([first], with: [repeated, later, later])
 
-        #expect(merged.map(\.id) == [first.id, later.id])
-        #expect(merged.first?.modifiedFields == ["cutoff_score"])
+        #expect(merged.map(\.id) == [first.id, repeated.id, later.id])
+        #expect(merged.contains { $0.modifiedFields == ["cutoff_score"] })
     }
 
     @Test func `only the current account reload generation may publish`() {

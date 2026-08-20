@@ -127,7 +127,11 @@ struct MarkdownExportTests {
         let detail = try JSONDecoder().decode(
             InterviewDetail.self,
             from: Data(
-                #"{"from":"2026-07-30T09:00:00Z","result_url":"https://hr.test/result","candidate":"Ada"}"#.utf8
+                #"""
+                {"id":"i1","status":"scheduled","url":"https://hr.test/i1",
+                 "from":"2026-07-30T09:00:00Z","result_url":"https://hr.test/result",
+                 "candidate":{"email":"ada@example.com","name":"Ada"}}
+                """#.utf8
             )
         )
         let transcript = try JSONDecoder().decode(
@@ -183,7 +187,8 @@ struct MarkdownExportTests {
             QuestionDetail.self,
             from: Data(
                 #"""
-                {"options":["<b>JOIN</b>","SELECT &amp; PROJECT"],"answer":"<b>JOIN</b>",
+                {"id":"q1","type":"mcq","name":"SQL",
+                 "options":["<b>JOIN</b>","SELECT &amp; PROJECT"],"answer":1,
                  "internal_notes":"<p>Use joins.</p>"}
                 """#.utf8
             )

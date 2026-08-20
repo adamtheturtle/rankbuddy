@@ -76,11 +76,11 @@ struct ModelDecodingResilienceTests {
         #expect(sections.count == 3)
         #expect(sections[0].uuid == nil)
         #expect(sections[0].displayName == "Coding")
-        #expect(sections[0].id == "Coding")
+        #expect(sections[0].id == "0-Coding")
         #expect(sections[1].id == "s2")
         // A wholly empty section still decodes with a generic label and a fallback id.
         #expect(sections[2].displayName == "Section")
-        #expect(sections[2].id == "section")
+        #expect(sections[2].id == "2")
     }
 
     @Test func `a uuid-less section does not break the surrounding page`() throws {
