@@ -262,7 +262,8 @@ struct HackerRankClientTests {
         #expect(page.items.compactMap(\.id) == [101, 102])
         #expect(detail.id == 101)
         #expect(detail.name == "Backend Pairing")
-        #expect(detail.description == "Live backend interview")
+        #expect(detail.status == 1)
+        #expect(detail.editorAccess == true)
     }
 
     @Test func `invite template fixtures cover collection and detail routes`() async throws {
@@ -273,7 +274,7 @@ struct HackerRankClientTests {
         #expect(page.items.compactMap(\.id) == ["tpl-1", "tpl-2"])
         #expect(detail.id == "tpl-1")
         #expect(detail.subject == "Your HackerRank invite")
-        #expect(detail.access == "company")
+        #expect(detail.content?.isEmpty == false)
     }
 
     @Test func `SCIM fixtures cover user collection and detail routes`() async throws {
@@ -315,11 +316,8 @@ struct HackerRankClientTests {
         #expect(report.pdfURL == "https://www.hackerrank.com/x/candidates/c1/report.pdf")
     }
 
-    @Test func `archive fixture uses the typed test acknowledgement`() async throws {
-        let archived = try await makeClient().archiveTest(testID: "t1")
-
-        #expect(archived.id == "t-created")
-        #expect(archived.name == "New Test")
+    @Test func `archive fixture completes without decoding an empty body`() async throws {
+        try await makeClient().archiveTest(testID: "t1")
     }
 
     // MARK: - Token validation

@@ -533,7 +533,15 @@ struct RankBuddyToolProviderTests {
     }
 
     @Test func `create_test runs against the mock when writes are on`() async {
-        let result = await writeProvider().callTool("create_test", arguments: ["name": .string("Backend Screen")])
+        let result = await writeProvider().callTool(
+            "create_test",
+            arguments: [
+                "name": .string("Backend Screen"),
+                "duration": .int(60),
+                "role_ids": .array([.string("backend")]),
+                "experience": .array([.string("Senior")])
+            ]
+        )
         let body = text(result)
         #expect(result.isError != true)
         #expect(body.contains("created_test"))
@@ -1267,14 +1275,13 @@ struct RankBuddyToolProviderTests {
         #expect(text(noChange).contains("At least one"))
     }
 
-    @Test func `update_interview_template accepts explicit text clears`() async {
-        for key in ["title", "description"] {
-            let result = await writeProvider().callTool(
-                "update_interview_template",
-                arguments: ["template_id": .int(1), key: .string("  \n")]
-            )
-            #expect(result.isError != true)
-        }
+    @Test func `update_interview_template accepts explicit name clears`() async {
+        let result = await writeProvider().callTool(
+            "update_interview_template",
+            arguments: ["template_id": .int(1), "name": .string("  \n")]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("name"))
     }
 
     @Test func `delete_interview_template requires a positive id`() async {
@@ -1407,19 +1414,13 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("question_id"))
     }
 
-    @Test func `question writes reject negative max scores`() async {
+    @Test func `question writes reject missing create requirements`() async {
         let created = await writeProvider().callTool(
             "create_question",
-            arguments: ["name": .string("Sum"), "type": .string("coding"), "max_score": .double(-1)]
-        )
-        let updated = await writeProvider().callTool(
-            "update_question",
-            arguments: ["question_id": .string("question-1"), "max_score": .int(-1)]
+            arguments: ["name": .string("Sum"), "type": .string("coding")]
         )
         #expect(created.isError == true)
-        #expect(text(created).contains("max_score"))
-        #expect(updated.isError == true)
-        #expect(text(updated).contains("max_score"))
+        #expect(text(created).contains("problem_statement"))
     }
 
     @Test func `question writes reject negative recommended durations`() async {
@@ -1427,6 +1428,7 @@ struct RankBuddyToolProviderTests {
             "create_question",
             arguments: [
                 "name": .string("Sum"), "type": .string("coding"),
+                "problem_statement": .string("Return two indices."),
                 "recommended_duration": .int(-1)
             ]
         )
@@ -1441,26 +1443,16 @@ struct RankBuddyToolProviderTests {
     }
 
     @Test func `question writes reject unsupported lifecycle statuses`() async {
-        let create = await writeProvider().callTool(
-            "create_question",
-            arguments: [
-                "name": .string("Two Sum"),
-                "type": .string("coding"),
-                "status": .string("published")
-            ]
-        )
         let update = await writeProvider().callTool(
             "update_question",
             arguments: ["question_id": .string("question-1"), "status": .string("draft")]
         )
-        for result in [create, update] {
-            #expect(result.isError == true)
-            #expect(text(result).contains("status"))
-        }
+        #expect(update.isError == true)
+        #expect(text(update).contains("status"))
     }
 
     @Test func `question writes reject malformed list elements`() async {
-        for key in ["languages", "tags", "skills"] {
+        for key in ["languages", "tags"] {
             let result = await writeProvider().callTool(
                 "update_question",
                 arguments: [
@@ -1497,7 +1489,7 @@ struct RankBuddyToolProviderTests {
             "update_interview_template",
             arguments: [
                 "template_id": .int(1),
-                "description": .string(String(repeating: "d", count: 10001))
+                "name": .string(String(repeating: "d", count: 256))
             ]
         )
         for result in [create, update] {
@@ -1574,7 +1566,7 @@ struct RankBuddyToolProviderTests {
         )
         #expect(result.isError == true)
         #expect(text(result).contains("At least one"))
-        #expect(RankBuddyToolProvider.hasQuestionUpdate(["max_score": .int(0)]))
+        #expect(RankBuddyToolProvider.hasQuestionUpdate(["tags": .array([.string("arrays")])]))
     }
 
     @Test func `update_question rejects a blank target id`() async {

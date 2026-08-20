@@ -114,9 +114,9 @@ struct GenerateCodeStubsSheet: View {
                 questionID: questionID,
                 options: CodeStubGenerationOptions(
                     functionName: normalizedFunctionName,
-                    returnType: nonBlank(returnType),
-                    parameters: parsed,
-                    languages: parsedLanguages
+                    functionParams: CodeStubValidation.functionParamsSignature(from: parsed),
+                    functionReturn: nonBlank(returnType),
+                    allowedLanguages: parsedLanguages
                 )
             )
             dismiss()
@@ -215,7 +215,7 @@ struct CustomCodeStubSheet: View {
         do {
             _ = try await HackerRankClient(account: account).updateCustomCodeStubs(
                 questionID: questionID,
-                stubs: [QuestionCodeStub(language: normalizedLanguage, code: code)]
+                stubs: [QuestionCodeStub(language: normalizedLanguage, body: code)]
             )
             dismiss()
         } catch {
@@ -225,6 +225,11 @@ struct CustomCodeStubSheet: View {
 }
 
 // MARK: - Request bodies
+
+nonisolated struct CodeStubParameter: Equatable {
+    let name: String
+    let type: String
+}
 
 nonisolated enum CodeStubValidation {
     static let maxFieldLength = 255
@@ -284,6 +289,18 @@ nonisolated enum CodeStubValidation {
 
     private static func isASCIILetter(_ scalar: Unicode.Scalar) -> Bool {
         (65 ... 90).contains(scalar.value) || (97 ... 122).contains(scalar.value)
+    }
+
+    static func functionParamsSignature(from parameters: [CodeStubParameter]?) -> String? {
+        guard let parameters, !parameters.isEmpty else { return nil }
+
+        return parameters.map { parameter in
+            let apiType = parameter.type
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .uppercased()
+                .replacingOccurrences(of: "[]", with: "_ARRAY")
+            return "\(apiType) \(parameter.name)"
+        }.joined(separator: " ")
     }
 
     static func generationBoundsIssue(

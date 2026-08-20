@@ -54,16 +54,21 @@ struct CreateUserTests {
     }
 
     @Test func `creating a user decodes the created record`() async throws {
-        let created = try await makeClient().createUser(email: "new@example.com", role: "recruiter")
+        let created = try await makeClient().createUser(
+            email: "new@example.com",
+            firstName: "New",
+            role: "recruiter",
+            teamIDs: ["tm1"]
+        )
         #expect(created.id == "u-created")
     }
 
-    @Test func `optional name fields are accepted`() async throws {
-        // Blank optional fields are dropped by the client; the call still succeeds.
-        let created = try await makeClient().createUser(
-            email: "  new@example.com ", firstName: "   ", lastName: "Person", role: "interviewer"
-        )
-        #expect(created.id == "u-created")
+    @Test func `blank first names are rejected before the request is sent`() async {
+        await #expect(throws: HackerRankError.self) {
+            _ = try await makeClient().createUser(
+                email: "new@example.com", firstName: "   ", role: "interviewer", teamIDs: ["tm1"]
+            )
+        }
     }
 
     @Test func `creating a user with a team decodes the created record`() async throws {
@@ -83,7 +88,12 @@ struct CreateUserTests {
 
     @Test func `creating against the bad-key account surfaces the server's 401`() async {
         await expectUnauthorized {
-            _ = try await HackerRankClient(account: .badKeyDemo).createUser(email: "new@example.com")
+            _ = try await HackerRankClient(account: .badKeyDemo).createUser(
+                email: "new@example.com",
+                firstName: "New",
+                role: "recruiter",
+                teamIDs: ["tm1"]
+            )
         }
     }
 }

@@ -13,18 +13,16 @@ struct QuestionEditOverlay {
     mutating func merge(name: String?, options update: QuestionWriteOptions) {
         self.name = name ?? self.name
         options = QuestionWriteOptions(
-            status: update.status ?? options.status,
             languages: update.languages ?? options.languages,
             problemStatement: update.problemStatement ?? options.problemStatement,
             recommendedDuration: update.clearsRecommendedDuration
                 ? nil : update.recommendedDuration ?? options.recommendedDuration,
+            internalNotes: update.internalNotes ?? options.internalNotes,
             tags: update.tags ?? options.tags,
-            maxScore: update.clearsMaxScore ? nil : update.maxScore ?? options.maxScore,
-            skills: update.skills ?? options.skills,
+            mcqOptions: update.mcqOptions ?? options.mcqOptions,
+            answer: update.answer ?? options.answer,
             clearsRecommendedDuration: update.recommendedDuration == nil
-                ? update.clearsRecommendedDuration || options.clearsRecommendedDuration : false,
-            clearsMaxScore: update.maxScore == nil
-                ? update.clearsMaxScore || options.clearsMaxScore : false
+                ? update.clearsRecommendedDuration || options.clearsRecommendedDuration : false
         )
     }
 
@@ -36,17 +34,6 @@ struct QuestionEditOverlay {
 extension QuestionDetailView {
     /// Per-field editable rows: each saves immediately and reverts if the write fails.
     @ViewBuilder var editableRows: some View {
-        EditableTextRow(label: "Max score", value: displayed.maxScore.map { $0.formatted() } ?? "") { newValue in
-            guard newValue.isEmpty || QuestionEditValidation.maxScore(from: newValue) != nil else {
-                editError = "Max score must be a finite number of zero or greater."
-                return false
-            }
-
-            return await save(QuestionWriteOptions(
-                maxScore: QuestionEditValidation.maxScore(from: newValue),
-                clearsMaxScore: newValue.isEmpty
-            ))
-        }
         EditableNumberRow(label: "Recommended duration (minutes)", value: displayed.recommendedDuration) { newValue in
             guard QuestionEditValidation.isValidRecommendedDuration(newValue) else {
                 editError = "Recommended duration must be between 0 and 1,440 minutes."
@@ -60,13 +47,6 @@ extension QuestionDetailView {
         }
         EditableLanguagesRow(value: displayed.languages) { newValue in
             await save(QuestionWriteOptions(languages: newValue ?? []))
-        }
-        EditableTextRow(
-            label: "Skills",
-            value: displayed.skills?.joined(separator: ", ") ?? "",
-            prompt: "Comma-separated"
-        ) { newValue in
-            await save(QuestionWriteOptions(skills: splitList(newValue) ?? []))
         }
         EditableTextRow(
             label: "Tags",
@@ -89,14 +69,14 @@ extension Question {
             name: name ?? self.name,
             owner: owner,
             createdAt: createdAt,
-            status: options.status ?? status,
+            status: status,
             languages: options.languages ?? languages,
             problemStatement: options.problemStatement ?? problemStatement,
             recommendedDuration: options.clearsRecommendedDuration
                 ? nil : options.recommendedDuration ?? recommendedDuration,
             tags: options.tags ?? tags,
-            maxScore: options.clearsMaxScore ? nil : options.maxScore ?? maxScore,
-            skills: options.skills ?? skills
+            maxScore: maxScore,
+            skills: skills
         )
     }
 }

@@ -361,16 +361,13 @@ struct InviteCandidateSheet: View {
                 fullName: CandidateInviteValidation.normalizedFullName(fullName),
                 sendEmail: sendEmail,
                 options: CandidateInviteOptions(
-                    validFrom: trimmed(validFrom),
-                    validUntil: trimmed(validUntil),
-                    emailSubject: trimmed(emailSubject),
-                    emailMessage: trimmed(emailMessage),
-                    templateID: selectedTemplateID,
+                    inviteValidFrom: trimmed(validFrom),
+                    inviteValidTo: trimmed(validUntil),
+                    subject: trimmed(emailSubject),
+                    message: trimmed(emailMessage),
+                    template: selectedTemplateID,
                     evaluatorEmail: trimmed(evaluatorEmail),
-                    tags: CandidateInviteValidation.normalizedTags(tags),
-                    additionalTime: additionalTimeMinutes,
-                    atsCandidateID: trimmed(atsCandidateID),
-                    atsRequisitionID: trimmed(atsRequisitionID)
+                    tags: CandidateInviteValidation.normalizedTags(tags)
                 )
             )
             onInvited()

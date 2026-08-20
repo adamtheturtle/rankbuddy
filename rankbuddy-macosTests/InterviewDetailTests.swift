@@ -85,7 +85,7 @@ struct InterviewDetailTests {
             ]}
             """#.utf8)
         )
-        #expect(transcript.messages[0].id == transcript.messages[1].id)
+        #expect(transcript.messages[0].id != transcript.messages[1].id)
 
         let rows = TranscriptMessageOccurrence.rows(transcript.messages)
 

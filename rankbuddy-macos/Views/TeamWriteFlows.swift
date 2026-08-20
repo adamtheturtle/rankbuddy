@@ -175,7 +175,13 @@ struct AddTeamMemberSheet: View {
         errorMessage = nil
         defer { isSending = false }
         do {
-            try await HackerRankClient(account: account).addTeamMember(teamID: teamID, email: trimmedEmail, role: role)
+            let firstName = trimmedEmail.split(separator: "@", maxSplits: 1).first.map(String.init) ?? trimmedEmail
+            _ = try await HackerRankClient(account: account).createUser(
+                email: trimmedEmail,
+                firstName: firstName,
+                role: role,
+                teamIDs: [teamID]
+            )
             onAdded()
             dismiss()
         } catch {

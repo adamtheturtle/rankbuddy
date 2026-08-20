@@ -87,7 +87,12 @@ struct TestWriteFlowsTests {
     }
 
     @Test func `creating a test decodes the created record`() async throws {
-        let created = try await makeClient().createTest(name: "  Backend Screen  ")
+        let created = try await makeClient().createTest(
+            name: "  Backend Screen  ",
+            duration: 60,
+            roleIDs: ["backend"],
+            experience: ["Senior"]
+        )
         #expect(created.id == "t-created")
     }
 
@@ -108,19 +113,29 @@ struct TestWriteFlowsTests {
             shuffleQuestions: true,
             enableProctoring: true
         )
-        #expect(try await makeClient().createTest(name: "Backend", options: options).id == "t-created")
+        #expect(try await makeClient().createTest(
+            name: "Backend",
+            duration: 90,
+            roleIDs: ["backend"],
+            experience: ["Senior"],
+            options: options
+        ).id == "t-created")
         #expect(try await makeClient().updateTest(testID: "t1", name: "Backend", options: options).id == "t-created")
     }
 
     @Test func `deleting a test succeeds against the demo without throwing`() async throws {
-        let deleted = try await makeClient().deleteTest(testID: "t1")
-        #expect(deleted.id == "t-created")
+        try await makeClient().deleteTest(testID: "t1")
     }
 
     @Test func `writes against the bad-key account surface the server's 401`() async {
         let client = HackerRankClient(account: .badKeyDemo)
         await expectUnauthorized {
-            _ = try await client.createTest(name: "Nope")
+            _ = try await client.createTest(
+                name: "Nope",
+                duration: 60,
+                roleIDs: ["backend"],
+                experience: ["Senior"]
+            )
         }
         await expectUnauthorized {
             _ = try await client.updateTest(testID: "t1", name: "Nope")

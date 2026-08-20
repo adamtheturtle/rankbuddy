@@ -166,14 +166,27 @@ extension RankBuddyToolProvider {
             return errorResult("`name` can be at most \(TestNameValidation.maxLength) characters.")
         }
 
-        if let error = testWriteValidationError(arguments) {
+        if let error = testWriteValidationError(arguments, requireCreateFields: true) {
             return errorResult(error)
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+        guard let duration = intArgument(arguments, "duration"), duration > 0 else {
+            return errorResult("`duration` is required and must be greater than zero.")
+        }
+        guard let roleIDs = stringArrayArgument(arguments, "role_ids"), !roleIDs.isEmpty else {
+            return errorResult("`role_ids` is required and must contain at least one role id.")
+        }
+        let experience = stringArrayArgument(arguments, "experience") ?? ["Senior"]
+        guard !experience.isEmpty else {
+            return errorResult("`experience` must contain at least one level.")
+        }
 
         do {
             let created = try await HackerRankClient(account: resolved).createTest(
                 name: name,
+                duration: duration,
+                roleIDs: roleIDs,
+                experience: experience,
                 options: testWriteOptions(arguments)
             )
             guard let createdID = Self.validatedCreatedID(created.id) else {
@@ -308,13 +321,16 @@ extension RankBuddyToolProvider {
 
     nonisolated static func hasQuestionUpdate(_ arguments: [String: Value]?) -> Bool {
         let keys = [
-            "name", "type", "status", "languages", "problem_statement",
-            "recommended_duration", "tags", "max_score", "skills"
+            "name", "type", "languages", "problem_statement",
+            "recommended_duration", "tags", "status"
         ]
         return keys.contains { arguments?[$0] != nil }
     }
 
-    private func testWriteValidationError(_ arguments: [String: Value]?) -> String? {
+    private func testWriteValidationError(
+        _ arguments: [String: Value]?,
+        requireCreateFields: Bool = false
+    ) -> String? {
         if let duration = intArgument(arguments, "duration"), duration <= 0 {
             return "`duration` must be greater than zero."
         }
@@ -326,6 +342,20 @@ extension RankBuddyToolProvider {
         }
         if hasInvalidStringArrayElements(arguments, "tags") {
             return "`tags` must contain only non-empty strings."
+        }
+        if requireCreateFields {
+            if intArgument(arguments, "duration") == nil {
+                return "`duration` is required and must be greater than zero."
+            }
+            if stringArrayArgument(arguments, "role_ids")?.isEmpty != false {
+                return "`role_ids` is required and must contain at least one role id."
+            }
+            if hasInvalidStringArrayElements(arguments, "role_ids") {
+                return "`role_ids` must contain only non-empty strings."
+            }
+            if hasInvalidStringArrayElements(arguments, "experience") {
+                return "`experience` must contain only non-empty strings."
+            }
         }
         return TestScheduleValidation.error(
             startTime: stringArgument(arguments, "start_time") ?? "",
@@ -389,10 +419,10 @@ extension RankBuddyToolProvider {
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
         do {
-            let archived = try await HackerRankClient(account: resolved).archiveTest(testID: testID)
+            try await HackerRankClient(account: resolved).archiveTest(testID: testID)
             return jsonResult([
                 "account": resolved.label,
-                "archived_test": ["id": archived.id ?? testID, "name": archived.name ?? ""]
+                "archived_test": ["id": testID, "archived": true]
             ])
         } catch {
             return errorResult("Couldn't archive test: \(error.localizedDescription)")
@@ -493,21 +523,21 @@ extension RankBuddyToolProvider {
                 fullName: fullName,
                 sendEmail: boolArgument(arguments, "send_email") ?? true,
                 options: CandidateInviteOptions(
-                    validFrom: validFrom,
-                    validUntil: validUntil,
-                    emailSubject: emailSubject,
-                    emailMessage: emailMessage,
-                    templateID: stringArgument(arguments, "template_id"),
+                    inviteValidFrom: validFrom,
+                    inviteValidTo: validUntil,
+                    subject: emailSubject,
+                    message: emailMessage,
+                    template: stringArgument(arguments, "template_id"),
                     evaluatorEmail: evaluatorEmail,
-                    finishURL: finishURL,
-                    resultURL: resultURL,
-                    notifyResultUpdate: boolArgument(arguments, "notify_result_update"),
+                    testFinishURL: finishURL,
+                    testResultURL: resultURL,
+                    acceptResultUpdates: boolArgument(arguments, "notify_result_update"),
                     tags: tags,
                     force: boolArgument(arguments, "force"),
-                    allowReattempt: boolArgument(arguments, "allow_reattempt"),
-                    additionalTime: additionalTime,
-                    atsCandidateID: atsCandidateID,
-                    atsRequisitionID: atsRequisitionID
+                    forceReattempt: boolArgument(arguments, "allow_reattempt"),
+                    accommodations: additionalTime.flatMap {
+                        CandidateAccommodations(additionalTimePercent: $0)
+                    }
                 )
             )
             guard let invitedID = Self.validatedCreatedID(invited.id) else {
@@ -709,9 +739,9 @@ extension RankBuddyToolProvider {
             let created = try await HackerRankClient(account: resolved).createUser(
                 email: email,
                 firstName: firstName,
-                lastName: lastName,
                 role: role,
-                teamIDs: [teamID]
+                teamIDs: [teamID],
+                lastName: lastName
             )
             guard let userID = Self.validatedCreatedID(created.id) else {
                 return errorResult("HackerRank created the user but returned no user ID.")
@@ -826,15 +856,13 @@ extension RankBuddyToolProvider {
             return errorResult("`type` must be coding, mcq, or subjective.")
         }
 
-        let status = Self.normalizedOptionalString(stringArgument(arguments, "status"))?.lowercased()
-        guard arguments?["status"] == nil || status.flatMap(QuestionLifecycleStatus.init(rawValue:)) != nil else {
-            return errorResult("`status` must be active or archived.")
+        guard let problemStatement = Self.normalizedOptionalString(
+            stringArgument(arguments, "problem_statement")
+        ) else {
+            return errorResult("`problem_statement` must not be empty.")
         }
-        guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
-            return errorResult("`max_score` must be a finite number of zero or greater.")
-        }
-        guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
-            return errorResult("`recommended_duration` must be zero or greater.")
+        guard let recommendedDuration = intArgument(arguments, "recommended_duration"), recommendedDuration >= 0 else {
+            return errorResult("`recommended_duration` is required and must be zero or greater.")
         }
 
         if let error = questionListValidationError(arguments) {
@@ -846,7 +874,9 @@ extension RankBuddyToolProvider {
             let written = try await HackerRankClient(account: resolved).createQuestion(
                 name: name,
                 type: type,
-                options: questionWriteOptions(arguments, status: status)
+                problemStatement: problemStatement,
+                recommendedDuration: recommendedDuration,
+                options: questionWriteOptions(arguments)
             )
             guard let questionID = Self.validatedCreatedID(written.id) else {
                 return errorResult("HackerRank created the question but returned no question ID.")
@@ -883,10 +913,7 @@ extension RankBuddyToolProvider {
 
         let status = Self.normalizedOptionalString(stringArgument(arguments, "status"))?.lowercased()
         guard arguments?["status"] == nil || status.flatMap(QuestionLifecycleStatus.init(rawValue:)) != nil else {
-            return errorResult("`status` must be active or archived.")
-        }
-        guard doubleArgument(arguments, "max_score").map({ $0.isFinite && $0 >= 0 }) ?? true else {
-            return errorResult("`max_score` must be a finite number of zero or greater.")
+            return errorResult("`status` is read-only on the HackerRank API and cannot be changed here.")
         }
         guard intArgument(arguments, "recommended_duration").map({ $0 >= 0 }) ?? true else {
             return errorResult("`recommended_duration` must be zero or greater.")
@@ -902,7 +929,7 @@ extension RankBuddyToolProvider {
                 questionID: questionID,
                 name: name,
                 type: type,
-                options: questionWriteOptions(arguments, status: status)
+                options: questionWriteOptions(arguments)
             )
             return jsonResult([
                 "account": resolved.label,
@@ -917,20 +944,17 @@ extension RankBuddyToolProvider {
         }
     }
 
-    private func questionWriteOptions(_ arguments: [String: Value]?, status: String?) -> QuestionWriteOptions {
+    private func questionWriteOptions(_ arguments: [String: Value]?) -> QuestionWriteOptions {
         QuestionWriteOptions(
-            status: status,
             languages: stringArrayArgument(arguments, "languages"),
             problemStatement: stringArgument(arguments, "problem_statement"),
             recommendedDuration: intArgument(arguments, "recommended_duration"),
-            tags: stringArrayArgument(arguments, "tags"),
-            maxScore: doubleArgument(arguments, "max_score"),
-            skills: stringArrayArgument(arguments, "skills")
+            tags: stringArrayArgument(arguments, "tags")
         )
     }
 
     private func questionListValidationError(_ arguments: [String: Value]?) -> String? {
-        for key in ["languages", "tags", "skills"] where hasInvalidStringArrayElements(arguments, key) {
+        for key in ["languages", "tags"] where hasInvalidStringArrayElements(arguments, key) {
             return "`\(key)` must contain only non-empty strings."
         }
         return nil
@@ -959,17 +983,12 @@ extension RankBuddyToolProvider {
         guard let rawQuestionID = stringArgument(arguments, "question_id") else {
             return missingArgument("question_id")
         }
-        guard let questionID = Self.normalizedOptionalString(rawQuestionID) else {
+        guard Self.normalizedOptionalString(rawQuestionID) != nil else {
             return errorResult("`question_id` must not be empty.")
         }
-        guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
+        guard resolveAccount(account) != nil else { return errorResult("No account configured.") }
 
-        do {
-            _ = try await HackerRankClient(account: resolved).deleteQuestion(questionID: questionID)
-            return jsonResult(["account": resolved.label, "deleted_question_id": questionID, "deleted": true])
-        } catch {
-            return errorResult("Couldn't delete question: \(error.localizedDescription)")
-        }
+        return errorResult("Deleting questions is no longer supported by the HackerRank API.")
     }
 
     @MainActor
@@ -1141,17 +1160,25 @@ extension RankBuddyToolProvider {
         }
         guard let resolved = resolveAccount(account) else { return errorResult("No account configured.") }
 
+        let firstName = Self.normalizedOptionalString(stringArgument(arguments, "first_name"))
+            ?? email.split(separator: "@", maxSplits: 1).first.map(String.init)
+            ?? email
+        guard !firstName.isEmpty else { return errorResult("`first_name` must not be empty.") }
+
         do {
-            let result = try await HackerRankClient(account: resolved).addTeamMember(
-                teamID: teamID, email: email, role: role
+            let created = try await HackerRankClient(account: resolved).createUser(
+                email: email,
+                firstName: firstName,
+                role: role ?? "interviewer",
+                teamIDs: [teamID]
             )
-            guard let memberID = Self.validatedCreatedID(result.id) else {
+            guard let memberID = Self.validatedCreatedID(created.id) else {
                 return errorResult("HackerRank added the team member but returned no user ID.")
             }
 
             return jsonResult([
                 "account": resolved.label, "team_id": teamID,
-                "added_member": ["id": memberID, "email": result.email ?? email]
+                "added_member": ["id": memberID, "email": created.email ?? email]
             ])
         } catch {
             return errorResult("Couldn't add team member: \(error.localizedDescription)")
@@ -1178,7 +1205,7 @@ extension RankBuddyToolProvider {
             )
             return jsonResult([
                 "account": resolved.label, "team_id": teamID,
-                "added_member": ["id": result.id ?? userID, "email": result.email ?? ""]
+                "added_member": ["team_id": result.team ?? teamID, "user_id": result.user ?? userID]
             ])
         } catch {
             return errorResult("Couldn't add team member: \(error.localizedDescription)")
@@ -1264,7 +1291,9 @@ extension RankBuddyToolProvider {
             let created = try await HackerRankClient(account: resolved).scheduleInterview(
                 title: title,
                 from: from,
-                candidateEmail: candidateEmail.flatMap { $0.isEmpty ? nil : $0 },
+                candidate: candidateEmail.flatMap { email in
+                    email.isEmpty ? nil : InterviewCandidate(email: email)
+                },
                 notes: notes
             )
             let createdID = Self.validatedCreatedID(created.id)
@@ -1321,10 +1350,10 @@ extension RankBuddyToolProvider {
 
         do {
             let template = try await HackerRankClient(account: resolved).createInterviewTemplate(
-                options: InterviewTemplateWriteOptions(
-                    name: name,
-                    title: title,
-                    description: description
+                name: name,
+                options: InterviewTemplateCreateOptions(
+                    roleID: Self.normalizedOptionalString(stringArgument(arguments, "role_id")),
+                    teamShare: intArgument(arguments, "team_share")
                 )
             )
             return interviewTemplateResult(template, account: resolved.label)
@@ -1351,8 +1380,10 @@ extension RankBuddyToolProvider {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let description = stringArgument(arguments, "description")?
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard arguments?["name"] != nil || arguments?["title"] != nil || arguments?["description"] != nil else {
-            return errorResult("At least one of `name`, `title`, or `description` must be provided.")
+        guard arguments?["name"] != nil || arguments?["role_id"] != nil || arguments?["team_share"] != nil
+            || arguments?["scorecard_id"] != nil
+        else {
+            return errorResult("At least one of `name`, `role_id`, `team_share`, or `scorecard_id` must be provided.")
         }
 
         if let issue = InterviewTemplateValidation.textIssue(
@@ -1365,7 +1396,12 @@ extension RankBuddyToolProvider {
         do {
             let template = try await HackerRankClient(account: resolved).updateInterviewTemplate(
                 id: templateID,
-                options: InterviewTemplateWriteOptions(name: name, title: title, description: description)
+                options: InterviewTemplateUpdateOptions(
+                    name: name,
+                    roleID: Self.normalizedOptionalString(stringArgument(arguments, "role_id")),
+                    teamShare: intArgument(arguments, "team_share"),
+                    scorecardID: intArgument(arguments, "scorecard_id")
+                )
             )
             return interviewTemplateResult(template, account: resolved.label)
         } catch {
@@ -1406,8 +1442,12 @@ extension RankBuddyToolProvider {
             "template": [
                 "id": id,
                 "name": template.name ?? "",
-                "title": template.title ?? "",
-                "description": template.description ?? ""
+                "status": template.status ?? NSNull(),
+                "created_at": template.createdAt ?? "",
+                "roles": template.roles ?? [],
+                "team_share": template.teamShare ?? NSNull(),
+                "questions": template.questions ?? [],
+                "scorecard": template.scorecard ?? NSNull()
             ] as [String: Any]
         ])
     }
@@ -1611,8 +1651,18 @@ extension RankBuddyToolProvider {
         }
         return [
             write("create_test", "Create a HackerRank test with optional assessment settings.",
-                  properties: testProperties(nameDescription: "The test's name.", account: account),
-                  required: ["name"]),
+                  properties: testProperties(nameDescription: "The test's name.", account: account)
+                      .merging([
+                          "role_ids": [
+                              "type": "array", "items": ["type": "string", "minLength": 1],
+                              "description": "Hiring role ids targeted by the assessment."
+                          ],
+                          "experience": [
+                              "type": "array", "items": ["type": "string", "minLength": 1],
+                              "description": "Experience levels targeted by the assessment."
+                          ]
+                      ]) { current, _ in current },
+                  required: ["name", "duration", "role_ids"]),
             write("update_test", "Update a HackerRank test and its assessment settings.",
                   properties: testProperties(nameDescription: "The test's name.", account: account)
                       .merging(["test_id": string("The test's id.", minLength: 1)]) { current, _ in current },
@@ -1746,7 +1796,7 @@ extension RankBuddyToolProvider {
                                  "description": "Skills assessed; a comma-separated string is also accepted."],
                       "account": account
                   ],
-                  required: ["name", "type"]),
+                  required: ["name", "type", "problem_statement", "recommended_duration"]),
             write("update_question", "Update question metadata.",
                   properties: [
                       "question_id": string("The question's id."),
@@ -1805,10 +1855,11 @@ extension RankBuddyToolProvider {
             write("delete_team", "Delete a team.",
                   properties: ["team_id": string("The team's id."), "account": account],
                   required: ["team_id"], destructive: true),
-            write("add_team_member", "Add a member to a team by email.",
+            write("add_team_member", "Create a user and add them to a team by email.",
                   properties: [
                       "team_id": string("The team's id."),
                       "email": string("The member's email.", minLength: 1, format: "email"),
+                      "first_name": string("The member's first name (optional; defaults from the email)."),
                       "role": string(
                           "The member's role (optional).",
                           allowedValues: ["recruiter", "interviewer", "developer"]
@@ -1848,10 +1899,8 @@ extension RankBuddyToolProvider {
                   properties: [
                       "name": string("The template's name.", minLength: 1,
                                      maxLength: InterviewTemplateValidation.maxNameLength),
-                      "title": string("Default interview title.",
-                                      maxLength: InterviewTemplateValidation.maxTitleLength),
-                      "description": string("Default interview description.",
-                                            maxLength: InterviewTemplateValidation.maxDescriptionLength),
+                      "role_id": string("Unique id of the role the template targets."),
+                      "team_share": integer("Team sharing permission level (0–3).", minimum: 0, maximum: 3),
                       "account": account
                   ],
                   required: ["name"]),
@@ -1860,10 +1909,9 @@ extension RankBuddyToolProvider {
                       "template_id": integer("The template id.", minimum: 1),
                       "name": string("The template's name.",
                                      maxLength: InterviewTemplateValidation.maxNameLength),
-                      "title": string("Default interview title.",
-                                      maxLength: InterviewTemplateValidation.maxTitleLength),
-                      "description": string("Default interview description.",
-                                            maxLength: InterviewTemplateValidation.maxDescriptionLength),
+                      "role_id": string("Unique id of the role the template targets."),
+                      "team_share": integer("Team sharing permission level (0–3).", minimum: 0, maximum: 3),
+                      "scorecard_id": integer("Scorecard id to attach to the template.", minimum: 1),
                       "account": account
                   ],
                   required: ["template_id"]),

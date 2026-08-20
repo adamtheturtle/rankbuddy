@@ -165,7 +165,7 @@ enum MarkdownExport {
                 ("Starts", formattedDate(test.startTime)), ("Ends", formattedDate(test.endTime)),
                 ("Created", formattedDate(test.createdAt)),
                 ("Library", formattedList(test.library.map { [$0] })),
-                ("Role", formattedList(test.role.map { [$0] })),
+                ("Roles", formattedList(test.roleIDs)),
                 ("Skills", formattedList(test.skills)),
                 ("Type", formattedList(test.type.map { [$0] })),
                 ("Languages", formattedLanguages(test.languages)),

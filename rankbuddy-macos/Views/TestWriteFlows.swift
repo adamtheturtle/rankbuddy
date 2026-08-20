@@ -108,6 +108,8 @@ struct TestEditorSheet: View {
     @State private var enableProctoring: Bool
     @State private var shuffleQuestionsChanged: Bool
     @State private var enableProctoringChanged: Bool
+    @State private var roleIDs = ""
+    @State private var experience = "Senior"
     @State private var isSending = false
     @State private var errorMessage: String?
     @State private var mutationTask: Task<Void, Never>?
@@ -130,6 +132,8 @@ struct TestEditorSheet: View {
             _enableProctoring = State(initialValue: false)
             _shuffleQuestionsChanged = State(initialValue: true)
             _enableProctoringChanged = State(initialValue: true)
+            _roleIDs = State(initialValue: "")
+            _experience = State(initialValue: "Senior")
 
         case let .edit(test):
             _name = State(initialValue: test.name)
@@ -144,6 +148,8 @@ struct TestEditorSheet: View {
             _enableProctoring = State(initialValue: test.enableProctoring ?? false)
             _shuffleQuestionsChanged = State(initialValue: false)
             _enableProctoringChanged = State(initialValue: false)
+            _roleIDs = State(initialValue: test.roleIDs?.joined(separator: ", ") ?? "")
+            _experience = State(initialValue: "")
         }
     }
 
@@ -159,7 +165,18 @@ struct TestEditorSheet: View {
     }
 
     private var canSave: Bool {
-        TestNameValidation.isValid(trimmedName) && validationError == nil
+        TestNameValidation.isValid(trimmedName) && validationError == nil && createRequirementsMet
+    }
+
+    private var createRequirementsMet: Bool {
+        guard !isEditing else { return true }
+
+        let parsedDuration = Int(duration.trimmingCharacters(in: .whitespacesAndNewlines))
+        let parsedRoleIDs = TestListEditing.values(from: roleIDs) ?? []
+        let parsedExperience = TestListEditing.values(from: experience) ?? []
+        return parsedDuration.map { $0 > 0 } == true
+            && !parsedRoleIDs.isEmpty
+            && !parsedExperience.isEmpty
     }
 
     private var options: TestWriteOptions {
@@ -207,6 +224,17 @@ struct TestEditorSheet: View {
         if let error = TestAssessmentValidation.error(duration: duration, cutoffScore: cutoffScore) {
             return error
         }
+        if !isEditing {
+            if Int(duration.trimmingCharacters(in: .whitespacesAndNewlines)) == nil {
+                return "Duration is required when creating a test."
+            }
+            if TestListEditing.values(from: roleIDs)?.isEmpty != false {
+                return "At least one role id is required when creating a test."
+            }
+            if TestListEditing.values(from: experience)?.isEmpty != false {
+                return "At least one experience level is required when creating a test."
+            }
+        }
         return TestScheduleValidation.error(startTime: startTime, endTime: endTime)
     }
 
@@ -224,6 +252,8 @@ struct TestEditorSheet: View {
 
                 Section("Assessment") {
                     TextField("Duration (minutes)", text: $duration)
+                    TextField("Role ids (comma-separated)", text: $roleIDs, prompt: Text("Required when creating"))
+                    TextField("Experience levels (comma-separated)", text: $experience, prompt: Text("e.g. Senior"))
                     TextField("Cutoff score", text: $cutoffScore)
                     TextField("Allowed languages (comma-separated)", text: $languages)
                     TextField("Tags (comma-separated)", text: $tags)
@@ -291,7 +321,19 @@ struct TestEditorSheet: View {
             let client = HackerRankClient(account: account)
             switch mode {
             case .create:
-                try await client.createTest(name: trimmedName, options: options)
+                guard
+                    let createDuration = Int(duration.trimmingCharacters(in: .whitespacesAndNewlines)),
+                    let createRoleIDs = TestListEditing.values(from: roleIDs),
+                    let createExperience = TestListEditing.values(from: experience)
+                else { return }
+
+                try await client.createTest(
+                    name: trimmedName,
+                    duration: createDuration,
+                    roleIDs: createRoleIDs,
+                    experience: createExperience,
+                    options: options
+                )
             case let .edit(test):
                 let originalName = TestNameValidation.normalized(test.name)
                 let shouldRebaseName = TestDirtyField.needsNameRebase(edited: trimmedName, original: originalName)

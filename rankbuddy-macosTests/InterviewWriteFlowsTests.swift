@@ -78,7 +78,7 @@ struct InterviewWriteFlowsTests {
         let created = try await makeClient().scheduleInterview(
             title: "  Backend Screen  ",
             from: Date(timeIntervalSince1970: 1_750_000_000),
-            candidateEmail: " ada@example.com ",
+            candidate: InterviewCandidate(email: " ada@example.com "),
             notes: "  Focus on systems design  "
         )
         #expect(created.id == "i-created")
