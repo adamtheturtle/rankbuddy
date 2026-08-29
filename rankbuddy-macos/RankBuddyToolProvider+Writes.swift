@@ -176,6 +176,7 @@ extension RankBuddyToolProvider {
         guard let roleIDs = stringArrayArgument(arguments, "role_ids"), !roleIDs.isEmpty else {
             return errorResult("`role_ids` is required and must contain at least one role id.")
         }
+
         let experience = stringArrayArgument(arguments, "experience") ?? ["Senior"]
         guard !experience.isEmpty else {
             return errorResult("`experience` must contain at least one level.")
@@ -843,7 +844,6 @@ extension RankBuddyToolProvider {
     // MARK: - Questions
 
     @MainActor
-    // swiftlint:disable:next cyclomatic_complexity
     private func createQuestionTool(_ arguments: [String: Value]?, account: String?) async -> CallTool.Result {
         guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
         guard let rawType = stringArgument(arguments, "type") else { return missingArgument("type") }
@@ -855,7 +855,6 @@ extension RankBuddyToolProvider {
         else {
             return errorResult("`type` must be coding, mcq, or subjective.")
         }
-
         guard let problemStatement = Self.normalizedOptionalString(
             stringArgument(arguments, "problem_statement")
         ) else {
@@ -968,14 +967,6 @@ extension RankBuddyToolProvider {
             return "`name` must not be empty."
         }
         return questionListValidationError(arguments)
-    }
-
-    private func doubleArgument(_ arguments: [String: Value]?, _ key: String) -> Double? {
-        switch arguments?[key] {
-        case let .double(value): value
-        case let .int(value): Double(value)
-        default: nil
-        }
     }
 
     @MainActor

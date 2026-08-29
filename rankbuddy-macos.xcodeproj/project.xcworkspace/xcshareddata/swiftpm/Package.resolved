@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/buddy-kit",
       "state" : {
-        "revision" : "f26178a475557f2b98053cd0efd8f05446242c13",
-        "version" : "0.18.0"
+        "revision" : "819a6067f3230b3e61d4a3cc4b21f249f1f6af21",
+        "version" : "0.19.0"
       }
     },
     {
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/MCPClientInstall",
       "state" : {
-        "revision" : "0b4772a2bc7c5cbf71a8b441e0ad56c53fc246ba",
-        "version" : "0.3.1"
+        "revision" : "4a60ade2906edb5c9172ad44f3c4d9a3e339f104",
+        "version" : "0.4.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/MCPKit/",
       "state" : {
-        "revision" : "e402d903599d2e3b6c3e6aa9587215f994906373",
-        "version" : "0.5.0"
+        "revision" : "2829ab57a7d672facd80f390371a0820ef028102",
+        "version" : "0.5.1"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle",
       "state" : {
-        "revision" : "79bc9e872948e47877e76f194cb0c8e0412b0b90",
-        "version" : "2.9.5"
+        "revision" : "ac2def288cbff5cfc7df3ffef6abdf45b72bcb0a",
+        "version" : "2.9.6"
       }
     },
     {

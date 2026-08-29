@@ -120,6 +120,7 @@ enum RankBuddyCandidateSpotlightIndex {
 
 struct OpenRankBuddyCandidateIntent: OpenIntent {
     static let title: LocalizedStringResource = "Open RankBuddy Candidate"
+    // periphery:ignore - App Intents discovers this metadata at runtime.
     static let description = IntentDescription("Opens a candidate in RankBuddy without indexing candidate details.")
 
     @Parameter(title: "Candidate")
@@ -142,6 +143,7 @@ final class CandidateDeepLinkRouter {
     static let shared = CandidateDeepLinkRouter()
 
     struct Request: Equatable {
+        // periphery:ignore - Synthesized Equatable uses this to distinguish repeated requests.
         let id = UUID()
         let accountID: String
         let testID: String

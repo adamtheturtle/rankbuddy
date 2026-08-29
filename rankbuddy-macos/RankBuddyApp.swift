@@ -25,7 +25,6 @@ struct RankBuddyApp: App {
     @State private var commandContext = AppCommandContext()
     /// Account-aware favourites, shared with the lists and the palette (#25).
     @State private var favorites: FavoritesStore
-    // periphery:ignore
     /// Mirrors favourites to iCloud when the capability is present; nil in demo mode (#22).
     @State private var favoritesSync: FavoritesSyncCoordinator?
     @State private var savedSearchSync: SavedSearchSyncCoordinator?

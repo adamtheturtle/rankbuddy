@@ -64,11 +64,11 @@ nonisolated enum MCPClient: String, CaseIterable, Identifiable {
     /// The ready-to-use configuration (or command) for this client, for the given server
     /// launch `command` (RankBuddy's own executable path). Configuration-file snippets delegate
     /// to MCPClientInstall; Claude Code's documented CLI registration remains a shell command.
-    func configText(command: String, serverName: String = "rankbuddy") -> String {
+    func configText(command: String, serverName: String = "rankbuddy") throws -> String {
         if self == .claudeCode {
             return "claude mcp add \(serverName) -- \"\(command)\" --mcp"
         }
-        return buddyClient.configSnippet(for: server(command: command, name: serverName))
+        return try buddyClient.configSnippet(for: server(command: command, name: serverName))
     }
 
     /// The config file the one-click installer updates, also shown in the manual fallback.
@@ -108,12 +108,12 @@ nonisolated enum MCPClient: String, CaseIterable, Identifiable {
 
     /// The snippet to paste into the config file by hand. Claude Code's install path is its
     /// JSON config file, so the manual fallback shows JSON rather than the CLI command.
-    func manualConfigText(command: String, serverName: String = "rankbuddy") -> String {
+    func manualConfigText(command: String, serverName: String = "rankbuddy") throws -> String {
         switch self {
         case .claudeCode:
-            buddyClient.configSnippet(for: server(command: command, name: serverName))
+            try buddyClient.configSnippet(for: server(command: command, name: serverName))
         default:
-            configText(command: command, serverName: serverName)
+            try configText(command: command, serverName: serverName)
         }
     }
 

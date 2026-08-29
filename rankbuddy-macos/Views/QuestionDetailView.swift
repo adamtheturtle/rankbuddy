@@ -21,7 +21,6 @@ struct QuestionDetailView: View {
     var onChanged: () -> Void = {}
     @Environment(AccountStore.self) private var store
     @Environment(\.controlActiveState) private var controlActiveState
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AppCommandContext.self) private var commandContext
     @State var detail: QuestionDetail?

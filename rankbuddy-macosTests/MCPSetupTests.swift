@@ -58,7 +58,7 @@ struct MCPSetupTests {
     @Test func `the JSON clients emit a valid mcpServers block with the launch command`() throws {
         for client in [MCPClient.claudeDesktop, .cursor] {
             #expect(client.isCommand == false)
-            let text = client.configText(command: "/path/to/RankBuddy")
+            let text = try client.configText(command: "/path/to/RankBuddy")
             let object = try JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any]
             let servers = try #require(object?["mcpServers"] as? [String: Any])
             let server = try #require(servers["rankbuddy"] as? [String: Any])
@@ -67,14 +67,14 @@ struct MCPSetupTests {
         }
     }
 
-    @Test func `the CLI client shows a Claude Code add command and Codex shows a TOML table`() {
-        let claudeCode = MCPClient.claudeCode.configText(command: "/path/to/RankBuddy")
+    @Test func `the CLI client shows a Claude Code add command and Codex shows a TOML table`() throws {
+        let claudeCode = try MCPClient.claudeCode.configText(command: "/path/to/RankBuddy")
         #expect(MCPClient.claudeCode.isCommand)
         #expect(claudeCode.hasPrefix("claude mcp add rankbuddy -- "))
         #expect(claudeCode.contains("/path/to/RankBuddy"))
         #expect(claudeCode.hasSuffix("--mcp"))
 
-        let codex = MCPClient.codex.configText(command: "/path/to/RankBuddy")
+        let codex = try MCPClient.codex.configText(command: "/path/to/RankBuddy")
         #expect(codex.contains("[mcp_servers.rankbuddy]"))
         #expect(codex.contains("command = \"/path/to/RankBuddy\""))
         #expect(codex.contains("args = [\"--mcp\"]"))

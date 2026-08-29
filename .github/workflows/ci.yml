@@ -121,7 +121,7 @@ jobs:
 
       - name: SwiftLint (strict)
         env:
-          SWIFTLINT_VERSION: 0.63.3
+          SWIFTLINT_VERSION: 0.65.1
         run: |
           set -euo pipefail
           curl -sSfL -o swiftlint.zip "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/swiftlint_linux_amd64.zip"
@@ -132,7 +132,7 @@ jobs:
 
       - name: SwiftFormat (lint)
         env:
-          SWIFTFORMAT_VERSION: 0.61.1
+          SWIFTFORMAT_VERSION: 0.62.1
         run: |
           set -euo pipefail
           curl -sSfL -o swiftformat.zip "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat_linux.zip"
@@ -217,7 +217,7 @@ jobs:
 
       - name: Install SwiftLint analyzer
         env:
-          SWIFTLINT_VERSION: 0.63.3
+          SWIFTLINT_VERSION: 0.65.1
         run: |
           set -euo pipefail
           curl -sSfL -o swiftlint.zip \
@@ -428,7 +428,7 @@ jobs:
 
       - name: Install Periphery
         env:
-          PERIPHERY_VERSION: 3.7.4
+          PERIPHERY_VERSION: 3.8.0
         run: |
           set -euo pipefail
           curl -sSfL -o periphery.zip "https://github.com/peripheryapp/periphery/releases/download/${PERIPHERY_VERSION}/periphery-${PERIPHERY_VERSION}.zip"

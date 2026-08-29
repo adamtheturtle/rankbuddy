@@ -50,23 +50,23 @@ struct MCPClientsTests {
         }
     }
 
-    @Test func `the Claude Code client emits an mcp-add command carrying --mcp`() {
-        let text = MCPClient.claudeCode.configText(command: command)
+    @Test func `the Claude Code client emits an mcp-add command carrying --mcp`() throws {
+        let text = try MCPClient.claudeCode.configText(command: command)
         #expect(text.hasPrefix("claude mcp add rankbuddy -- "))
         #expect(text.contains("\"\(command)\""))
         #expect(text.hasSuffix("--mcp"))
     }
 
-    @Test func `the Codex client emits a TOML server block with the launch args`() {
-        let text = MCPClient.codex.configText(command: command)
+    @Test func `the Codex client emits a TOML server block with the launch args`() throws {
+        let text = try MCPClient.codex.configText(command: command)
         #expect(text.contains("[mcp_servers.rankbuddy]"))
         #expect(text.contains("command = \"\(command)\""))
         #expect(text.contains("args = [\"--mcp\"]"))
     }
 
-    @Test func `a custom server name is threaded through every format`() {
+    @Test func `a custom server name is threaded through every format`() throws {
         for client in MCPClient.allCases {
-            let text = client.configText(command: command, serverName: "rb-eu")
+            let text = try client.configText(command: command, serverName: "rb-eu")
             // The custom name reaches the output; the default "rankbuddy" name isn't assumed
             // (and can't be asserted absent, since the command path itself contains it).
             #expect(text.contains("rb-eu"))
