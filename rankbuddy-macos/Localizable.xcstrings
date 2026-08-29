@@ -4,6 +4,9 @@
     "" : {
 
     },
+    "…%lld more" : {
+
+    },
     "%@" : {
 
     },
@@ -42,13 +45,7 @@
     "1 minute" : {
 
     },
-    "AI Summary" : {
-
-    },
-    "ATS candidate ID" : {
-
-    },
-    "ATS requisition ID" : {
+    "A welcome screen, relative dates, theme options, and a Dock menu." : {
 
     },
     "About RankBuddy" : {
@@ -84,27 +81,6 @@
     "Add %@ to Favourites" : {
 
     },
-    "Add Account" : {
-
-    },
-    "Add Account…" : {
-
-    },
-    "Add Demo Account" : {
-
-    },
-    "Add Member" : {
-
-    },
-    "Add Member…" : {
-
-    },
-    "Add Testcase" : {
-
-    },
-    "Add Testcase…" : {
-
-    },
     "Add a HackerRank account to get started, then select it to edit." : {
 
     },
@@ -117,6 +93,12 @@
     "Add account" : {
 
     },
+    "Add Account" : {
+
+    },
+    "Add Account…" : {
+
+    },
     "Add an account" : {
 
     },
@@ -126,7 +108,22 @@
     "Add an account to see its activity." : {
 
     },
+    "Add Demo Account" : {
+
+    },
+    "Add Member" : {
+
+    },
+    "Add Member…" : {
+
+    },
     "Add notes" : {
+
+    },
+    "Add Testcase" : {
+
+    },
+    "Add Testcase…" : {
 
     },
     "Add to Favourites" : {
@@ -157,10 +154,13 @@
         }
       }
     },
-    "All Accounts" : {
+    "AI Summary" : {
 
     },
     "All accounts" : {
+
+    },
+    "All Accounts" : {
 
     },
     "Allow the MCP server to make changes" : {
@@ -172,6 +172,9 @@
     "An icon and tint to tell this account apart in the switcher and sidebar." : {
 
     },
+    "An optional Dock badge of upcoming interviews, with notifications for new ones." : {
+
+    },
     "Answer" : {
 
     },
@@ -181,19 +184,25 @@
     "Archive" : {
 
     },
+    "Archive “%@”?" : {
+
+    },
     "Archive Test" : {
 
     },
     "Archive this test" : {
 
     },
-    "Archive “%@”?" : {
-
-    },
     "Assessment" : {
 
     },
     "Assistant" : {
+
+    },
+    "ATS candidate ID" : {
+
+    },
+    "ATS requisition ID" : {
 
     },
     "Auto-refresh lists: %@" : {
@@ -217,7 +226,16 @@
     "Cancel this invitation?" : {
 
     },
+    "Candidate" : {
+
+    },
+    "Candidate %@" : {
+
+    },
     "Candidate email (optional)" : {
+
+    },
+    "Candidate in %@" : {
 
     },
     "Candidate instructions" : {
@@ -253,16 +271,19 @@
     "Clear Activity" : {
 
     },
+    "Clear all filters" : {
+
+    },
     "Clear Languages" : {
 
     },
     "Clear MCP activity?" : {
 
     },
-    "Clear all filters" : {
+    "Click to rename" : {
 
     },
-    "Click to rename" : {
+    "Coding" : {
 
     },
     "Color" : {
@@ -283,37 +304,28 @@
     "Connect an assistant to the server and its tool calls show up here." : {
 
     },
+    "Content" : {
+
+    },
     "Continue" : {
 
     },
     "Copy" : {
 
     },
-    "Couldn't generate a summary." : {
+    "Couldn’t archive test" : {
 
     },
     "Couldn’t Change App Visibility" : {
-
-    },
-    "Couldn’t Create Pad" : {
-
-    },
-    "Couldn’t Load Candidate" : {
-
-    },
-    "Couldn’t Load Team" : {
-
-    },
-    "Couldn’t Load User" : {
-
-    },
-    "Couldn’t archive test" : {
 
     },
     "Couldn’t change the login item" : {
 
     },
     "Couldn’t complete that action" : {
+
+    },
+    "Couldn’t Create Pad" : {
 
     },
     "Couldn’t delete interview" : {
@@ -328,10 +340,22 @@
     "Couldn’t delete test" : {
 
     },
+    "Couldn't generate a summary." : {
+
+    },
     "Couldn’t load activity" : {
 
     },
+    "Couldn’t Load Candidate" : {
+
+    },
     "Couldn’t load more activity: %@" : {
+
+    },
+    "Couldn’t Load Team" : {
+
+    },
+    "Couldn’t Load User" : {
 
     },
     "Couldn’t lock user" : {
@@ -364,12 +388,6 @@
     "Create" : {
 
     },
-    "Create User" : {
-
-    },
-    "Create User…" : {
-
-    },
     "Create a Pad or schedule an interview" : {
 
     },
@@ -391,6 +409,12 @@
     "Create user" : {
 
     },
+    "Create User" : {
+
+    },
+    "Create User…" : {
+
+    },
     "Current" : {
 
     },
@@ -403,7 +427,13 @@
     "Delete" : {
 
     },
+    "Delete “%@”?" : {
+
+    },
     "Delete All Testcases" : {
+
+    },
+    "Delete all testcases?" : {
 
     },
     "Delete All Testcases…" : {
@@ -424,9 +454,6 @@
     "Delete Test" : {
 
     },
-    "Delete all testcases?" : {
-
-    },
     "Delete this interview" : {
 
     },
@@ -440,9 +467,6 @@
 
     },
     "Delete this test" : {
-
-    },
-    "Delete “%@”?" : {
 
     },
     "Departments" : {
@@ -472,6 +496,15 @@
     "Duration (minutes)" : {
 
     },
+    "e.g. int" : {
+
+    },
+    "e.g. python" : {
+
+    },
+    "e.g. Senior" : {
+
+    },
     "Edit" : {
 
     },
@@ -484,10 +517,10 @@
     "Edit Assessment…" : {
 
     },
-    "Edit Test" : {
+    "Edit languages" : {
 
     },
-    "Edit languages" : {
+    "Edit Test" : {
 
     },
     "Edit title" : {
@@ -517,10 +550,10 @@
     "Ends (ISO-8601)" : {
 
     },
-    "Enter a URL from the selected account’s HackerRank host, or enter a bare item ID." : {
+    "Enter a name to create a question" : {
 
     },
-    "Enter a name to create a question" : {
+    "Enter a URL from the selected account’s HackerRank host, or enter a bare item ID." : {
 
     },
     "Enter a valid email address, a first name, and a team to create a user" : {
@@ -538,22 +571,25 @@
     "Expected output" : {
 
     },
+    "Experience levels (comma-separated)" : {
+
+    },
     "Explanation" : {
 
     },
     "Export %@ as CSV" : {
 
     },
-    "Export CSV…" : {
-
-    },
-    "Export Loaded Rows CSV…" : {
+    "Export as a Markdown file" : {
 
     },
     "Export as Markdown…" : {
 
     },
-    "Export as a Markdown file" : {
+    "Export CSV…" : {
+
+    },
+    "Export Loaded Rows CSV…" : {
 
     },
     "Export the currently loaded %@ rows as CSV" : {
@@ -577,6 +613,9 @@
     "Fetch the candidate's report PDF from HackerRank and open it" : {
 
     },
+    "Filter & save searches" : {
+
+    },
     "Filter %@ by date" : {
 
     },
@@ -598,13 +637,13 @@
     "Generate" : {
 
     },
+    "Generate a plain-language summary on this device" : {
+
+    },
     "Generate Code Stubs" : {
 
     },
     "Generate Code Stubs…" : {
-
-    },
-    "Generate a plain-language summary on this device" : {
 
     },
     "Get a Token" : {
@@ -614,6 +653,9 @@
 
     },
     "HackerRank API Documentation" : {
+
+    },
+    "HackerRank did not return answer details for this question." : {
 
     },
     "HackerRank writes a starter stub for each language from this signature." : {
@@ -652,13 +694,13 @@
     "Invite" : {
 
     },
+    "Invite a candidate to this test" : {
+
+    },
     "Invite Candidate" : {
 
     },
     "Invite Candidate…" : {
-
-    },
-    "Invite a candidate to this test" : {
 
     },
     "Invite options" : {
@@ -712,10 +754,10 @@
     "Loading question details…" : {
 
     },
-    "Loading teams…" : {
+    "Loading team…" : {
 
     },
-    "Loading team…" : {
+    "Loading teams…" : {
 
     },
     "Loading transcript…" : {
@@ -733,19 +775,13 @@
     "Lock %@?" : {
 
     },
-    "Lock User" : {
-
-    },
     "Lock this user's account" : {
 
     },
+    "Lock User" : {
+
+    },
     "Lock user?" : {
-
-    },
-    "MCP Activity" : {
-
-    },
-    "MCP Server" : {
 
     },
     "Manage Accounts…" : {
@@ -757,10 +793,25 @@
     "Max score" : {
 
     },
+    "MCP Activity" : {
+
+    },
+    "MCP Server" : {
+
+    },
     "Menu Bar" : {
 
     },
+    "More at home on the Mac" : {
+
+    },
     "Name" : {
+
+    },
+    "name: type pairs, comma-separated, e.g. counts: int[], target: int" : {
+
+    },
+    "Narrow any list by date range, then save a search to re-run it later." : {
 
     },
     "New" : {
@@ -793,6 +844,12 @@
     "No Account" : {
 
     },
+    "No account configured" : {
+
+    },
+    "No account selected" : {
+
+    },
     "No Account Selected" : {
 
     },
@@ -802,19 +859,19 @@
     "No Activity" : {
 
     },
+    "No Answer Available" : {
+
+    },
+    "No Content Available" : {
+
+    },
     "No MCP activity yet" : {
 
     },
-    "No Transcript" : {
-
-    },
-    "No account configured" : {
-
-    },
-    "No account selected" : {
-
-    },
     "No recent changes are recorded for this account." : {
+
+    },
+    "No Transcript" : {
 
     },
     "None" : {
@@ -832,10 +889,10 @@
     "Notify me about new interviews" : {
 
     },
-    "OK" : {
+    "Offline" : {
 
     },
-    "Offline" : {
+    "OK" : {
 
     },
     "Open" : {
@@ -848,24 +905,6 @@
 
     },
     "Open Account Settings" : {
-
-    },
-    "Open RankBuddy" : {
-
-    },
-    "Open RankBuddy Item" : {
-
-    },
-    "Open RankBuddy automatically when you log in to your Mac." : {
-
-    },
-    "Open RankBuddy to ${section}" : {
-
-    },
-    "Open Section" : {
-
-    },
-    "Open Settings" : {
 
     },
     "Open by URL or ID" : {
@@ -883,6 +922,21 @@
     "Open links in the background" : {
 
     },
+    "Open RankBuddy" : {
+
+    },
+    "Open RankBuddy automatically when you log in to your Mac." : {
+
+    },
+    "Open RankBuddy Candidate" : {
+
+    },
+    "Open RankBuddy Item" : {
+
+    },
+    "Open RankBuddy to ${section}" : {
+
+    },
     "Open report" : {
 
     },
@@ -892,22 +946,31 @@
     "Open résumé" : {
 
     },
+    "Open Section" : {
+
+    },
+    "Open Settings" : {
+
+    },
     "Open the %@ in your browser" : {
 
     },
     "Open the activity window" : {
 
     },
-    "Opens RankBuddy to a specific section." : {
+    "Opens a candidate in RankBuddy without indexing candidate details." : {
 
     },
     "Opens a test, question, or interview in RankBuddy." : {
 
     },
+    "Opens in your browser, which may be signed in to a different HackerRank account." : {
+
+    },
     "Opens in your browser's signed-in account" : {
 
     },
-    "Opens in your browser, which may be signed in to a different HackerRank account." : {
+    "Opens RankBuddy to a specific section." : {
 
     },
     "Opens the RankBuddy main window." : {
@@ -923,6 +986,9 @@
 
     },
     "Override only for regional HackerRank deployments. Leave blank to use the default." : {
+
+    },
+    "Overview" : {
 
     },
     "Parameters" : {
@@ -946,6 +1012,12 @@
     "Prefer to edit the file yourself?" : {
 
     },
+    "Print & export" : {
+
+    },
+    "Print or save a candidate report as PDF, and export any list to CSV." : {
+
+    },
     "Print or save as PDF" : {
 
     },
@@ -964,6 +1036,9 @@
     "Public login link" : {
 
     },
+    "Question detail section" : {
+
+    },
     "Questions" : {
 
     },
@@ -973,13 +1048,16 @@
     "RankBuddy" : {
 
     },
+    "RankBuddy can’t locate its executable, so assistant configuration is unavailable." : {
+
+    },
+    "RankBuddy Candidate" : {
+
+    },
     "RankBuddy Item" : {
 
     },
     "RankBuddy Section" : {
-
-    },
-    "RankBuddy can’t locate its executable, so assistant configuration is unavailable." : {
 
     },
     "Recent" : {
@@ -1021,10 +1099,10 @@
     "Remove %@ from Favourites" : {
 
     },
-    "Remove Account?" : {
+    "Remove account" : {
 
     },
-    "Remove account" : {
+    "Remove Account?" : {
 
     },
     "Remove from Favourites" : {
@@ -1052,6 +1130,12 @@
 
     },
     "Require Touch ID to reveal a token" : {
+
+    },
+    "Required" : {
+
+    },
+    "Required when creating" : {
 
     },
     "Requires a HackerRank for Work personal access token." : {
@@ -1084,6 +1168,9 @@
     "Role" : {
 
     },
+    "Role ids (comma-separated)" : {
+
+    },
     "Sample (shown to candidates)" : {
 
     },
@@ -1102,10 +1189,10 @@
     "Save the current filters so you can re-apply them later." : {
 
     },
-    "Saved Accounts Need Recovery" : {
+    "Save…" : {
 
     },
-    "Save…" : {
+    "Saved Accounts Need Recovery" : {
 
     },
     "Schedule" : {
@@ -1174,10 +1261,10 @@
     "Show Detail Pane" : {
 
     },
-    "Show RankBuddy in" : {
+    "Show only active or upcoming items" : {
 
     },
-    "Show only active or upcoming items" : {
+    "Show RankBuddy in" : {
 
     },
     "Show the correct answer" : {
@@ -1217,6 +1304,9 @@
 
     },
     "Starts (ISO-8601)" : {
+
+    },
+    "Stay in the loop" : {
 
     },
     "Stub code" : {
@@ -1300,6 +1390,9 @@
     "This permanently deletes the test on HackerRank. This can’t be undone." : {
 
     },
+    "This question does not have a problem statement." : {
+
+    },
     "This removes %@ from the team on HackerRank." : {
 
     },
@@ -1333,13 +1426,13 @@
     "Type" : {
 
     },
-    "Use This Account" : {
-
-    },
     "Use a unique description so this account is distinguishable in selectors." : {
 
     },
     "Use the default icon and color." : {
+
+    },
+    "Use This Account" : {
 
     },
     "Used when you paste a bare ID rather than a full URL" : {
@@ -1367,18 +1460,6 @@
 
     },
     "Your changes to this account have not been saved." : {
-
-    },
-    "e.g. int" : {
-
-    },
-    "e.g. python" : {
-
-    },
-    "name: type pairs, comma-separated, e.g. counts: int[], target: int" : {
-
-    },
-    "…%lld more" : {
 
     }
   },
