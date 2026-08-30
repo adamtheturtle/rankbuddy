@@ -21,3 +21,6 @@ node_modules/
 # fresh checkout resolves the same package graph as CI (see docs/dependencies.md).
 .swiftpm/
 .build/
+
+# Vale styles downloaded by `vale sync`.
+styles/
