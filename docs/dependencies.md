@@ -25,8 +25,7 @@ It is the human-readable counterpart to [`.github/dependabot.yml`](../.github/de
 - **Pinning discipline.**
   - `buddy-kit` itself is pinned to an **exact released version** (never a branch or floating range), so every build is reproducible.
   - Transitive requirements follow their packages' manifests; the committed resolution file records the exact graph used by CI.
-- **Resolution files are committed.**
-  `Package.resolved` is tracked (it is **not** git-ignored) so a fresh checkout — local or CI — resolves an identical package graph.
+- **Resolution files are committed.** `Package.resolved` is tracked (it is **not** git-ignored) so a fresh checkout — local or CI — resolves an identical package graph.
 
 ### FastList usage audit
 
