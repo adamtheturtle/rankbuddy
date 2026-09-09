@@ -11,8 +11,7 @@ Derived from the public [`adamtheturtle/hackerrank`](https://github.com/adamthet
 
 ## Confirmed against a live account (2026-06-24)
 
-- **Auth/pagination:** `GET /x/api/v3/tests|questions|interviews` return `200` with the envelope below (`data`, `total`, `page_total`, `offset`, absolute `next`/`previous`/ `first`/`last`).
-  Pagination is offset/limit and `next` is absolute — as modelled.
+- **Auth/pagination:** `GET /x/api/v3/tests|questions|interviews` return `200` with the envelope below (`data`, `total`, `page_total`, `offset`, absolute `next`/`previous`/ `first`/`last`). Pagination is offset/limit and `next` is absolute — as modelled.
 - **Ids are JSON strings** (e.g. `"2360707"`), so the models' `String` ids are correct.
 - **Dates** are ISO-8601 with a `+0000` zero-offset and no fractional seconds (e.g. `2026-06-22T04:10:51+0000`); `DisplayFormat` parses this.
 - **Field-name correction:** tests expose **`start_time` / `end_time`** (not `starttime` / `endtime` as the Python schema implied).
