@@ -615,6 +615,15 @@ struct RankBuddyToolProviderTests {
         #expect(RankBuddyToolProvider.validatedPositiveID(42) == 42)
     }
 
+    @Test func `template writes reject deprecated sharing input`() async {
+        let result = await writeProvider().callTool(
+            "create_interview_template",
+            arguments: ["name": .string("Interview"), "team_share": .int(1)]
+        )
+        #expect(result.isError == true)
+        #expect(text(result).contains("team_share"))
+    }
+
     @Test func `catalogue lists require usable resource ids`() {
         #expect(RankBuddyToolProvider.allResourceIDsUsable(["test-1", " question-1 "]))
         #expect(!RankBuddyToolProvider.allResourceIDsUsable(["test-1", " \n"]))

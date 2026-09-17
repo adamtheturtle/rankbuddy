@@ -16,16 +16,28 @@ extension HackerRankClient {
         session: URLSession? = nil,
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) {
+        let selectedSession: URLSession
         if let session {
-            self.init(token: account.token, baseURL: account.baseURL, session: session)
+            selectedSession = session
         } else if account.token == Account.badKeyDemoToken {
             self = .mock(unauthorized: true)
-        } else if account.isMock, let scenario = DemoFailureScenario(environment: environment) {
-            self.init(token: account.token, baseURL: account.baseURL, session: scenario.session())
+            return
         } else if account.isMock {
-            self = .mock()
+            guard let scenario = DemoFailureScenario(environment: environment) else {
+                self = .mock()
+                return
+            }
+
+            selectedSession = scenario.session()
         } else {
-            self.init(token: account.token, baseURL: account.baseURL)
+            selectedSession = Self.liveSession
+        }
+
+        // Account.baseURL is either the built-in HTTPS URL or a parsed HTTPS override.
+        do {
+            self = try Self(token: account.token, baseURL: account.baseURL, session: selectedSession)
+        } catch {
+            preconditionFailure("Invalid account base URL: \(error)")
         }
     }
 }
