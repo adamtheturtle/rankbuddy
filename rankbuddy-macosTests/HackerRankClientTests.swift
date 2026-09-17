@@ -160,6 +160,8 @@ struct HackerRankClientTests {
         do {
             _ = try await request.value
             Issue.record("expected cancellation")
+        } catch is CancellationError {
+            // PaginatedRESTClient 0.5 propagates task cancellation directly.
         } catch let error as HackerRankError {
             guard case let .network(urlError) = error else {
                 Issue.record("expected a network cancellation, got \(error)")
@@ -168,7 +170,7 @@ struct HackerRankClientTests {
 
             #expect(urlError.code == .cancelled)
         } catch {
-            Issue.record("expected HackerRankError, got \(error)")
+            Issue.record("expected cancellation, got \(error)")
         }
         #expect(HangingURLProtocol.requestCount == 1)
     }

@@ -1325,6 +1325,9 @@ extension RankBuddyToolProvider {
         _ arguments: [String: Value]?,
         account: String?
     ) async -> CallTool.Result {
+        if arguments?["team_share"] != nil {
+            return errorResult("`team_share` is deprecated and cannot change template sharing.")
+        }
         guard let rawName = stringArgument(arguments, "name") else { return missingArgument("name") }
         guard let name = Self.normalizedOptionalString(rawName) else {
             return errorResult("`name` must not be empty.")
@@ -1343,8 +1346,7 @@ extension RankBuddyToolProvider {
             let template = try await HackerRankClient(account: resolved).createInterviewTemplate(
                 name: name,
                 options: InterviewTemplateCreateOptions(
-                    roleID: Self.normalizedOptionalString(stringArgument(arguments, "role_id")),
-                    teamShare: intArgument(arguments, "team_share")
+                    roleID: Self.normalizedOptionalString(stringArgument(arguments, "role_id"))
                 )
             )
             return interviewTemplateResult(template, account: resolved.label)
@@ -1371,10 +1373,13 @@ extension RankBuddyToolProvider {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let description = stringArgument(arguments, "description")?
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard arguments?["name"] != nil || arguments?["role_id"] != nil || arguments?["team_share"] != nil
+        if arguments?["team_share"] != nil {
+            return errorResult("`team_share` is deprecated and cannot change template sharing.")
+        }
+        guard arguments?["name"] != nil || arguments?["role_id"] != nil
             || arguments?["scorecard_id"] != nil
         else {
-            return errorResult("At least one of `name`, `role_id`, `team_share`, or `scorecard_id` must be provided.")
+            return errorResult("At least one of `name`, `role_id`, or `scorecard_id` must be provided.")
         }
 
         if let issue = InterviewTemplateValidation.textIssue(
@@ -1390,7 +1395,6 @@ extension RankBuddyToolProvider {
                 options: InterviewTemplateUpdateOptions(
                     name: name,
                     roleID: Self.normalizedOptionalString(stringArgument(arguments, "role_id")),
-                    teamShare: intArgument(arguments, "team_share"),
                     scorecardID: intArgument(arguments, "scorecard_id")
                 )
             )
@@ -1891,7 +1895,6 @@ extension RankBuddyToolProvider {
                       "name": string("The template's name.", minLength: 1,
                                      maxLength: InterviewTemplateValidation.maxNameLength),
                       "role_id": string("Unique id of the role the template targets."),
-                      "team_share": integer("Team sharing permission level (0–3).", minimum: 0, maximum: 3),
                       "account": account
                   ],
                   required: ["name"]),
@@ -1901,7 +1904,6 @@ extension RankBuddyToolProvider {
                       "name": string("The template's name.",
                                      maxLength: InterviewTemplateValidation.maxNameLength),
                       "role_id": string("Unique id of the role the template targets."),
-                      "team_share": integer("Team sharing permission level (0–3).", minimum: 0, maximum: 3),
                       "scorecard_id": integer("Scorecard id to attach to the template.", minimum: 1),
                       "account": account
                   ],
