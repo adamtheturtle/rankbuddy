@@ -25,7 +25,7 @@ concurrency:
 jobs:
   validate:
     name: Validate Sparkle-free store build
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -38,7 +38,7 @@ jobs:
 
       - name: Select Xcode
         run: |
-          sudo xcode-select -s /Applications/Xcode_26.5.app
+          sudo xcode-select -s /Applications/Xcode_27.app
           xcodebuild -version
 
       - name: Build unsigned App Store product
@@ -83,7 +83,7 @@ jobs:
     name: Archive and upload
     if: github.event_name == 'workflow_dispatch' && inputs.upload
     needs: validate
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 40
     steps:
       - name: Checkout
@@ -98,7 +98,7 @@ jobs:
 
       - name: Select Xcode
         run: |
-          sudo xcode-select -s /Applications/Xcode_26.5.app
+          sudo xcode-select -s /Applications/Xcode_27.app
           xcodebuild -version
 
       - name: Validate required secrets
