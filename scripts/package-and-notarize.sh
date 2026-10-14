@@ -16,8 +16,9 @@ repo_root="$(cd "$script_dir/.." && pwd)"
 entitlements="${ENTITLEMENTS:-$repo_root/rankbuddy-macos/rankbuddy-macos.entitlements}"
 [[ -f "$entitlements" ]] || die "entitlements not found: $entitlements"
 
-team_id="$(printf '%s' "$SIGNING_IDENTITY" | sed -n 's/.*(\([A-Z0-9]\{10\}\)).*/\1/p')"
-[[ -n "$team_id" ]] || die "could not parse Team ID from SIGNING_IDENTITY"
+# SIGNING_IDENTITY_NAME supplies the certificate name when signing by hash.
+team_id="$(printf '%s' "${SIGNING_IDENTITY_NAME:-$SIGNING_IDENTITY}" | sed -n 's/.*(\([A-Z0-9]\{10\}\)).*/\1/p')"
+[[ -n "$team_id" ]] || die "could not parse Team ID; set SIGNING_IDENTITY_NAME when signing by hash"
 bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist")"
 
 work="$(mktemp -d)"
