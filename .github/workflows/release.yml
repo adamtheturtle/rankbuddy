@@ -87,19 +87,25 @@ jobs:
           retention-days: 14
 
       - name: Import signing certificate
-        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466
+        id: signing_certificate
+        uses: apple-actions/import-codesign-certs@77ba2a2a8f5cfc8c405ebf3159f767c323e238f9  # v7.1.0
         with:
           p12-file-base64: ${{ secrets.DEVELOPER_ID_APP_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.DEVELOPER_ID_APP_CERT_PASSWORD }}
 
       - name: Resolve signing identity
+        env:
+          IDENTITIES: ${{ steps.signing_certificate.outputs.identities }}
         run: |
           set -euo pipefail
-          identity="$(security find-identity -v -p codesigning \
-            | grep 'Developer ID Application' | head -1 \
-            | sed -E 's/.*"(.*)".*/\1/')"
-          test -n "$identity" || { echo "::error::Developer ID identity not found"; exit 1; }
-          echo "SIGNING_IDENTITY=$identity" >> "$GITHUB_ENV"
+          identity="$(jq -ce '
+            [.[] | select(.name | startswith("Developer ID Application:"))]
+            | if length == 1 then .[0]
+              else error("Expected exactly one Developer ID Application identity; found \(length)")
+              end
+          ' <<< "$IDENTITIES")"
+          echo "SIGNING_IDENTITY=$(jq -r .hash <<< "$identity")" >> "$GITHUB_ENV"
+          echo "SIGNING_IDENTITY_NAME=$(jq -r .name <<< "$identity")" >> "$GITHUB_ENV"
 
       - name: Package and notarize
         env:

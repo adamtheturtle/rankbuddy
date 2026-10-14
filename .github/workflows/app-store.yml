@@ -118,7 +118,8 @@ jobs:
           done
 
       - name: Import distribution certificate
-        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466
+        id: signing_certificate
+        uses: apple-actions/import-codesign-certs@77ba2a2a8f5cfc8c405ebf3159f767c323e238f9  # v7.1.0
         with:
           p12-file-base64: ${{ secrets.APPLE_DISTRIBUTION_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.APPLE_DISTRIBUTION_CERT_PASSWORD }}
@@ -138,10 +139,17 @@ jobs:
 
       - name: Archive
         env:
+          IDENTITIES: ${{ steps.signing_certificate.outputs.identities }}
           PROFILE_NAME: ${{ secrets.APP_STORE_PROVISIONING_PROFILE_NAME }}
           MARKETING_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
+          signing_identity="$(jq -er '
+            [.[] | select(.name | startswith("Apple Distribution:"))]
+            | if length == 1 then .[0].hash
+              else error("Expected exactly one Apple Distribution identity; found \(length)")
+              end
+          ' <<< "$IDENTITIES")"
           build="$(git rev-list --count HEAD)"
           scripts/validate-release-version.sh "$MARKETING_VERSION" "$build" "v$MARKETING_VERSION"
           scripts/run-xcodebuild.sh AppStoreArchive.log archive \
@@ -157,7 +165,7 @@ jobs:
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$build" \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY='Apple Distribution' \
+            CODE_SIGN_IDENTITY="$signing_identity" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
 
       - name: Validate archive has no Sparkle
