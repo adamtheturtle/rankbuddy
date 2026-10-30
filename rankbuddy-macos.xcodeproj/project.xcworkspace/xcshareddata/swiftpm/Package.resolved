@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/HackerRankKit",
       "state" : {
-        "revision" : "701e5da5e38308378b523d8e9c078ff07eb229e8",
-        "version" : "0.9.0"
+        "revision" : "1f2051529e36137ffec311cde6f6653a4c988c11",
+        "version" : "0.10.0"
       }
     },
     {

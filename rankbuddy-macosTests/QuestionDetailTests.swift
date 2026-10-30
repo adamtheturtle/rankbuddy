@@ -95,6 +95,21 @@ struct QuestionDetailTests {
         #expect(overlay.applying(to: refreshed).languages == ["python"])
     }
 
+    @Test func `system prompt edits survive overlays and metadata refreshes`() throws {
+        let original = Question(id: "q1", type: "fullstack", name: "Project", customSystemPrompt: "Old")
+        let prompt = "  Give hints.\nDo not solve.  "
+        var overlay = QuestionEditOverlay()
+        overlay.merge(name: nil, options: QuestionWriteOptions(customSystemPrompt: prompt))
+        overlay.merge(name: "Renamed", options: QuestionWriteOptions(tags: ["project"]))
+        #expect(overlay.applying(to: original).customSystemPrompt == prompt)
+        let metadata = try JSONDecoder().decode(QuestionDetailMetadata.self, from: Data(
+            #"{"custom_system_prompt":"Remote"}"#.utf8
+        ))
+        #expect(overlay.applying(to: metadata.applying(to: original)).customSystemPrompt == prompt)
+        overlay.merge(name: nil, options: QuestionWriteOptions(customSystemPrompt: ""))
+        #expect(overlay.applying(to: original).customSystemPrompt?.isEmpty == true)
+    }
+
     @Test func `detail request identity includes account and question`() {
         let accountA = UUID()
         let accountB = UUID()

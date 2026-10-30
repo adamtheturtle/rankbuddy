@@ -31,6 +31,9 @@ extension QuestionDetailView {
 
         case .content:
             problemStatementSection
+            if displayed.type == "fullstack" {
+                systemPromptSection
+            }
             if let notes = detail?.internalNotes, !notes.isEmpty {
                 Section("Internal notes") {
                     HTMLText(html: notes)
@@ -84,6 +87,33 @@ extension QuestionDetailView {
 
         case .coding:
             codingSection
+        }
+    }
+
+    private var systemPromptSection: some View {
+        Section {
+            if canEdit {
+                InlineEditableText(
+                    text: displayed.customSystemPrompt ?? "",
+                    placeholder: "No custom system prompt",
+                    preservesWhitespace: true
+                ) { newValue in
+                    if let issue = QuestionEditValidation.systemPromptIssue(newValue) {
+                        editError = issue
+                        return false
+                    }
+                    return await save(QuestionWriteOptions(customSystemPrompt: newValue))
+                }
+            } else if let prompt = displayed.customSystemPrompt, !prompt.isEmpty {
+                Text(prompt).textSelection(.enabled)
+            }
+        } header: {
+            Text("AI system prompt")
+        } footer: {
+            Text("""
+            Customize the project AI assistant. Up to 15,000 characters. \
+            Clear the text to remove the custom prompt.
+            """)
         }
     }
 

@@ -323,7 +323,7 @@ extension RankBuddyToolProvider {
     nonisolated static func hasQuestionUpdate(_ arguments: [String: Value]?) -> Bool {
         let keys = [
             "name", "type", "languages", "problem_statement",
-            "recommended_duration", "tags", "status"
+            "recommended_duration", "tags", "status", "custom_system_prompt"
         ]
         return keys.contains { arguments?[$0] != nil }
     }
@@ -948,11 +948,21 @@ extension RankBuddyToolProvider {
             languages: stringArrayArgument(arguments, "languages"),
             problemStatement: stringArgument(arguments, "problem_statement"),
             recommendedDuration: intArgument(arguments, "recommended_duration"),
-            tags: stringArrayArgument(arguments, "tags")
+            tags: stringArrayArgument(arguments, "tags"),
+            customSystemPrompt: stringArgument(arguments, "custom_system_prompt")
         )
     }
 
     private func questionListValidationError(_ arguments: [String: Value]?) -> String? {
+        if let value = arguments?["custom_system_prompt"] {
+            guard case let .string(prompt) = value else {
+                return "`custom_system_prompt` must be a string."
+            }
+
+            if let issue = QuestionEditValidation.systemPromptIssue(prompt) {
+                return issue
+            }
+        }
         for key in ["languages", "tags"] where hasInvalidStringArrayElements(arguments, key) {
             return "`\(key)` must contain only non-empty strings."
         }
@@ -1779,6 +1789,10 @@ extension RankBuddyToolProvider {
                       ),
                       "languages": ["type": "array", "items": ["type": "string"],
                                     "description": "Allowed languages; a comma-separated string is also accepted."],
+                      "custom_system_prompt": string(
+                          "Project AI system prompt. Empty text clears it; omission preserves it.",
+                          maxLength: QuestionEditValidation.maxSystemPromptLength
+                      ),
                       "problem_statement": string("Problem statement, typically Markdown or HTML."),
                       "recommended_duration": integer("Recommended duration in minutes.", minimum: 0),
                       "tags": ["type": "array", "items": ["type": "string"],
@@ -1803,6 +1817,10 @@ extension RankBuddyToolProvider {
                       ),
                       "languages": ["type": "array", "items": ["type": "string"],
                                     "description": "Allowed languages; a comma-separated string is also accepted."],
+                      "custom_system_prompt": string(
+                          "Project AI system prompt. Empty text clears it; omission preserves it.",
+                          maxLength: QuestionEditValidation.maxSystemPromptLength
+                      ),
                       "problem_statement": string("Problem statement, typically Markdown or HTML."),
                       "recommended_duration": integer("Recommended duration in minutes.", minimum: 0),
                       "tags": ["type": "array", "items": ["type": "string"],

@@ -22,7 +22,8 @@ struct QuestionEditOverlay {
             mcqOptions: update.mcqOptions ?? options.mcqOptions,
             answer: update.answer ?? options.answer,
             clearsRecommendedDuration: update.recommendedDuration == nil
-                ? update.clearsRecommendedDuration || options.clearsRecommendedDuration : false
+                ? update.clearsRecommendedDuration || options.clearsRecommendedDuration : false,
+            customSystemPrompt: update.customSystemPrompt ?? options.customSystemPrompt
         )
     }
 
@@ -76,7 +77,8 @@ extension Question {
                 ? nil : options.recommendedDuration ?? recommendedDuration,
             tags: options.tags ?? tags,
             maxScore: maxScore,
-            skills: skills
+            skills: skills,
+            customSystemPrompt: options.customSystemPrompt ?? customSystemPrompt
         )
     }
 }

@@ -64,6 +64,7 @@ nonisolated struct QuestionDetailMetadata: Decodable {
     var tags: [String]?
     var maxScore: Double?
     var skills: [String]?
+    var customSystemPrompt: String?
 
     enum CodingKeys: String, CodingKey {
         case uniqueID = "unique_id"
@@ -78,6 +79,7 @@ nonisolated struct QuestionDetailMetadata: Decodable {
         case tags
         case maxScore = "max_score"
         case skills
+        case customSystemPrompt = "custom_system_prompt"
     }
 
     func applying(to question: Question) -> Question {
@@ -94,7 +96,8 @@ nonisolated struct QuestionDetailMetadata: Decodable {
             recommendedDuration: recommendedDuration ?? question.recommendedDuration,
             tags: tags ?? question.tags,
             maxScore: maxScore ?? question.maxScore,
-            skills: skills ?? question.skills
+            skills: skills ?? question.skills,
+            customSystemPrompt: customSystemPrompt ?? question.customSystemPrompt
         )
     }
 }
