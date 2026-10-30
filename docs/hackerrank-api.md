@@ -149,3 +149,11 @@ SCIM bearer credentials are organisation-wide provisioning secrets, and create/u
 
 RankBuddy continues to use the scoped v3 Users and Teams APIs for user-visible administration.
 Supporting SCIM in the future would require a separate threat model, credential store, audit surface, and deployment use case; it must not reuse a user's ordinary HackerRank API token.
+
+## Project AI system prompts
+
+Open an existing project question's Content pane to edit its AI system prompt.
+Prompts preserve whitespace and may contain up to 15,000 characters.
+Saving empty text clears the custom prompt.
+The `create_question` and `update_question` tools accept `custom_system_prompt`; omitting it preserves the existing value.
+HackerRank support confirmed this top-level parameter ahead of its public API documentation.

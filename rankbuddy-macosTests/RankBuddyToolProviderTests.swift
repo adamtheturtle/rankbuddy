@@ -1423,6 +1423,20 @@ struct RankBuddyToolProviderTests {
         #expect(text(result).contains("question_id"))
     }
 
+    @Test func `question system prompts allow explicit clears and reject invalid values`() async {
+        #expect(RankBuddyToolProvider.hasQuestionUpdate(["custom_system_prompt": .string("")]))
+        let cleared = await writeProvider().callTool(
+            "update_question", arguments: ["question_id": .string("q1"), "custom_system_prompt": .string("")]
+        )
+        #expect(cleared.isError != true)
+        for value in [Value.int(1), .string(String(repeating: "x", count: 15001))] {
+            let result = await writeProvider().callTool(
+                "update_question", arguments: ["question_id": .string("q1"), "custom_system_prompt": value]
+            )
+            #expect(result.isError == true)
+        }
+    }
+
     @Test func `question writes reject missing create requirements`() async {
         let created = await writeProvider().callTool(
             "create_question",

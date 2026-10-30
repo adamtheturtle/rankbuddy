@@ -6,6 +6,13 @@
 import Foundation
 
 nonisolated enum QuestionEditValidation {
+    static let maxSystemPromptLength = 15000
+
+    static func systemPromptIssue(_ prompt: String) -> String? {
+        prompt.unicodeScalars.count > maxSystemPromptLength
+            ? "Custom system prompt must be at most 15,000 characters." : nil
+    }
+
     static let recommendedDurationRange = 0 ... 1440
 
     static func maxScore(from text: String) -> Double? {

@@ -382,6 +382,7 @@ struct InlineEditableText: View {
     let text: String
     var placeholder: LocalizedStringKey = "Empty"
     var rendersHTML = false
+    var preservesWhitespace = false
     /// Persists the new value; returns whether it saved (failure keeps the editor open).
     let commit: (String) async -> Bool
 
@@ -505,7 +506,8 @@ struct InlineEditableText: View {
 
         isSaving = true
         defer { isSaving = false }
-        if await commit(draft.trimmingCharacters(in: .whitespacesAndNewlines)) {
+        let value = preservesWhitespace ? draft : draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if await commit(value) {
             isEditing = false
         }
     }

@@ -9,6 +9,12 @@ import Testing
 
 @MainActor
 struct QuestionEditValidationTests {
+    @Test func `system prompts count Unicode scalars and accept empty text`() {
+        #expect(QuestionEditValidation.systemPromptIssue("") == nil)
+        #expect(QuestionEditValidation.systemPromptIssue(String(repeating: "🐢", count: 15000)) == nil)
+        #expect(QuestionEditValidation.systemPromptIssue(String(repeating: "x", count: 15001)) != nil)
+    }
+
     @Test func `question creation names respect the API limit`() {
         #expect(QuestionCreationValidation.nameIssue(String(repeating: "x", count: 255)) == nil)
         #expect(QuestionCreationValidation.nameIssue(String(repeating: "x", count: 256)) != nil)
@@ -143,7 +149,7 @@ struct QuestionEditValidationTests {
         #expect(nonBlank(" solve \n") == "solve")
     }
 
-    @Test func `testcases require meaningful content`() {
+    @Test func `cases require meaningful content`() {
         #expect(!TestcaseValidation.hasContent(input: "", output: " \n"))
         #expect(TestcaseValidation.hasContent(input: "1 2", output: ""))
         #expect(TestcaseValidation.hasContent(input: "", output: "42"))
@@ -177,7 +183,7 @@ struct QuestionEditValidationTests {
         ) == nil)
     }
 
-    @Test func `testcase scores reject non-numeric text`() {
+    @Test func `case scores reject non-numeric text`() {
         #expect(TestcaseValidation.isValidScore(""))
         #expect(TestcaseValidation.isValidScore(" 10\n"))
         #expect(!TestcaseValidation.isValidScore("ten"))
