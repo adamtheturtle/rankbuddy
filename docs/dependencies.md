@@ -15,10 +15,9 @@ It is the human-readable counterpart to [`.github/dependabot.yml`](../.github/de
 - **Automated bumps, reviewed adoption.**
   Run `./scripts/bump-swift-package.sh <package> <version>` to update the Xcode package requirement, resolve the graph, and verify the committed `Package.resolved` pin.
   Then review transitive changes and run preflight.
-- **Why this is not native Dependabot.**
-  The app has Xcode `exactVersion` and `upToNextMajorVersion` requirements, which a mechanical update can handle, but resolution also requires the private [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) repository.
-  Dependabot cannot reuse the Actions deploy key.
-  The repository-local bump script keeps that credential boundary and makes the exact project-file edit explicit.
+- **Public dependency access.**
+  [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) and the other Swift packages resolve over public HTTPS.
+  Package resolution requires no token or deploy key.
 - **One downstream tracker per release.**
   Keep individual bugs upstream.
   For an owned package release, dispatch the **Track package release** workflow (or run `scripts/create-package-adoption-issue.sh`) to create one idempotent RankBuddy adoption issue containing the upstream issue checklist.
