@@ -27,7 +27,7 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][A-Za-z0-9.-]+)?$ ]]; then
 fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-project_file="$repo_root/rankbuddy-macos.xcodeproj/project.pbxproj"
+project_file="$repo_root/rankbuddy-macos.xcodeproj/project.xcproj"
 resolved_file="$repo_root/rankbuddy-macos.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
 
 for command_name in ruby xcodebuild; do
@@ -41,10 +41,10 @@ ruby - "$project_file" "$package_name" "$version" "$dry_run" <<'RUBY'
 path, package, version, dry_run = ARGV
 contents = File.read(path)
 escaped = Regexp.escape(package)
-pattern = /(XCRemoteSwiftPackageReference "#{escaped}" \*\/ = \{.*?requirement = \{.*?(?:minimumVersion|version) = )[^;]+;/m
+pattern = /("repository"\s*:\s*"https:\/\/github\.com\/[^"\/]+\/#{escaped}(?:\.git)?\/?",\s*"version"\s*:\s*\{\s*"(?:version|up-to-next-major-version)"\s*:\s*")[^"]+"/i
 matches = contents.scan(pattern).length
 abort "error: expected one Xcode package requirement for #{package}, found #{matches}" unless matches == 1
-updated = contents.sub(pattern) { "#{$1}#{version};" }
+updated = contents.sub(pattern) { "#{$1}#{version}\"" }
 if dry_run == "1"
   puts "Would update #{package} to #{version}."
   exit

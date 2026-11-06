@@ -44,6 +44,9 @@ The override applies only to demo requests; configured live accounts continue us
 
 ## Development
 
+The project uses Xcode's JSON configuration file, `rankbuddy-macos.xcodeproj/project.xcproj`.
+Open it with Xcode 27 or later; changing the project file format requires Xcode 27.2 or later.
+
 - **Preflight:** run `./scripts/preflight.sh` before pushing.
   It resolves the committed package graph, lints, checks formatting, builds the macOS app, runs the parallel Fast test plan, and checks staged and unstaged patches for whitespace errors.
   Full logs and result bundles are retained under `.context/`.
