@@ -1,0 +1,617 @@
+{
+  "default-configuration": "Release",
+  "configurations": [
+    "Debug",
+    "Release",
+  ],
+  "localizations": {
+    "development": "en",
+    "supported": [
+      "Base",
+    ],
+  },
+  "packages": [
+    {
+      "kind": "remote",
+      "repository": "https://github.com/adamtheturtle/buddy-kit",
+      "version": {
+        "version": "0.19.0",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/adamtheturtle/CommandPaletteKit",
+      "version": {
+        "version": "0.2.2",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/SvenTiigi/WhatsNewKit.git",
+      "version": {
+        "up-to-next-major-version": "2.2.1",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/adamtheturtle/SafeURLKit.git",
+      "version": {
+        "version": "0.1.2",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/adamtheturtle/FastList",
+      "version": {
+        "version": "0.10.1",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/sparkle-project/Sparkle",
+      "version": {
+        "up-to-next-major-version": "2.9.6",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/modelcontextprotocol/swift-sdk.git",
+      "version": {
+        "up-to-next-major-version": "0.12.1",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/adamtheturtle/MCPKit/",
+      "version": {
+        "up-to-next-major-version": "0.5.1",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/adamtheturtle/MCPClientInstall",
+      "version": {
+        "up-to-next-major-version": "0.4.0",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/apple/swift-async-algorithms",
+      "version": {
+        "up-to-next-major-version": "1.1.5",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/adamtheturtle/PrintableView",
+      "version": {
+        "up-to-next-major-version": "0.4.0",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/adamtheturtle/HackerRankKit",
+      "version": {
+        "version": "0.10.0",
+      },
+    },
+  ],
+  "files": [
+    {
+      "kind": "folder",
+      "path": "rankbuddy-macos",
+      "target-membership": [
+        "RankBuddy-AppStore",
+        "rankbuddy-macos",
+      ],
+      "membership-exceptions": [
+        {
+          "target": "rankbuddy-macos",
+          "exclusions": [
+            "Info.plist",
+          ],
+        }, {
+          "target": "RankBuddy-AppStore",
+          "exclusions": [
+            "Info.plist",
+          ],
+        },
+      ],
+    },
+    { "kind": "folder", "path": "rankbuddy-macosTests", "target-membership": [ "rankbuddy-macosTests" ] },
+    { "kind": "folder", "path": "rankbuddy-macosUITests", "target-membership": [ "rankbuddy-macosUITests" ] },
+    { "kind": "group", "name": "Frameworks" },
+    {
+      "kind": "group",
+      "name": "Products",
+      "children": [
+        { "path": "<PRODUCTS>/rankbuddy-macos.app", "id": "000000000000000000000120", "type": "wrapper.application", "index": false },
+        { "path": "<PRODUCTS>/rankbuddy-macosTests.xctest", "id": "662C2C552FEC525200FE99C0", "type": "wrapper.cfbundle", "index": false },
+        { "path": "<PRODUCTS>/rankbuddy-macosUITests.xctest", "id": "770000000000000000000002", "type": "wrapper.cfbundle", "index": false },
+        { "path": "<PRODUCTS>/RankBuddy-AppStore.app", "id": "78000000000000000000000D", "type": "wrapper.application", "index": false },
+      ],
+    },
+  ],
+  "targets": [
+    {
+      "name": "rankbuddy-macos",
+      "id": "000000000000000100000000",
+      "product": "Products/rankbuddy-macos.app",
+      "product-type": "application",
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+      ],
+      "package-product-members": [
+        {
+          "package": "CommandPaletteKit",
+          "product-name": "CommandPaletteKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "CommandPaletteKit",
+          "product-name": "CommandPaletteKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "FastList",
+          "product-name": "FastList",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "FastList",
+          "product-name": "FastList",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKitMock",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKitMock",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MCPClientInstall",
+          "product-name": "MCPClientInstall",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MCPClientInstall",
+          "product-name": "MCPClientInstall",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MCPKit",
+          "product-name": "MCPKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MCPKit",
+          "product-name": "MCPKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "PrintableView",
+          "product-name": "PrintableView",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "PrintableView",
+          "product-name": "PrintableView",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "SafeURLKit",
+          "product-name": "SafeURLKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "SafeURLKit",
+          "product-name": "SafeURLKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "Sparkle",
+          "product-name": "Sparkle",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "WhatsNewKit",
+          "product-name": "WhatsNewKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "WhatsNewKit",
+          "product-name": "WhatsNewKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "BuddyAppKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "BuddyAppKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "BuddyDesignSystem",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "BuddyDesignSystem",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "swift-async-algorithms",
+          "product-name": "AsyncAlgorithms",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "swift-async-algorithms",
+          "product-name": "AsyncAlgorithms",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "swift-sdk",
+          "product-name": "MCP",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "swift-sdk",
+          "product-name": "MCP",
+          "build-phase": { "build-phase": "frameworks" },
+        },
+      ],
+      "build-settings": {
+        "CODE_SIGN_ENTITLEMENTS": "rankbuddy-macos/rankbuddy-macos.entitlements",
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "6L9H6Q8CUF",
+        "ENABLE_APP_SANDBOX": "YES",
+        "ENABLE_HARDENED_RUNTIME[config=Release]": "YES",
+        "ENABLE_INCOMING_NETWORK_CONNECTIONS": "NO",
+        "ENABLE_OUTGOING_NETWORK_CONNECTIONS": "YES",
+        "ENABLE_PREVIEWS": "YES",
+        "ENABLE_RESOURCE_ACCESS_AUDIO_INPUT": "NO",
+        "ENABLE_RESOURCE_ACCESS_BLUETOOTH": "NO",
+        "ENABLE_RESOURCE_ACCESS_CALENDARS": "NO",
+        "ENABLE_RESOURCE_ACCESS_CAMERA": "NO",
+        "ENABLE_RESOURCE_ACCESS_CONTACTS": "NO",
+        "ENABLE_RESOURCE_ACCESS_LOCATION": "NO",
+        "ENABLE_RESOURCE_ACCESS_PRINTING": "NO",
+        "ENABLE_RESOURCE_ACCESS_USB": "NO",
+        "ENABLE_USER_SELECTED_FILES": "readonly",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_FILE": "rankbuddy-macos/Info.plist",
+        "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.developer-tools",
+        "LD_RUNPATH_SEARCH_PATHS": "@executable_path/Frameworks",
+        "LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]": "@executable_path/../Frameworks",
+        "MACOSX_DEPLOYMENT_TARGET": "15.0",
+        "MARKETING_VERSION": "1.0",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.adamdangoor.rankbuddy",
+        "PRODUCT_NAME": "$(TARGET_NAME)",
+        "REGISTER_APP_GROUPS": "YES",
+        "SDKROOT": "auto",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+        "SUPPORTED_PLATFORMS": "macosx",
+        "SUPPORTS_MACCATALYST": "NO",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+        "SWIFT_EMIT_LOC_STRINGS": "YES",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "6.0",
+      },
+    }, {
+      "name": "rankbuddy-macosTests",
+      "id": "662C2C542FEC525200FE99C0",
+      "product": "Products/rankbuddy-macosTests.xctest",
+      "product-type": "bundle.unit-test",
+      "test-host-target": "rankbuddy-macos",
+      "dependencies": [
+        "rankbuddy-macos",
+      ],
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+      ],
+      "package-product-members": [
+        {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKitMock",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        },
+      ],
+      "build-settings": {
+        "BUNDLE_LOADER": "$(TEST_HOST)",
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "6L9H6Q8CUF",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "MARKETING_VERSION": "1.0",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.adamdangoor.rankbuddy-macosTests",
+        "PRODUCT_NAME": "$(TARGET_NAME)",
+        "SDKROOT": "macosx",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "NO",
+        "SUPPORTED_PLATFORMS": "macosx",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_EMIT_LOC_STRINGS": "NO",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "5.0",
+        "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/rankbuddy-macos.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/rankbuddy-macos",
+        "VALIDATE_PRODUCT[config=Release]": "YES",
+      },
+    }, {
+      "name": "rankbuddy-macosUITests",
+      "id": "770000000000000000000005",
+      "product": "Products/rankbuddy-macosUITests.xctest",
+      "product-type": "bundle.ui-testing",
+      "test-host-target": "rankbuddy-macos",
+      "dependencies": [
+        "rankbuddy-macos",
+      ],
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+      ],
+      "build-settings": {
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "6L9H6Q8CUF",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "MARKETING_VERSION": "1.0",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.adamdangoor.rankbuddy-macosUITests",
+        "PRODUCT_NAME": "$(TARGET_NAME)",
+        "SDKROOT": "macosx",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "NO",
+        "SUPPORTED_PLATFORMS": "macosx",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_EMIT_LOC_STRINGS": "NO",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "6.0",
+        "TEST_TARGET_NAME": "rankbuddy-macos",
+      },
+    }, {
+      "name": "RankBuddy-AppStore",
+      "id": "780000000000000000000012",
+      "product": "Products/RankBuddy-AppStore.app",
+      "product-type": "application",
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+      ],
+      "package-product-members": [
+        {
+          "package": "CommandPaletteKit",
+          "product-name": "CommandPaletteKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "CommandPaletteKit",
+          "product-name": "CommandPaletteKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "FastList",
+          "product-name": "FastList",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "FastList",
+          "product-name": "FastList",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKitMock",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "HackerRankKit",
+          "product-name": "HackerRankKitMock",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MCPClientInstall",
+          "product-name": "MCPClientInstall",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MCPClientInstall",
+          "product-name": "MCPClientInstall",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MCPKit",
+          "product-name": "MCPKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MCPKit",
+          "product-name": "MCPKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "PrintableView",
+          "product-name": "PrintableView",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "PrintableView",
+          "product-name": "PrintableView",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "SafeURLKit",
+          "product-name": "SafeURLKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "SafeURLKit",
+          "product-name": "SafeURLKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "WhatsNewKit",
+          "product-name": "WhatsNewKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "WhatsNewKit",
+          "product-name": "WhatsNewKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "BuddyAppKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "BuddyAppKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "BuddyDesignSystem",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "BuddyDesignSystem",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "buddy-kit",
+          "product-name": "PaginatedRESTClient",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "swift-async-algorithms",
+          "product-name": "AsyncAlgorithms",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "swift-async-algorithms",
+          "product-name": "AsyncAlgorithms",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "swift-sdk",
+          "product-name": "MCP",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "swift-sdk",
+          "product-name": "MCP",
+          "build-phase": { "build-phase": "frameworks" },
+        },
+      ],
+      "build-settings": {
+        "CODE_SIGN_ENTITLEMENTS": "rankbuddy-macos/RankBuddy-AppStore.entitlements",
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "6L9H6Q8CUF",
+        "ENABLE_APP_SANDBOX": "YES",
+        "ENABLE_HARDENED_RUNTIME[config=Release]": "YES",
+        "ENABLE_INCOMING_NETWORK_CONNECTIONS": "NO",
+        "ENABLE_OUTGOING_NETWORK_CONNECTIONS": "YES",
+        "ENABLE_PREVIEWS": "YES",
+        "ENABLE_RESOURCE_ACCESS_PRINTING": "YES",
+        "ENABLE_USER_SELECTED_FILES": "readwrite",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_FILE": "rankbuddy-macos/Info.plist",
+        "INFOPLIST_KEY_CFBundleDisplayName": "RankBuddy",
+        "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.developer-tools",
+        "LD_RUNPATH_SEARCH_PATHS": "@executable_path/Frameworks",
+        "LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]": "@executable_path/../Frameworks",
+        "MACOSX_DEPLOYMENT_TARGET": "15.0",
+        "MARKETING_VERSION": "1.0",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.adamdangoor.rankbuddy",
+        "PRODUCT_NAME": "$(TARGET_NAME)",
+        "REGISTER_APP_GROUPS": "YES",
+        "SDKROOT": "macosx",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+        "SUPPORTED_PLATFORMS": "macosx",
+        "SUPPORTS_MACCATALYST": "NO",
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS": "APP_STORE $(inherited)",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+        "SWIFT_EMIT_LOC_STRINGS": "YES",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "6.0",
+      },
+    },
+  ],
+  "build-settings": {
+    "ALWAYS_SEARCH_USER_PATHS": "NO",
+    "APPLETVOS_DEPLOYMENT_TARGET": "27.0",
+    "ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS": "YES",
+    "CLANG_ANALYZER_NONNULL": "YES",
+    "CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION": "YES_AGGRESSIVE",
+    "CLANG_CXX_LANGUAGE_STANDARD": "gnu++20",
+    "CLANG_ENABLE_MODULES": "YES",
+    "CLANG_ENABLE_OBJC_ARC": "YES",
+    "CLANG_ENABLE_OBJC_WEAK": "YES",
+    "CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING": "YES",
+    "CLANG_WARN_BOOL_CONVERSION": "YES",
+    "CLANG_WARN_COMMA": "YES",
+    "CLANG_WARN_CONSTANT_CONVERSION": "YES",
+    "CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS": "YES",
+    "CLANG_WARN_DIRECT_OBJC_ISA_USAGE": "YES_ERROR",
+    "CLANG_WARN_DOCUMENTATION_COMMENTS": "YES",
+    "CLANG_WARN_EMPTY_BODY": "YES",
+    "CLANG_WARN_ENUM_CONVERSION": "YES",
+    "CLANG_WARN_INFINITE_RECURSION": "YES",
+    "CLANG_WARN_INT_CONVERSION": "YES",
+    "CLANG_WARN_NON_LITERAL_NULL_CONVERSION": "YES",
+    "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF": "YES",
+    "CLANG_WARN_OBJC_LITERAL_CONVERSION": "YES",
+    "CLANG_WARN_OBJC_ROOT_CLASS": "YES_ERROR",
+    "CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER": "YES",
+    "CLANG_WARN_RANGE_LOOP_ANALYSIS": "YES",
+    "CLANG_WARN_STRICT_PROTOTYPES": "YES",
+    "CLANG_WARN_SUSPICIOUS_MOVE": "YES",
+    "CLANG_WARN_UNGUARDED_AVAILABILITY": "YES_AGGRESSIVE",
+    "CLANG_WARN_UNREACHABLE_CODE": "YES",
+    "CLANG_WARN__DUPLICATE_METHOD_MATCH": "YES",
+    "COPY_PHASE_STRIP": "NO",
+    "DEAD_CODE_STRIPPING": "YES",
+    "DEBUG_INFORMATION_FORMAT[config=Debug]": "dwarf",
+    "DEBUG_INFORMATION_FORMAT[config=Release]": "dwarf-with-dsym",
+    "ENABLE_NS_ASSERTIONS[config=Release]": "NO",
+    "ENABLE_STRICT_OBJC_MSGSEND": "YES",
+    "ENABLE_TESTABILITY[config=Debug]": "YES",
+    "ENABLE_USER_SCRIPT_SANDBOXING": "YES",
+    "GCC_C_LANGUAGE_STANDARD": "gnu17",
+    "GCC_DYNAMIC_NO_PIC[config=Debug]": "NO",
+    "GCC_NO_COMMON_BLOCKS": "YES",
+    "GCC_OPTIMIZATION_LEVEL[config=Debug]": "0",
+    "GCC_PREPROCESSOR_DEFINITIONS[config=Debug]": [
+      "DEBUG=1",
+      "$(inherited)",
+    ],
+    "GCC_TREAT_WARNINGS_AS_ERRORS": "YES",
+    "GCC_WARN_64_TO_32_BIT_CONVERSION": "YES",
+    "GCC_WARN_ABOUT_RETURN_TYPE": "YES_ERROR",
+    "GCC_WARN_UNDECLARED_SELECTOR": "YES",
+    "GCC_WARN_UNINITIALIZED_AUTOS": "YES_AGGRESSIVE",
+    "GCC_WARN_UNUSED_FUNCTION": "YES",
+    "GCC_WARN_UNUSED_VARIABLE": "YES",
+    "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES",
+    "MACOSX_DEPLOYMENT_TARGET": "15.0",
+    "MTL_ENABLE_DEBUG_INFO[config=Debug]": "INCLUDE_SOURCE",
+    "MTL_ENABLE_DEBUG_INFO[config=Release]": "NO",
+    "MTL_FAST_MATH": "YES",
+    "ONLY_ACTIVE_ARCH[config=Debug]": "YES",
+    "OTHER_SWIFT_FLAGS[config=Release]": "$(inherited) -Xfrontend -warn-long-expression-type-checking=250 -Xfrontend -warn-long-function-bodies=500",
+    "PROJECT_UNIQUE_VALUE": "YOV662YY",
+    "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+    "SWIFT_ACTIVE_COMPILATION_CONDITIONS[config=Debug]": "DEBUG $(inherited)",
+    "SWIFT_COMPILATION_MODE[config=Release]": "wholemodule",
+    "SWIFT_OPTIMIZATION_LEVEL[config=Debug]": "-Onone",
+    "SWIFT_TREAT_WARNINGS_AS_ERRORS": "YES",
+    "SWIFT_VERSION": "6.0",
+  },
+  "last-upgrade": "27.0",
+  "last-swift-update": "27.0",
+}
