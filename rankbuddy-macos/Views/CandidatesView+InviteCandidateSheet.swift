@@ -185,7 +185,7 @@ struct InviteCandidateSheet: View {
 
     private var additionalTimeValid: Bool {
         trimmed(additionalTime) == nil
-            || additionalTimeMinutes.map(CandidateInviteValidation.additionalTimeRange.contains) == true
+            || additionalTimeMinutes.map { CandidateInviteValidation.isValid(additionalTime: $0) } == true
     }
 
     private var canInvite: Bool {

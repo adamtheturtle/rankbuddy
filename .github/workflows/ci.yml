@@ -91,7 +91,9 @@ jobs:
     # wouldn't start. The official Swift toolchain image supplies both. 6.4
     # matches the Swift version the app target builds with, so the sourcekit
     # SwiftLint parses with is the same one used locally.
-    container: swift:6.4
+    # The pinned SwiftLint binary needs libxml2.so.2 from Ubuntu 24.04.
+    # The floating 6.4 tag now uses Ubuntu 26.04 and cannot load that binary.
+    container: swift:6.4-noble
     timeout-minutes: 10
     # Inside a container GitHub runs `run:` steps with `sh` (dash), which rejects
     # the `set -o pipefail` bashism the steps below rely on; the image ships bash,
@@ -111,13 +113,12 @@ jobs:
             rankbuddy-macos/rankbuddy-macos.entitlements \
             | grep -Fq '<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>'
 
-      # The full Swift image ships git but not the unzip/curl this job uses to
-      # fetch and unpack the pinned release binaries.
-      - name: Install fetch tools
+      # Supply both the fetch tools and SwiftLint's XML runtime explicitly.
+      - name: Install fetch tools and lint runtime
         run: |
           set -euo pipefail
           apt-get update
-          apt-get install -y --no-install-recommends curl unzip
+          apt-get install -y --no-install-recommends curl unzip libxml2
 
       - name: SwiftLint (strict)
         env:
