@@ -65,7 +65,7 @@ extension HackerRankError: @retroactive LocalizedError {
     /// status code. HackerRank error bodies are JSON in a few shapes: a top-level "message" or
     /// "error" string, an "errors" array of strings or of objects with a "message", or a
     /// Rails-style "errors" map of field name to problems.
-    private static func serverMessage(inBody body: String) -> String? {
+    static func serverMessage(inBody body: String) -> String? {
         guard let data = body.data(using: .utf8),
               let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return nil }
