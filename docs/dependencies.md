@@ -51,7 +51,7 @@ The validation tools are version-pinned in `ci.yml` and must be bumped in lockst
 | SwiftFormat | `ci.yml` (`0.62.1`)                           | `.swiftformat`                  |
 | actionlint  | `ci.yml` (`1.7.12`)                           | the workflow syntax in use      |
 | Periphery   | `ci.yml` (`3.8.0`)                            | `.periphery.yml`                |
-| Swift/Xcode | `swift:6.2` container + `Xcode_26.5` on macOS | the app target's Swift version  |
+| Swift/Xcode | `swift:6.4-noble` for lint, `swift:6.4` for package tests, Xcode 27 on macOS | the app target's Swift version  |
 
 When upgrading a tool locally, bump the version in `ci.yml` in the same change so local and CI parsing/build behavior stay identical.
 
