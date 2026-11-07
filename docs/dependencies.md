@@ -85,3 +85,14 @@ permissions:
 
 No validation job writes to the repository, comments, or publishes artifacts to external services, so none needs more than read access.
 Workflows added later (release, website deploy) must declare the **minimum** additional permissions they require at the job level rather than widening the default for the whole file.
+
+## HackerRank MCP tools
+
+`HackerRankMCP` owns shared tool schemas, validation and API dispatch.
+RankBuddy uses its public context and client-factory hooks for stored accounts and the demo backend.
+The app keeps its MCP activity log, account resource and triage prompt.
+The desktop UI also depends directly on `HackerRankKit`.
+
+Adoption order: HackerRankKit release, HackerRankMCP release, then RankBuddy.
+The app uses exact release requirements for HackerRankKit 0.11.0 and HackerRankMCP 0.4.0.
+`bump-swift-package.sh` converts revision pins to exact release requirements and only edits the requested package.

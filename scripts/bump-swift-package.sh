@@ -41,10 +41,27 @@ ruby - "$project_file" "$package_name" "$version" "$dry_run" <<'RUBY'
 path, package, version, dry_run = ARGV
 contents = File.read(path)
 escaped = Regexp.escape(package)
-pattern = /(XCRemoteSwiftPackageReference "#{escaped}" \*\/ = \{.*?requirement = \{.*?(?:minimumVersion|version) = )[^;]+;/m
+# Bound the match to this package object, including revision requirements.
+pattern = /(XCRemoteSwiftPackageReference "#{escaped}" \*\/ = \{\n)(.*?)(^\t\t\};)/m
 matches = contents.scan(pattern).length
 abort "error: expected one Xcode package requirement for #{package}, found #{matches}" unless matches == 1
-updated = contents.sub(pattern) { "#{$1}#{version};" }
+updated = contents.sub(pattern) do
+  opening, block, closing = Regexp.last_match.captures
+  requirement = /(requirement = \{\n)(.*?)(^\t\t\t\};)/m
+  abort "error: expected one requirement for #{package}" unless block.scan(requirement).length == 1
+  block = block.sub(requirement) do
+    prefix, fields, suffix = Regexp.last_match.captures
+    if fields.match?(/kind = revision;/)
+      fields = fields.sub(/kind = revision;/, "kind = exactVersion;")
+      fields = fields.sub(/revision = [^;]+;/, "version = #{version};")
+    else
+      abort "error: unsupported requirement for #{package}" unless fields.match?(/(?:minimumVersion|version) = [^;]+;/)
+      fields = fields.sub(/((?:minimumVersion|version) = )[^;]+;/) { "#{Regexp.last_match(1)}#{version};" }
+    end
+    prefix + fields + suffix
+  end
+  opening + block + closing
+end
 if dry_run == "1"
   puts "Would update #{package} to #{version}."
   exit
