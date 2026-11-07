@@ -15,8 +15,7 @@ It is the human-readable counterpart to [`.github/dependabot.yml`](../.github/de
 - **Automated bumps, reviewed adoption.**
   Run `./scripts/bump-swift-package.sh <package> <version>` to update the Xcode package requirement, resolve the graph, and verify the committed `Package.resolved` pin.
   Then review transitive changes and run preflight.
-- **Public dependency access.**
-  [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) and the other Swift packages resolve over public HTTPS.
+- **Public dependency access.** [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) and the other Swift packages resolve over public HTTPS.
   Package resolution requires no token or deploy key.
 - **One downstream tracker per release.**
   Keep individual bugs upstream.
