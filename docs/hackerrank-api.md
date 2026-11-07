@@ -51,11 +51,7 @@ The documented actor filter is `user`.
 
 ## Pagination and contract details
 
-Ordinary collections use offset/limit pagination with absolute `next` URLs.
-HackerRankKit validates continuation origins before authenticating them.
-Global candidate search is separate from per-test candidate search.
-Interview templates and invite-email templates are distinct resources.
-The API offers adding/removing template questions without an ordering guarantee.
+Ordinary collections use offset/limit pagination with absolute `next` URLs. HackerRankKit validates continuation origins before authenticating them. Global candidate search is separate from per-test candidate search. Interview templates and invite-email templates are distinct resources. The API offers adding/removing template questions without an ordering guarantee.
 
 The generated catalogue normalizes query parameters that Swagger incorrectly marks as path parameters.
 It preserves the PDF endpoint's fixed `format=url` query.
