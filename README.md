@@ -85,4 +85,4 @@ In **All Accounts** scope, supply an explicit account label or UUID for tool cal
 SCIM tools use the account's saved provisioning credential.
 The demo account supports the complete catalogue without live credentials.
 
-The desktop and shared tools use the released HackerRankKit 0.11.0 and HackerRankMCP 0.4.0 packages.
+The desktop and shared tools use the released HackerRankKit 0.11.1 and HackerRankMCP 0.4.1 packages.

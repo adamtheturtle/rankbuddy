@@ -34,13 +34,13 @@ private final class TemplateBrowserURLProtocol: URLProtocol {
                 ? "\"https://www.hackerrank.com/x/api/v3/interview_templates?offset=1&filter=\(filter)\""
                 : "null"
             body = """
-            {"data":[{"id":\(offset + 1),"name":"\(owner) \(filter) \(offset + 1)"}],"next":\(next),"total":2}
+            {"data":[{"id":"\(offset + 1)","name":"\(owner) \(filter) \(offset + 1)"}],"next":\(next),"total":2}
             """
         } else if url.path == "/x/api/v3/templates" {
             body = #"{"data":[{"id":"email-1","name":"Invite","subject":"Welcome"}],"next":null}"#
         } else if url.path.hasPrefix("/x/api/v3/interview_templates/") {
             body = """
-            {"id":1,"name":"\(owner) full template","questions":["q2","q1"],"editor_access":false}
+            {"id":"1","name":"\(owner) full template","questions":[2,1],"editor_access":false}
             """
         } else if url.path.hasPrefix("/x/api/v3/questions/") {
             let id = url.lastPathComponent == "mismatched" ? "other-question" : url.lastPathComponent
@@ -92,7 +92,7 @@ struct TemplatesTests {
         let summary = TemplateRecord(interview: InterviewTemplate(id: 1, name: "Summary"))
         let detail = try await TemplateLibrary.detail(summary, client: client)
         #expect(detail.title == "Alpha full template")
-        #expect(detail.questionIDs == ["q2", "q1"])
+        #expect(detail.questionIDs == ["2", "1"])
         #expect(detail.editorAccess == false)
         let invitations = try await TemplateLibrary.page(
             client: client, kind: .invitation, ownership: .all, cursor: nil

@@ -70,6 +70,6 @@ These checks establish request routing and response handling, not live account p
 
 Release HackerRankKit first, then HackerRankMCP, then RankBuddy.
 The app still uses HackerRankKit directly for desktop API calls.
-The app uses released HackerRankKit 0.11.0 and HackerRankMCP 0.4.0 packages.
+The app uses released HackerRankKit 0.11.1 and HackerRankMCP 0.4.1 packages.
 Tool contract tests run in HackerRankMCP against mock clients.
 RankBuddy retains tests for its host adapter and app-owned resources and prompts.

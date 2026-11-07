@@ -44,11 +44,13 @@ struct TemplatesScreen: View {
                 ForEach(TemplateKind.allCases) { Text($0.title).tag($0) }
             }
             .accessibilityIdentifier("template-kind")
+            .accessibilityLabel("Template Type")
             if kind == .interview {
                 Picker("Ownership", selection: $ownership) {
                     ForEach(TemplateOwnership.allCases) { Text($0.title).tag($0) }
                 }
                 .accessibilityIdentifier("template-ownership")
+                .accessibilityLabel("Template Ownership")
             }
         }
         .pickerStyle(.menu)
