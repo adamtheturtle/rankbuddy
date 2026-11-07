@@ -12,6 +12,7 @@ Browse and edit interview resources through native screens, or use the API Explo
 ## Features
 
 - **Tests**, **Candidates** (per test), **Questions**, **Interviews**, **People** and **Teams**, with detail panes and editing flows.
+- **Templates** for browsing interview question sets and invitation emails, with ownership filters and full details.
 - An **API Explorer** covering all 76 documented v3, ATS and SCIM operations, with request schemas and complete responses.
 - An embedded **MCP server**, with read tools by default and explicit write access in Settings.
 - Cursor-based **Account Activity**, with object and date filters.

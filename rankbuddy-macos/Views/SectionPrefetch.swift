@@ -12,7 +12,7 @@ import HackerRankKit
 /// Runs once the active account is known. A section already cached — in memory from this launch,
 /// or on disk from a recent one — is skipped, so a warm cache never triggers a redundant fetch; a
 /// failed fetch is ignored, leaving that section to load normally when it's opened. Fetches run
-/// one after another to stay polite to the API rather than firing five requests at once.
+/// one after another to stay polite to the API rather than firing every request at once.
 @MainActor
 enum SectionPrefetch {
     /// Loads and caches each background section's first page, skipping the visible section and
@@ -37,6 +37,13 @@ enum SectionPrefetch {
         }
         if visibleSection != .teams {
             await warmOne(key: "selection.teams.\(id)") { try await client.teamsPage() }
+        }
+        if visibleSection != .templates {
+            for kind in TemplateKind.allCases {
+                await warmOne(key: TemplateLibrary.cacheKey(accountID: id, kind: kind, ownership: .all)) {
+                    try await TemplateLibrary.page(client: client, kind: kind, ownership: .all, cursor: nil)
+                }
+            }
         }
     }
 
