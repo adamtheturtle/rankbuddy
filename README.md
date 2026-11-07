@@ -77,10 +77,11 @@ The response includes its HTTP status and headers, so empty responses and pendin
 SCIM operations use a separate provisioning token, saved in the selected account's Keychain item.
 ATS invite workflows are available in the Explorer as well as MCP.
 
-The MCP `api_` catalogue exposes the same operations and request schemas.
+The embedded MCP tools come from [HackerRankMCP](https://github.com/adamtheturtle/HackerRankMCP).
+Its `api_` catalogue exposes the same operations and request schemas.
 Write tools require **Allow the MCP server to make changes** in Settings.
 SCIM tools use the account's saved provisioning credential.
 The demo account supports the complete catalogue without live credentials.
 
-This branch temporarily pins the tested commit from [HackerRankKit #224](https://github.com/adamtheturtle/HackerRankKit/pull/224).
-Replace that revision with a released version after the SDK is released.
+This branch temporarily pins tested commits from [HackerRankKit #224](https://github.com/adamtheturtle/HackerRankKit/pull/224) and [HackerRankMCP #122](https://github.com/adamtheturtle/HackerRankMCP/pull/122).
+Merge and release HackerRankKit first, then HackerRankMCP, then update both RankBuddy pins to released versions before merging this app change.

@@ -15,8 +15,7 @@ It is the human-readable counterpart to [`.github/dependabot.yml`](../.github/de
 - **Automated bumps, reviewed adoption.**
   Run `./scripts/bump-swift-package.sh <package> <version>` to update the Xcode package requirement, resolve the graph, and verify the committed `Package.resolved` pin.
   Then review transitive changes and run preflight.
-- **Public dependency access.**
-  [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) and the other Swift packages resolve over public HTTPS.
+- **Public dependency access.** [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) and the other Swift packages resolve over public HTTPS.
   Package resolution requires no token or deploy key.
 - **One downstream tracker per release.**
   Keep individual bugs upstream.
@@ -86,3 +85,14 @@ permissions:
 
 No validation job writes to the repository, comments, or publishes artifacts to external services, so none needs more than read access.
 Workflows added later (release, website deploy) must declare the **minimum** additional permissions they require at the job level rather than widening the default for the whole file.
+
+## HackerRank MCP tools
+
+`HackerRankMCP` owns shared tool schemas, validation and API dispatch.
+RankBuddy uses its public context and client-factory hooks for stored accounts and the demo backend.
+The app keeps its MCP activity log, account resource and triage prompt.
+The desktop UI also depends directly on `HackerRankKit`.
+
+Adoption order: HackerRankKit release, HackerRankMCP release, then RankBuddy.
+Replace both temporary revision requirements with released versions before merging the app changes.
+`bump-swift-package.sh` converts revision pins to exact release requirements and only edits the requested package.

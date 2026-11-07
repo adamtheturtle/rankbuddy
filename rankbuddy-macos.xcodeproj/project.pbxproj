@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		66D000012FFF000000000001 /* HackerRankMCP in Frameworks */ = {isa = PBXBuildFile; productRef = 66D000012FFF000000000011 /* HackerRankMCP */; };
+		66D000012FFF000000000002 /* HackerRankMCP in Frameworks */ = {isa = PBXBuildFile; productRef = 66D000012FFF000000000011 /* HackerRankMCP */; };
 		66062D152FEB0FB800352492 /* BuddyAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D142FEB0FB800352492 /* BuddyAppKit */; };
 		66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D162FEB0FB800352492 /* BuddyDesignSystem */; };
 		66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */ = {isa = PBXBuildFile; productRef = 66062D182FEB0FB800352492 /* PaginatedRESTClient */; };
@@ -113,6 +115,7 @@
 				6676A0AB2FEEB24F0023907A /* Sparkle in Frameworks */,
 				66AE79D42FFE6820003A66B1 /* HackerRankKitMock in Frameworks */,
 				66AE79D22FFE6820003A66B1 /* HackerRankKit in Frameworks */,
+				66D000012FFF000000000001 /* HackerRankMCP in Frameworks */,
 				66062D172FEB0FB800352492 /* BuddyDesignSystem in Frameworks */,
 				66062D192FEB0FB800352492 /* PaginatedRESTClient in Frameworks */,
 				6676A0AE2FEEB2710023907A /* MCP in Frameworks */,
@@ -144,6 +147,7 @@
 				78000000000000000000000A /* PrintableView in Frameworks */,
 				78000000000000000000000C /* HackerRankKitMock in Frameworks */,
 				78000000000000000000000B /* HackerRankKit in Frameworks */,
+				66D000012FFF000000000002 /* HackerRankMCP in Frameworks */,
 				780000000000000000000002 /* BuddyDesignSystem in Frameworks */,
 				780000000000000000000003 /* PaginatedRESTClient in Frameworks */,
 				780000000000000000000008 /* MCP in Frameworks */,
@@ -219,6 +223,7 @@
 				663804512FF65BBB004A9FCE /* AsyncAlgorithms */,
 				66AE79CD2FFE5C93003A66B1 /* PrintableView */,
 				66AE79D12FFE6820003A66B1 /* HackerRankKit */,
+				66D000012FFF000000000011 /* HackerRankMCP */,
 				66AE79D32FFE6820003A66B1 /* HackerRankKitMock */,
 			);
 			productName = "rankbuddy-macos";
@@ -299,6 +304,7 @@
 				663804512FF65BBB004A9FCE /* AsyncAlgorithms */,
 				66AE79CD2FFE5C93003A66B1 /* PrintableView */,
 				66AE79D12FFE6820003A66B1 /* HackerRankKit */,
+				66D000012FFF000000000011 /* HackerRankMCP */,
 				66AE79D32FFE6820003A66B1 /* HackerRankKitMock */,
 			);
 			productName = "RankBuddy-AppStore";
@@ -353,6 +359,7 @@
 				663804502FF65BBB004A9FCE /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 				66AE79CC2FFE5C93003A66B1 /* XCRemoteSwiftPackageReference "PrintableView" */,
 				66AE79D02FFE6820003A66B1 /* XCRemoteSwiftPackageReference "HackerRankKit" */,
+				66D000012FFF000000000021 /* XCRemoteSwiftPackageReference "HackerRankMCP" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -947,6 +954,14 @@
 				minimumVersion = 0.4.0;
 			};
 		};
+		66D000012FFF000000000021 /* XCRemoteSwiftPackageReference "HackerRankMCP" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamtheturtle/HackerRankMCP";
+			requirement = {
+				kind = revision;
+				revision = e8cc89dd41c6e3cbca0a38121d1d57b56518918b;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1029,6 +1044,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 66C000012FFF000000000021 /* XCRemoteSwiftPackageReference "MCPClientInstall" */;
 			productName = MCPClientInstall;
+		};
+		66D000012FFF000000000011 /* HackerRankMCP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66D000012FFF000000000021 /* XCRemoteSwiftPackageReference "HackerRankMCP" */;
+			productName = HackerRankMCP;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

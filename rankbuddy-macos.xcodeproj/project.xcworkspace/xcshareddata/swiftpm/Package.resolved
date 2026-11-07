@@ -1,5 +1,5 @@
 {
-  "originHash" : "a0e12773478be52d2fbc841aa69456b8684518a98d5062e040a889b1759654d9",
+  "originHash" : "ff5d9ef5cdfb57b3a96e090e76c18faf5b5451ca4b2d768b2c643166e6d9fc8b",
   "pins" : [
     {
       "identity" : "buddy-kit",
@@ -46,6 +46,14 @@
       }
     },
     {
+      "identity" : "hackerrankmcp",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/adamtheturtle/HackerRankMCP",
+      "state" : {
+        "revision" : "e8cc89dd41c6e3cbca0a38121d1d57b56518918b"
+      }
+    },
+    {
       "identity" : "highlightr",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/raspu/Highlightr",
@@ -68,8 +76,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adamtheturtle/MCPKit/",
       "state" : {
-        "revision" : "2829ab57a7d672facd80f390371a0820ef028102",
-        "version" : "0.5.1"
+        "revision" : "c038b066c9dbf9132e4433984e02b4912291f5c1",
+        "version" : "0.6.0"
       }
     },
     {

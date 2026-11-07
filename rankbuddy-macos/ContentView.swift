@@ -27,7 +27,6 @@ struct ContentView: View {
     @State private var dragMonitor = FavoriteDragMonitor.shared
     /// Whether a drag is currently hovering the Favourites drop zone (drives its highlight).
     @State private var isFavoriteDropTargeted = false
-    @State private var apiExplorerPresented = false
     @State private var candidateRouter = CandidateDeepLinkRouter.shared
     private let whatsNewEnvironment = WhatsNewEnvironment(
         versionStore: WhatsNewContent.versionStore(),
@@ -102,13 +101,6 @@ struct ContentView: View {
             openCandidateRequest(candidateRouter.request)
         }
         .onChange(of: candidateRouter.request) { _, request in openCandidateRequest(request) }
-        .toolbar {
-            ToolbarItem {
-                Button("API Explorer", systemImage: "network") { apiExplorerPresented = true }
-                    .accessibilityIdentifier("api-explorer")
-            }
-        }
-        .sheet(isPresented: $apiExplorerPresented) { APIExplorerView().environment(store) }
         .whatsNewSheet()
         .environment(\.whatsNew, whatsNewEnvironment)
         .onChange(of: store.accounts.map(\.id)) {

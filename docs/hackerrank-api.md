@@ -11,7 +11,9 @@ The native screens provide common test, candidate, question, interview, user and
 Choose an account and operation, review its request format, enter path/query/body JSON, and run it.
 Complete response status, headers and JSON are retained, including empty responses and HTTP 202 results.
 
-The embedded MCP server exposes the same contract as `api_` tools.
+The embedded MCP server uses [HackerRankMCP](https://github.com/adamtheturtle/HackerRankMCP) for its tool catalogue and request handling.
+RankBuddy adapts its Keychain accounts and demo backend, and keeps activity logging, the account resource and triage prompt in the app.
+The shared provider preserves the existing friendly tools and exposes the complete contract as `api_` tools.
 Each tool accepts nested `path`, `query` and `body` objects, with the account selected separately.
 Read tools are available by default.
 Write tools require the existing Settings opt-in and remain blocked when invoked by name without it.
@@ -63,3 +65,11 @@ Project AI prompts preserve whitespace and may contain up to 15,000 characters.
 Unit and integration tests use synthetic data and the SDK's mock server.
 Coverage checks compare advertised `api_` tool names with the complete SDK catalogue and invoke every documented route without live credentials.
 These checks establish request routing and response handling, not live account permissions or the success of particular production mutations.
+
+## Package adoption
+
+Release HackerRankKit first, then HackerRankMCP, then RankBuddy.
+The app still uses HackerRankKit directly for desktop API calls.
+Replace the temporary SDK and MCP commit pins with release requirements before merging.
+Tool contract tests run in HackerRankMCP against mock clients.
+RankBuddy retains tests for its host adapter and app-owned resources and prompts.
