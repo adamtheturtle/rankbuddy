@@ -42,6 +42,9 @@ struct TemplateDetailView: View {
                     Button("Retry") { Task { await load() } }
                 }
             }
+            if displayed.kind == .interview {
+                questions
+            }
             Section("Properties") {
                 OptionalRow("ID", displayed.apiID)
                 OptionalRow("Owner ID", displayed.owner)
@@ -59,9 +62,7 @@ struct TemplateDetailView: View {
                     OptionalRow("Default Template", displayed.isDefault.map { $0 ? "Yes" : "No" })
                 }
             }
-            if displayed.kind == .interview {
-                questions
-            } else {
+            if displayed.kind == .invitation {
                 Section("Subject") {
                     Text(displayed.subject ?? "No subject")
                 }
