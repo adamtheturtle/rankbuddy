@@ -58,6 +58,20 @@ struct RankBuddyToolProviderTests {
         #expect(text(explicit).contains("One"))
     }
 
+    @Test func `the adapter preserves the account store fallback selection`() async {
+        let account = Account(label: "Fallback", token: Account.demoToken)
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [account])
+        let provider = RankBuddyToolProvider(makeStore: { store })
+        for selection in [nil, UUID()] {
+            store.currentAccountID = selection
+            let result = await provider.callTool("list_tests", arguments: nil)
+            #expect(result.isError != true)
+            #expect(text(result).contains("Fallback"))
+        }
+        let explicit = await provider.callTool("list_tests", arguments: ["account": .string(UUID().uuidString)])
+        #expect(explicit.isError == true)
+    }
+
     @Test func `write audit summaries identify targets and redact email addresses`() {
         let detail = RankBuddyToolProvider.callDetail(
             tool: "remove_team_member",

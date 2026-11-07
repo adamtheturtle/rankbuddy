@@ -32,7 +32,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
                         HackerRankMCPAccount(id: account.id, name: account.label, token: account.token,
                                              baseURL: account.baseURL,
                                              scimToken: account.scimToken ?? (account.isMock ? "demo-scim" : nil))
-                    }, currentAccountID: store.currentAccountID, isMergedView: store.isMergedView
+                    }, currentAccountID: store.currentAccount?.id, isMergedView: store.isMergedView
                 )
             },
             makeClient: { snapshot in
@@ -54,7 +54,7 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         let startedAt = Date()
         let account = stringArgument(arguments, "account")
         let invalidAccount = arguments?["account"] != nil && account == nil
-        let resolved = name == "list_accounts" || invalidAccount ? nil : await resolveAccount(account)?.label
+        let resolved = name == "list_accounts" || invalidAccount ? nil : await provider.resolveAccount(account)?.name
         let result = await provider.callTool(name, arguments: arguments)
         MCPActivityLog.record(tool: name, detail: Self.callDetail(tool: name, arguments: arguments),
                               outcome: result.isError == true ? .failed : .succeeded,
@@ -146,35 +146,14 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         return "\(first)***@\(parts[1])"
     }
 
-    // MARK: - Account payloads
-
-    @MainActor
-    private func accountsPayload() -> [String: Any] {
-        let store = makeStore()
-        let merged = store.isMergedView
-        let accounts = store.accounts.map { account in
-            [
-                "id": account.id.uuidString,
-                "label": account.label,
-                "current": !merged && account.id == store.currentAccountID
-            ] as [String: Any]
+    private func accountsJSON() async -> String {
+        let result = await provider.callTool("list_accounts", arguments: nil)
+        for content in result.content {
+            if case let .text(value, _, _) = content {
+                return value
+            }
         }
-        return [
-            "accounts": accounts,
-            "total_count": accounts.count,
-            "scope": merged ? "all_accounts" : "current_account"
-        ]
-    }
-
-    /// Serialises the accounts payload on the main actor, returning a `Sendable` `String` so the
-    /// result can cross back to the nonisolated `readResource` caller without sharing the
-    /// non-`Sendable` `[String: Any]`.
-    @MainActor
-    private func accountsJSON() -> String {
-        let data = (try? JSONSerialization.data(
-            withJSONObject: accountsPayload(), options: [.prettyPrinted, .sortedKeys]
-        )) ?? Data("{}".utf8)
-        return String(data: data, encoding: .utf8) ?? "{}"
+        return "{}"
     }
 }
 

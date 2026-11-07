@@ -80,6 +80,7 @@ ATS invite workflows are available in the Explorer as well as MCP.
 The embedded MCP tools come from [HackerRankMCP](https://github.com/adamtheturtle/HackerRankMCP).
 Its `api_` catalogue exposes the same operations and request schemas.
 Write tools require **Allow the MCP server to make changes** in Settings.
+In **All Accounts** scope, supply an explicit account label or UUID for tool calls.
 SCIM tools use the account's saved provisioning credential.
 The demo account supports the complete catalogue without live credentials.
 
