@@ -926,8 +926,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/adamtheturtle/HackerRankKit";
 			requirement = {
-				kind = revision;
-				revision = efdd68ae2750f7a6f835be1a430406392a35b9f8;
+				kind = exactVersion;
+				version = 0.11.0;
 			};
 		};
 		66B000012FFF000000000021 /* XCRemoteSwiftPackageReference "WhatsNewKit" */ = {
@@ -958,8 +958,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/adamtheturtle/HackerRankMCP";
 			requirement = {
-				kind = revision;
-				revision = e8cc89dd41c6e3cbca0a38121d1d57b56518918b;
+				kind = exactVersion;
+				version = 0.4.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

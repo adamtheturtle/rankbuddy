@@ -94,5 +94,5 @@ The app keeps its MCP activity log, account resource and triage prompt.
 The desktop UI also depends directly on `HackerRankKit`.
 
 Adoption order: HackerRankKit release, HackerRankMCP release, then RankBuddy.
-Replace both temporary revision requirements with released versions before merging the app changes.
+The app uses exact release requirements for HackerRankKit 0.11.0 and HackerRankMCP 0.4.0.
 `bump-swift-package.sh` converts revision pins to exact release requirements and only edits the requested package.

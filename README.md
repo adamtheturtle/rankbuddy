@@ -84,5 +84,4 @@ In **All Accounts** scope, supply an explicit account label or UUID for tool cal
 SCIM tools use the account's saved provisioning credential.
 The demo account supports the complete catalogue without live credentials.
 
-This branch temporarily pins tested commits from [HackerRankKit #224](https://github.com/adamtheturtle/HackerRankKit/pull/224) and [HackerRankMCP #122](https://github.com/adamtheturtle/HackerRankMCP/pull/122).
-Merge and release HackerRankKit first, then HackerRankMCP, then update both RankBuddy pins to released versions before merging this app change.
+The desktop and shared tools use the released HackerRankKit 0.11.0 and HackerRankMCP 0.4.0 packages.
