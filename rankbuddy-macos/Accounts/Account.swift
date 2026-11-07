@@ -28,6 +28,8 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
     static let maximumLabelLength = 100
     /// The HackerRank personal access token. Stored in the Keychain by the account store.
     var token: String
+    /// A separate provisioning credential, persisted only in the account Keychain item.
+    var scimToken: String?
     /// An optional base-URL override for regional HackerRank endpoints.
     var baseURLOverride: String?
     /// The email of the user this token belongs to (#72), cached from token validation. Identifies
@@ -177,6 +179,7 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         userEmail: String? = nil,
         iconSymbol: String? = nil,
         tintHex: String? = nil,
+        scimToken: String? = nil,
         id: UUID = UUID()
     ) {
         self.id = id
@@ -186,10 +189,11 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         self.userEmail = userEmail
         self.iconSymbol = iconSymbol
         self.tintHex = tintHex
+        self.scimToken = scimToken
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, label, token, baseURLOverride, userEmail, iconSymbol, tintHex
+        case id, label, token, scimToken, baseURLOverride, userEmail, iconSymbol, tintHex
     }
 
     init(from decoder: Decoder) throws {
@@ -197,6 +201,7 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         id = try values.decode(UUID.self, forKey: .id)
         label = try Self.limitedLabel(values.decode(String.self, forKey: .label))
         token = try values.decode(String.self, forKey: .token)
+        scimToken = try values.decodeIfPresent(String.self, forKey: .scimToken)
         baseURLOverride = try values.decodeIfPresent(String.self, forKey: .baseURLOverride)
         userEmail = try values.decodeIfPresent(String.self, forKey: .userEmail)
         iconSymbol = try values.decodeIfPresent(String.self, forKey: .iconSymbol)
@@ -208,6 +213,7 @@ nonisolated struct Account: StorableAccount, Codable, Identifiable, Hashable {
         try values.encode(id, forKey: .id)
         try values.encode(Self.limitedLabel(label), forKey: .label)
         try values.encode(token, forKey: .token)
+        try values.encodeIfPresent(scimToken, forKey: .scimToken)
         try values.encodeIfPresent(baseURLOverride, forKey: .baseURLOverride)
         try values.encodeIfPresent(userEmail, forKey: .userEmail)
         try values.encodeIfPresent(iconSymbol, forKey: .iconSymbol)
