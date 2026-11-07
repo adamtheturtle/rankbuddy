@@ -13,7 +13,7 @@ import Testing
 @MainActor
 struct SidebarSectionTests {
     @Test func `the sections are in display order`() {
-        #expect(SidebarSection.allCases == [.tests, .questions, .interviews, .people, .teams])
+        #expect(SidebarSection.allCases == [.tests, .questions, .interviews, .people, .teams, .templates])
     }
 
     @Test func `raw values are stable persistence keys`() {
@@ -25,6 +25,7 @@ struct SidebarSectionTests {
         #expect(SidebarSection.interviews.rawValue == "interviews")
         #expect(SidebarSection.people.rawValue == "users")
         #expect(SidebarSection.teams.rawValue == "teams")
+        #expect(SidebarSection.templates.rawValue == "templates")
     }
 
     @Test func `id matches the raw value`() {
@@ -39,6 +40,7 @@ struct SidebarSectionTests {
         #expect(SidebarSection.interviews.title == "Interviews")
         #expect(SidebarSection.people.title == "People")
         #expect(SidebarSection.teams.title == "Teams")
+        #expect(SidebarSection.templates.title == "Templates")
 
         for section in SidebarSection.allCases {
             #expect(!section.title.isEmpty)
