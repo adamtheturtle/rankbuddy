@@ -1566,7 +1566,7 @@ extension RankBuddyToolProvider {
 // MARK: - Catalogue
 
 extension RankBuddyToolProvider {
-    static var writeDescriptors: [[String: Any]] {
+    static var legacyWriteDescriptors: [[String: Any]] {
         let account: [String: Any] = [
             "type": "string", "description": "Account label or id; defaults to the current account."
         ]

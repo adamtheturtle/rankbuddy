@@ -99,6 +99,9 @@ nonisolated struct RankBuddyToolProvider: MCPToolProvider {
         arguments: [String: Value]?,
         account: String?
     ) async -> CallTool.Result {
+        if name.hasPrefix("api_") {
+            return await callFullAPI(name, arguments: arguments, account: account)
+        }
         // Write tools are gated behind the separate opt-in even if a client calls one by name
         // while it isn't advertised (#73).
         if Self.isWriteTool(name) {

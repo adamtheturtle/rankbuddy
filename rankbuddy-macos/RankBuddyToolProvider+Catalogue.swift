@@ -120,6 +120,6 @@ extension RankBuddyToolProvider {
                          "query": query, "cursor": searchCursor, "account": account
                      ],
                      required: ["test_id", "query"])
-        ]
+        ] + fullAPIDescriptors(allowWrites: false)
     }
 }
