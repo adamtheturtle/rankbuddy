@@ -153,7 +153,6 @@ struct BusinessCollectionView: View {
             } else {
                 records
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             Divider()
             HStack {
                 Text("\(model.records.count) loaded").foregroundStyle(.secondary)
