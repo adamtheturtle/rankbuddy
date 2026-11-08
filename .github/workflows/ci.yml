@@ -44,13 +44,15 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Run actionlint
-        # Pin the version for reproducibility; the download script is fetched at
-        # the matching tag rather than from main.
+        # Pin the release and retry temporary GitHub download failures.
         env:
           ACTIONLINT_VERSION: 1.7.12
         run: |
           set -euo pipefail
-          bash <(curl -sSf "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") "$ACTIONLINT_VERSION"
+          curl --fail --show-error --location --retry 5 --retry-delay 2 \
+            --connect-timeout 20 --max-time 180 --output actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          tar -xzf actionlint.tar.gz actionlint
           ./actionlint -color
 
   # Lint any standalone shell scripts. actionlint only covers shell embedded in
@@ -125,7 +127,8 @@ jobs:
           SWIFTLINT_VERSION: 0.65.1
         run: |
           set -euo pipefail
-          curl -sSfL -o swiftlint.zip "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/swiftlint_linux_amd64.zip"
+          curl --fail --show-error --location --retry 5 --retry-delay 2 \
+            --connect-timeout 20 --max-time 180 --output swiftlint.zip "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/swiftlint_linux_amd64.zip"
           unzip -o -q swiftlint.zip
           chmod +x swiftlint
           ./swiftlint version
@@ -136,7 +139,8 @@ jobs:
           SWIFTFORMAT_VERSION: 0.62.1
         run: |
           set -euo pipefail
-          curl -sSfL -o swiftformat.zip "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat_linux.zip"
+          curl --fail --show-error --location --retry 5 --retry-delay 2 \
+            --connect-timeout 20 --max-time 180 --output swiftformat.zip "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat_linux.zip"
           # The Linux zip unpacks a binary named `swiftformat_linux` (the macOS
           # zip used `swiftformat`).
           unzip -o -q swiftformat.zip
@@ -216,7 +220,8 @@ jobs:
           SWIFTLINT_VERSION: 0.65.1
         run: |
           set -euo pipefail
-          curl -sSfL -o swiftlint.zip \
+          curl --fail --show-error --location --retry 5 --retry-delay 2 \
+            --connect-timeout 20 --max-time 180 --output swiftlint.zip \
             "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/portable_swiftlint.zip"
           unzip -o -q swiftlint.zip
           chmod +x swiftlint
@@ -407,7 +412,8 @@ jobs:
           PERIPHERY_VERSION: 3.8.0
         run: |
           set -euo pipefail
-          curl -sSfL -o periphery.zip "https://github.com/peripheryapp/periphery/releases/download/${PERIPHERY_VERSION}/periphery-${PERIPHERY_VERSION}.zip"
+          curl --fail --show-error --location --retry 5 --retry-delay 2 \
+            --connect-timeout 20 --max-time 180 --output periphery.zip "https://github.com/peripheryapp/periphery/releases/download/${PERIPHERY_VERSION}/periphery-${PERIPHERY_VERSION}.zip"
           unzip -o -q periphery.zip
           chmod +x periphery
           ./periphery version
