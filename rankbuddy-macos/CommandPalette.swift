@@ -264,6 +264,7 @@ struct AppCommands: Commands {
     /// flips it is hidden from the default toolbar.
     @AppStorage(ListLayout.detailPaneHiddenKey) private var detailPaneHidden = false
     @Environment(\.openWindow) private var openWindow
+    @FocusedValue(\.accountActivityRefresh) private var activityRefresh
     let palette: PaletteModel
     let openLink: OpenLinkModel
     let commandContext: AppCommandContext
@@ -318,8 +319,14 @@ struct AppCommands: Commands {
 
             Divider()
 
-            CommandActionButton(action: commandContext.refresh, fallbackTitle: "Reload")
-                .keyboardShortcut("r", modifiers: .command)
+            if let activityRefresh {
+                Button("Refresh Account Activity") { activityRefresh.perform() }
+                    .keyboardShortcut("r", modifiers: .command)
+                    .disabled(!activityRefresh.isEnabled)
+            } else {
+                CommandActionButton(action: commandContext.refresh, fallbackTitle: "Reload")
+                    .keyboardShortcut("r", modifiers: .command)
+            }
 
             Divider()
 

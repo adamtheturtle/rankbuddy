@@ -127,43 +127,57 @@ struct BusinessCollectionView: View {
     let account: Account
     let kind: NativeCollectionKind
     let title: String
+    @Environment(AppCommandContext.self) private var commandContext
     @State private var model = NativeBusinessCollection()
     @State private var query: [URLQueryItem] = []
     @State private var filtersPresented = false
     @State private var createPresented = false
     @State private var selected: NativeBusinessRecord?
     @State private var search = ""
+    @State private var commandOwner = UUID()
+
+    private var hasSearch: Bool {
+        !search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if kind == .candidates {
                 TextField("Search candidates by name or email", text: $search)
                     .textFieldStyle(.roundedBorder).padding()
+                    .accessibilityLabel("Search Candidates")
             }
-            if let error = model.error {
+            if let error = model.error, !model.records.isEmpty {
                 Text(error).foregroundStyle(.red).padding()
             }
             if let notice = model.notice {
                 Text(notice).foregroundStyle(.secondary).padding()
             }
-            if kind == .candidates, search.isEmpty {
+            if kind == .candidates, !hasSearch {
                 ContentUnavailableView("Search Candidates", systemImage: "person.crop.circle.badge.magnifyingglass",
                                        description: Text("Enter a name or email to find candidates across your tests."))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if model.records.isEmpty, model.loading {
+                CompactStateView(title: kind == .candidates ? "Searching Candidates" : "Loading \(title)",
+                                 systemImage: "arrow.triangle.2.circlepath", message: "Getting the latest records.",
+                                 isLoading: true)
+            } else if let error = model.error, model.records.isEmpty {
+                CompactStateView(title: "Couldn’t Load \(title)", systemImage: "exclamationmark.triangle",
+                                 message: error,
+                                 actionTitle: "Try Again", actionSystemImage: "arrow.clockwise") {
+                    Task { await load() }
+                }
+            } else if model.records.isEmpty {
+                CompactStateView(title: kind == .candidates ? "No Candidates Found" : "No Records",
+                                 systemImage: "magnifyingglass",
+                                 message: kind == .candidates ? "Try a different name or email." :
+                                     "Try changing the filters for this account.")
             } else {
                 records
             }
-            Divider()
-            HStack {
-                Text("\(model.records.count) loaded").foregroundStyle(.secondary)
-                Spacer()
-                if model.loading {
-                    ProgressView().controlSize(.small)
-                }
-                if model.nextQuery != nil {
-                    Button("Load More") { Task { await load(more: true) } }.disabled(model.loading)
-                }
-            }.padding()
+            if kind != .candidates || hasSearch {
+                collectionFooter
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .navigationTitle(title)
@@ -180,9 +194,13 @@ struct BusinessCollectionView: View {
             }
             ToolbarItem(id: "business-refresh", placement: .primaryAction) {
                 Button("Refresh", systemImage: "arrow.clockwise") { Task { await load() } }
+                    .disabled(model.loading || (kind == .candidates && !hasSearch))
             }
         }
-        .sheet(isPresented: $filtersPresented) { NativeListFiltersSheet(operationID: kind.operationID, query: $query) }
+        .sheet(isPresented: $filtersPresented) {
+            NativeListFiltersSheet(operationID: kind.operationID, query: $query, collectionTitle: title,
+                                   excludedNames: kind == .candidates ? ["query"] : [])
+        }
         .sheet(isPresented: $createPresented) {
             NativeFeatureFormSheet(title: kind == .provisioningUsers ? "New Provisioned User" : "New Provisioned Group",
                                    operationID: kind == .provisioningUsers ? "api_scim_create_user" :
@@ -190,13 +208,17 @@ struct BusinessCollectionView: View {
                                    account: account) { Task { await load() } }
         }
         .task(id: query) { await load() }
+        .onAppear { registerCommands() }
+        .activatesListCommands(in: commandContext, owner: commandOwner)
+        .onDisappear { commandContext.clearListActions(owner: commandOwner) }
         .task(id: search) {
             guard kind == .candidates else { return }
 
             try? await Task.sleep(for: .milliseconds(350))
             guard !Task.isCancelled else { return }
 
-            query = query.filter { $0.name != "query" } + [URLQueryItem(name: "query", value: search)]
+            query = query.filter { $0.name != "query" }
+                + [URLQueryItem(name: "query", value: search.trimmingCharacters(in: .whitespacesAndNewlines))]
         }
     }
 
@@ -204,23 +226,58 @@ struct BusinessCollectionView: View {
         GeometryReader { geometry in
             HSplitView {
                 List(model.records, selection: $selected) { record in
-                    Text(record.title).tag(record)
-                }.frame(minWidth: 260, maxHeight: .infinity)
-                if let selected {
-                    BusinessRecordDetail(account: account, kind: kind, record: selected) { Task { await load() } }
-                        .id(selected.id)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ContentUnavailableView("Select a Record", systemImage: "doc.text.magnifyingglass")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(kind.isAudit ? record.auditTitle : record.title)
+                            .font(.callout.weight(.medium)).lineLimit(2)
+                        if kind.isAudit, let date = record.auditDate {
+                            Text(date).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }.padding(.vertical, 4).tag(record)
+                }.frame(minWidth: 260, idealWidth: 360, maxWidth: .infinity, maxHeight: .infinity)
+                recordDetails
+                    .frame(minWidth: 320, idealWidth: 500, maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
 
+    @ViewBuilder private var recordDetails: some View {
+        if let selected {
+            BusinessRecordDetail(account: account, kind: kind, record: selected) { Task { await load() } }
+                .id(selected.id)
+        } else {
+            ContentUnavailableView("Select a Record", systemImage: "doc.text.magnifyingglass")
+        }
+    }
+
+    private var collectionFooter: some View {
+        VStack(spacing: 0) {
+            Divider()
+            HStack {
+                Text("\(model.records.count) loaded").foregroundStyle(.secondary)
+                Spacer()
+                if model.loading {
+                    ProgressView().controlSize(.small)
+                }
+                if model.nextQuery != nil {
+                    Button("Load More") { Task { await load(more: true) } }.disabled(model.loading)
+                }
+            }.padding()
+        }
+    }
+
+    private func registerCommands() {
+        commandContext.registerListActions(owner: commandOwner, actions: .init(
+            primaryNew: kind.scim ? .init(title: kind == .provisioningUsers ? "New User…" : "New Group…",
+                                          perform: { createPresented = true }) : nil,
+            secondaryNew: nil, exportCSV: nil, exportSelectedCSV: nil,
+            refresh: .init(title: "Reload", isEnabled: { !model.loading && (kind != .candidates || hasSearch) },
+                           perform: { Task { await load() } })
+        ))
+    }
+
     private func load(more: Bool = false) async {
-        if kind == .candidates, query.first(where: { $0.name == "query" })?.value?.isEmpty != false {
+        if kind == .candidates, !hasSearch {
             model.clear()
             selected = nil
             return

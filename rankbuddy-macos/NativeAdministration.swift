@@ -15,6 +15,18 @@ struct NativeBusinessRecord: Identifiable, Hashable, Codable, Sendable {
         return ["displayName", "diplayName", "userName", "email", "full_name", "name", "action", "source_type", "id"]
             .compactMap { fields[$0]?.text }.first(where: { !$0.isEmpty }) ?? "Event"
     }
+
+    var auditTitle: String {
+        let fields = value.object
+        let action = fields["action"]?.text ?? "Event"
+        let resource = [fields["source_type"]?.text, fields["source_id"]?.text]
+            .compactMap(\.self).filter { !$0.isEmpty }.joined(separator: " ")
+        return [DisplayFormat.enumLabel(action), resource].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+
+    var auditDate: String? {
+        DisplayFormat.date(value.object["created_at"]?.text)
+    }
 }
 
 enum NativeCollectionKind: String {
@@ -32,6 +44,10 @@ enum NativeCollectionKind: String {
 
     var scim: Bool {
         self == .provisioningUsers || self == .provisioningGroups
+    }
+
+    var isAudit: Bool {
+        self == .auditCursor || self == .auditOffset
     }
 }
 

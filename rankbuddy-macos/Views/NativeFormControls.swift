@@ -166,7 +166,10 @@ struct NativeRecordContent: View {
                 if let url = URL.remoteWebURL(from: value.text) {
                     LabeledContent(label) { Link(value.text, destination: url) }
                 } else {
-                    LabeledContent(label) { Text(value.text).textSelection(.enabled) }
+                    LabeledContent(label) {
+                        Text(label.hasSuffix(" At") ? DisplayFormat.date(value.text) ?? value.text : value.text)
+                            .textSelection(.enabled)
+                    }
                 }
             }
         }

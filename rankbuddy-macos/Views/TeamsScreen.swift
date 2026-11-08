@@ -22,7 +22,7 @@ struct TeamsScreen: View {
     @State var requestQuery: [URLQueryItem] = []
 
     var body: some View {
-        screen.nativeListFilters("api_list_all_teams", query: $requestQuery)
+        screen.nativeListFilters("api_list_all_teams", title: "Teams", query: $requestQuery)
     }
 
     @ViewBuilder private var screen: some View {
@@ -163,7 +163,7 @@ struct TeamMembersList: View {
     @State private var requestQuery: [URLQueryItem] = []
 
     var body: some View {
-        screen.nativeListFilters("api_list_all_memberships", query: $requestQuery)
+        screen.nativeListFilters("api_list_all_memberships", title: "Members", query: $requestQuery)
     }
 
     private var screen: some View {

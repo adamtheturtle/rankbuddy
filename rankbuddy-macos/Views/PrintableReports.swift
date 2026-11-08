@@ -177,7 +177,7 @@ struct TestReport: View {
                     ("Library", DisplayFormat.list(test.libraryFilterValues)),
                     ("Role", DisplayFormat.list(test.roleFilterValues)),
                     ("Skills", DisplayFormat.list(test.skillFilterValues)),
-                    ("Type", DisplayFormat.list(test.typeFilterValues)),
+                    ("Type", DisplayFormat.list(test.presentationTypes)),
                     ("Languages", DisplayFormat.languages(test.languages)),
                     ("Proctoring", test.enableProctoring.map { $0 ? "Enabled" : "Disabled" }),
                     ("Shuffle questions", DisplayFormat.boolean(test.shuffleQuestions)),
@@ -213,8 +213,9 @@ struct TestReport: View {
 
             if let sections = test.sections, !sections.isEmpty {
                 PrintSection(title: "Sections") {
-                    ReportFieldList(fields: reportFields(sections.map {
-                        ($0.displayName, $0.questionCount.map { "\($0) question\($0 == 1 ? "" : "s")" })
+                    ReportFieldList(fields: reportFields(sections.enumerated().map { index, section in
+                        (section.presentationTitle(index: index),
+                         section.questionCount.map { "\($0) question\($0 == 1 ? "" : "s")" })
                     }))
                 }
             }

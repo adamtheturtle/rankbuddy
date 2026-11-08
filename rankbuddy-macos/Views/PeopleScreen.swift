@@ -25,7 +25,7 @@ struct PeopleScreen: View {
     @State var requestQuery: [URLQueryItem] = []
 
     var body: some View {
-        screen.nativeListFilters("api_list_all_users", query: $requestQuery)
+        screen.nativeListFilters("api_list_all_users", title: "People", query: $requestQuery)
     }
 
     @ViewBuilder private var screen: some View {

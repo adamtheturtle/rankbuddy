@@ -27,6 +27,15 @@ struct FormattingTests {
         #expect(DisplayFormat.languageName("brainfuck") == "Brainfuck")
     }
 
+    @Test(arguments: [
+        ["cpp23", "C++23"], ["cpp26", "C++26"], ["cplusplus23", "C++23"],
+        ["JAVA_21", "Java 21"], ["java25", "Java 25"], ["csharp12", "C# 12"],
+        ["javascript", "JavaScript"], ["objectivec", "Objective-C"]
+    ])
+    func `versioned language labels preserve names and versions`(_ example: [String]) {
+        #expect(DisplayFormat.languageName(example[0]) == example[1])
+    }
+
     @Test func `languages joins normalised names and omits empties`() {
         #expect(DisplayFormat.languages(nil) == nil)
         #expect(DisplayFormat.languages([]) == nil)

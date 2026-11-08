@@ -32,6 +32,7 @@ struct TemplatesScreen: View {
                 .map(\.hashValue),
             kind: kind, ownership: ownership, merged: store.isMergedView))
         .nativeListFilters(kind == .interview ? "api_list_all_interview_templates" : "api_list_all_invite_templates",
+                           title: kind == .interview ? "Interview Templates" : "Assessment Templates",
                            query: $requestQuery)
         .sheet(item: $creationAccount) { account in
             TemplateEditorSheet(account: account) {

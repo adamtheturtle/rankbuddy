@@ -41,6 +41,7 @@ enum NativeListQuery {
 
 private struct NativeListFiltersModifier: ViewModifier {
     let operationID: String
+    let title: String
     @Binding var query: [URLQueryItem]
     @State private var presented = false
 
@@ -63,7 +64,7 @@ private struct NativeListFiltersModifier: ViewModifier {
                 }
             }
             .sheet(isPresented: $presented) {
-                NativeListFiltersSheet(operationID: operationID, query: $query)
+                NativeListFiltersSheet(operationID: operationID, query: $query, collectionTitle: title)
             }
     }
 }
@@ -71,9 +72,19 @@ private struct NativeListFiltersModifier: ViewModifier {
 struct NativeListFiltersSheet: View {
     let operationID: String
     @Binding var query: [URLQueryItem]
+    let collectionTitle: String
+    var excludedNames: Set<String> = []
     @Environment(\.dismiss) private var dismiss
     @State private var model: NativeFeatureFormModel?
     @State private var error: String?
+
+    private var preferredHeight: CGFloat {
+        let fields = model?.parameters ?? []
+        let controls = fields.reduce(0) { height, field in
+            height + (!field.required && !field.included ? 44 : field.kind == "array" ? 140 : 84)
+        }
+        return min(560, max(260, CGFloat(160 + controls + (error == nil ? 0 : 54))))
+    }
 
     var body: some View {
         NavigationStack {
@@ -88,48 +99,40 @@ struct NativeListFiltersSheet: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle("Filters")
+            .navigationTitle("\(collectionTitle) Filters")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .automatic) { Button("Reset") { query = []; dismiss() } }
+                ToolbarItem(placement: .automatic) {
+                    Button("Reset") {
+                        query = NativeListFilters.applying([], to: query, preserving: excludedNames)
+                        dismiss()
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Apply") {
-                        do { query = try model?.request().query ?? []; dismiss() } catch {
+                        do {
+                            query = try NativeListFilters.applying(model?.request().query ?? [], to: query,
+                                                                   preserving: excludedNames)
+                            dismiss()
+                        } catch {
                             self.error = error.localizedDescription
                         }
                     }
+                    .disabled(model == nil)
                 }
             }
         }
-        .frame(width: 600, height: 560)
+        .frame(width: 600, height: preferredHeight)
         .task {
             do {
-                let draft = try NativeFeatureFormModel(operationID: operationID)
-                draft.parameters.removeAll { field in
-                    draft.operation.parameters.contains { $0.name == field.name && $0.location == "path" }
-                        || (operationID == "api_list_all_interview_templates" && field.name == "filter")
-                }
-                for item in query {
-                    if let field = draft.parameters.first(where: { $0.name == item.name }) {
-                        field.included = true
-                        field.text = item.value ?? ""
-                        field.boolean = item.value == "true"
-                        if field.kind == "array" {
-                            for text in (item.value ?? "").split(separator: ",") {
-                                field.addEntry()
-                                field.entries.last?.text = String(text)
-                            }
-                        }
-                    }
-                }
-                model = draft
+                model = try NativeListFilters.draft(operationID: operationID, query: query, excluding: excludedNames)
             } catch { self.error = error.localizedDescription }
         }
     }
 }
 
 extension View {
-    func nativeListFilters(_ operationID: String, query: Binding<[URLQueryItem]>) -> some View {
-        modifier(NativeListFiltersModifier(operationID: operationID, query: query))
+    func nativeListFilters(_ operationID: String, title: String, query: Binding<[URLQueryItem]>) -> some View {
+        modifier(NativeListFiltersModifier(operationID: operationID, title: title, query: query))
     }
 }
