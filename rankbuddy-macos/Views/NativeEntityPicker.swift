@@ -17,7 +17,7 @@ enum NativeEntityCollection: String {
         switch field {
         case "template": self = .invitationTemplates
         case "test_id": self = .tests
-        case "question_id", "question_ids", "qid": self = .questions
+        case "question_id", "question_ids", "questions", "qid": self = .questions
         case "user_id": self = .users
         case "team_id": self = .teams
         case "interview_template_id": self = .interviewTemplates
