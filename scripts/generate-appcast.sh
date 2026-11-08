@@ -21,7 +21,7 @@ archive="${2:-rankbuddy-${tag}.dmg}"
 [ -f "$archive" ] || die "update archive not found: $archive"
 : "${SPARKLE_PRIVATE_ED_KEY:?set SPARKLE_PRIVATE_ED_KEY}"
 
-sparkle_version="${SPARKLE_VERSION:-2.9.4}"
+sparkle_version="${SPARKLE_VERSION:-2.9.6}"
 server_url="${GITHUB_SERVER_URL:-https://github.com}"
 repository="${GITHUB_REPOSITORY:-adamtheturtle/rankbuddy-macos}"
 download_prefix="${server_url}/${repository}/releases/download/${tag}/"
@@ -36,7 +36,7 @@ key_file="$work/sparkle-private-key"
 archives_dir="$work/archives"
 (umask 077 && printf '%s' "$SPARKLE_PRIVATE_ED_KEY" > "$key_file")
 
-curl -fsSL \
+curl -fsSL --retry 5 --retry-delay 2 --connect-timeout 20 --max-time 180 \
     "https://github.com/sparkle-project/Sparkle/releases/download/${sparkle_version}/Sparkle-${sparkle_version}.tar.xz" \
     -o "$work/sparkle.tar.xz"
 tar -xJf "$work/sparkle.tar.xz" -C "$work"

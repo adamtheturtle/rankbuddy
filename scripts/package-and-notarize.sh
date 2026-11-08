@@ -10,6 +10,7 @@ app="${1:-}"
 dmg="${2:-rankbuddy.dmg}"
 [[ -d "$app" ]] || die "usage: $0 <path-to-.app> [output.dmg]"
 : "${SIGNING_IDENTITY:?set SIGNING_IDENTITY}"
+: "${PROVISIONING_PROFILE:?set PROVISIONING_PROFILE to a matching Developer ID profile}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
@@ -30,6 +31,10 @@ sed -e "s|\$(PRODUCT_BUNDLE_IDENTIFIER)|$bundle_id|g" \
   -e "s|\$(AppIdentifierPrefix)|$team_id.|g" \
   -e "s|\$(TeamIdentifierPrefix)|$team_id.|g" \
   "$entitlements" > "$expanded"
+
+python3 "$script_dir/prepare_developer_id_signing.py" \
+  --app "$app" --profile "$PROVISIONING_PROFILE" --entitlements "$expanded" \
+  --team "$team_id" --identity "$SIGNING_IDENTITY"
 
 sign() {
   codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$@"
@@ -83,4 +88,5 @@ fi
 
 xcrun stapler staple "$dmg"
 xcrun stapler validate "$dmg"
+spctl --assess --type execute --verbose=2 "$app"
 spctl --assess --type open --context context:primary-signature --verbose=2 "$dmg"

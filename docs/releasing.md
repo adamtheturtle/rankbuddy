@@ -7,6 +7,8 @@ The release workflow stamps the marketing version from the tag and uses the full
 
 - `DEVELOPER_ID_APP_CERT_P12_BASE64`: base64-encoded Developer ID Application certificate and private key exported as PKCS#12.
 - `DEVELOPER_ID_APP_CERT_PASSWORD`: password protecting that PKCS#12 file.
+- `DEVELOPER_ID_PROVISIONING_PROFILE_BASE64`: base64-encoded Developer ID distribution profile for `com.adamdangoor.rankbuddy`, with iCloud key-value store access and the selected signing certificate.
+  A registered-Mac development profile cannot be used for this release.
 - `ASC_KEY`: base64-encoded App Store Connect API `.p8` key.
 - `ASC_KEY_ID`: the API key ID.
 - `ASC_ISSUER_ID`: the App Store Connect issuer UUID.
@@ -44,13 +46,16 @@ scripts/run-xcodebuild.sh ReleaseBuild.log build \
   CODE_SIGNING_ALLOWED=NO
 
 SIGNING_IDENTITY='Developer ID Application: Name (TEAMID)' \
+PROVISIONING_PROFILE=/path/to/RankBuddy-DeveloperID.provisionprofile \
 NOTARY_KEYCHAIN_PROFILE=rankbuddy-notary \
 scripts/package-and-notarize.sh \
   DerivedData-Release/Build/Products/Release/rankbuddy-macos.app \
   "rankbuddy-v$version.dmg"
 ```
 
-The packaging script signs nested Sparkle code before the app, expands Xcode entitlement placeholders, signs the DMG, requires an accepted notarization result, staples it, then runs `codesign`, `stapler`, and Gatekeeper validation.
+The packaging script expands Xcode entitlement placeholders and validates the profile's distribution type, expiry, team, application identifier, certificate and restricted entitlements.
+It embeds that profile before signing the app, including its team and application identifiers.
+It signs nested Sparkle code before the app, signs the DMG, requires accepted notarization, staples the DMG, and checks both the app and DMG with Gatekeeper.
 
 After notarization, `scripts/generate-appcast.sh` downloads the pinned Sparkle tools, signs the DMG enclosure, and publishes `appcast.xml` beside the DMG.
 Tagged Release builds read the stable `releases/latest/download/appcast.xml` URL; ordinary Debug builds remain updater-free.

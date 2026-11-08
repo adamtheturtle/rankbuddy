@@ -32,6 +32,7 @@ jobs:
         env:
           CERTIFICATE: ${{ secrets.DEVELOPER_ID_APP_CERT_P12_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_APP_CERT_PASSWORD }}
+          DEVELOPER_ID_PROFILE: ${{ secrets.DEVELOPER_ID_PROVISIONING_PROFILE_BASE64 }}
           ASC_KEY: ${{ secrets.ASC_KEY }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
@@ -39,7 +40,7 @@ jobs:
           SPARKLE_PUBLIC_ED_KEY: ${{ secrets.SPARKLE_PUBLIC_ED_KEY }}
         run: |
           set -euo pipefail
-          for name in CERTIFICATE CERTIFICATE_PASSWORD ASC_KEY ASC_KEY_ID ASC_ISSUER_ID \
+          for name in CERTIFICATE CERTIFICATE_PASSWORD DEVELOPER_ID_PROFILE ASC_KEY ASC_KEY_ID ASC_ISSUER_ID \
             SPARKLE_PRIVATE_ED_KEY SPARKLE_PUBLIC_ED_KEY; do
             test -n "${!name}" || { echo "::error::$name is required"; exit 1; }
           done
@@ -104,11 +105,15 @@ jobs:
 
       - name: Package and notarize
         env:
+          DEVELOPER_ID_PROFILE: ${{ secrets.DEVELOPER_ID_PROVISIONING_PROFILE_BASE64 }}
           ASC_KEY: ${{ secrets.ASC_KEY }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
-          scripts/package-and-notarize.sh \
+          set -euo pipefail
+          profile="$RUNNER_TEMP/RankBuddy-DeveloperID.provisionprofile"
+          (umask 077; printf '%s' "$DEVELOPER_ID_PROFILE" | base64 --decode > "$profile")
+          PROVISIONING_PROFILE="$profile" scripts/package-and-notarize.sh \
             DerivedData-Release/Build/Products/Release/rankbuddy-macos.app \
             "rankbuddy-${GITHUB_REF_NAME}.dmg"
 

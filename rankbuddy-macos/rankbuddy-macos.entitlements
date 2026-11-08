@@ -22,18 +22,14 @@
 	     filesystem access. -->
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
-	<!-- Team-ID-prefixed App Group (not the bare "group." form): a notarized
-	     Developer-ID build embeds no provisioning profile, and macOS only
-	     authorizes a "group."-prefixed App Group when it's listed in the profile.
-	     The "<TeamID>.group." form is authorized by matching the team-ID prefix to
-	     the signing identity, so it needs no profile. Shared with a future widget. -->
+	<!-- This Team-ID-prefixed App Group is authorized by the signing identity.
+	     The iCloud key-value store entitlement above also requires the matching
+	     Developer ID provisioning profile embedded by the release packager. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>6L9H6Q8CUF.group.com.adamdangoor.rankbuddy</string>
 	</array>
-	<!-- No keychain-access-groups on purpose: it is a provisioning-profile-required
-	     entitlement, and a Developer-ID build embeds no profile, so declaring it makes
-	     AMFI refuse to launch the app. The account store uses the default access group
-	     implicitly (KeychainStore pins its own service string). -->
+	<!-- The account store uses the default Keychain access group implicitly.
+	     KeychainStore pins its own service string. -->
 </dict>
 </plist>
