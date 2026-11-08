@@ -47,7 +47,7 @@ struct NativeEntityPicker: View {
     var body: some View {
         VStack(alignment: .leading) {
             if field.kind == "array" {
-                TextField("Search loaded questions", text: $query)
+                TextField("Search loaded questions", text: $query).textFieldStyle(.roundedBorder)
                 List(options.filter { query.isEmpty || $0.title.localizedStandardContains(query) }) { option in
                     Toggle(option.title, isOn: Binding(
                         get: { field.entries.contains { $0.text == option.id } },
@@ -62,12 +62,14 @@ struct NativeEntityPicker: View {
                     ))
                 }.frame(height: 180)
             } else {
-                Picker(field.title, selection: $field.text) {
-                    Text("Choose…").tag("")
-                    if !field.text.isEmpty, !options.contains(where: { $0.id == field.text }) {
-                        Text(field.text).tag(field.text)
-                    }
-                    ForEach(options) { Text($0.title).tag($0.id) }
+                NativeFormValue(title: field.required ? field.title : nil) {
+                    Picker(field.title, selection: $field.text) {
+                        Text("Choose…").tag("")
+                        if !field.text.isEmpty, !options.contains(where: { $0.id == field.text }) {
+                            Text(field.text).tag(field.text)
+                        }
+                        ForEach(options) { Text($0.title).tag($0.id) }
+                    }.labelsHidden()
                 }
             }
             DisclosureGroup(field.kind == "array" ? "Use Question IDs" : "Use an ID") {

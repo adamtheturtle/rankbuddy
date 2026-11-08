@@ -34,78 +34,102 @@ struct NativeFeatureFormSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                LabeledContent("Account", value: account.label)
-                if let model {
-                    if model.operation.scim, account.scimToken?.isEmpty != false, !account.isMock {
-                        Text("Add this account’s provisioning token in Account Settings to manage provisioning.")
-                        SettingsLink { Text("Account Settings") }
-                    }
-                    ForEach(model.parameters) { NativeFormControl(field: $0).disabled(model.sending) }
-                    if let body = model.body {
-                        ForEach(NativeFormGroups.names, id: \.self) { group in
-                            let fields = body.children.filter { NativeFormGroups.group(for: $0.name) == group }
-                            if !fields.isEmpty {
-                                Section(group) {
-                                    ForEach(fields) { NativeFormControl(field: $0) }
-                                }.disabled(loading || model.sending || model.committed || model.uncertain)
-                            }
-                        }
-                    }
-                    if loading {
-                        ProgressView().controlSize(.small)
-                    }
-                    if let error = model.error {
-                        Text(error).foregroundStyle(.red)
-                    }
-                    if let result = model.result {
-                        Section("Result") { NativeRecordContent(value: result) }
-                    }
-                    if model.committed {
-                        Label("Saved", systemImage: "checkmark.circle").foregroundStyle(.green)
-                    }
-                    if let validation = model.validationMessage, model.result == nil {
-                        Text(validation).font(.caption).foregroundStyle(.secondary)
-                    }
-                } else if let setupError {
-                    Text(setupError).foregroundStyle(.red)
-                }
-            }
-            .formStyle(.grouped)
-            .navigationTitle(title)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    if !embedded {
-                        Button(dismissTitle) { dismiss() }.disabled(model?.sending == true)
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
+        presentation
+            .environment(\.nativeFeatureAccount, account)
+            .environment(\.nativeFormOmissionLabel,
+                         model?.operation.method == "PUT" && model?.operation.scim == false ? "Unchanged" : "Default")
+            .interactiveDismissDisabled(model?.sending == true)
+            .confirmationDialog(title, isPresented: $confirmDeletion, titleVisibility: .visible) {
+                Button("Confirm Deletion", role: .destructive) {
                     if let model {
-                        Button(submitTitle(model)) {
-                            if model.operation.method == "DELETE" {
-                                confirmDeletion = true
-                            } else {
-                                submit(model)
-                            }
-                        }
-                        .disabled(loading || model.sending || model.committed || model.uncertain || model
-                            .validationMessage != nil)
+                        submit(model)
                     }
                 }
+            } message: { Text("This changes data in \(account.label). This action cannot be undone in RankBuddy.") }
+            .task { await loadExisting() }
+    }
+
+    @ViewBuilder private var presentation: some View {
+        if embedded {
+            form
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if let model {
+                        HStack {
+                            Spacer()
+                            submitButton(model).buttonStyle(.borderedProminent)
+                        }
+                        .padding(16).background(.bar)
+                    }
+                }
+        } else {
+            NavigationStack {
+                form
+                    .navigationTitle(title)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(dismissTitle) { dismiss() }.disabled(model?.sending == true)
+                        }
+                        if let model {
+                            ToolbarItem(placement: .confirmationAction) { submitButton(model) }
+                        }
+                    }
+            }
+            .frame(minWidth: 640, idealWidth: 680, minHeight: 500, idealHeight: 650)
+        }
+    }
+
+    private var form: some View {
+        Form {
+            if !embedded {
+                LabeledContent("Account", value: account.label)
+            }
+            if let model {
+                if model.operation.scim, account.scimToken?.isEmpty != false, !account.isMock {
+                    Text("Add this account’s provisioning token in Account Settings to manage provisioning.")
+                    SettingsLink { Text("Account Settings") }
+                }
+                ForEach(model.parameters) { NativeFormControl(field: $0).disabled(model.sending) }
+                if let body = model.body {
+                    ForEach(NativeFormGroups.names, id: \.self) { group in
+                        let fields = body.children.filter { NativeFormGroups.group(for: $0.name) == group }
+                        if !fields.isEmpty {
+                            Section(group) {
+                                ForEach(fields) { NativeFormControl(field: $0) }
+                            }.disabled(loading || model.sending || model.committed || model.uncertain)
+                        }
+                    }
+                }
+                if loading {
+                    ProgressView().controlSize(.small)
+                }
+                if let error = model.error {
+                    Text(error).foregroundStyle(.red)
+                }
+                if let result = model.result {
+                    Section("Result") { NativeRecordContent(value: result) }
+                }
+                if model.committed {
+                    Label("Saved", systemImage: "checkmark.circle").foregroundStyle(.green)
+                }
+                if let validation = model.validationMessage, model.result == nil {
+                    Text(validation).font(.caption).foregroundStyle(.secondary)
+                }
+            } else if let setupError {
+                Text(setupError).foregroundStyle(.red)
             }
         }
-        .environment(\.nativeFeatureAccount, account)
-        .frame(minWidth: 640, idealWidth: 680, minHeight: 500, idealHeight: 650)
-        .interactiveDismissDisabled(model?.sending == true)
-        .confirmationDialog(title, isPresented: $confirmDeletion, titleVisibility: .visible) {
-            Button("Confirm Deletion", role: .destructive) {
-                if let model {
-                    submit(model)
-                }
+        .formStyle(.grouped)
+    }
+
+    private func submitButton(_ model: NativeFeatureFormModel) -> some View {
+        Button(submitTitle(model)) {
+            if model.operation.method == "DELETE" {
+                confirmDeletion = true
+            } else {
+                submit(model)
             }
-        } message: { Text("This changes data in \(account.label). This action cannot be undone in RankBuddy.") }
-        .task { await loadExisting() }
+        }
+        .disabled(loading || model.sending || model.committed || model.uncertain || model.validationMessage != nil)
     }
 
     private var dismissTitle: String {

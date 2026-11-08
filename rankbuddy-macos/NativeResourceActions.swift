@@ -74,8 +74,8 @@ private struct NativeResourceActionsModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    if account != nil {
+                if account != nil {
+                    ToolbarItem(id: "native-resource-actions", placement: .primaryAction) {
                         Menu("\(kind.rawValue.capitalized) Actions", systemImage: "ellipsis.circle") {
                             ForEach(kind.actions) { action in
                                 Button(action.title) { selected = action }

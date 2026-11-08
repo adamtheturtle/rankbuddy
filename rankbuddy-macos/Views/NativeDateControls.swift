@@ -11,11 +11,16 @@ struct NativeDateControl: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            DatePicker(field.title, selection: Binding(get: { date }, set: {
-                date = $0
-                field.text = $0.ISO8601Format()
-            }), displayedComponents: [.date, .hourAndMinute])
-            TextField("Exact timestamp (ISO 8601)", text: $field.text)
+            NativeFormValue(title: field.required ? field.title : nil) {
+                DatePicker(field.title, selection: Binding(get: { date }, set: {
+                    date = $0
+                    field.text = $0.ISO8601Format()
+                }), displayedComponents: [.date, .hourAndMinute]).labelsHidden()
+            }
+            DisclosureGroup("Exact timestamp") {
+                TextField("ISO 8601", text: $field.text).textFieldStyle(.roundedBorder)
+                    .font(.body.monospaced()).padding(.top, 4)
+            }.font(.caption).foregroundStyle(.secondary)
         }
         .onAppear {
             if let parsed = DisplayFormat.parseDate(field.text) {
@@ -33,15 +38,20 @@ struct NativeDateRangeControl: View {
     @State private var end = Date()
 
     var body: some View {
-        GroupBox(field.title) {
-            VStack {
+        VStack(alignment: .leading, spacing: 8) {
+            if field.required {
+                Text(field.title).font(.headline)
+            }
+            VStack(spacing: 8) {
                 DatePicker("From", selection: Binding(get: { start }, set: { start = $0; update() }),
                            displayedComponents: [.date, .hourAndMinute])
                 DatePicker("To", selection: Binding(get: { end }, set: { end = $0; update() }),
                            displayedComponents: [.date, .hourAndMinute])
-                TextField("Exact range (from..to)", text: $field.text)
+                DisclosureGroup("Exact range") {
+                    TextField("From..to (ISO 8601)", text: $field.text).textFieldStyle(.roundedBorder)
+                        .font(.body.monospaced()).padding(.top, 4)
+                }.font(.caption).foregroundStyle(.secondary)
             }
-            .padding(6)
         }
         .onAppear {
             let values = field.text.components(separatedBy: "..")
