@@ -5,10 +5,6 @@
 
 import SwiftUI
 
-extension EnvironmentValues {
-    @Entry var listNavigationIsProvided = false
-}
-
 /// Layout preferences shared across every list (#53).
 enum ListLayout {
     /// Shared `@AppStorage` key toggling the persistent detail pane, mirroring PadBuddy's

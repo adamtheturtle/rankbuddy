@@ -154,7 +154,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// Forwarded into each FastList row: FastList hosts rows in their own NSHostingView, which
     /// does not inherit the SwiftUI environment, so rows that read these stores would trap (#31).
     @Environment(AccountStore.self) private var accountStore
-    @Environment(\.listNavigationIsProvided) private var navigationIsProvided
+    @Environment(\.mainWindowOwnsNavigation) private var navigationIsProvided
     // Internal (not private) so the row-accessory and command-registration helpers in
     // `LoadableList+Interaction.swift` can read them, per the repo's split-file rule.
     @Environment(FavoritesStore.self) var favorites
@@ -277,7 +277,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             .searchable(text: $query, placement: .automatic, prompt: "Search \(title)")
             // A customizable toolbar (#101): only the primary actions show by default; the rest
             // are available via "Customize Toolbar…". Built in `LoadableList+Toolbar`.
-            .toolbar(id: "list") { customToolbar }
+            .windowToolbar(id: "list") { customToolbar }
             // Re-runs when the account-scoped key changes, clearing any stale restored
             // pane before loading the new account's data (#19).
             .task(id: restorationKey) { await reload() }

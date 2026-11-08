@@ -94,7 +94,7 @@ struct TemplateDetailView: View {
         .confirmationDialog("Delete “\(displayed.title)”?", isPresented: $deletePresented, titleVisibility: .visible) {
             Button("Delete Template", role: .destructive) { Task { await delete() } }
         } message: { Text("The template will no longer be available for new interviews.") }
-        .toolbar(id: "templateDetail") {
+        .windowToolbar(id: "templateDetail") {
             ToolbarItem(id: "templateActions", placement: .primaryAction) {
                 if displayed.kind == .interview, !deleted {
                     Menu("Template Actions", systemImage: "ellipsis.circle") {

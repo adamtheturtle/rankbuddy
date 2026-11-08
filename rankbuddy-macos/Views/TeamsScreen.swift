@@ -359,7 +359,7 @@ struct TeamDetailView: View {
         .navigationTitle(displayed.name)
         .nativeResourceActions(.team, account: account, path: ["id": team.id, "team_id": team.id], onSaved: onChanged)
         .onChange(of: detailIdentity) { resetForSelectedTeam() }
-        .toolbar(id: "teamDetail") {
+        .windowToolbar(id: "teamDetail") {
             ToolbarItem(id: "delete") {
                 Button(role: .destructive) {
                     deletePresented = true

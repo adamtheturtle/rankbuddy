@@ -85,8 +85,15 @@ struct ContentView: View {
                     }
                     detailView(for: selection)
                 }
+                // Keep customization on the content, not on a navigation container.
+                .toolbar(id: "list") {
+                    ToolbarItem(id: "commandPalette") {
+                        Button("Search RankBuddy", systemImage: "magnifyingglass") { palette.isPresented = true }
+                    }
+                    .defaultCustomization(.hidden)
+                }
             }
-            .environment(\.listNavigationIsProvided, true)
+            .environment(\.mainWindowOwnsNavigation, true)
             // Warm every section's first page in the background so the first visit to a tab is
             // instant rather than a spinner (#102). Skip the visible section because its list is
             // already loading it. Single-account only — merged lists don't cache.

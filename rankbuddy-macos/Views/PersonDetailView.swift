@@ -155,7 +155,7 @@ struct PersonDetailView: View {
             await resolveTeamNames()
         }
         .onChange(of: detailIdentity) { resetForSelectedUser() }
-        .toolbar(id: "personDetail") {
+        .windowToolbar(id: "personDetail") {
             ToolbarItem(id: "lock") {
                 if account != nil {
                     Button(role: .destructive) {

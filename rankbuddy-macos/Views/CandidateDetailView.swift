@@ -139,7 +139,7 @@ struct CandidateDetailView: View {
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
         .onDisappear { commandContext.clearDetailActions(owner: commandOwner) }
         // Print and Markdown export are off the bar by default but one Customize Toolbar away.
-        .toolbar(id: "candidateDetail") {
+        .windowToolbar(id: "candidateDetail") {
             ToolbarItem(id: "reportPDF") {
                 if testID != nil, account != nil {
                     Button {
