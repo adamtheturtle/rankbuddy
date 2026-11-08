@@ -1,7 +1,7 @@
 # RankBuddy for macOS
 
-A native macOS app for browsing your [HackerRank for Work](https://www.hackerrank.com/work/) data — tests, candidates, questions, and interviews — built on the shared `buddy-kit` foundation.
-Pre-release; the read-only MVP is the current focus.
+A native macOS app for working with [HackerRank for Work](https://www.hackerrank.com/work/), built on the shared `buddy-kit` foundation.
+Browse and edit interview resources through native screens, or use the API Explorer and embedded MCP server for the complete documented API.
 
 ## Requirements
 
@@ -11,7 +11,11 @@ Pre-release; the read-only MVP is the current focus.
 
 ## Features
 
-- Read-only **Tests**, **Candidates** (per test), **Questions**, and **Interviews** lists with detail panes.
+- **Tests**, **Candidates** (per test), **Questions**, **Interviews**, **People** and **Teams**, with detail panes and editing flows.
+- **Templates** for browsing interview question sets and invitation emails, with ownership filters and full details.
+- An **API Explorer** covering all 76 documented v3, ATS and SCIM operations, with request schemas and complete responses.
+- An embedded **MCP server**, with read tools by default and explicit write access in Settings.
+- Cursor-based **Account Activity**, with object and date filters.
 - Per-list **search**, **sorting** (remembered across launches), pull-to-refresh, and loading / empty / error states.
 - Right-click **context menus** to copy a row's primary text or open/copy its web link.
 - A ⌘K **command palette** with fuzzy ranking and full keyboard navigation.
@@ -45,7 +49,7 @@ The override applies only to demo requests; configured live accounts continue us
 ## Development
 
 The project uses Xcode's JSON configuration file, `rankbuddy-macos.xcodeproj/project.xcproj`.
-Open it with Xcode 27 or later; changing the project file format requires Xcode 27.2 or later.
+Use Xcode 27.2 or later to work on the project.
 
 - **Preflight:** run `./scripts/preflight.sh` before pushing.
   It resolves the committed package graph, lints, checks formatting, builds the macOS app, runs the parallel Fast test plan, and checks staged and unstaged patches for whitespace errors.
@@ -68,3 +72,20 @@ Open it with Xcode 27 or later; changing the project file format requires Xcode 
   Keep these thresholds in the project-level Release configuration so they cover every Swift target and the scheduled CI Release build.
 
 The HackerRank API contract RankBuddy relies on is documented in [`docs/hackerrank-api.md`](docs/hackerrank-api.md); dependency notes are in [`docs/dependencies.md`](docs/dependencies.md), and the tagged Developer ID release process is in [`docs/releasing.md`](docs/releasing.md).
+
+## Complete API access
+
+Open **API Explorer** from the main window toolbar, select an account and operation, then fill its path parameters, query fields and JSON body.
+**Request format** shows the operation's complete schema.
+The response includes its HTTP status and headers, so empty responses and pending interview artifacts remain distinguishable.
+SCIM operations use a separate provisioning token, saved in the selected account's Keychain item.
+ATS invite workflows are available in the Explorer as well as MCP.
+
+The embedded MCP tools come from [HackerRankMCP](https://github.com/adamtheturtle/HackerRankMCP).
+Its `api_` catalogue exposes the same operations and request schemas.
+Write tools require **Allow the MCP server to make changes** in Settings.
+In **All Accounts** scope, supply an explicit account label or UUID for tool calls.
+SCIM tools use the account's saved provisioning credential.
+The demo account supports the complete catalogue without live credentials.
+
+The desktop and shared tools use the released HackerRankKit 0.11.1 and HackerRankMCP 0.4.1 packages.

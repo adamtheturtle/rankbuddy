@@ -83,6 +83,7 @@ extension QuestionDetailView {
                     systemImage: "checkmark.seal",
                     description: Text("HackerRank did not return answer details for this question.")
                 )
+                .frame(maxWidth: .infinity)
             }
 
         case .coding:

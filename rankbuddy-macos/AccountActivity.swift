@@ -22,6 +22,8 @@ struct AccountActivityView: View {
     @State private var loadMoreError: String?
     @State private var reloadGeneration = 0
     @State private var loadedCursors: Set<String> = []
+    @State private var sourceType = ""
+    @State private var dateRange = ""
 
     private enum Phase: Equatable {
         case loading
@@ -39,6 +41,10 @@ struct AccountActivityView: View {
         if let account = activityAccount {
             VStack(spacing: 0) {
                 accountPicker(selectedAccount: account)
+                AccountActivityFilters(sourceType: $sourceType, dateRange: $dateRange,
+                                       isLoading: phase == .loading || isLoadingMore) {
+                    Task { await reload(account: account) }
+                }
                 Divider()
                 stateView(account: account)
             }
@@ -163,7 +169,10 @@ struct AccountActivityView: View {
         loadMoreError = nil
         loadedCursors = []
         do {
-            let page = try await HackerRankClient(account: account).auditLogPage()
+            let page = try await HackerRankClient(account: account).auditLogCursorPage(filters: AuditLogFilters(
+                sourceType: sourceType.isEmpty ? nil : sourceType,
+                createdAt: DateRangeFilter.createdAtServerValue(dateRange), sort: "created_at"
+            ))
             guard Self.isCurrentRequest(
                 accountID: account.id,
                 currentAccountID: activityAccount?.id,
@@ -171,8 +180,8 @@ struct AccountActivityView: View {
                 currentGeneration: reloadGeneration
             ) else { return }
 
-            entries = Self.mergedEntries([], with: page.items)
-            nextCursor = page.next
+            entries = Self.mergedEntries([], with: page.data)
+            nextCursor = page.nextCursor
             phase = .loaded
         } catch {
             guard Self.isCurrentRequest(
@@ -198,7 +207,7 @@ struct AccountActivityView: View {
         loadMoreError = nil
         defer { isLoadingMore = false }
         do {
-            let page = try await HackerRankClient(account: account).auditLogPage(after: cursor)
+            let page = try await HackerRankClient(account: account).auditLogCursorPage(cursor: cursor)
             guard Self.isCurrentPagination(
                 request,
                 currentAccountID: activityAccount?.id,
@@ -206,13 +215,13 @@ struct AccountActivityView: View {
                 currentCursor: nextCursor
             ) else { return }
 
-            if Self.hasCursorCycle(next: page.next, requested: cursor, previouslyLoaded: loadedCursors) {
+            if Self.hasCursorCycle(next: page.nextCursor, requested: cursor, previouslyLoaded: loadedCursors) {
                 loadMoreError = "The server repeated an earlier page. Refresh to check again."
                 return
             }
             loadedCursors.insert(cursor)
-            entries = Self.mergedEntries(entries, with: page.items)
-            nextCursor = page.next
+            entries = Self.mergedEntries(entries, with: page.data)
+            nextCursor = page.nextCursor
         } catch {
             guard Self.isCurrentPagination(
                 request,
@@ -358,4 +367,29 @@ struct AuditLogRow: View {
     }
     .padding()
     .frame(width: 480)
+}
+
+private struct AccountActivityFilters: View {
+    @Binding var sourceType: String
+    @Binding var dateRange: String
+    let isLoading: Bool
+    let apply: () -> Void
+
+    var body: some View {
+        HStack {
+            Picker("Changed object", selection: $sourceType) {
+                Text("All objects").tag("")
+                ForEach(["test", "question", "interview", "user", "team", "test_candidate"], id: \.self) {
+                    Text($0.replacingOccurrences(of: "_", with: " ").capitalized).tag($0)
+                }
+            }
+            Picker("Date", selection: $dateRange) {
+                Text("All dates").tag("")
+                ForEach(NamedDateRange.options, id: \.self) { Text($0).tag($0) }
+            }
+            Button("Apply", action: apply).disabled(isLoading)
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 8)
+    }
 }

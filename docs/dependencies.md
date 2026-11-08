@@ -15,10 +15,8 @@ It is the human-readable counterpart to [`.github/dependabot.yml`](../.github/de
 - **Automated bumps, reviewed adoption.**
   Run `./scripts/bump-swift-package.sh <package> <version>` to update the Xcode package requirement, resolve the graph, and verify the committed `Package.resolved` pin.
   Then review transitive changes and run preflight.
-- **Why this is not native Dependabot.**
-  The app has Xcode `exactVersion` and `upToNextMajorVersion` requirements, which a mechanical update can handle, but resolution also requires the private [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) repository.
-  Dependabot cannot reuse the Actions deploy key.
-  The repository-local bump script keeps that credential boundary and makes the exact project-file edit explicit.
+- **Public dependency access.** [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) and the other Swift packages resolve over public HTTPS.
+  Package resolution requires no token or deploy key.
 - **One downstream tracker per release.**
   Keep individual bugs upstream.
   For an owned package release, dispatch the **Track package release** workflow (or run `scripts/create-package-adoption-issue.sh`) to create one idempotent RankBuddy adoption issue containing the upstream issue checklist.
@@ -47,13 +45,13 @@ New RankBuddy features must be implemented in `LoadableList` or another app-owne
 
 The validation tools are version-pinned in `ci.yml` and must be bumped in lockstep with the local toolchain and the config files they read:
 
-| Tool        | Pinned in                                     | Keep aligned with               |
-| ----------- | --------------------------------------------- | ------------------------------- |
-| SwiftLint   | `ci.yml` (`0.65.1`)                           | `.swiftlint.yml`                |
-| SwiftFormat | `ci.yml` (`0.62.1`)                           | `.swiftformat`                  |
-| actionlint  | `ci.yml` (`1.7.12`)                           | the workflow syntax in use      |
-| Periphery   | `ci.yml` (`3.8.0`)                            | `.periphery.yml`                |
-| Swift/Xcode | `swift:6.2` container + `Xcode_26.5` on macOS | the app target's Swift version  |
+| Tool        | Pinned in                                                                    | Keep aligned with               |
+| ----------- | ---------------------------------------------------------------------------- | ------------------------------- |
+| SwiftLint   | `ci.yml` (`0.65.1`)                                                          | `.swiftlint.yml`                |
+| SwiftFormat | `ci.yml` (`0.62.1`)                                                          | `.swiftformat`                  |
+| actionlint  | `ci.yml` (`1.7.12`)                                                          | the workflow syntax in use      |
+| Periphery   | `ci.yml` (`3.8.0`)                                                           | `.periphery.yml`                |
+| Swift/Xcode | `swift:6.4-noble` for lint, `swift:6.4` for package tests, Xcode 27 on macOS | the app target's Swift version  |
 
 When upgrading a tool locally, bump the version in `ci.yml` in the same change so local and CI parsing/build behavior stay identical.
 
@@ -87,3 +85,14 @@ permissions:
 
 No validation job writes to the repository, comments, or publishes artifacts to external services, so none needs more than read access.
 Workflows added later (release, website deploy) must declare the **minimum** additional permissions they require at the job level rather than widening the default for the whole file.
+
+## HackerRank MCP tools
+
+`HackerRankMCP` owns shared tool schemas, validation and API dispatch.
+RankBuddy uses its public context and client-factory hooks for stored accounts and the demo backend.
+The app keeps its MCP activity log, account resource and triage prompt.
+The desktop UI also depends directly on `HackerRankKit`.
+
+Adoption order: HackerRankKit release, HackerRankMCP release, then RankBuddy.
+The app uses exact release requirements for HackerRankKit 0.11.1 and HackerRankMCP 0.4.1.
+`bump-swift-package.sh` converts revision pins to exact release requirements and only edits the requested package.

@@ -41,10 +41,15 @@ ruby - "$project_file" "$package_name" "$version" "$dry_run" <<'RUBY'
 path, package, version, dry_run = ARGV
 contents = File.read(path)
 escaped = Regexp.escape(package)
-pattern = /("repository"\s*:\s*"https:\/\/github\.com\/[^"\/]+\/#{escaped}(?:\.git)?\/?",\s*"version"\s*:\s*\{\s*"(?:version|up-to-next-major-version)"\s*:\s*")[^"]+"/i
+# Match one package's native JSON requirement, including a revision pin.
+pattern = /("repository"\s*:\s*"https:\/\/github\.com\/[^"\/]+\/#{escaped}(?:\.git)?\/?",\s*"version"\s*:\s*\{\s*")(version|up-to-next-major-version|revision)("\s*:\s*")[^"]+"/i
 matches = contents.scan(pattern).length
 abort "error: expected one Xcode package requirement for #{package}, found #{matches}" unless matches == 1
-updated = contents.sub(pattern) { "#{$1}#{version}\"" }
+updated = contents.sub(pattern) do
+  prefix, kind, separator = Regexp.last_match.captures
+  kind = "version" if kind == "revision"
+  "#{prefix}#{kind}#{separator}#{version}\""
+end
 if dry_run == "1"
   puts "Would update #{package} to #{version}."
   exit
