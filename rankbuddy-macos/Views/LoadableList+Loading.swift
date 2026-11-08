@@ -11,6 +11,8 @@ extension LoadableList {
     // them in the background, so returning to a section does not flash a full-screen spinner.
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func reload() async {
+        guard !Task.isCancelled else { return }
+
         let generation = UUID()
         loadGeneration = generation
         didRestore = false
@@ -49,7 +51,7 @@ extension LoadableList {
         } else {
             nil
         }
-        guard generation == loadGeneration else { return }
+        guard generation == loadGeneration, !Task.isCancelled else { return }
 
         if let cached,
            !cached.items.isEmpty {
@@ -91,8 +93,8 @@ extension LoadableList {
         }
 
         do {
-            let page = try await loadCurrentPage(nil)
-            guard generation == loadGeneration else { return }
+            guard let page = try await loadCurrentPage(nil) else { return }
+            guard generation == loadGeneration, !Task.isCancelled else { return }
 
             items = page.items
             if !isServerSearching {
@@ -159,7 +161,7 @@ extension LoadableList {
         isLoadingMore = true
         defer { isLoadingMore = false }
         do {
-            let page = try await loadCurrentPage(cursor)
+            guard let page = try await loadCurrentPage(cursor) else { return }
             guard generation == loadGeneration else { return }
 
             if page.next == cursor || page.next.map(loadedCursors.contains) == true {
