@@ -76,7 +76,7 @@ struct TemplateDetailView: View {
                     Button("Refresh Template", systemImage: "arrow.clockwise") {
                         Task { await load() }
                     }
-                    .labelStyle(.titleAndIcon)
+                    .labelStyle(.iconOnly)
                     .help("Reload all details for the selected template")
                     .accessibilityIdentifier("refresh-template")
                     .disabled(isLoading || record.apiID == nil)

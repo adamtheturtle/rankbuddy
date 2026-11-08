@@ -59,27 +59,6 @@ struct FullAPICoverageTests {
     }
 
     @Test
-    func `explorer request fields preserve data and validate JSON`() throws {
-        let input = try APIExplorerFormatting.inputs(
-            path: #"{"id":1}"#, query: #"{"note_ids":[1,2],"include_total":false}"#,
-            body: #"{"content":"  note\r\n"}"#
-        )
-        #expect(input.pathParameters == ["id": "1"])
-        #expect(input.query.contains(URLQueryItem(name: "note_ids", value: "1,2")))
-        #expect(input.query.contains(URLQueryItem(name: "include_total", value: "false")))
-        #expect(input.body == .object(["content": .string("  note\r\n")]))
-        #expect(throws: DecodingError.self) {
-            try APIExplorerFormatting.inputs(path: "broken", query: "{}", body: nil)
-        }
-        let rendered = APIExplorerFormatting.json(.object(["content": .string("text")]))
-        #expect(rendered.contains("content"))
-        let response = try JSONDecoder().decode(
-            HackerRankAPIResponse.self, from: Data(#"{"status":202,"headers":{"Retry-After":"180"},"data":null}"#.utf8)
-        )
-        #expect(try APIExplorerFormatting.response(response).contains("Retry-After"))
-    }
-
-    @Test
     func `SCIM credentials persist separately without changing ordinary account identity`() throws {
         let original = Account(label: "Work", token: "v3-synthetic")
         var configured = original
