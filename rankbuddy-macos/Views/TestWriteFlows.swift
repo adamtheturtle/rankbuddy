@@ -35,14 +35,6 @@ struct TestEditorSheet: View {
     }
 }
 
-nonisolated enum TestEditRebaseError: LocalizedError {
-    case testNotFound
-
-    var errorDescription: String? {
-        "Couldn’t refresh this assessment before saving. Reload it and try again."
-    }
-}
-
 nonisolated enum TestScheduleValidation {
     static func error(startTime: String, endTime: String) -> String? {
         let start = normalizedDate(startTime)

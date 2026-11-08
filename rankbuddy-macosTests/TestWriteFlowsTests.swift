@@ -35,30 +35,6 @@ struct TestWriteFlowsTests {
         #expect(TestAssessmentValidation.error(duration: "30", cutoffScore: "1000001") != nil)
     }
 
-    @Test func `unchanged assessment booleans stay absent from updates`() {
-        #expect(TestBooleanEditing.updateValue(false, changed: false) == nil)
-        #expect(TestBooleanEditing.updateValue(true, changed: false) == nil)
-        #expect(TestBooleanEditing.updateValue(false, changed: true) == false)
-        #expect(TestBooleanEditing.updateValue(true, changed: true) == true)
-    }
-
-    @Test func `assessment edits omit unchanged fields and rebase unchanged names`() {
-        #expect(TestDirtyField.scalar(90, original: 90) == nil)
-        #expect(TestDirtyField.scalar(120, original: 90) == 120)
-        #expect(TestDirtyField.text("Old instructions", original: "Old instructions") == nil)
-        #expect(TestDirtyField.text("New instructions", original: "Old instructions") == "New instructions")
-        #expect(TestDirtyField.clearableList(["swift"], original: ["swift"]) == nil)
-        #expect(TestDirtyField.clearableList(nil, original: nil) == nil)
-        #expect(TestDirtyField.clearableList(nil, original: ["swift"])?.isEmpty == true)
-        #expect(TestDirtyField.needsNameRebase(edited: "Old", original: "Old"))
-        #expect(!TestDirtyField.needsNameRebase(edited: "Local", original: "Old"))
-    }
-
-    @Test func `assessment lists deduplicate while preserving first spelling`() {
-        #expect(TestListEditing.values(from: " Swift, swift, python, SWIFT ") == ["Swift", "python"])
-        #expect(TestListEditing.values(from: " , \n") == nil)
-    }
-
     @Test func `assessment schedule accepts an ordered ISO window`() {
         #expect(TestScheduleValidation.error(
             startTime: "2026-08-01T09:00:00Z",

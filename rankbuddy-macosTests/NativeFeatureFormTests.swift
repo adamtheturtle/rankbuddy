@@ -223,8 +223,35 @@ struct NativeFeatureFormTests {
         ) == nil)
     }
 
+    @Test(arguments: [
+        ["api_create_test", "duration", "0"],
+        ["api_invite_candidate", "invite_valid_to", "2098-01-01T10:00:00Z"],
+        ["api_create_interview", "from", "2000-01-01T09:00:00Z"],
+        ["api_create_team", "name", String(repeating: "x", count: 256)],
+        ["api_create_user", "firstname", " "],
+        ["api_create_question", "recommended_duration", "-1"]
+    ])
+    func `invalid native drafts never reach the service`(_ example: [String]) async throws {
+        let client = try client()
+        let draft = try NativeFeatureFormModel(operationID: example[0])
+        draft.parameters.forEach(fill)
+        let body = try #require(draft.body)
+        fill(body)
+        let field = try #require(body.children.first { $0.name == example[1] })
+        field.text = example[2]
+        #expect(await !(draft.submit(client: client, scimToken: nil)))
+        #expect(draft.error != nil)
+        #expect(NativeRequestCapture.requests.withLock { $0.isEmpty })
+    }
+
     private func fill(_ field: NativeFormField) {
         field.included = true
+        if ["from", "starttime", "invite_valid_from"].contains(field.name) {
+            field.text = "2099-01-01T09:00:00Z"; return
+        }
+        if ["to", "endtime", "invite_valid_to"].contains(field.name) {
+            field.text = "2099-01-01T10:00:00Z"; return
+        }
         if let choice = field.choices.first {
             field.text = choice.text; return
         }

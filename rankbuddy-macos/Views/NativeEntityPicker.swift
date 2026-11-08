@@ -41,6 +41,8 @@ struct NativeEntityPicker: View {
     @State private var loading = false
     @State private var query = ""
     @State private var error: String?
+    @State private var seenCursors = Set<String>()
+    @State private var seenIDs = Set<String>()
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -129,9 +131,9 @@ struct NativeEntityPicker: View {
                 }, result.next)
             }
             try Task.checkCancellation()
-            let existing = Set(options.map(\.id))
-            options += page.options.filter { !existing.contains($0.id) }
-            cursor = page.next
+            let next = try InviteTemplatePaging.next(page.next, itemCount: page.options.count, seen: &seenCursors)
+            InviteTemplatePaging.appendUnique(page.options, to: &options, seenIDs: &seenIDs, id: { $0.id })
+            cursor = next
             loaded = true
         } catch {
             if !Task.isCancelled {

@@ -112,6 +112,11 @@ final class NativeFeatureFormModel {
             }
         }
         var payload = try body?.value()
+        if operation.id == "api_invite_candidate", var values = payload?.object,
+           let name = values["full_name"]?.text {
+            values["full_name"] = CandidateInviteValidation.normalizedFullName(name).map(HackerRankJSONValue.string)
+            payload = .object(values)
+        }
         if operation.method == "PUT", !operation.scim, case let .object(values) = payload {
             payload = .object(values.filter { original[$0.key] != $0.value })
         }
@@ -127,6 +132,9 @@ final class NativeFeatureFormModel {
     }
 
     private func validate(query: [URLQueryItem], body: HackerRankJSONValue?) throws {
+        if let issue = NativeFeatureValidation.issue(operationID: operation.id, fields: body?.object ?? [:]) {
+            throw NativeFormError.invalid(issue)
+        }
         let values = query.reduce(into: [String: String]()) { $0[$1.name] = $1.value }
         if let limit = values["limit"].flatMap(Int.init), limit < 1 {
             throw NativeFormError.invalid("Page size must be positive.")

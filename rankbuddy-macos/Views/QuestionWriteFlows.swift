@@ -6,9 +6,6 @@
 import HackerRankKit
 import SwiftUI
 
-/// The question types HackerRank accepts on create, shared by the create sheet's picker.
-let questionTypes = ["coding", "mcq", "subjective"]
-
 /// A sheet that creates a question (#147). Name, type, problem statement and recommended
 /// duration are required by the API.
 struct NewQuestionSheet: View {
