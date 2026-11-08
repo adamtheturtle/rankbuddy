@@ -230,7 +230,7 @@ struct TestDetailView: View {
             title: displayedTest.name,
             account: account
         )
-        .toolbar(id: "testDetail") {
+        .windowToolbar(id: "testDetail") {
             DetailLinkToolbarContent(
                 url: RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: displayedTest.id),
                 noun: "test"

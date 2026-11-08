@@ -3,9 +3,6 @@
 //  rankbuddy-macos
 //
 
-import BuddyAppKit
-import BuddyDesignSystem
-import HackerRankKit
 import SwiftUI
 
 /// Layout preferences shared across every list (#53).
@@ -37,10 +34,12 @@ extension LoadableList {
     var customToolbar: some CustomizableToolbarContent {
         // The section's write action (e.g. "Invite Candidate", "Create User"); empty for the
         // read-only lists. Kept fixed at the leading edge — it's the primary action.
-        ToolbarItem(id: "accessory", placement: .primaryAction) {
-            accessoryToolbar()
+        if let accessoryToolbar {
+            ToolbarItem(id: "accessory", placement: .primaryAction) {
+                accessoryToolbar()
+            }
+            .customizationBehavior(.disabled)
         }
-        .customizationBehavior(.disabled)
 
         if !sortOptions.isEmpty {
             ToolbarItem(id: "sort", placement: .automatic) {

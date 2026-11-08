@@ -9,10 +9,11 @@ import SwiftUI
 struct NativeFormControl: View {
     @Bindable var field: NativeFormField
     @Environment(\.nativeFeatureAccount) private var account
+    @Environment(\.nativeFormOmissionLabel) private var omissionLabel
     var namedEntry = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             if namedEntry {
                 TextField("Field name", text: $field.name)
             }
@@ -21,20 +22,23 @@ struct NativeFormControl: View {
                     get: { field.included ? (field.boolean ? "yes" : "no") : "default" },
                     set: { field.included = $0 != "default"; field.boolean = $0 == "yes" }
                 )) {
-                    Text("Default / unchanged").tag("default")
+                    Text(omissionLabel).tag("default")
                     Text("Yes").tag("yes")
                     Text("No").tag("no")
                 }
             } else {
                 if !field.required {
-                    Toggle("Set \(field.title)", isOn: $field.included)
+                    Toggle(field.title, isOn: $field.included)
+                        .help("Include a value for this setting")
                 }
                 if field.included || field.required {
-                    valueControl
-                    if let description = field.schema.object["description"]?.text, !description.isEmpty {
-                        Text(description.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
-                            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 8) {
+                        valueControl
+                        if let description = field.schema.object["description"]?.text {
+                            NativeFormHelp(html: description)
+                        }
                     }
+                    .padding(.leading, field.required ? 0 : 12)
                 }
             }
         }
@@ -50,8 +54,10 @@ struct NativeFormControl: View {
         } else if field.schema.object["type"]?.text == "datetime" {
             NativeDateControl(field: field)
         } else if !field.choices.isEmpty {
-            Picker(field.title, selection: $field.text) {
-                ForEach(field.choices, id: \.self) { Text($0.text).tag($0.text) }
+            NativeFormValue(title: field.required ? field.title : nil) {
+                Picker(field.title, selection: $field.text) {
+                    ForEach(field.choices, id: \.self) { Text(NativeFormSchema.optionTitle($0.text)).tag($0.text) }
+                }.labelsHidden()
             }
         } else {
             if field.schema.object.isEmpty || !(field.schema.object["type"]?.array.isEmpty ?? true) {
@@ -62,7 +68,7 @@ struct NativeFormControl: View {
             switch field.kind {
             case "boolean": Toggle(field.title, isOn: $field.boolean)
             case "array", "object": collection
-            case "null": LabeledContent(field.title, value: "Empty value")
+            case "null": Text("Empty value").foregroundStyle(.secondary)
             default: scalar
             }
         }
@@ -72,45 +78,48 @@ struct NativeFormControl: View {
         if ["password", "secret", "token", "authorization"].contains(where: {
             field.name.localizedCaseInsensitiveContains($0)
         }) {
-            SecureField(field.title, text: $field.text)
-        } else if [
-            "content",
-            "instructions",
-            "problem_statement",
-            "internal_notes",
-            "custom_system_prompt",
-            "message",
-            "input",
-            "output"
-        ]
-        .contains(field.name) {
-            Text(field.title).font(.headline)
-            TextEditor(text: $field.text).frame(minHeight: 100)
+            NativeFormValue(title: field.required ? field.title : nil) {
+                SecureField(field.title, text: $field.text).labelsHidden().textFieldStyle(.roundedBorder)
+            }
+        } else if ["content", "instructions", "problem_statement", "internal_notes", "custom_system_prompt",
+                   "message", "input", "output"].contains(field.name) {
+            if field.required {
+                Text(field.title).font(.headline)
+            }
+            TextEditor(text: $field.text)
+                .scrollContentBackground(.hidden)
+                .padding(6).frame(minHeight: 112)
+                .background(.background, in: RoundedRectangle(cornerRadius: 6))
+                .overlay { RoundedRectangle(cornerRadius: 6).stroke(.separator) }
+                .accessibilityLabel(field.title)
         } else {
-            TextField(field.title, text: $field.text)
+            NativeFormValue(title: field.required ? field.title : nil) {
+                TextField(field.title, text: $field.text).labelsHidden().textFieldStyle(.roundedBorder)
+            }
         }
     }
 
     private var collection: some View {
-        GroupBox(field.title) {
+        GroupBox {
             VStack(alignment: .leading, spacing: 12) {
-                ForEach(field.children) { child in
-                    AnyView(Self(field: child))
-                }
+                ForEach(field.children) { child in AnyView(Self(field: child)) }
                 ForEach(field.entries) { entry in
-                    HStack(alignment: .top) {
+                    HStack(alignment: .top, spacing: 12) {
                         AnyView(Self(field: entry, namedEntry: field.kind == "object"))
                         Button("Remove", systemImage: "minus.circle") {
                             field.entries.removeAll { $0.id == entry.id }
-                        }
-                        .labelStyle(.iconOnly)
+                        }.labelStyle(.iconOnly).help("Remove this item")
                     }
                 }
                 if field.kind == "array" || field.allowsExtraProperties {
                     Button(field.kind == "array" ? "Add Item" : "Add Field", systemImage: "plus") { field.addEntry() }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading).padding(6)
+            .frame(maxWidth: .infinity, alignment: .leading).padding(8)
+        } label: {
+            if field.required {
+                Text(field.title)
+            }
         }
     }
 }

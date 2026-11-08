@@ -223,7 +223,7 @@ struct InterviewDetailView: View {
             account: account,
             webURL: URL.remoteWebURL(from: interview.url)
         )
-        .toolbar(id: "interviewDetail") {
+        .windowToolbar(id: "interviewDetail") {
             DetailLinkToolbarContent(url: URL.remoteWebURL(from: interview.url), noun: "interview")
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Interview: \(displayTitle)") {

@@ -146,7 +146,7 @@ struct QuestionDetailView: View {
         )
         // Share and Open stay in the bar; Print and Markdown export are off the bar by default but
         // one Customize Toolbar away.
-        .toolbar(id: "questionDetail") {
+        .windowToolbar(id: "questionDetail") {
             DetailLinkToolbarContent(
                 url: owningAccount.flatMap {
                     RankBuddyUserActivity.webURL(base: $0.baseURL, collection: .questions, itemID: question.id)

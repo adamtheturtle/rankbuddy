@@ -94,9 +94,9 @@ struct TemplateDetailView: View {
         .confirmationDialog("Delete “\(displayed.title)”?", isPresented: $deletePresented, titleVisibility: .visible) {
             Button("Delete Template", role: .destructive) { Task { await delete() } }
         } message: { Text("The template will no longer be available for new interviews.") }
-        .toolbar(id: "templateDetail") {
-            ToolbarItem(id: "templateActions", placement: .primaryAction) {
-                if displayed.kind == .interview, !deleted {
+        .windowToolbar(id: "templateDetail") {
+            if displayed.kind == .interview, !deleted {
+                ToolbarItem(id: "templateActions", placement: .primaryAction) {
                     Menu("Template Actions", systemImage: "ellipsis.circle") {
                         Button("Template Settings…", systemImage: "slider.horizontal.3") { settingsPresented = true }
                         Button("Sharing…", systemImage: "person.badge.plus") { sharingPresented = true }

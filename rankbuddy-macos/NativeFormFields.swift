@@ -135,6 +135,8 @@ enum NativeFormSchema {
         let names = [
             "from": "Starts",
             "to": "Ends",
+            "starttime": "Start Time",
+            "endtime": "End Time",
             "limit": "Page Size",
             "offset": "Skip Records",
             "diplayName": "Group Name",
@@ -163,6 +165,13 @@ enum NativeFormSchema {
                         "id": "ID", "ids": "IDs", "ide": "IDE", "mcq": "MCQ", "ml": "ML",
                         "pdf": "PDF", "scim": "SCIM", "url": "URL", "urls": "URLs"]
         return words.map { acronyms[$0.lowercased()] ?? $0.capitalized }.joined(separator: " ")
+    }
+
+    static func optionTitle(_ value: String) -> String {
+        let labels = ["ide_and_git": "IDE and Git", "ide": "IDE", "code": "Coding",
+                      "mcq": "Multiple Choice", "basic_auth": "Basic Authentication",
+                      "noauth": "No Authentication"]
+        return labels[value] ?? title(value)
     }
 }
 

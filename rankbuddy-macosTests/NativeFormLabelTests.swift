@@ -24,4 +24,16 @@ struct NativeFormLabelTests {
     func `field labels preserve words and format complete acronyms`(_ example: [String]) {
         #expect(NativeFormSchema.title(example[0]) == example[1])
     }
+
+    @Test(arguments: [
+        ["ide_and_git", "IDE and Git"],
+        ["mcq", "Multiple Choice"],
+        ["basic_auth", "Basic Authentication"],
+        ["bearer_token", "Bearer Token"],
+        ["interviewer", "Interviewer"],
+        ["3", "3"]
+    ])
+    func `enum labels are readable while wire values stay separate`(_ example: [String]) {
+        #expect(NativeFormSchema.optionTitle(example[0]) == example[1])
+    }
 }
