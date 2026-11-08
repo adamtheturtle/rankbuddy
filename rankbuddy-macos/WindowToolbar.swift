@@ -6,6 +6,7 @@
 import SwiftUI
 
 extension EnvironmentValues {
+    /// Explicit scene scope: `isPresented` is also true in the main macOS window.
     @Entry var mainWindowOwnsNavigation = false
 }
 

@@ -156,8 +156,8 @@ struct PersonDetailView: View {
         }
         .onChange(of: detailIdentity) { resetForSelectedUser() }
         .windowToolbar(id: "personDetail") {
-            ToolbarItem(id: "lock") {
-                if account != nil {
+            if account != nil {
+                ToolbarItem(id: "lock") {
                     Button(role: .destructive) {
                         lockPresented = true
                     } label: {
@@ -166,8 +166,8 @@ struct PersonDetailView: View {
                     .disabled(!canLock)
                     .help(canLock ? "Lock this user's account" : "This user is already locked or inactive")
                 }
+                .defaultCustomization(.hidden)
             }
-            .defaultCustomization(.hidden)
         }
         .confirmationDialog(
             "Lock \(displayed.displayName)?",

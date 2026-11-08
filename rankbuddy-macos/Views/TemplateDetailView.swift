@@ -95,8 +95,8 @@ struct TemplateDetailView: View {
             Button("Delete Template", role: .destructive) { Task { await delete() } }
         } message: { Text("The template will no longer be available for new interviews.") }
         .windowToolbar(id: "templateDetail") {
-            ToolbarItem(id: "templateActions", placement: .primaryAction) {
-                if displayed.kind == .interview, !deleted {
+            if displayed.kind == .interview, !deleted {
+                ToolbarItem(id: "templateActions", placement: .primaryAction) {
                     Menu("Template Actions", systemImage: "ellipsis.circle") {
                         Button("Template Settings…", systemImage: "slider.horizontal.3") { settingsPresented = true }
                         Button("Sharing…", systemImage: "person.badge.plus") { sharingPresented = true }

@@ -140,8 +140,8 @@ struct CandidateDetailView: View {
         .onDisappear { commandContext.clearDetailActions(owner: commandOwner) }
         // Print and Markdown export are off the bar by default but one Customize Toolbar away.
         .windowToolbar(id: "candidateDetail") {
-            ToolbarItem(id: "reportPDF") {
-                if testID != nil, account != nil {
+            if testID != nil, account != nil {
+                ToolbarItem(id: "reportPDF") {
                     Button {
                         Task { await openServerPDF() }
                     } label: {
@@ -154,8 +154,8 @@ struct CandidateDetailView: View {
                     .disabled(isFetchingPDF)
                     .help("Fetch the candidate's report PDF from HackerRank and open it")
                 }
+                .defaultCustomization(.hidden)
             }
-            .defaultCustomization(.hidden)
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Candidate: \(candidate.fullName ?? candidate.email)") {
                     CandidateReport(candidate: candidate)
