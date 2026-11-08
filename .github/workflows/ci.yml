@@ -91,7 +91,8 @@ jobs:
     # wouldn't start. The official Swift toolchain image supplies both. 6.4
     # matches the Swift version the app target builds with, so the sourcekit
     # SwiftLint parses with is the same one used locally.
-    # The pinned SwiftLint binary requires libxml2.so.2 from Ubuntu 24.04.
+    # The pinned SwiftLint binary needs libxml2.so.2 from Ubuntu 24.04.
+    # The floating 6.4 tag now uses Ubuntu 26.04 and cannot load that binary.
     container: swift:6.4-noble
     timeout-minutes: 10
     # Inside a container GitHub runs `run:` steps with `sh` (dash), which rejects
@@ -112,9 +113,8 @@ jobs:
             rankbuddy-macos/rankbuddy-macos.entitlements \
             | grep -Fq '<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>'
 
-      # The full Swift image ships git but not the unzip/curl this job uses to
-      # fetch and unpack the pinned release binaries.
-      - name: Install fetch tools
+      # Supply both the fetch tools and SwiftLint's XML runtime explicitly.
+      - name: Install fetch tools and lint runtime
         run: |
           set -euo pipefail
           apt-get update
@@ -188,11 +188,6 @@ jobs:
           # The analyzer ratchets unused imports in files changed by this commit.
           fetch-depth: 2
 
-      - name: Configure buddy-kit access
-        uses: ./.github/actions/configure-buddy-kit
-        with:
-          ssh-private-key: ${{ secrets.BUDDY_KIT_DEPLOY_KEY }}
-
       - name: Select Xcode
         run: |
           sudo xcode-select -s /Applications/Xcode_27.app
@@ -261,11 +256,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Configure buddy-kit access
-        uses: ./.github/actions/configure-buddy-kit
-        with:
-          ssh-private-key: ${{ secrets.BUDDY_KIT_DEPLOY_KEY }}
-
       # Pin an explicit Xcode rather than the image default, which drifts as Apple
       # ships updates. 27.0 is the stable compiler on the xcode-27 image.
       - name: Select Xcode
@@ -316,11 +306,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Configure buddy-kit access
-        uses: ./.github/actions/configure-buddy-kit
-        with:
-          ssh-private-key: ${{ secrets.BUDDY_KIT_DEPLOY_KEY }}
-
       - name: Select Xcode
         run: |
           sudo xcode-select -s /Applications/Xcode_27.app
@@ -364,11 +349,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Configure buddy-kit access
-        uses: ./.github/actions/configure-buddy-kit
-        with:
-          ssh-private-key: ${{ secrets.BUDDY_KIT_DEPLOY_KEY }}
 
       - name: Select Xcode
         run: |
@@ -416,11 +396,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Configure buddy-kit access
-        uses: ./.github/actions/configure-buddy-kit
-        with:
-          ssh-private-key: ${{ secrets.BUDDY_KIT_DEPLOY_KEY }}
 
       - name: Select Xcode
         run: |

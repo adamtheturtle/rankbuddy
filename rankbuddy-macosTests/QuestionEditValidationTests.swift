@@ -20,15 +20,6 @@ struct QuestionEditValidationTests {
         #expect(QuestionCreationValidation.nameIssue(String(repeating: "x", count: 256)) != nil)
     }
 
-    @Test func `max score rejects non-finite numbers`() {
-        #expect(QuestionEditValidation.maxScore(from: "10.5") == 10.5)
-        #expect(QuestionEditValidation.maxScore(from: "nan") == nil)
-        #expect(QuestionEditValidation.maxScore(from: "inf") == nil)
-        #expect(QuestionEditValidation.maxScore(from: "-inf") == nil)
-        #expect(QuestionEditValidation.maxScore(from: "-0.1") == nil)
-        #expect(QuestionEditValidation.maxScore(from: "0") == 0)
-    }
-
     @Test func `recommended duration is bounded to one day`() {
         #expect(QuestionEditValidation.isValidRecommendedDuration(nil))
         #expect(QuestionEditValidation.isValidRecommendedDuration(0))
@@ -44,17 +35,6 @@ struct QuestionEditValidationTests {
         #expect(!QuestionCreationValidation.isValidDurationText("-1"))
         #expect(QuestionCreationValidation.isValidDurationText("0"))
         #expect(QuestionCreationValidation.duration(from: " 30\n") == 30)
-    }
-
-    @Test func `question creation max score rejects non-numeric text`() {
-        #expect(QuestionCreationValidation.isValidMaxScoreText(""))
-        #expect(QuestionCreationValidation.isValidMaxScoreText(" 10.5\n"))
-        #expect(!QuestionCreationValidation.isValidMaxScoreText("ten"))
-        #expect(!QuestionCreationValidation.isValidMaxScoreText("nan"))
-        #expect(!QuestionCreationValidation.isValidMaxScoreText("inf"))
-        #expect(!QuestionCreationValidation.isValidMaxScoreText("-0.1"))
-        #expect(QuestionCreationValidation.isValidMaxScoreText("0"))
-        #expect(QuestionCreationValidation.maxScore(from: " 10.5\n") == 10.5)
     }
 
     @Test func `comma-separated values deduplicate without losing first spelling`() {

@@ -15,7 +15,3 @@ updates:
       github-actions:
         patterns:
           - "*"
-
-  # SwiftPM updates use scripts/bump-swift-package.sh instead of Dependabot.
-  # Resolving this Xcode graph requires the private buddy-kit repository, while
-  # Dependabot cannot use the Actions deploy key. See docs/dependencies.md.

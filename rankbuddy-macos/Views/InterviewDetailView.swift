@@ -19,7 +19,7 @@ struct InterviewDetailView: View {
     @State private var detailError: String?
     @State private var isDetailLoading = false
     @State private var transcript: InterviewTranscript?
-    @State private var transcriptError: String?
+    @State private var transcriptError: InterviewTranscriptFailure?
     @State private var isTranscriptLoading = false
     @State private var deletePresented = false
     @State private var deleteError: String?
@@ -287,8 +287,10 @@ struct InterviewDetailView: View {
         Section("Transcript") {
             if isTranscriptLoading {
                 ProgressView("Loading transcript…")
-            } else if let transcriptError {
-                Label(transcriptError, systemImage: "exclamationmark.triangle")
+            } else if transcriptError == .transcriptionDisabled {
+                TranscriptionDisabledView()
+            } else if case let .requestFailed(message) = transcriptError {
+                Label(message, systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.red)
                 Button("Retry") {
                     Task { await loadTranscript(for: requestIdentity) }
@@ -465,7 +467,7 @@ struct InterviewDetailView: View {
 
     private enum TranscriptLoadResult {
         case loaded(InterviewTranscript)
-        case failed(String)
+        case failed(InterviewTranscriptFailure)
     }
 
     private enum DetailLoadResult {
@@ -491,7 +493,7 @@ struct InterviewDetailView: View {
         do {
             return try await .loaded(client.interviewTranscript(id: interviewID))
         } catch {
-            return .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            return .failed(InterviewTranscriptFailure(error: error))
         }
     }
 
@@ -509,6 +511,19 @@ struct InterviewDetailView: View {
 }
 
 // swiftlint:enable type_body_length
+
+struct TranscriptionDisabledView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("Transcription not enabled", systemImage: "text.bubble")
+                .font(.headline)
+            Text("No transcript is available because interview transcription is turned off in HackerRank.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
 
 /// One message in the interview transcript, styled to distinguish the candidate from the
 /// interviewers (#103).
@@ -572,4 +587,14 @@ struct TranscriptMessageRow: View {
     }
     .formStyle(.grouped)
     .frame(width: 460, height: 320)
+}
+
+#Preview("Transcription not enabled") {
+    Form {
+        Section("Transcript") {
+            TranscriptionDisabledView()
+        }
+    }
+    .formStyle(.grouped)
+    .frame(width: 460, height: 200)
 }

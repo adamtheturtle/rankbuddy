@@ -292,6 +292,8 @@ struct ContentView: View {
             QuestionsScreen()
         case .interviews:
             InterviewsScreen()
+        case .templates:
+            TemplatesScreen()
         case .people:
             PeopleScreen()
         case .teams:
