@@ -181,7 +181,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// extension's toggle reads it.
     @Environment(\.accessibilityReduceMotion) var reduceMotion
 
-    @State var apiExplorerPresented = false
     @State var phase: Phase = .loading
     /// `items`/`nextCursor`/`isLoadingMore`/`pagesLoaded` are internal so the auto-refresh
     /// extension (a separate file, for file_length) can reload in place (#69).
@@ -278,7 +277,6 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
             // A customizable toolbar (#101): only the primary actions show by default; the rest
             // are available via "Customize Toolbar…". Built in `LoadableList+Toolbar`.
             .toolbar(id: "list") { customToolbar }
-            .sheet(isPresented: $apiExplorerPresented) { APIExplorerView().environment(accountStore) }
             // Re-runs when the account-scoped key changes, clearing any stale restored
             // pane before loading the new account's data (#19).
             .task(id: restorationKey) { await reload() }

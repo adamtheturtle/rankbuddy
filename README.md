@@ -1,7 +1,7 @@
 # RankBuddy for macOS
 
 A native macOS app for working with [HackerRank for Work](https://www.hackerrank.com/work/), built on the shared `buddy-kit` foundation.
-Browse and edit interview resources through native screens, or use the API Explorer and embedded MCP server for the complete documented API.
+Browse and edit interview resources through native screens, with an embedded MCP server for the complete documented API.
 
 ## Requirements
 
@@ -13,7 +13,6 @@ Browse and edit interview resources through native screens, or use the API Explo
 
 - **Tests**, **Candidates** (per test), **Questions**, **Interviews**, **People** and **Teams**, with detail panes and editing flows.
 - **Templates** for browsing interview question sets and invitation emails, with ownership filters and full details.
-- An **API Explorer** covering all 76 documented v3, ATS and SCIM operations, with request schemas and complete responses.
 - An embedded **MCP server**, with read tools by default and explicit write access in Settings.
 - Cursor-based **Account Activity**, with object and date filters.
 - Per-list **search**, **sorting** (remembered across launches), pull-to-refresh, and loading / empty / error states.
@@ -74,12 +73,6 @@ Use Xcode 27.2 or later to work on the project.
 The HackerRank API contract RankBuddy relies on is documented in [`docs/hackerrank-api.md`](docs/hackerrank-api.md); dependency notes are in [`docs/dependencies.md`](docs/dependencies.md), and the tagged Developer ID release process is in [`docs/releasing.md`](docs/releasing.md).
 
 ## Complete API access
-
-Open **API Explorer** from the main window toolbar, select an account and operation, then fill its path parameters, query fields and JSON body.
-**Request format** shows the operation's complete schema.
-The response includes its HTTP status and headers, so empty responses and pending interview artifacts remain distinguishable.
-SCIM operations use a separate provisioning token, saved in the selected account's Keychain item.
-ATS invite workflows are available in the Explorer as well as MCP.
 
 The embedded MCP tools come from [HackerRankMCP](https://github.com/adamtheturtle/HackerRankMCP).
 Its `api_` catalogue exposes the same operations and request schemas.

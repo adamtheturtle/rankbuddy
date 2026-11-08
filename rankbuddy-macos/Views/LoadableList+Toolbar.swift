@@ -42,12 +42,6 @@ extension LoadableList {
         }
         .customizationBehavior(.disabled)
 
-        ToolbarItem(id: "apiExplorer", placement: .automatic) {
-            Button("API Explorer", systemImage: "network") { apiExplorerPresented = true }
-                .accessibilityIdentifier("api-explorer")
-        }
-        .customizationBehavior(.disabled)
-
         if !sortOptions.isEmpty {
             ToolbarItem(id: "sort", placement: .automatic) {
                 Menu {

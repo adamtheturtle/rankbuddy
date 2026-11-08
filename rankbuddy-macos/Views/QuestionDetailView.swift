@@ -108,9 +108,7 @@ struct QuestionDetailView: View {
         .formStyle(.grouped)
         .safeAreaInset(edge: .top, spacing: 0) {
             QuestionDetailPaneBar(panes: availablePanes, selection: selectedPane) { pane in
-                withAnimation(.snappy(duration: 0.18)) {
-                    selectedPane = pane
-                }
+                selectedPane = pane
             }
         }
         .navigationTitle(displayed.name)
