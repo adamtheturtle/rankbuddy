@@ -9,10 +9,15 @@ import SwiftUI
 struct TemplateDetailView: View {
     let record: TemplateRecord
     let account: Account
+    var onChanged: () -> Void = {}
     @State private var current: TemplateRecord?
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var editQuestionsPresented = false
+    @State private var settingsPresented = false
+    @State private var sharingPresented = false
+    @State private var deletePresented = false
+    @State private var deleted = false
 
     private var displayed: TemplateRecord {
         current ?? record
@@ -20,47 +25,51 @@ struct TemplateDetailView: View {
 
     var body: some View {
         Form {
-            Section {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(displayed.title).font(.title2).bold()
-                    Text(account.label).foregroundStyle(.secondary)
-                }
-            }
-            if let errorMessage {
+            if deleted {
+                ContentUnavailableView("Template Deleted", systemImage: "trash")
+            } else {
                 Section {
-                    Text(errorMessage).foregroundStyle(.red)
-                    Button("Retry") { Task { await load() } }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(displayed.title).font(.title2).bold()
+                        Text(account.label).foregroundStyle(.secondary)
+                    }
                 }
-            }
-            if displayed.kind == .interview {
-                questions
-            }
-            Section("Properties") {
-                OptionalRow("ID", displayed.apiID)
-                OptionalRow("Owner ID", displayed.owner)
-                OptionalRow("Created", DisplayFormat.date(displayed.createdAt))
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage).foregroundStyle(.red)
+                        Button("Retry") { Task { await load() } }
+                    }
+                }
                 if displayed.kind == .interview {
-                    OptionalRow("Status", displayed.status.map {
-                        $0 == 1 ? "Active" : $0 == 0 ? "Deleted" : String($0)
-                    })
-                    OptionalRow("Role IDs", displayed.roles?.joined(separator: ", "))
-                    OptionalRow("Scorecard ID", displayed.scorecard.map(String.init))
-                    OptionalRow("Edit Access", displayed.editorAccess.map { $0 ? "Yes" : "No" })
-                    OptionalRow("Import Available", displayed.importTemplate.map { $0 ? "Yes" : "No" })
-                } else {
-                    OptionalRow("Updated", DisplayFormat.date(displayed.updatedAt))
-                    OptionalRow("Default Template", displayed.isDefault.map { $0 ? "Yes" : "No" })
+                    questions
                 }
-            }
-            if displayed.kind == .invitation {
-                Section("Subject") {
-                    Text(displayed.subject ?? "No subject")
-                }
-                Section("Email Body") {
-                    if let content = displayed.content, !content.isEmpty {
-                        HTMLText(html: content)
+                Section("Properties") {
+                    OptionalRow("ID", displayed.apiID)
+                    OptionalRow("Owner ID", displayed.owner)
+                    OptionalRow("Created", DisplayFormat.date(displayed.createdAt))
+                    if displayed.kind == .interview {
+                        OptionalRow("Status", displayed.status.map {
+                            $0 == 1 ? "Active" : $0 == 0 ? "Deleted" : String($0)
+                        })
+                        OptionalRow("Role IDs", displayed.roles?.joined(separator: ", "))
+                        OptionalRow("Scorecard ID", displayed.scorecard.map(String.init))
+                        OptionalRow("Edit Access", displayed.editorAccess.map { $0 ? "Yes" : "No" })
+                        OptionalRow("Import Available", displayed.importTemplate.map { $0 ? "Yes" : "No" })
                     } else {
-                        Text("No email body").foregroundStyle(.secondary)
+                        OptionalRow("Updated", DisplayFormat.date(displayed.updatedAt))
+                        OptionalRow("Default Template", displayed.isDefault.map { $0 ? "Yes" : "No" })
+                    }
+                }
+                if displayed.kind == .invitation {
+                    Section("Subject") {
+                        Text(displayed.subject ?? "No subject")
+                    }
+                    Section("Email Body") {
+                        if let content = displayed.content, !content.isEmpty {
+                            HTMLText(html: content)
+                        } else {
+                            Text("No email body").foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -69,9 +78,33 @@ struct TemplateDetailView: View {
         .textSelection(.enabled)
         .task { await load() }
         .sheet(isPresented: $editQuestionsPresented, onDismiss: { Task { await load() } }, content: {
-            TemplateQuestionsEditor(record: displayed, account: account) { current = $0 }
+            TemplateQuestionsEditor(record: displayed, account: account) {
+                current = $0
+                onChanged()
+            }
         })
+        .sheet(isPresented: $settingsPresented) {
+            TemplateEditorSheet(account: account, record: displayed) { changed() }
+        }
+        .sheet(isPresented: $sharingPresented) {
+            if let id = displayed.apiID.flatMap(Int.init) {
+                TemplateSharingSheet(account: account, templateID: id) { changed() }
+            }
+        }
+        .confirmationDialog("Delete “\(displayed.title)”?", isPresented: $deletePresented, titleVisibility: .visible) {
+            Button("Delete Template", role: .destructive) { Task { await delete() } }
+        } message: { Text("The template will no longer be available for new interviews.") }
         .toolbar(id: "templateDetail") {
+            ToolbarItem(id: "templateActions", placement: .primaryAction) {
+                if displayed.kind == .interview, !deleted {
+                    Menu("Template Actions", systemImage: "ellipsis.circle") {
+                        Button("Template Settings…", systemImage: "slider.horizontal.3") { settingsPresented = true }
+                        Button("Sharing…", systemImage: "person.badge.plus") { sharingPresented = true }
+                        Button("Delete Template…", systemImage: "trash", role: .destructive) { deletePresented = true }
+                    }
+                    .disabled(isLoading || displayed.editorAccess != true || displayed.apiID.flatMap(Int.init) == nil)
+                }
+            }
             ToolbarItem(id: "refreshTemplate", placement: .primaryAction) {
                 HStack {
                     if isLoading {
@@ -83,7 +116,7 @@ struct TemplateDetailView: View {
                     .labelStyle(.iconOnly)
                     .help("Reload all details for the selected template")
                     .accessibilityIdentifier("refresh-template")
-                    .disabled(isLoading || record.apiID == nil)
+                    .disabled(isLoading || record.apiID == nil || deleted)
                 }
             }
         }
@@ -133,6 +166,23 @@ struct TemplateDetailView: View {
 
             errorMessage = rankCoverageError(error)
         }
+    }
+
+    private func changed() {
+        onChanged()
+        Task { await load() }
+    }
+
+    private func delete() async {
+        guard let id = displayed.apiID.flatMap(Int.init), !isLoading else { return }
+
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            _ = try await HackerRankClient(account: account).deleteInterviewTemplate(id: id)
+            deleted = true
+            onChanged()
+        } catch { errorMessage = rankCoverageError(error) }
     }
 }
 

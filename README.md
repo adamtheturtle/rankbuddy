@@ -1,7 +1,7 @@
 # RankBuddy for macOS
 
 A native macOS app for working with [HackerRank for Work](https://www.hackerrank.com/work/), built on the shared `buddy-kit` foundation.
-Browse and edit interview resources through native screens, with an embedded MCP server for the complete documented API.
+Work with the documented HackerRank API through native screens, with an embedded MCP server for automation.
 
 ## Requirements
 
@@ -12,7 +12,10 @@ Browse and edit interview resources through native screens, with an embedded MCP
 ## Features
 
 - **Tests**, **Candidates** (per test), **Questions**, **Interviews**, **People** and **Teams**, with detail panes and editing flows.
-- **Templates** for browsing interview question sets and invitation emails, with ownership filters and full details.
+- **Templates** with creation, settings, question selection, deletion, and sharing with people, teams, or the organisation.
+- **Audit Logs** with offset and cursor pagination, **ATS Invitations**, and **Provisioning** for SCIM users and groups.
+- Native editors and filters for the documented request options, including nested settings, callbacks, permissions, and accommodations.
+- An account-wide **Find Candidates** destination, alongside each test’s candidate list.
 - An embedded **MCP server**, with read tools by default and explicit write access in Settings.
 - Cursor-based **Account Activity**, with object and date filters.
 - Per-list **search**, **sorting** (remembered across launches), pull-to-refresh, and loading / empty / error states.
@@ -72,7 +75,14 @@ Use Xcode 27.2 or later to work on the project.
 
 The HackerRank API contract RankBuddy relies on is documented in [`docs/hackerrank-api.md`](docs/hackerrank-api.md); dependency notes are in [`docs/dependencies.md`](docs/dependencies.md), and the tagged Developer ID release process is in [`docs/releasing.md`](docs/releasing.md).
 
-## Complete API access
+## Native API coverage
+
+All 76 documented operations have native entry points.
+The [coverage inventory](docs/native-api-coverage.json) records each screen, source entry point, parameter, nested body field, and enumerated choice.
+Contract tests exercise requests from the native form state independently of the embedded MCP server.
+See [API coverage](docs/hackerrank-api.md) for resource workflows and contract details.
+
+## MCP access
 
 The embedded MCP tools come from [HackerRankMCP](https://github.com/adamtheturtle/HackerRankMCP).
 Its `api_` catalogue exposes the same operations and request schemas.

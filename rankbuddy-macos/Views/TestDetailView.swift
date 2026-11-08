@@ -204,6 +204,10 @@ struct TestDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayedTest.name)
+        .nativeResourceActions(.test, account: account, path: ["id": test.id, "test_id": test.id]) {
+            onChanged()
+            Task { await loadDetail(for: requestIdentity) }
+        }
         .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)

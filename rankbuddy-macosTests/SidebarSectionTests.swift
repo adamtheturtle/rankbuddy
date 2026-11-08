@@ -13,7 +13,8 @@ import Testing
 @MainActor
 struct SidebarSectionTests {
     @Test func `the sections are in display order`() {
-        #expect(SidebarSection.allCases == [.tests, .questions, .interviews, .people, .teams, .templates])
+        #expect(SidebarSection.allCases == [.tests, .questions, .interviews, .people, .teams, .templates,
+                                            .candidates, .auditLogs, .atsInvitations, .provisioning])
     }
 
     @Test func `raw values are stable persistence keys`() {

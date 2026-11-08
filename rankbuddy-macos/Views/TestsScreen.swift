@@ -19,14 +19,26 @@ struct TestsScreen: View {
     @State private var createPresented = false
     @State private var reloadToken = 0
 
+    @State var requestQuery: [URLQueryItem] = []
+
     var body: some View {
+        screen.nativeListFilters("api_list_all_tests", query: $requestQuery)
+    }
+
+    @ViewBuilder private var screen: some View {
         if store.isMergedView {
             mergedList
         } else if let account = store.currentAccount {
             LoadableList(
                 title: "Tests",
                 emptyMessage: "No tests",
-                loadPage: { try await HackerRankClient(account: account).testsPage(after: $0) },
+                loadPage: { cursor in try await NativeListQuery.page(
+                    Test.self,
+                    client: HackerRankClient(account: account),
+                    operationID: "api_list_all_tests",
+                    query: requestQuery,
+                    cursor: cursor
+                ) },
                 searchableText: { "\($0.name) \($0.tags?.joined(separator: " ") ?? "") \($0.metadataSearchText)" },
                 sortOptions: [
                     SortOption("Name", systemImage: "textformat", kind: .text) {
@@ -69,7 +81,7 @@ struct TestsScreen: View {
                         ($0.languages ?? []).map(DisplayFormat.languageName)
                     }
                 ],
-                restorationKey: "selection.tests.\(account.id)",
+                restorationKey: requestQuery.isEmpty ? "selection.tests.\(account.id)" : nil,
                 filterDate: { DisplayFormat.parseDate($0.startTime) },
                 dateFilterLabel: "Starts",
                 contextMenu: { test in
@@ -135,7 +147,9 @@ struct TestsScreen: View {
                 detail: { TestDetailView(test: $0, account: account, onChanged: { reloadToken += 1 }) }
             )
             .sheet(isPresented: $createPresented) {
-                TestEditorSheet(account: account, mode: .create) { reloadToken += 1 }
+                TestEditorSheet(account: account, mode: .create) {
+                    reloadToken += 1
+                }
             }
             .onAppear { consumeCreationRequest() }
             .onChange(of: commandContext.creationRequest) { consumeCreationRequest() }
@@ -166,7 +180,8 @@ struct TestsScreen: View {
     /// Loads one merged page of tests across every configured account (#17).
     private func loadMergedTests(_ cursor: String?) async throws -> Page<AccountScoped<Test>> {
         try await MergedLoader.page(accounts: store.accounts, cursor: cursor) {
-            try await HackerRankClient(account: $0).testsPage(after: $1)
+            try await NativeListQuery.page(Test.self, client: HackerRankClient(account: $0),
+                                           operationID: "api_list_all_tests", query: requestQuery, cursor: $1)
         }
     }
 

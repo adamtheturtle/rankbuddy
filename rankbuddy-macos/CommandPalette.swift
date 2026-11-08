@@ -314,7 +314,7 @@ struct AppCommands: Commands {
         CommandMenu("Go") {
             ForEach(Array(SidebarSection.allCases.enumerated()), id: \.element) { index, section in
                 Button(section.title) { selection = section }
-                    .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
+                    .keyboardShortcut(KeyEquivalent(Character("\((index + 1) % 10)")), modifiers: .command)
             }
 
             Divider()

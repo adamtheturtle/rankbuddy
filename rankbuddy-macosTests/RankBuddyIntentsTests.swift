@@ -17,7 +17,8 @@ import Testing
 struct RankBuddyIntentsTests {
     /// The intent's automation enum is deliberately separate from `SidebarSection`; these
     /// are the cases it offers.
-    private let options: [RankBuddySectionOption] = [.tests, .questions, .interviews, .people, .teams, .templates]
+    private let options: [RankBuddySectionOption] = [.tests, .questions, .interviews, .people, .teams, .templates,
+                                                     .candidates, .auditLogs, .atsInvitations, .provisioning]
 
     @Test func `every section option resolves to a real sidebar section`() {
         for option in options {

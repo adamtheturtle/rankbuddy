@@ -129,6 +129,11 @@ struct CandidateDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(candidate.fullName ?? candidate.email)
+        .nativeResourceActions(.candidate, account: account,
+                               path: ["candidate_id": candidate.id, "test_id": testID ?? ""]) {
+            onChanged()
+            Task { await loadDetail(for: requestIdentity) }
+        }
         .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)

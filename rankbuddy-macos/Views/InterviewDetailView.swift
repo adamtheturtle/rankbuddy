@@ -208,6 +208,10 @@ struct InterviewDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayTitle)
+        .nativeResourceActions(.interview, account: owningAccount, path: ["interview_id": interview.id]) {
+            onChanged()
+            Task { await loadDetail(for: requestIdentity) }
+        }
         .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)

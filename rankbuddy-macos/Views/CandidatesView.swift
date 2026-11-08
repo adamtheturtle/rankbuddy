@@ -22,19 +22,28 @@ struct CandidatesList: View {
     @State private var candidatePendingReportDelete: TestCandidate?
     @State private var actionError: String?
 
+    @State private var requestQuery: [URLQueryItem] = []
+
     var body: some View {
+        screen.nativeListFilters("api_list_all_candidates", query: $requestQuery)
+    }
+
+    private var screen: some View {
         LoadableList(
             title: "Candidates",
             emptyMessage: "No candidates",
             loadPage: {
-                try await HackerRankClient(account: account)
-                    .candidatesPage(testID: testID, after: $0)
+                try await NativeListQuery.page(TestCandidate.self, client: HackerRankClient(account: account),
+                                               operationID: "api_list_all_candidates", path: ["test_id": testID],
+                                               query: requestQuery, cursor: $0)
             },
             // The search field queries the server (#104), so a candidate deep in a long list is
             // reachable — not just one already paged into the loaded rows.
             serverSearch: { query, cursor in
-                try await HackerRankClient(account: account)
-                    .searchCandidates(testID: testID, query: query, after: cursor)
+                try await NativeListQuery.page(TestCandidate.self, client: HackerRankClient(account: account),
+                                               operationID: "api_search_test_candidates", path: ["test_id": testID],
+                                               query: requestQuery + [URLQueryItem(name: "search", value: query)],
+                                               cursor: cursor)
             },
             searchableText: { "\($0.fullName ?? "") \($0.email) \($0.listStatusLabel ?? "")" },
             sortOptions: [

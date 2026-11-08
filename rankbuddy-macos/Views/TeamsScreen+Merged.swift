@@ -9,14 +9,13 @@ import SwiftUI
 
 extension TeamsScreen {
     /// Loads one page per account and retains the source account on every team.
-    func loadMergedTeams(_: String?) async throws -> Page<AccountScoped<Team>> {
-        let items = try await MergedLoader.firstPages(accounts: store.accounts) {
-            try await HackerRankClient(account: $0).teamsPage().items
+    func loadMergedTeams(_ cursor: String?) async throws -> Page<AccountScoped<Team>> {
+        try await MergedLoader.page(accounts: store.accounts, cursor: cursor) { account, next in
+            try await NativeListQuery.page(Team.self, client: HackerRankClient(account: account),
+                                           operationID: "api_list_all_teams", query: requestQuery, cursor: next)
         }
-        return Page(items: items, next: nil)
     }
 
-    /// All-account teams are read and managed using the credential attached to each row.
     var mergedList: some View {
         LoadableList(
             title: "Teams",

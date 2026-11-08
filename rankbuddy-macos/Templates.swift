@@ -136,11 +136,17 @@ enum TemplateLibrary {
         client: HackerRankClient,
         kind: TemplateKind,
         ownership: TemplateOwnership,
-        cursor: String?
+        cursor: String?,
+        query: [URLQueryItem] = []
     ) async throws -> Page<TemplateRecord> {
         switch kind {
         case .interview:
-            let page = try await client.interviewTemplatesPage(after: cursor, filter: ownership.apiFilter)
+            let page = try await NativeListQuery.page(
+                InterviewTemplate.self, client: client, operationID: "api_list_all_interview_templates",
+                query: query.filter { $0.name != "filter" } + (ownership.apiFilter.map {
+                    [URLQueryItem(name: "filter", value: $0.rawValue)]
+                } ?? []), cursor: cursor
+            )
             return Page(
                 items: page.items.map { TemplateRecord(interview: $0) },
                 next: page.next,
@@ -148,7 +154,10 @@ enum TemplateLibrary {
             )
 
         case .invitation:
-            let page = try await client.inviteTemplatesPage(after: cursor)
+            let page = try await NativeListQuery.page(
+                InviteTemplate.self, client: client, operationID: "api_list_all_invite_templates", query: query,
+                cursor: cursor
+            )
             return Page(
                 items: page.items.map { TemplateRecord(invitation: $0) },
                 next: page.next,

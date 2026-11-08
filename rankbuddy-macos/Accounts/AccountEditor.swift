@@ -67,6 +67,7 @@ struct AccountEditor: View {
 
     @State private var label: String
     @State private var token: String
+    @State private var scimToken: String
     @State private var baseURLOverride: String
     @State private var userEmail: String
     @State private var selectedIcon: String
@@ -94,6 +95,7 @@ struct AccountEditor: View {
         self.onDirtyChange = onDirtyChange
         _label = State(initialValue: existing?.label ?? "")
         _token = State(initialValue: existing?.token ?? "")
+        _scimToken = State(initialValue: existing?.scimToken ?? "")
         _baseURLOverride = State(initialValue: existing?.baseURLOverride ?? "")
         _userEmail = State(initialValue: existing?.userEmail ?? "")
         _selectedIcon = State(initialValue: existing?.displayIcon ?? Account.defaultIconSymbol)
@@ -169,6 +171,14 @@ struct AccountEditor: View {
                     .help(isTokenRevealed ? "Hide the token" : "Show the token")
                     .accessibilityLabel(isTokenRevealed ? "Hide token" : "Show token")
                 }
+            }
+
+            fieldRow("Provisioning token") {
+                SecureField("Optional SCIM token", text: $scimToken)
+                    .textFieldStyle(.roundedBorder)
+                    .textContentType(.password)
+                    .accessibilityLabel("Provisioning token")
+                    .help("A separate SCIM credential for user and group provisioning. Stored in Keychain.")
             }
 
             fieldRow("Base URL") {
@@ -378,6 +388,7 @@ struct AccountEditor: View {
         DraftFingerprint(
             label: label,
             token: token,
+            scimToken: scimToken,
             baseURLOverride: baseURLOverride,
             userEmail: userEmail,
             selectedIcon: selectedIcon,
@@ -393,7 +404,7 @@ struct AccountEditor: View {
             userEmail: trimmedEmail.isEmpty ? nil : trimmedEmail,
             iconSymbol: selectedIcon == Account.defaultIconSymbol ? nil : selectedIcon,
             tintHex: selectedTintHex,
-            scimToken: existing?.scimToken,
+            scimToken: Self.normalizedCredential(scimToken).isEmpty ? nil : Self.normalizedCredential(scimToken),
             id: existing?.id ?? UUID()
         )
     }
@@ -480,6 +491,7 @@ private extension AccountEditor {
     struct DraftFingerprint: Equatable {
         let label: String
         let token: String
+        let scimToken: String
         let baseURLOverride: String
         let userEmail: String
         let selectedIcon: String
@@ -488,6 +500,7 @@ private extension AccountEditor {
         init(account: Account?) {
             label = account?.label ?? ""
             token = account?.token ?? ""
+            scimToken = account?.scimToken ?? ""
             baseURLOverride = account?.baseURLOverride ?? ""
             userEmail = account?.userEmail ?? ""
             selectedIcon = account?.displayIcon ?? Account.defaultIconSymbol
@@ -497,6 +510,7 @@ private extension AccountEditor {
         init(
             label: String,
             token: String,
+            scimToken: String,
             baseURLOverride: String,
             userEmail: String,
             selectedIcon: String,
@@ -504,6 +518,7 @@ private extension AccountEditor {
         ) {
             self.label = label
             self.token = token
+            self.scimToken = scimToken
             self.baseURLOverride = baseURLOverride
             self.userEmail = userEmail
             self.selectedIcon = selectedIcon

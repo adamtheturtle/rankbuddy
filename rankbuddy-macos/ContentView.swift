@@ -298,6 +298,14 @@ struct ContentView: View {
             PeopleScreen()
         case .teams:
             TeamsScreen()
+        case .candidates:
+            AdministrationScreen(destination: .candidates)
+        case .auditLogs:
+            AdministrationScreen(destination: .audit)
+        case .atsInvitations:
+            AdministrationScreen(destination: .ats)
+        case .provisioning:
+            AdministrationScreen(destination: .provisioning)
         }
     }
 }
