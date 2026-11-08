@@ -91,7 +91,7 @@ struct NativeFeatureFormSheet: View {
                 ForEach(model.parameters) { NativeFormControl(field: $0).disabled(model.sending) }
                 if let body = model.body {
                     ForEach(NativeFormGroups.names, id: \.self) { group in
-                        let fields = body.children.filter { NativeFormGroups.group(for: $0.name) == group }
+                        let fields = NativeFormGroups.fields(body.children, in: group)
                         if !fields.isEmpty {
                             Section(group) {
                                 ForEach(fields) { NativeFormControl(field: $0) }

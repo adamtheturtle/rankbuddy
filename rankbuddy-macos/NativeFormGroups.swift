@@ -3,11 +3,22 @@
 //  rankbuddy-macos
 //
 
-import Foundation
-
 enum NativeFormGroups {
     static let names = ["Basics", "Schedule", "Content", "Questions and Scoring", "Permissions",
                         "Assessment Integrity", "Invitations and Results", "Editor", "Additional Settings"]
+
+    static func fields(_ fields: [NativeFormField], in group: String) -> [NativeFormField] {
+        let matching = fields.filter { Self.group(for: $0.name) == group }
+        guard group == "Schedule" else { return matching }
+
+        let order = ["duration", "recommended_duration", "from", "starttime", "invite_valid_from",
+                     "to", "endtime", "invite_valid_to", "accommodations"]
+        return matching.sorted {
+            let first = order.firstIndex(of: $0.name) ?? order.count
+            let second = order.firstIndex(of: $1.name) ?? order.count
+            return first == second ? $0.name < $1.name : first < second
+        }
+    }
 
     static func group(for name: String) -> String {
         if ["name", "title", "email", "full_name", "firstname", "lastname", "country", "phone", "role", "type",

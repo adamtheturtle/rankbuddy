@@ -4,8 +4,6 @@
 //
 
 import AppKit
-import BuddyAppKit
-import BuddyDesignSystem
 import FastList
 import HackerRankKit
 import SwiftUI
@@ -128,7 +126,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     var onItemsLoaded: ([Item]) -> Void = { _ in }
     /// Extra leading toolbar content (e.g. a write action like "Invite Candidate", #12).
     /// Defaults to nothing, keeping read-only lists unchanged.
-    var accessoryToolbar: () -> AnyView = { AnyView(EmptyView()) }
+    var accessoryToolbar: (() -> AnyView)?
     /// The matching menu commands for the section's write actions (#101).
     var primaryMenuAction: AppCommandContext.Action?
     var secondaryMenuAction: AppCommandContext.Action?
@@ -156,6 +154,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// Forwarded into each FastList row: FastList hosts rows in their own NSHostingView, which
     /// does not inherit the SwiftUI environment, so rows that read these stores would trap (#31).
     @Environment(AccountStore.self) private var accountStore
+    @Environment(\.listNavigationIsProvided) private var navigationIsProvided
     // Internal (not private) so the row-accessory and command-registration helpers in
     // `LoadableList+Interaction.swift` can read them, per the repo's split-file rule.
     @Environment(FavoritesStore.self) var favorites
@@ -259,9 +258,11 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
         }
     }
 
-    private var listColumn: some View {
-        NavigationStack {
+    @ViewBuilder private var listColumn: some View {
+        if navigationIsProvided {
             listChangeObservers
+        } else {
+            NavigationStack { listChangeObservers }
         }
     }
 

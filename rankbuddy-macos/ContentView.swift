@@ -75,15 +75,18 @@ struct ContentView: View {
             .navigationTitle("RankBuddy")
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
-            VStack(spacing: 0) {
-                // The health monitor probes one current account. In merged mode that account is
-                // an invisible implementation detail, so a single-account warning would blame
-                // the All Accounts scope without identifying which credential needs attention.
-                if !store.isMergedView, health.isUnauthorized(store.currentAccountID) {
-                    UnauthorizedBanner()
+            NavigationStack {
+                VStack(spacing: 0) {
+                    // The health monitor probes one current account. In merged mode that account is
+                    // an invisible implementation detail, so a single-account warning would blame
+                    // the All Accounts scope without identifying which credential needs attention.
+                    if !store.isMergedView, health.isUnauthorized(store.currentAccountID) {
+                        UnauthorizedBanner()
+                    }
+                    detailView(for: selection)
                 }
-                detailView(for: selection)
             }
+            .environment(\.listNavigationIsProvided, true)
             // Warm every section's first page in the background so the first visit to a tab is
             // instant rather than a spinner (#102). Skip the visible section because its list is
             // already loading it. Single-account only — merged lists don't cache.

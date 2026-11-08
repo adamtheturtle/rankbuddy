@@ -201,18 +201,22 @@ struct BusinessCollectionView: View {
     }
 
     private var records: some View {
-        HSplitView {
-            List(model.records, selection: $selected) { record in
-                Text(record.title).tag(record)
-            }.frame(minWidth: 260)
-            if let selected {
-                BusinessRecordDetail(account: account, kind: kind, record: selected) { Task { await load() } }
-                    .id(selected.id)
-            } else {
-                ContentUnavailableView("Select a Record", systemImage: "doc.text.magnifyingglass")
+        GeometryReader { geometry in
+            HSplitView {
+                List(model.records, selection: $selected) { record in
+                    Text(record.title).tag(record)
+                }.frame(minWidth: 260, maxHeight: .infinity)
+                if let selected {
+                    BusinessRecordDetail(account: account, kind: kind, record: selected) { Task { await load() } }
+                        .id(selected.id)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ContentUnavailableView("Select a Record", systemImage: "doc.text.magnifyingglass")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func load(more: Bool = false) async {
