@@ -8,6 +8,7 @@ import SwiftUI
 nonisolated enum QuestionDetailPane: String, CaseIterable, Identifiable {
     case overview
     case content
+    case guidelines
     case answer
     case coding
 
@@ -19,6 +20,7 @@ nonisolated enum QuestionDetailPane: String, CaseIterable, Identifiable {
         switch self {
         case .overview: "Overview"
         case .content: "Content"
+        case .guidelines: "Interviewer Guidelines"
         case .answer: "Answer"
         case .coding: "Coding"
         }
@@ -28,6 +30,7 @@ nonisolated enum QuestionDetailPane: String, CaseIterable, Identifiable {
         switch self {
         case .overview: "info.circle"
         case .content: "text.alignleft"
+        case .guidelines: "person.text.rectangle"
         case .answer: "checkmark.seal"
         case .coding: "chevron.left.forwardslash.chevron.right"
         }

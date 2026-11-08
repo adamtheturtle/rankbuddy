@@ -71,7 +71,7 @@ struct QuestionDetailView: View {
     }
 
     private var availablePanes: [QuestionDetailPane] {
-        var panes: [QuestionDetailPane] = [.overview, .content, .answer]
+        var panes: [QuestionDetailPane] = [.overview, .content, .guidelines, .answer]
         if canEdit, displayed.type.lowercased() == "coding" {
             panes.append(.coding)
         }
