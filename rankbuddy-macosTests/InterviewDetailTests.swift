@@ -35,6 +35,32 @@ struct InterviewDetailTests {
         #expect(transcript.messages.first?.messageID == "m1")
     }
 
+    // MARK: - Transcript availability
+
+    @Test(arguments: [
+        #"{"message":"Interview transcription is not enabled."}"#,
+        #"{"error":"Interview transcription is not enabled"}"#,
+        #"{"errors":["Interview transcription is not enabled"]}"#,
+        #"{"errors":[{"message":"  INTERVIEW TRANSCRIPTION IS NOT ENABLED  "}]}"#
+    ])
+    func `disabled transcription is unavailable rather than retryable`(body: String) {
+        #expect(InterviewTranscriptFailure(error: HackerRankError.http(400, body)) == .transcriptionDisabled)
+    }
+
+    @Test(arguments: [
+        HackerRankError.http(400, #"{"message":"Invalid interview ID"}"#),
+        .http(400, "<html>Interview transcription is not enabled</html>"),
+        .http(403, #"{"message":"Interview transcription is not enabled"}"#),
+        .http(429, ""),
+        .http(503, ""),
+        .decode("Invalid JSON"),
+        .network(URLError(.notConnectedToInternet))
+    ])
+    func `other transcript failures retain their error and retry action`(error: HackerRankError) throws {
+        let message = try #require((error as LocalizedError).errorDescription)
+        #expect(InterviewTranscriptFailure(error: error) == .requestFailed(message))
+    }
+
     // MARK: - Person decoding (string vs object shapes)
 
     @Test func `interviewer decodes from a keyed object`() throws {

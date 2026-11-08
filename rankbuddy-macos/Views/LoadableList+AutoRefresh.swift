@@ -52,7 +52,9 @@ extension LoadableList {
         let generation = loadGeneration
         let page: Page<Item>
         do {
-            page = try await loadCurrentPage(nil)
+            guard let loaded = try await loadCurrentPage(nil) else { return }
+
+            page = loaded
         } catch {
             guard generation == loadGeneration else { return }
 

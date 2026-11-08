@@ -9,8 +9,8 @@ import SwiftUI
 /// The question types HackerRank accepts on create, shared by the create sheet's picker.
 let questionTypes = ["coding", "mcq", "subjective"]
 
-/// A sheet that creates a question (#147) — name and type are required (the API rejects a
-/// create without them); everything else is optional metadata.
+/// A sheet that creates a question (#147). Name, type, problem statement and recommended
+/// duration are required by the API.
 struct NewQuestionSheet: View {
     let account: Account
     var onCreated: () -> Void
@@ -20,7 +20,6 @@ struct NewQuestionSheet: View {
     @State private var type = "coding"
     @State private var problemStatement = ""
     @State private var duration = ""
-    @State private var maxScore = ""
     @State private var languages = ""
     @State private var tags = ""
     @State private var isSending = false
@@ -32,7 +31,11 @@ struct NewQuestionSheet: View {
     }
 
     private var payloadIssue: String? {
-        QuestionAuthoringValidation.boundsIssue(
+        guard QuestionCreationValidation.isValidDurationText(duration) else {
+            return "Recommended duration must be a whole number of zero or more minutes."
+        }
+
+        return QuestionAuthoringValidation.boundsIssue(
             problemStatement: problemStatement,
             languages: splitList(languages),
             tags: splitList(tags)
@@ -57,7 +60,6 @@ struct NewQuestionSheet: View {
                         ForEach(questionTypes, id: \.self) { Text(DisplayFormat.enumLabel($0)).tag($0) }
                     }
                     TextField("Recommended duration (minutes)", text: $duration)
-                    TextField("Max score", text: $maxScore)
                     TextField("Languages", text: $languages, prompt: Text("Comma-separated, e.g. python, java"))
                     TextField("Tags", text: $tags, prompt: Text("Comma-separated"))
                 }

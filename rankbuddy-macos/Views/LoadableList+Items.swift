@@ -108,15 +108,17 @@ extension LoadableList {
 
     /// Loads one page, routing through the server-side search loader when a query is active
     /// (#104), then the server-side date loader when one is set (#86), else the plain page loader.
-    func loadCurrentPage(_ cursor: String?) async throws -> Page<Item> {
-        if let serverSearch, isServerSearching {
-            return try await serverSearch(trimmedQuery, cursor)
-        }
-        if let loadPageInDateRange {
-            return try await loadPageInDateRange(cursor, dateRange)
-        }
+    func loadCurrentPage(_ cursor: String?) async throws -> Page<Item>? {
+        try await ListPageLoading.load {
+            if let serverSearch, isServerSearching {
+                return try await serverSearch(trimmedQuery, cursor)
+            }
+            if let loadPageInDateRange {
+                return try await loadPageInDateRange(cursor, dateRange)
+            }
 
-        return try await loadPage(cursor)
+            return try await loadPage(cursor)
+        }
     }
 
     /// Reloads the first page when a server-search query changes (#104), debounced so each
@@ -142,8 +144,8 @@ extension LoadableList {
         let refreshesCanonicalFirstPage = !isServerSearching
         let requestCacheKey = refreshesCanonicalFirstPage ? cacheKey : nil
         do {
-            let page = try await loadCurrentPage(nil)
-            guard generation == loadGeneration, !Task.isCancelled else { return }
+            guard let page = try await loadCurrentPage(nil),
+                  generation == loadGeneration, !Task.isCancelled else { return }
 
             items = page.items
             if refreshesCanonicalFirstPage {

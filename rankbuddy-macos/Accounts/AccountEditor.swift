@@ -393,6 +393,7 @@ struct AccountEditor: View {
             userEmail: trimmedEmail.isEmpty ? nil : trimmedEmail,
             iconSymbol: selectedIcon == Account.defaultIconSymbol ? nil : selectedIcon,
             tintHex: selectedTintHex,
+            scimToken: existing?.scimToken,
             id: existing?.id ?? UUID()
         )
     }
