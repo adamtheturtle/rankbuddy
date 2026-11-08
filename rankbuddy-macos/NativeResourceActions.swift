@@ -3,7 +3,6 @@
 //  rankbuddy-macos
 //
 
-import HackerRankKit
 import SwiftUI
 
 struct NativeResourceAction: Identifiable {

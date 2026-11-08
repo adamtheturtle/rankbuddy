@@ -3,7 +3,6 @@
 //  rankbuddy-macos
 //
 
-import BuddyAppKit
 import HackerRankKit
 import SwiftUI
 

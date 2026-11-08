@@ -3,7 +3,6 @@
 //  rankbuddy-macos
 //
 
-import AppKit
 import BuddyAppKit
 import CommandPaletteKit
 import HackerRankKit

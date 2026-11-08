@@ -3,8 +3,6 @@
 //  rankbuddy-macos
 //
 
-import SwiftUI
-
 /// The top-level sections shown in the sidebar of the main window.
 ///
 /// Order is the display order, so the cases are deliberately not sorted. `nonisolated` (a pure

@@ -3,7 +3,6 @@
 //  rankbuddy-macos
 //
 
-import Foundation
 import HackerRankKit
 
 enum NativeFeatureValidation {

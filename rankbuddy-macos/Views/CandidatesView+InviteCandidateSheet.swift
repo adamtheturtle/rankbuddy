@@ -4,7 +4,6 @@
 //
 
 import Foundation
-import HackerRankKit
 import SwiftUI
 
 /// Product/API guardrails shared by the invite sheet and non-UI write surfaces.
