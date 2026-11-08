@@ -27,7 +27,7 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][A-Za-z0-9.-]+)?$ ]]; then
 fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-project_file="$repo_root/rankbuddy-macos.xcodeproj/project.pbxproj"
+project_file="$repo_root/rankbuddy-macos.xcodeproj/project.xcproj"
 resolved_file="$repo_root/rankbuddy-macos.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
 
 for command_name in ruby xcodebuild; do
@@ -41,26 +41,14 @@ ruby - "$project_file" "$package_name" "$version" "$dry_run" <<'RUBY'
 path, package, version, dry_run = ARGV
 contents = File.read(path)
 escaped = Regexp.escape(package)
-# Bound the match to this package object, including revision requirements.
-pattern = /(XCRemoteSwiftPackageReference "#{escaped}" \*\/ = \{\n)(.*?)(^\t\t\};)/m
+# Match one package's native JSON requirement, including a revision pin.
+pattern = /("repository"\s*:\s*"https:\/\/github\.com\/[^"\/]+\/#{escaped}(?:\.git)?\/?",\s*"version"\s*:\s*\{\s*")(version|up-to-next-major-version|revision)("\s*:\s*")[^"]+"/i
 matches = contents.scan(pattern).length
 abort "error: expected one Xcode package requirement for #{package}, found #{matches}" unless matches == 1
 updated = contents.sub(pattern) do
-  opening, block, closing = Regexp.last_match.captures
-  requirement = /(requirement = \{\n)(.*?)(^\t\t\t\};)/m
-  abort "error: expected one requirement for #{package}" unless block.scan(requirement).length == 1
-  block = block.sub(requirement) do
-    prefix, fields, suffix = Regexp.last_match.captures
-    if fields.match?(/kind = revision;/)
-      fields = fields.sub(/kind = revision;/, "kind = exactVersion;")
-      fields = fields.sub(/revision = [^;]+;/, "version = #{version};")
-    else
-      abort "error: unsupported requirement for #{package}" unless fields.match?(/(?:minimumVersion|version) = [^;]+;/)
-      fields = fields.sub(/((?:minimumVersion|version) = )[^;]+;/) { "#{Regexp.last_match(1)}#{version};" }
-    end
-    prefix + fields + suffix
-  end
-  opening + block + closing
+  prefix, kind, separator = Regexp.last_match.captures
+  kind = "version" if kind == "revision"
+  "#{prefix}#{kind}#{separator}#{version}\""
 end
 if dry_run == "1"
   puts "Would update #{package} to #{version}."
