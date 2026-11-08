@@ -34,10 +34,20 @@ extension QuestionDetailView {
             if displayed.type == "fullstack" {
                 systemPromptSection
             }
-            if let notes = detail?.internalNotes, !notes.isEmpty {
-                Section("Internal notes") {
+
+        case .guidelines:
+            if let notes = detail?.internalNotes,
+               !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Section("Interviewer Guidelines") {
                     HTMLText(html: notes)
                 }
+            } else {
+                ContentUnavailableView(
+                    "No Interviewer Guidelines Available",
+                    systemImage: "person.text.rectangle",
+                    description: Text("HackerRank did not return interviewer guidelines for this question.")
+                )
+                .frame(maxWidth: .infinity)
             }
 
         case .answer:
