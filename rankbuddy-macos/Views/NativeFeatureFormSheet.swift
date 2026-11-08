@@ -77,7 +77,7 @@ struct NativeFeatureFormSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     if !embedded {
-                        Button("Done") { dismiss() }.disabled(model?.sending == true)
+                        Button(dismissTitle) { dismiss() }.disabled(model?.sending == true)
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
@@ -106,6 +106,13 @@ struct NativeFeatureFormSheet: View {
             }
         } message: { Text("This changes data in \(account.label). This action cannot be undone in RankBuddy.") }
         .task { await loadExisting() }
+    }
+
+    private var dismissTitle: String {
+        if model?.uncertain == true {
+            return "Close"
+        }
+        return model?.operation.isWrite == true && model?.committed != true ? "Cancel" : "Done"
     }
 
     private func submitTitle(_ model: NativeFeatureFormModel) -> String {
