@@ -109,7 +109,7 @@ func rowMenuItems(
 /// A compact baseline; multiline titles and accessibility text can still make rows taller.
 enum FastListRowMetrics {
     /// Baseline hosted-row height for the AppKit `FastList` backend.
-    static let macHeight: CGFloat = 48
+    static let macHeight: CGFloat = 56
 }
 
 extension View {
@@ -130,7 +130,8 @@ extension View {
 
     func listRowTitleStyle(fullText: String) -> some View {
         font(.callout.weight(.medium))
-            .lineLimit(2, reservesSpace: true)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
             .truncationMode(.tail).help(fullText).accessibilityLabel(fullText)
     }
 
@@ -194,7 +195,7 @@ struct FavoriteStarButton: View {
 struct RowDateLabel: View {
     let date: Date?
 
-    static let minimumColumnWidth: CGFloat = 60, maximumColumnWidth: CGFloat = 160
+    static let minimumColumnWidth: CGFloat = 60, maximumColumnWidth: CGFloat = 110
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { _ in
@@ -209,6 +210,7 @@ struct RowDateLabel: View {
                     .frame(minWidth: Self.minimumColumnWidth, maxWidth: Self.maximumColumnWidth, alignment: .trailing)
             }
         }
+        .fixedSize(horizontal: true, vertical: false)
     }
 }
 
