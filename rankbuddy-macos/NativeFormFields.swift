@@ -153,8 +153,16 @@ enum NativeFormSchema {
             "functionReturn": "Return Type",
             "allowedLanguages": "Allowed Languages"
         ]
-        return names[name] ?? name.replacingOccurrences(of: "_", with: " ").capitalized
-            .replacingOccurrences(of: " Id", with: " ID").replacingOccurrences(of: " Url", with: " URL")
+        if let title = names[name] {
+            return title
+        }
+        let words = name.replacingOccurrences(of: "(?<=[a-z0-9])(?=[A-Z])", with: " ",
+                                              options: .regularExpression)
+            .replacingOccurrences(of: "_", with: " ").split(separator: " ")
+        let acronyms = ["ai": "AI", "api": "API", "ats": "ATS", "html": "HTML", "http": "HTTP",
+                        "id": "ID", "ids": "IDs", "ide": "IDE", "mcq": "MCQ", "ml": "ML",
+                        "pdf": "PDF", "scim": "SCIM", "url": "URL", "urls": "URLs"]
+        return words.map { acronyms[$0.lowercased()] ?? $0.capitalized }.joined(separator: " ")
     }
 }
 
