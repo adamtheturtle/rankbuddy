@@ -113,7 +113,6 @@ struct TemplateQuestionsEditor: View {
                     .disabled(model.isLoading)
                 }
                 Spacer()
-                Text("\(model.availableQuestions.count) loaded").font(.caption).foregroundStyle(.secondary)
             }
         }
     }
