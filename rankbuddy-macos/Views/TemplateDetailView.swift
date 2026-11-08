@@ -20,20 +20,9 @@ struct TemplateDetailView: View {
     var body: some View {
         Form {
             Section {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(displayed.title).font(.title2).bold()
-                        Text(account.label).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    if isLoading {
-                        ProgressView().controlSize(.small)
-                    }
-                    Button("Refresh Details", systemImage: "arrow.clockwise") {
-                        Task { await load() }
-                    }
-                    .labelStyle(.iconOnly)
-                    .disabled(isLoading || record.apiID == nil)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(displayed.title).font(.title2).bold()
+                    Text(account.label).foregroundStyle(.secondary)
                 }
             }
             if let errorMessage {
@@ -78,6 +67,22 @@ struct TemplateDetailView: View {
         .formStyle(.grouped)
         .textSelection(.enabled)
         .task { await load() }
+        .toolbar(id: "templateDetail") {
+            ToolbarItem(id: "refreshTemplate", placement: .primaryAction) {
+                HStack {
+                    if isLoading {
+                        ProgressView().controlSize(.small)
+                    }
+                    Button("Refresh Template", systemImage: "arrow.clockwise") {
+                        Task { await load() }
+                    }
+                    .labelStyle(.titleAndIcon)
+                    .help("Reload all details for the selected template")
+                    .accessibilityIdentifier("refresh-template")
+                    .disabled(isLoading || record.apiID == nil)
+                }
+            }
+        }
     }
 
     private var questions: some View {
