@@ -130,8 +130,7 @@ extension View {
 
     func listRowTitleStyle(fullText: String) -> some View {
         font(.callout.weight(.medium))
-            .lineLimit(2)
-            .fixedSize(horizontal: false, vertical: true)
+            .lineLimit(2, reservesSpace: true)
             .truncationMode(.tail).help(fullText).accessibilityLabel(fullText)
     }
 

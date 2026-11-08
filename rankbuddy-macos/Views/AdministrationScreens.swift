@@ -303,7 +303,7 @@ struct BusinessRecordDetail: View {
             if let error {
                 Text(error).foregroundStyle(.red)
             }
-            NativeRecordContent(value: detail ?? record.value)
+            NativeRecordContent(value: detail ?? record.value, style: kind.isAudit ? .audit : .general)
         }
         .formStyle(.grouped)
         .nativeResourceActions(kind == .provisioningUsers ? .provisioningUser : .provisioningGroup,

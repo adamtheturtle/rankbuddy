@@ -128,6 +128,8 @@ struct NativeFormControl: View {
 struct NativeRecordContent: View {
     let value: HackerRankJSONValue
     var label = "Details"
+    var style = NativeRecordStyle.general
+    var fieldNameValue = false
 
     var body: some View {
         if ["password", "token", "secret", "authorization"].contains(where: {
@@ -137,11 +139,11 @@ struct NativeRecordContent: View {
         } else {
             switch value {
             case let .object(fields):
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(fields.keys.sorted(), id: \.self) { key in
-                        if let value = fields[key] {
-                            AnyView(Self(value: value, label: NativeFormSchema.title(key)))
-                        }
+                if label == "Details" {
+                    objectContent(fields)
+                } else {
+                    GroupBox(label) {
+                        objectContent(fields).padding(8)
                     }
                 }
 
@@ -152,7 +154,8 @@ struct NativeRecordContent: View {
                             Text("None").foregroundStyle(.secondary)
                         }
                         ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                            AnyView(Self(value: item, label: "Item \(index + 1)"))
+                            AnyView(Self(value: item, label: "Item \(index + 1)", style: style,
+                                         fieldNameValue: style == .audit && label == "Changed Fields"))
                             Divider()
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
@@ -167,11 +170,29 @@ struct NativeRecordContent: View {
                     LabeledContent(label) { Link(value.text, destination: url) }
                 } else {
                     LabeledContent(label) {
-                        Text(label.hasSuffix(" At") ? DisplayFormat.date(value.text) ?? value.text : value.text)
+                        Text(displayValue)
                             .textSelection(.enabled)
+                            .help(value.text)
                     }
                 }
             }
         }
+    }
+
+    private var displayValue: String {
+        if fieldNameValue {
+            return NativeRecordPresentation.label(value.text, style: style)
+        }
+        return label.hasSuffix(" At") ? DisplayFormat.date(value.text) ?? value.text : value.text
+    }
+
+    private func objectContent(_ fields: [String: HackerRankJSONValue]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(fields.keys.sorted(), id: \.self) { key in
+                if let value = fields[key] {
+                    AnyView(Self(value: value, label: NativeRecordPresentation.label(key, style: style), style: style))
+                }
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }

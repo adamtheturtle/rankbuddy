@@ -83,7 +83,7 @@ struct NativeListFiltersSheet: View {
         let controls = fields.reduce(0) { height, field in
             height + (!field.required && !field.included ? 44 : field.kind == "array" ? 140 : 84)
         }
-        return min(560, max(260, CGFloat(160 + controls + (error == nil ? 0 : 54))))
+        return min(560, max(180, CGFloat(92 + controls + (error == nil ? 0 : 54))))
     }
 
     var body: some View {

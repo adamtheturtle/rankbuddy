@@ -10,6 +10,14 @@ import Testing
 
 @MainActor
 struct CollectionPresentationTests {
+    @Test func `audit change labels do not change interview scheduling labels`() {
+        #expect(NativeRecordPresentation.label("from", style: .audit) == "Before")
+        #expect(NativeRecordPresentation.label("to", style: .audit) == "After")
+        #expect(NativeRecordPresentation.label("from", style: .general) == "Starts")
+        #expect(NativeRecordPresentation.label("to", style: .general) == "Ends")
+        #expect(NativeRecordPresentation.label("ip_address", style: .audit) == "IP Address")
+    }
+
     @Test func `section names do not become assessment types`() throws {
         let data = Data(#"""
         {"id":"t1","name":"Assessment","sections":[
