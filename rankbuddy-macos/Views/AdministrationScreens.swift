@@ -179,7 +179,8 @@ struct BusinessCollectionView: View {
 
     private func load(more: Bool = false) async {
         if kind == .candidates, query.first(where: { $0.name == "query" })?.value?.isEmpty != false {
-            model.records = []
+            model.clear()
+            selected = nil
             return
         }
         if !more {

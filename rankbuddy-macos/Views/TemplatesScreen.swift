@@ -11,8 +11,7 @@ struct TemplatesScreen: View {
     @Environment(AccountStore.self) private var store
     @AppStorage("templates.kind") private var kind: TemplateKind = .interview
     @AppStorage("templates.ownership") private var ownership: TemplateOwnership = .all
-    @State private var createPresented = false
-    @State private var creationAccountID: UUID?
+    @State private var creationAccount: Account?
     @State private var reloadToken = 0
     @State private var requestQuery: [URLQueryItem] = []
 
@@ -34,12 +33,10 @@ struct TemplatesScreen: View {
             kind: kind, ownership: ownership, merged: store.isMergedView))
         .nativeListFilters(kind == .interview ? "api_list_all_interview_templates" : "api_list_all_invite_templates",
                            query: $requestQuery)
-        .sheet(isPresented: $createPresented) {
-            if let account = store.accounts.first(where: { $0.id == creationAccountID }) {
-                TemplateEditorSheet(account: account) {
-                    ownership = .owned
-                    reloadToken += 1
-                }
+        .sheet(item: $creationAccount) { account in
+            TemplateEditorSheet(account: account) {
+                ownership = .owned
+                reloadToken += 1
             }
         }
     }
@@ -150,8 +147,7 @@ struct TemplatesScreen: View {
     }
 
     private func beginCreation(_ account: Account) {
-        creationAccountID = account.id
-        createPresented = true
+        creationAccount = account
     }
 }
 

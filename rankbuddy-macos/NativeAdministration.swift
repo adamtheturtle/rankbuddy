@@ -45,6 +45,16 @@ final class NativeBusinessCollection {
     private var seenContinuations = Set<String>()
     private var generation = 0
 
+    func clear() {
+        generation += 1
+        records = []
+        nextQuery = nil
+        error = nil
+        notice = nil
+        seenContinuations = []
+        loading = false
+    }
+
     func load(kind: NativeCollectionKind, client: HackerRankClient, scimToken: String?,
               query: [URLQueryItem], more: Bool = false) async {
         guard !more || !loading else { return }
