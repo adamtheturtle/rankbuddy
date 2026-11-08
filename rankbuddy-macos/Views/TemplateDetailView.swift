@@ -12,6 +12,7 @@ struct TemplateDetailView: View {
     @State private var current: TemplateRecord?
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var editQuestionsPresented = false
 
     private var displayed: TemplateRecord {
         current ?? record
@@ -67,6 +68,9 @@ struct TemplateDetailView: View {
         .formStyle(.grouped)
         .textSelection(.enabled)
         .task { await load() }
+        .sheet(isPresented: $editQuestionsPresented, onDismiss: { Task { await load() } }, content: {
+            TemplateQuestionsEditor(record: displayed, account: account) { current = $0 }
+        })
         .toolbar(id: "templateDetail") {
             ToolbarItem(id: "refreshTemplate", placement: .primaryAction) {
                 HStack {
@@ -86,7 +90,7 @@ struct TemplateDetailView: View {
     }
 
     private var questions: some View {
-        Section("Questions") {
+        Section {
             if let ids = displayed.questionIDs {
                 if ids.isEmpty {
                     Text("No questions in this template").foregroundStyle(.secondary)
@@ -104,6 +108,14 @@ struct TemplateDetailView: View {
             } else {
                 Text(isLoading ? "Loading question membership…" : "Question membership was not returned.")
                     .foregroundStyle(.secondary)
+            }
+        } header: {
+            HStack {
+                Text("Questions")
+                Spacer()
+                Button("Edit Questions", systemImage: "pencil") { editQuestionsPresented = true }
+                    .disabled(isLoading || displayed.editorAccess != true || displayed.apiID.flatMap(Int.init) == nil)
+                    .help(displayed.editorAccess == false ? "This template is read-only" : "Add or remove questions")
             }
         }
     }
@@ -124,7 +136,7 @@ struct TemplateDetailView: View {
     }
 }
 
-private struct TemplateQuestionRow: View {
+struct TemplateQuestionRow: View {
     let questionID: String
     let account: Account
     @Environment(\.openWindow) private var openWindow
