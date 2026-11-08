@@ -19,21 +19,37 @@ struct InterviewsScreen: View {
     @State private var schedulePresented = false
     @State private var reloadToken = 0
 
+    @State var requestQuery: [URLQueryItem] = []
+
     var body: some View {
+        screen.nativeListFilters("api_list_all_interviews", query: $requestQuery)
+    }
+
+    @ViewBuilder private var screen: some View {
         if store.isMergedView {
             mergedList
         } else if let account = store.currentAccount {
             LoadableList(
                 title: "Interviews",
                 emptyMessage: "No interviews",
-                loadPage: { try await HackerRankClient(account: account).interviewsPage(after: $0) },
+                loadPage: { cursor in try await NativeListQuery.page(
+                    Interview.self,
+                    client: HackerRankClient(account: account),
+                    operationID: "api_list_all_interviews",
+                    query: requestQuery,
+                    cursor: cursor
+                ) },
                 // The date chip filters server-side over all interviews, not just loaded rows
                 // (#86) — the account can have ~87k, so a client-only filter would miss most.
                 loadPageInDateRange: { cursor, range in
-                    try await HackerRankClient(account: account).interviewsPage(
-                        after: cursor,
-                        createdAtRange: DateRangeFilter.createdAtServerValue(range)
-                    )
+                    var query = requestQuery
+                    if !query.contains(where: { $0.name == "created_at" }),
+                       let dates = DateRangeFilter.createdAtServerValue(range) {
+                        query.append(URLQueryItem(name: "created_at", value: dates))
+                    }
+                    return try await NativeListQuery.page(Interview.self, client: HackerRankClient(account: account),
+                                                          operationID: "api_list_all_interviews",
+                                                          query: query, cursor: cursor)
                 },
                 searchableText: { "\($0.title ?? "") \($0.status)" },
                 sortOptions: [
@@ -64,7 +80,7 @@ struct InterviewsScreen: View {
                         value: { DisplayFormat.enumLabel($0.status) }
                     )
                 ],
-                restorationKey: "selection.interviews.\(account.id)",
+                restorationKey: requestQuery.isEmpty ? "selection.interviews.\(account.id)" : nil,
                 filterDate: { DisplayFormat.parseDate($0.createdAt) },
                 dateFilterLabel: "Created",
                 contextMenu: { interview in
@@ -196,7 +212,8 @@ struct InterviewsScreen: View {
     /// Loads one merged page of interviews across every configured account (#17).
     private func loadMergedInterviews(_ cursor: String?) async throws -> Page<AccountScoped<Interview>> {
         try await MergedLoader.page(accounts: store.accounts, cursor: cursor) {
-            try await HackerRankClient(account: $0).interviewsPage(after: $1)
+            try await NativeListQuery.page(Interview.self, client: HackerRankClient(account: $0),
+                                           operationID: "api_list_all_interviews", query: requestQuery, cursor: $1)
         }
     }
 

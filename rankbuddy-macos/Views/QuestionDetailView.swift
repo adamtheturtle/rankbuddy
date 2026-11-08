@@ -112,6 +112,10 @@ struct QuestionDetailView: View {
             }
         }
         .navigationTitle(displayed.name)
+        .nativeResourceActions(.question, account: owningAccount, path: ["question_id": question.id]) {
+            onChanged()
+            Task { await loadDetail(for: requestIdentity) }
+        }
         .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)

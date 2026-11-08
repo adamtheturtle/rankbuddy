@@ -11,6 +11,9 @@ struct TemplatesScreen: View {
     @Environment(AccountStore.self) private var store
     @AppStorage("templates.kind") private var kind: TemplateKind = .interview
     @AppStorage("templates.ownership") private var ownership: TemplateOwnership = .all
+    @State private var creationAccount: Account?
+    @State private var reloadToken = 0
+    @State private var requestQuery: [URLQueryItem] = []
 
     var body: some View {
         Group {
@@ -28,6 +31,14 @@ struct TemplatesScreen: View {
         .id(Scope(accountVersions: (store.isMergedView ? store.accounts : store.currentAccount.map { [$0] } ?? [])
                 .map(\.hashValue),
             kind: kind, ownership: ownership, merged: store.isMergedView))
+        .nativeListFilters(kind == .interview ? "api_list_all_interview_templates" : "api_list_all_invite_templates",
+                           query: $requestQuery)
+        .sheet(item: $creationAccount) { account in
+            TemplateEditorSheet(account: account) {
+                ownership = .owned
+                reloadToken += 1
+            }
+        }
     }
 
     private struct Scope: Hashable {
@@ -40,6 +51,19 @@ struct TemplatesScreen: View {
 
     private var controls: some View {
         HStack {
+            if kind == .interview {
+                if store.isMergedView {
+                    Menu("New Template", systemImage: "plus") {
+                        ForEach(store.accounts) { account in
+                            Button(account.label) { beginCreation(account) }
+                        }
+                    }
+                } else if let account = store.currentAccount {
+                    Button("New Template", systemImage: "plus") { beginCreation(account) }
+                        .help("Create an interview template")
+                        .accessibilityIdentifier("new-template")
+                }
+            }
             Picker("Template Type", selection: $kind) {
                 ForEach(TemplateKind.allCases) { Text($0.title).tag($0) }
             }
@@ -62,7 +86,7 @@ struct TemplatesScreen: View {
             emptyMessage: "No templates",
             loadPage: {
                 try await TemplateLibrary.page(client: HackerRankClient(account: account),
-                                               kind: kind, ownership: ownership, cursor: $0)
+                                               kind: kind, ownership: ownership, cursor: $0, query: requestQuery)
             },
             searchableText: { $0.searchableText },
             sortOptions: [
@@ -75,16 +99,21 @@ struct TemplatesScreen: View {
                                    > (DisplayFormat.parseDate($1.createdAt) ?? .distantPast)
                            })
             ],
-            restorationKey: TemplateLibrary.cacheKey(accountID: account.id, kind: kind, ownership: ownership),
+            restorationKey: requestQuery.isEmpty
+                ? TemplateLibrary.cacheKey(accountID: account.id, kind: kind, ownership: ownership) : nil,
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.title) },
             accessoryToolbar: { AnyView(controls) },
+            primaryMenuAction: kind == .interview ? .init(title: "New Template…", perform: {
+                beginCreation(account)
+            }) : nil,
+            reloadToken: reloadToken,
             rowTransfer: {
                 RowTransfer(title: $0.title, subtitle: $0.subtitle,
                             fields: [("Name", $0.title), ("ID", $0.apiID ?? "")])
             },
             rowDate: { DisplayFormat.parseDate($0.createdAt) },
             row: { TemplateRow(record: $0) },
-            detail: { TemplateDetailView(record: $0, account: account).id($0.id) }
+            detail: { TemplateDetailView(record: $0, account: account, onChanged: { reloadToken += 1 }).id($0.id) }
         )
     }
 
@@ -97,7 +126,7 @@ struct TemplatesScreen: View {
                 let selectedOwnership = ownership
                 return try await MergedLoader.page(accounts: store.accounts, cursor: cursor) { account, next in
                     try await TemplateLibrary.page(client: HackerRankClient(account: account), kind: selectedKind,
-                                                   ownership: selectedOwnership, cursor: next)
+                                                   ownership: selectedOwnership, cursor: next, query: requestQuery)
                 }
             },
             searchableText: { "\($0.item.searchableText) \($0.account.label)" },
@@ -109,9 +138,16 @@ struct TemplatesScreen: View {
             ],
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.title) },
             accessoryToolbar: { AnyView(controls) },
+            reloadToken: reloadToken,
             row: { MergedRow(title: $0.item.title, subtitle: $0.item.subtitle, account: $0.account) },
-            detail: { TemplateDetailView(record: $0.item, account: $0.account).id($0.id) }
+            detail: {
+                TemplateDetailView(record: $0.item, account: $0.account, onChanged: { reloadToken += 1 }).id($0.id)
+            }
         )
+    }
+
+    private func beginCreation(_ account: Account) {
+        creationAccount = account
     }
 }
 

@@ -6,10 +6,20 @@ It includes path/query parameters, request-body schemas and referenced definitio
 
 ## Desktop and MCP
 
-The native screens provide common test, candidate, question, interview, user and team workflows.
-**API Explorer**, available from the main toolbar, exposes every documented operation, including interview-template management and sharing, question membership, ATS invites and SCIM provisioning.
-Choose an account and operation, review its request format, enter path/query/body JSON, and run it.
-Complete response status, headers and JSON are retained, including empty responses and HTTP 202 results.
+The native screens cover the published operations and request options:
+
+- Tests, candidates, questions, interviews, people, and teams expose resource actions and settings in their detail toolbar.
+- Templates have a **New Template** action, initial question selection, settings, deletion, and explicit sharing controls.
+  Invitation-email templates are a separate read-only API resource.
+- **Find Candidates** searches across tests; per-test search remains available in each assessment’s candidate list.
+- **Audit Logs** supports offset and cursor pagination, with all published filters.
+- **ATS Invitations** has separate assessment and interview workflows.
+- **Provisioning** manages SCIM users and groups with the account’s separate provisioning credential.
+
+Forms use native controls for booleans, enumerated choices, dates, arrays, and nested settings.
+Optional values distinguish keeping defaults from sending false, zero, empty text, or an empty list.
+Resource editors retrieve current settings and omit unchanged fields on partial updates.
+No operation picker, path/query JSON editor, or request console is needed.
 
 The embedded MCP server uses [HackerRankMCP](https://github.com/adamtheturtle/HackerRankMCP) for its tool catalogue and request handling.
 RankBuddy adapts its Keychain accounts and demo backend, and keeps activity logging, the account resource and triage prompt in the app.
@@ -23,7 +33,7 @@ The `api_` catalogue covers resource details, global candidate search, membershi
 
 Ordinary operations use the account's v3 personal token and configured HTTPS origin under `/x/api/v3`.
 SCIM uses `https://services.hackerrank.com/scim/v2` with a separate provisioning credential.
-Enter that credential in API Explorer while selecting a SCIM operation and choose **Save Token**.
+Enter that credential in the account editor’s **Provisioning token** field in Settings.
 It is stored in the account's Keychain item, independently of the ordinary token.
 MCP never accepts provisioning tokens as tool arguments or returns stored credentials.
 The demo account uses the in-process mock for both namespaces.
@@ -48,7 +58,8 @@ Account Activity uses the cursor audit endpoint, allowing traversal beyond the o
 Initial requests support user, source type/ID, timestamp range, sort and expansion filters.
 Later requests send only the opaque cursor from the preceding page.
 Cursors expire after inactivity, and refreshing starts a new traversal.
-Object and date filters are available in Account Activity; the Explorer exposes all documented audit filters and both pagination APIs.
+Object and date filters remain available in Account Activity.
+The **Audit Logs** destination exposes all documented filters and both pagination modes.
 The documented actor filter is `user`.
 
 ## Pagination and contract details
@@ -60,10 +71,21 @@ It preserves the PDF endpoint's fixed `format=url` query.
 Request bodies retain additional JSON fields, including the support-confirmed project `custom_system_prompt` field.
 Project AI prompts preserve whitespace and may contain up to 15,000 characters.
 
+## SCIM request shapes
+
+The native forms retain the service’s documented `diplayName` group-name key.
+SCIM emails use address objects with `value` and optional `primary` fields, matching the SDK’s typed requests and the service.
+SCIM patch requests use capitalized `Operations` and the PatchOp schema identifier.
+Each change supports an operation, an optional path, and a structured value.
+These wire details differ from parts of the legacy Swagger schema and have explicit request tests.
+
 ## Verification
 
 Unit and integration tests use synthetic data and the SDK's mock server.
-Coverage checks compare advertised `api_` tool names with the complete SDK catalogue and invoke every documented route without live credentials.
+Native coverage is recorded in [native-api-coverage.json](native-api-coverage.json).
+Tests verify the 76 source entry points, 319 documented nested body-field paths, path/query parameters, and enumerated choices against the pinned SDK catalogue.
+Request tests submit every operation from native form state through the SDK with a synthetic URL protocol, checking authentication, queries, and encoded bodies.
+Separate MCP tests compare advertised `api_` tool names with the SDK catalogue.
 These checks establish request routing and response handling, not live account permissions or the success of particular production mutations.
 
 ## Package adoption

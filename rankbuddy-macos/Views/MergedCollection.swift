@@ -57,84 +57,6 @@ enum MergedLoader {
         let byAccountID: [String: String]
     }
 
-    // swiftlint:disable function_body_length cyclomatic_complexity
-    /// Fetches each account's first page, tagging every item with its account. A partial failure
-    /// carries both the successful rows and per-account errors so the list can identify omitted
-    /// accounts and offer retry. Throws the underlying error when every account fails.
-    nonisolated static func firstPages<Item: Identifiable & Hashable & Sendable>(
-        accounts: [Account],
-        maxConcurrent: Int = 4,
-        fetch: @escaping @Sendable (Account) async throws -> [Item]
-    ) async throws -> [AccountScoped<Item>] {
-        guard !accounts.isEmpty else { return [] }
-
-        let limit = max(1, min(maxConcurrent, accounts.count))
-        let results = await withTaskGroup(
-            of: (Int, Result<[Item], any Error>).self,
-            returning: [(Int, Result<[Item], any Error>)].self
-        ) { group in
-            for (index, account) in accounts.prefix(limit).enumerated() {
-                group.addTask {
-                    do {
-                        let items = try await fetch(account)
-                        return (index, .success(items))
-                    } catch {
-                        return (index, .failure(error))
-                    }
-                }
-            }
-
-            var nextIndex = limit
-            var completed: [(Int, Result<[Item], any Error>)] = []
-            for await result in group {
-                completed.append(result)
-                if nextIndex < accounts.count {
-                    let index = nextIndex
-                    let account = accounts[index]
-                    group.addTask {
-                        do {
-                            let items = try await fetch(account)
-                            return (index, .success(items))
-                        } catch {
-                            return (index, .failure(error))
-                        }
-                    }
-                    nextIndex += 1
-                }
-            }
-            return completed
-        }
-
-        var scoped: [AccountScoped<Item>] = []
-        var firstError: (any Error)?
-        var failures: [MergedAccountFailure] = []
-        var anySuccess = false
-        for (index, result) in results.sorted(by: { $0.0 < $1.0 }) {
-            switch result {
-            case let .success(items):
-                anySuccess = true
-                scoped += items.map { AccountScoped(account: accounts[index], item: $0) }
-
-            case let .failure(error):
-                firstError = firstError ?? error
-                failures.append(MergedAccountFailure(
-                    account: accounts[index],
-                    message: error.localizedDescription
-                ))
-            }
-        }
-        if !anySuccess, let firstError {
-            throw firstError
-        }
-        if !failures.isEmpty {
-            throw PartialMergedPage<AccountScoped<Item>>(
-                page: Page(items: scoped, next: nil),
-                failures: failures
-            )
-        }
-        return scoped
-    }
-
     /// Loads one page from every account that still has data, encoding the independent backend
     /// cursors into one opaque cursor that `LoadableList` can pass back on its next request.
     nonisolated static func page<Item: Identifiable & Hashable & Sendable>(
@@ -210,7 +132,6 @@ enum MergedLoader {
 
         return try JSONEncoder().encode(Cursor(byAccountID: values)).base64EncodedString()
     }
-    // swiftlint:enable function_body_length cyclomatic_complexity
 }
 
 /// A merged-list row: the item's title/subtitle plus a trailing chip naming its source account,

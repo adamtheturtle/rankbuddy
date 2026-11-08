@@ -28,79 +28,11 @@ nonisolated enum TeamFieldValidation {
 struct CreateTeamSheet: View {
     let account: Account
     var onCreated: () -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var name = ""
-    @State private var isSending = false
-    @State private var errorMessage: String?
-    @State private var mutationTask: Task<Void, Never>?
-
-    private var trimmedName: String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Team name", text: $name)
-                } footer: {
-                    if trimmedName.count > TeamNameValidation.maxLength {
-                        Text("Team name can be at most \(TeamNameValidation.maxLength) characters.")
-                            .foregroundStyle(.red)
-                    }
-                }
-
-                if let errorMessage {
-                    Section {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.red)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-            .formStyle(.grouped)
-            .navigationTitle("New Team")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        mutationTask?.cancel()
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    if isSending {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Button("Create") { mutationTask = Task { await create() } }
-                            .disabled(!TeamNameValidation.isValid(trimmedName))
-                    }
-                }
-            }
-        }
-        .frame(width: 440, height: 240)
-        .interactiveDismissDisabled(isSending)
-        .onDisappear { mutationTask?.cancel() }
-    }
-
-    private func create() async {
-        guard TeamNameValidation.isValid(trimmedName) else { return }
-
-        isSending = true
-        errorMessage = nil
-        defer { isSending = false }
-        do {
-            try await HackerRankClient(account: account).createTeam(name: trimmedName)
-            onCreated()
-            dismiss()
-        } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
+        NativeFeatureFormSheet(title: "New Team", operationID: "api_create_team", account: account, onSaved: onCreated)
     }
 }
 
-/// A sheet that adds a member to a team (`POST /teams/{id}/users`, #59). Refreshes the
-/// members list on success.
 struct AddTeamMemberSheet: View {
     let teamID: String
     let account: Account

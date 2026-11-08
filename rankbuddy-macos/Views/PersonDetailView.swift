@@ -150,6 +150,7 @@ struct PersonDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayed.displayName)
+        .nativeResourceActions(.person, account: account, path: ["id": user.id], onSaved: onChanged)
         .task(id: teamResolutionKey) {
             await resolveTeamNames()
         }

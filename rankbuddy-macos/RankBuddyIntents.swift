@@ -23,6 +23,10 @@ enum RankBuddySectionOption: String, AppEnum {
     case people = "users"
     case teams
     case templates
+    case candidates
+    case auditLogs
+    case atsInvitations
+    case provisioning
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation {
         TypeDisplayRepresentation(name: "RankBuddy Section")
@@ -35,7 +39,11 @@ enum RankBuddySectionOption: String, AppEnum {
             .interviews: "Interviews",
             .templates: "Templates",
             .people: "People",
-            .teams: "Teams"
+            .teams: "Teams",
+            .candidates: "Find Candidates",
+            .auditLogs: "Audit Logs",
+            .atsInvitations: "ATS Invitations",
+            .provisioning: "Provisioning"
         ]
     }
 }

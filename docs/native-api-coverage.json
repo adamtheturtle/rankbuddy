@@ -1,0 +1,1489 @@
+{
+  "source": "https://www.hackerrank.com/work/apidocs",
+  "operations": [
+    {
+      "id": "api_create_user",
+      "screen": "Users \u2192 Create user",
+      "source": "rankbuddy-macos/Views/CreateUserSheet.swift",
+      "symbol": "\"api_create_user\"",
+      "parameters": [],
+      "body_fields": [
+        "candidates_permission",
+        "company_admin",
+        "country",
+        "email",
+        "firstname",
+        "interviews_permission",
+        "lastname",
+        "phone",
+        "questions_permission",
+        "role",
+        "send_email",
+        "shared_candidates_permission",
+        "shared_interviews_permission",
+        "shared_questions_permission",
+        "shared_tests_permission",
+        "team_admin",
+        "teams",
+        "teams[]",
+        "teams[].id",
+        "tests_permission"
+      ],
+      "enum_fields": {
+        "role": [
+          "recruiter",
+          "developer",
+          "interviewer",
+          "admin"
+        ],
+        "questions_permission": [
+          0,
+          3
+        ],
+        "tests_permission": [
+          0,
+          3
+        ],
+        "interviews_permission": [
+          0,
+          3
+        ],
+        "candidates_permission": [
+          0,
+          3
+        ],
+        "shared_questions_permission": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "shared_tests_permission": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "shared_interviews_permission": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "shared_candidates_permission": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "api_list_all_users",
+      "screen": "Users \u2192 List all users",
+      "source": "rankbuddy-macos/Views/PeopleScreen.swift",
+      "symbol": "\"api_list_all_users\"",
+      "parameters": [
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_retrieve_user",
+      "screen": "People \u2192 User Settings",
+      "source": "rankbuddy-macos/Views/NativeFeatureFormSheet.swift",
+      "symbol": "\"api_retrieve_user\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_user",
+      "screen": "Users \u2192 Update user",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_update_user\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [
+        "candidates_permission",
+        "company_admin",
+        "country",
+        "firstname",
+        "interviews_permission",
+        "lastname",
+        "phone",
+        "questions_permission",
+        "role",
+        "shared_candidates_permission",
+        "shared_interviews_permission",
+        "shared_questions_permission",
+        "shared_tests_permission",
+        "team_admin",
+        "tests_permission"
+      ],
+      "enum_fields": {
+        "role": [
+          "recruiter",
+          "developer",
+          "interviewer",
+          "admin"
+        ],
+        "questions_permission": [
+          0,
+          3
+        ],
+        "tests_permission": [
+          0,
+          3
+        ],
+        "interviews_permission": [
+          0,
+          3
+        ],
+        "candidates_permission": [
+          0,
+          3
+        ],
+        "shared_questions_permission": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "shared_tests_permission": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "shared_interviews_permission": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "shared_candidates_permission": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "api_lock_user",
+      "screen": "People \u2192 Lock User",
+      "source": "rankbuddy-macos/Views/PeopleScreen.swift",
+      "symbol": ".lockUser(",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_search_users",
+      "screen": "Users \u2192 Search users",
+      "source": "rankbuddy-macos/Views/PeopleScreen.swift",
+      "symbol": "\"api_search_users\"",
+      "parameters": [
+        "search",
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_create_team",
+      "screen": "Teams \u2192 Create team",
+      "source": "rankbuddy-macos/Views/TeamWriteFlows.swift",
+      "symbol": "\"api_create_team\"",
+      "parameters": [],
+      "body_fields": [
+        "departments",
+        "departments[]",
+        "developer_cap",
+        "invite_as",
+        "locations",
+        "locations[]",
+        "name",
+        "recruiter_cap"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_teams",
+      "screen": "Teams \u2192 List all teams",
+      "source": "rankbuddy-macos/Views/TeamsScreen.swift",
+      "symbol": "\"api_list_all_teams\"",
+      "parameters": [
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_retrieve_team",
+      "screen": "Teams \u2192 Team Settings",
+      "source": "rankbuddy-macos/Views/NativeFeatureFormSheet.swift",
+      "symbol": "\"api_retrieve_team\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_team",
+      "screen": "Teams \u2192 Update team",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_update_team\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [
+        "departments",
+        "departments[]",
+        "developer_cap",
+        "invite_as",
+        "locations",
+        "locations[]",
+        "name",
+        "recruiter_cap"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_deletes_team",
+      "screen": "Teams \u2192 Delete Team",
+      "source": "rankbuddy-macos/Views/TeamsScreen.swift",
+      "symbol": ".deleteTeam(",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_memberships",
+      "screen": "UserMembership \u2192 List all memberships",
+      "source": "rankbuddy-macos/Views/TeamsScreen.swift",
+      "symbol": "\"api_list_all_memberships\"",
+      "parameters": [
+        "team_id",
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_create_membership",
+      "screen": "UserMembership \u2192 Create membership",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_create_membership\"",
+      "parameters": [
+        "team_id",
+        "user_id",
+        "license"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_retrieve_membership",
+      "screen": "UserMembership \u2192 Retrieve membership",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_retrieve_membership\"",
+      "parameters": [
+        "team_id",
+        "user_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_removes_membership",
+      "screen": "Teams \u2192 Members \u2192 Remove",
+      "source": "rankbuddy-macos/Views/TeamsScreen.swift",
+      "symbol": ".removeTeamMember(",
+      "parameters": [
+        "team_id",
+        "user_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_tests",
+      "screen": "Tests \u2192 List all tests",
+      "source": "rankbuddy-macos/Views/TestsScreen.swift",
+      "symbol": "\"api_list_all_tests\"",
+      "parameters": [
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_create_test",
+      "screen": "Tests \u2192 Create test",
+      "source": "rankbuddy-macos/Views/TestWriteFlows.swift",
+      "symbol": "\"api_create_test\"",
+      "parameters": [],
+      "body_fields": [
+        "candidate_details",
+        "candidate_details[]",
+        "custom_acknowledge_text",
+        "cutoff_score",
+        "draft",
+        "duration",
+        "enable_acknowledgement",
+        "enable_advanced_proctoring",
+        "enable_ml_plagiarism_analysis",
+        "enable_photo_identification",
+        "enable_proctoring",
+        "enable_secure_assessment_mode",
+        "endtime",
+        "experience",
+        "experience[]",
+        "hide_compile_test",
+        "hide_template",
+        "ide_config",
+        "instructions",
+        "languages",
+        "languages[]",
+        "locked",
+        "master_password",
+        "mcq_correct_score",
+        "mcq_incorrect_score",
+        "name",
+        "questions",
+        "questions[]",
+        "role_ids",
+        "role_ids[]",
+        "shuffle_questions",
+        "starttime",
+        "tags",
+        "tags[]",
+        "test_admins",
+        "test_admins[]"
+      ],
+      "enum_fields": {
+        "draft": [
+          true,
+          false
+        ],
+        "experience": [
+          "Intern",
+          "New Graduate",
+          "0-2 years",
+          "2-5 years",
+          ">5 years",
+          "All Experience Levels"
+        ],
+        "ide_config": [
+          "ide_and_git",
+          "ide",
+          "git"
+        ]
+      }
+    },
+    {
+      "id": "api_retrieve_test",
+      "screen": "Tests \u2192 Retrieve test",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_retrieve_test\"",
+      "parameters": [
+        "id",
+        "additional_fields"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_test",
+      "screen": "Tests \u2192 Update test",
+      "source": "rankbuddy-macos/Views/TestWriteFlows.swift",
+      "symbol": "\"api_update_test\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [
+        "candidate_details",
+        "candidate_details[]",
+        "custom_acknowledge_text",
+        "cutoff_score",
+        "draft",
+        "duration",
+        "enable_acknowledgement",
+        "enable_advanced_proctoring",
+        "enable_ml_plagiarism_analysis",
+        "enable_photo_identification",
+        "enable_proctoring",
+        "enable_secure_assessment_mode",
+        "endtime",
+        "experience",
+        "experience[]",
+        "hide_compile_test",
+        "hide_template",
+        "ide_config",
+        "instructions",
+        "languages",
+        "languages[]",
+        "locked",
+        "master_password",
+        "mcq_correct_score",
+        "mcq_incorrect_score",
+        "name",
+        "questions",
+        "questions[]",
+        "role_ids",
+        "role_ids[]",
+        "shuffle_questions",
+        "starttime",
+        "tags",
+        "tags[]",
+        "test_admins",
+        "test_admins[]"
+      ],
+      "enum_fields": {
+        "draft": [
+          true,
+          false
+        ],
+        "experience": [
+          "Intern",
+          "New Graduate",
+          "0-2 years",
+          "2-5 years",
+          ">5 years",
+          "All Experience Levels"
+        ],
+        "ide_config": [
+          "ide_and_git",
+          "ide",
+          "git"
+        ]
+      }
+    },
+    {
+      "id": "api_deletes_test",
+      "screen": "Tests \u2192 Delete Test",
+      "source": "rankbuddy-macos/Views/TestDetailView.swift",
+      "symbol": ".deleteTest(",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_archives_test",
+      "screen": "Tests \u2192 Archive Test",
+      "source": "rankbuddy-macos/Views/TestDetailView.swift",
+      "symbol": ".archiveTest(",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_inviters_for_a_test",
+      "screen": "Tests \u2192 List all inviters for a test",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_list_all_inviters_for_a_test\"",
+      "parameters": [
+        "id",
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_search_candidates",
+      "screen": "Candidates \u2192 Search candidates",
+      "source": "rankbuddy-macos/NativeAdministration.swift",
+      "symbol": "\"api_search_candidates\"",
+      "parameters": [
+        "query",
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_candidates",
+      "screen": "TestCandidate \u2192 List all candidates",
+      "source": "rankbuddy-macos/Views/CandidatesView.swift",
+      "symbol": "\"api_list_all_candidates\"",
+      "parameters": [
+        "test_id",
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_invite_candidate",
+      "screen": "TestCandidate \u2192 Invite candidate",
+      "source": "rankbuddy-macos/Views/CandidatesView+InviteCandidateSheet.swift",
+      "symbol": "\"api_invite_candidate\"",
+      "parameters": [
+        "test_id"
+      ],
+      "body_fields": [
+        "accept_result_updates",
+        "accommodations",
+        "accommodations.additional_time_percent",
+        "ats_state",
+        "email",
+        "evaluator_email",
+        "force",
+        "force_reattempt",
+        "full_name",
+        "invite_metadata",
+        "invite_valid_from",
+        "invite_valid_to",
+        "message",
+        "send_email",
+        "subject",
+        "tags",
+        "tags[]",
+        "template",
+        "test_finish_url",
+        "test_result_url",
+        "webhook_authentication",
+        "webhook_authentication.data",
+        "webhook_authentication.data.password",
+        "webhook_authentication.data.token",
+        "webhook_authentication.data.username",
+        "webhook_authentication.type"
+      ],
+      "enum_fields": {
+        "webhook_authentication.type": [
+          "bearer_token",
+          "basic_auth"
+        ]
+      }
+    },
+    {
+      "id": "api_show_candidate",
+      "screen": "TestCandidate \u2192 Show candidate",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_show_candidate\"",
+      "parameters": [
+        "test_id",
+        "candidate_id",
+        "additional_fields"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_candidate",
+      "screen": "TestCandidate \u2192 Update candidate",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_update_candidate\"",
+      "parameters": [
+        "test_id",
+        "candidate_id"
+      ],
+      "body_fields": [
+        "accept_result_updates",
+        "accommodations",
+        "ats_state",
+        "evaluator_email",
+        "full_name",
+        "invite_metadata",
+        "invite_valid_from",
+        "invite_valid_to",
+        "tags",
+        "tags[]",
+        "test_finish_url",
+        "test_result_url",
+        "webhook_authentication",
+        "webhook_authentication.data",
+        "webhook_authentication.data.password",
+        "webhook_authentication.data.token",
+        "webhook_authentication.data.username",
+        "webhook_authentication.type"
+      ],
+      "enum_fields": {
+        "webhook_authentication.type": [
+          "bearer_token",
+          "basic_auth"
+        ]
+      }
+    },
+    {
+      "id": "api_get_report_pdf",
+      "screen": "Candidates \u2192 Report PDF",
+      "source": "rankbuddy-macos/Views/CandidateDetailView.swift",
+      "symbol": ".candidateReportPDF(",
+      "parameters": [
+        "test_id",
+        "candidate_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_delete_report",
+      "screen": "Candidates \u2192 Delete Report",
+      "source": "rankbuddy-macos/Views/CandidatesView.swift",
+      "symbol": ".deleteCandidateReport(",
+      "parameters": [
+        "test_id",
+        "candidate_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_cancel_invite",
+      "screen": "Candidates \u2192 Cancel Invitation",
+      "source": "rankbuddy-macos/Views/CandidatesView.swift",
+      "symbol": ".cancelCandidateInvite(",
+      "parameters": [
+        "test_id",
+        "candidate_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_search_test_candidates",
+      "screen": "TestCandidate \u2192 Search candidates",
+      "source": "rankbuddy-macos/Views/CandidatesView.swift",
+      "symbol": "\"api_search_test_candidates\"",
+      "parameters": [
+        "test_id",
+        "search",
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_interviews",
+      "screen": "Interviews \u2192 List all interviews",
+      "source": "rankbuddy-macos/Views/InterviewsScreen.swift",
+      "symbol": "\"api_list_all_interviews\"",
+      "parameters": [
+        "limit",
+        "offset",
+        "created_at",
+        "updated_at",
+        "ended_at",
+        "user",
+        "interviewers",
+        "access",
+        "current_status",
+        "order_by",
+        "order_dir"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_create_interview",
+      "screen": "Interviews \u2192 Create interview",
+      "source": "rankbuddy-macos/Views/InterviewWriteFlows.swift",
+      "symbol": "\"api_create_interview\"",
+      "parameters": [],
+      "body_fields": [
+        "ai_assistant_available",
+        "candidate",
+        "candidate.email",
+        "candidate.name",
+        "from",
+        "interview_template_id",
+        "interviewers",
+        "interviewers[]",
+        "metadata",
+        "notes",
+        "replace_interviewers",
+        "result_url",
+        "resume_url",
+        "send_email",
+        "title",
+        "to"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_show_interview",
+      "screen": "Interviews \u2192 Details",
+      "source": "rankbuddy-macos/Views/InterviewDetailView.swift",
+      "symbol": ".interview(id:",
+      "parameters": [
+        "interview_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_interview",
+      "screen": "Interviews \u2192 Update interview",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_update_interview\"",
+      "parameters": [
+        "interview_id"
+      ],
+      "body_fields": [
+        "ai_assistant_available",
+        "candidate",
+        "from",
+        "interview_template_id",
+        "interviewers",
+        "interviewers[]",
+        "metadata",
+        "notes",
+        "replace_interviewers",
+        "result_url",
+        "resume_url",
+        "send_email",
+        "title",
+        "to"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_delete_interview",
+      "screen": "Interviews \u2192 Delete Interview",
+      "source": "rankbuddy-macos/Views/InterviewDetailView.swift",
+      "symbol": ".deleteInterview(",
+      "parameters": [
+        "interview_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_get_interview_artifacts",
+      "screen": "Interviews \u2192 Get interview artifacts",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_get_interview_artifacts\"",
+      "parameters": [
+        "interview_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_show_interview_transcript",
+      "screen": "Interviews \u2192 Transcript",
+      "source": "rankbuddy-macos/Views/InterviewDetailView.swift",
+      "symbol": ".interviewTranscript(",
+      "parameters": [
+        "interview_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_show_interviewer_notes",
+      "screen": "Interviews \u2192 Show interviewer notes",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_show_interviewer_notes\"",
+      "parameters": [
+        "interview_id",
+        "note_ids"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_interviewer_note",
+      "screen": "Interviews \u2192 Update interviewer note",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_update_interviewer_note\"",
+      "parameters": [
+        "interview_id"
+      ],
+      "body_fields": [
+        "content"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_create_interview_template",
+      "screen": "Templates \u2192 New Template",
+      "source": "rankbuddy-macos/Views/TemplateWriteFlows.swift",
+      "symbol": ".createInterviewTemplate(",
+      "parameters": [],
+      "body_fields": [
+        "name",
+        "question_ids",
+        "question_ids[]",
+        "role_id"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_interview_templates",
+      "screen": "Interview Templates \u2192 List all interview templates",
+      "source": "rankbuddy-macos/Views/TemplatesScreen.swift",
+      "symbol": "\"api_list_all_interview_templates\"",
+      "parameters": [
+        "limit",
+        "offset",
+        "filter"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_show_interview_template",
+      "screen": "Templates \u2192 Details",
+      "source": "rankbuddy-macos/Templates.swift",
+      "symbol": ".interviewTemplate(",
+      "parameters": [
+        "template_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_interview_template",
+      "screen": "Templates \u2192 Template Settings",
+      "source": "rankbuddy-macos/Views/TemplateWriteFlows.swift",
+      "symbol": ".updateInterviewTemplate(",
+      "parameters": [
+        "template_id"
+      ],
+      "body_fields": [
+        "name",
+        "role_id",
+        "scorecard_id"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_delete_interview_template",
+      "screen": "Templates \u2192 Delete Template",
+      "source": "rankbuddy-macos/Views/TemplateDetailView.swift",
+      "symbol": ".deleteInterviewTemplate(",
+      "parameters": [
+        "template_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_add_questions_to_interview_template",
+      "screen": "Templates \u2192 Edit Questions \u2192 Add",
+      "source": "rankbuddy-macos/TemplateQuestionEditorModel.swift",
+      "symbol": ".addQuestionsToInterviewTemplate(",
+      "parameters": [
+        "template_id"
+      ],
+      "body_fields": [
+        "question_ids",
+        "question_ids[]"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_remove_question_from_interview_template",
+      "screen": "Templates \u2192 Edit Questions \u2192 Remove",
+      "source": "rankbuddy-macos/TemplateQuestionEditorModel.swift",
+      "symbol": ".removeQuestionFromInterviewTemplate(",
+      "parameters": [
+        "template_id",
+        "question_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_share_interview_template",
+      "screen": "Templates \u2192 Sharing \u2192 Share",
+      "source": "rankbuddy-macos/Views/TemplateWriteFlows.swift",
+      "symbol": ".shareInterviewTemplate(",
+      "parameters": [
+        "template_id"
+      ],
+      "body_fields": [
+        "explicit_roles",
+        "explicit_roles[]",
+        "explicit_roles[].role_name",
+        "explicit_roles[].rollable_id",
+        "explicit_roles[].rollable_type"
+      ],
+      "enum_fields": {
+        "explicit_roles[].rollable_type": [
+          "user",
+          "team",
+          "company"
+        ],
+        "explicit_roles[].role_name": [
+          "viewer",
+          "editor"
+        ]
+      }
+    },
+    {
+      "id": "api_unshare_interview_template",
+      "screen": "Templates \u2192 Sharing \u2192 Remove Access",
+      "source": "rankbuddy-macos/Views/TemplateWriteFlows.swift",
+      "symbol": ".unshareInterviewTemplate(",
+      "parameters": [
+        "template_id"
+      ],
+      "body_fields": [
+        "explicit_roles",
+        "explicit_roles[]",
+        "explicit_roles[].rollable_id",
+        "explicit_roles[].rollable_type"
+      ],
+      "enum_fields": {
+        "explicit_roles[].rollable_type": [
+          "user",
+          "team",
+          "company"
+        ]
+      }
+    },
+    {
+      "id": "api_list_all_questions",
+      "screen": "Questions \u2192 List all questions",
+      "source": "rankbuddy-macos/Views/QuestionsScreen.swift",
+      "symbol": "\"api_list_all_questions\"",
+      "parameters": [
+        "status",
+        "access",
+        "difficulty",
+        "type",
+        "owner",
+        "tags",
+        "skills",
+        "languages"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_create_question",
+      "screen": "Questions \u2192 Create Question",
+      "source": "rankbuddy-macos/Views/QuestionWriteFlows.swift",
+      "symbol": "\"api_create_question\"",
+      "parameters": [],
+      "body_fields": [
+        "answer",
+        "internal_notes",
+        "languages",
+        "languages[]",
+        "name",
+        "options",
+        "options[]",
+        "problem_statement",
+        "recommended_duration",
+        "tags",
+        "tags[]",
+        "type"
+      ],
+      "enum_fields": {
+        "type": [
+          "code",
+          "approx",
+          "mcq",
+          "multiple_mcq",
+          "whiteboard",
+          "file_upload",
+          "textAns"
+        ]
+      }
+    },
+    {
+      "id": "api_show_question",
+      "screen": "Questions \u2192 Details",
+      "source": "rankbuddy-macos/Views/QuestionDetailView.swift",
+      "symbol": ".question(id:",
+      "parameters": [
+        "question_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_question",
+      "screen": "Questions \u2192 Update question",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_update_question\"",
+      "parameters": [
+        "question_id"
+      ],
+      "body_fields": [
+        "answer",
+        "internal_notes",
+        "languages",
+        "languages[]",
+        "name",
+        "options",
+        "options[]",
+        "problem_statement",
+        "recommended_duration",
+        "tags",
+        "tags[]",
+        "type"
+      ],
+      "enum_fields": {
+        "type": [
+          "code",
+          "approx",
+          "mcq",
+          "multiple_mcq",
+          "whiteboard",
+          "file_upload",
+          "textAns"
+        ]
+      }
+    },
+    {
+      "id": "api_generate_codestubs",
+      "screen": "Questions \u2192 Generate codestubs",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_generate_codestubs\"",
+      "parameters": [
+        "question_id"
+      ],
+      "body_fields": [
+        "allowedLanguages",
+        "functionName",
+        "functionParams",
+        "functionReturn",
+        "type"
+      ],
+      "enum_fields": {
+        "type": [
+          "code",
+          "approx"
+        ]
+      }
+    },
+    {
+      "id": "api_update_codestubs",
+      "screen": "Questions \u2192 Update codestubs",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_update_codestubs\"",
+      "parameters": [
+        "question_id"
+      ],
+      "body_fields": [
+        "templates",
+        "templates[]",
+        "templates[].body",
+        "templates[].head",
+        "templates[].language",
+        "templates[].tail"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_add_testcase",
+      "screen": "Questions \u2192 Add testcase",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_add_testcase\"",
+      "parameters": [
+        "question_id"
+      ],
+      "body_fields": [
+        "explanation",
+        "input",
+        "name",
+        "output",
+        "qid",
+        "sample",
+        "score",
+        "type"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_update_testcase",
+      "screen": "Questions \u2192 Update testcase",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_update_testcase\"",
+      "parameters": [
+        "question_id",
+        "testcase_id"
+      ],
+      "body_fields": [
+        "explanation",
+        "input",
+        "name",
+        "output",
+        "qid",
+        "sample",
+        "score",
+        "type"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_delete_testcase",
+      "screen": "Questions \u2192 Delete testcase",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_delete_testcase\"",
+      "parameters": [
+        "question_id",
+        "testcase_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_delete_all_testcases",
+      "screen": "Questions \u2192 Delete All Testcases",
+      "source": "rankbuddy-macos/Views/QuestionDetailView.swift",
+      "symbol": ".deleteAllTestcases(",
+      "parameters": [
+        "question_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_invite_templates",
+      "screen": "Templates \u2192 List all invite templates",
+      "source": "rankbuddy-macos/Views/TemplatesScreen.swift",
+      "symbol": "\"api_list_all_invite_templates\"",
+      "parameters": [
+        "access"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_show_invite_template",
+      "screen": "Templates \u2192 Invitation Email Templates \u2192 Details",
+      "source": "rankbuddy-macos/Templates.swift",
+      "symbol": ".inviteTemplate(",
+      "parameters": [
+        "template_id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_list_all_audit_logs",
+      "screen": "AuditLogs \u2192 List all audit logs",
+      "source": "rankbuddy-macos/NativeAdministration.swift",
+      "symbol": "\"api_list_all_audit_logs\"",
+      "parameters": [
+        "limit",
+        "offset",
+        "user",
+        "source_type",
+        "source_id",
+        "created_at",
+        "sort",
+        "expand"
+      ],
+      "body_fields": [],
+      "enum_fields": {
+        "query.source_type": [
+          "attempt",
+          "company",
+          "interview",
+          "interview_attendant",
+          "library",
+          "question",
+          "team",
+          "test",
+          "test_candidate",
+          "user",
+          "user_membership"
+        ],
+        "query.sort": [
+          "created_at",
+          "-created_at"
+        ],
+        "query.expand": [
+          "user"
+        ]
+      }
+    },
+    {
+      "id": "api_list_all_audit_logs_cursored",
+      "screen": "AuditLogs \u2192 List all audit logs cursored",
+      "source": "rankbuddy-macos/NativeAdministration.swift",
+      "symbol": "\"api_list_all_audit_logs_cursored\"",
+      "parameters": [
+        "include_total",
+        "user",
+        "source_type",
+        "source_id",
+        "created_at",
+        "sort",
+        "expand",
+        "cursor"
+      ],
+      "body_fields": [],
+      "enum_fields": {
+        "query.source_type": [
+          "attempt",
+          "company",
+          "interview",
+          "interview_attendant",
+          "library",
+          "question",
+          "team",
+          "test",
+          "test_candidate",
+          "user",
+          "user_membership"
+        ],
+        "query.sort": [
+          "created_at",
+          "-created_at"
+        ],
+        "query.expand": [
+          "user"
+        ]
+      }
+    },
+    {
+      "id": "api_ats_candidate_invite",
+      "screen": "ATS CodeScreen \u2192 ATS Candidate Invite",
+      "source": "rankbuddy-macos/Views/AdministrationScreens.swift",
+      "symbol": "\"api_ats_candidate_invite\"",
+      "parameters": [],
+      "body_fields": [
+        "accept_result_updates",
+        "accommodations",
+        "accommodations.additional_time_percent",
+        "candidate_id",
+        "email",
+        "force",
+        "force_reattempt_after",
+        "requisition_id",
+        "send_email",
+        "test_id",
+        "test_result_url",
+        "webhook_authentication",
+        "webhook_authentication.data",
+        "webhook_authentication.data.password",
+        "webhook_authentication.data.token",
+        "webhook_authentication.data.username",
+        "webhook_authentication.type"
+      ],
+      "enum_fields": {
+        "webhook_authentication.type": [
+          "bearer_token",
+          "basic_auth"
+        ]
+      }
+    },
+    {
+      "id": "api_ats_interview_invite",
+      "screen": "ATS Codepair \u2192 ATS Interview Invite",
+      "source": "rankbuddy-macos/Views/AdministrationScreens.swift",
+      "symbol": "\"api_ats_interview_invite\"",
+      "parameters": [],
+      "body_fields": [
+        "candidate",
+        "candidate.email",
+        "candidate.name",
+        "candidate_id",
+        "interview_metadata",
+        "interview_metadata.aws_request_id",
+        "interview_metadata.first_name",
+        "interview_metadata.last_name",
+        "requisition_id",
+        "send_email",
+        "title"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_scim_list_users",
+      "screen": "SCIM v2 \u2192 List Users",
+      "source": "rankbuddy-macos/NativeAdministration.swift",
+      "symbol": "\"api_scim_list_users\"",
+      "parameters": [
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_scim_create_user",
+      "screen": "SCIM v2 \u2192 Create User",
+      "source": "rankbuddy-macos/Views/AdministrationScreens.swift",
+      "symbol": "\"api_scim_create_user\"",
+      "parameters": [],
+      "body_fields": [
+        "active",
+        "company_admin",
+        "emails",
+        "emails[]",
+        "name",
+        "role",
+        "team_admin",
+        "userName"
+      ],
+      "enum_fields": {
+        "role": [
+          "recruiter",
+          "developer",
+          "interviewer",
+          "admin"
+        ]
+      }
+    },
+    {
+      "id": "api_scim_retrieve_user",
+      "screen": "SCIM v2 \u2192 Retrieve User",
+      "source": "rankbuddy-macos/Views/AdministrationScreens.swift",
+      "symbol": "\"api_scim_retrieve_user\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_scim_edit_user_put",
+      "screen": "SCIM v2 \u2192 Edit User - PUT",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_scim_edit_user_put\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [
+        "active",
+        "company_admin",
+        "emails",
+        "emails[]",
+        "name",
+        "role",
+        "team_admin"
+      ],
+      "enum_fields": {
+        "role": [
+          "recruiter",
+          "developer",
+          "interviewer",
+          "admin"
+        ]
+      }
+    },
+    {
+      "id": "api_scim_edit_user_patch",
+      "screen": "SCIM v2 \u2192 Edit User - PATCH",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_scim_edit_user_patch\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [
+        "operations",
+        "operations[]",
+        "operations[].op",
+        "operations[].value"
+      ],
+      "enum_fields": {
+        "operations[].op": [
+          "add",
+          "replace",
+          "remove"
+        ]
+      }
+    },
+    {
+      "id": "api_scim_lock_user",
+      "screen": "SCIM v2 \u2192 Lock User",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_scim_lock_user\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_scim_list_teams",
+      "screen": "SCIM v2 \u2192 List Teams",
+      "source": "rankbuddy-macos/NativeAdministration.swift",
+      "symbol": "\"api_scim_list_teams\"",
+      "parameters": [
+        "limit",
+        "offset"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_scim_create_team",
+      "screen": "SCIM v2 \u2192 Create Team",
+      "source": "rankbuddy-macos/Views/AdministrationScreens.swift",
+      "symbol": "\"api_scim_create_team\"",
+      "parameters": [],
+      "body_fields": [
+        "diplayName"
+      ],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_scim_retrieve_team",
+      "screen": "SCIM v2 \u2192 Retrieve Team",
+      "source": "rankbuddy-macos/Views/AdministrationScreens.swift",
+      "symbol": "\"api_scim_retrieve_team\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    },
+    {
+      "id": "api_scim_update_team",
+      "screen": "SCIM v2 \u2192 Update Team",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_scim_update_team\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [
+        "operations",
+        "operations[]",
+        "operations[].op",
+        "operations[].value"
+      ],
+      "enum_fields": {
+        "operations[].op": [
+          "add",
+          "replace",
+          "remove"
+        ]
+      }
+    },
+    {
+      "id": "api_scim_deprovision_team",
+      "screen": "SCIM v2 \u2192 Deprovision Team",
+      "source": "rankbuddy-macos/NativeResourceActions.swift",
+      "symbol": "\"api_scim_deprovision_team\"",
+      "parameters": [
+        "id"
+      ],
+      "body_fields": [],
+      "enum_fields": {}
+    }
+  ]
+}

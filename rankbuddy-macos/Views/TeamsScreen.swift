@@ -19,14 +19,26 @@ struct TeamsScreen: View {
     @State private var createPresented = false
     @State var reloadToken = 0
 
+    @State var requestQuery: [URLQueryItem] = []
+
     var body: some View {
+        screen.nativeListFilters("api_list_all_teams", query: $requestQuery)
+    }
+
+    @ViewBuilder private var screen: some View {
         if store.isMergedView {
             mergedList
         } else if let account = store.currentAccount {
             LoadableList(
                 title: "Teams",
                 emptyMessage: "No teams",
-                loadPage: { try await HackerRankClient(account: account).teamsPage(after: $0) },
+                loadPage: { cursor in try await NativeListQuery.page(
+                    Team.self,
+                    client: HackerRankClient(account: account),
+                    operationID: "api_list_all_teams",
+                    query: requestQuery,
+                    cursor: cursor
+                ) },
                 searchableText: { "\($0.name) \($0.departments?.joined(separator: " ") ?? "")" },
                 sortOptions: [
                     SortOption("Name", systemImage: "textformat", kind: .text) {
@@ -41,7 +53,7 @@ struct TeamsScreen: View {
                     ListFacet("department", "Department", systemImage: "building.2") { $0.departments ?? [] },
                     ListFacet("location", "Location", systemImage: "mappin.and.ellipse") { $0.locations ?? [] }
                 ],
-                restorationKey: "selection.teams.\(account.id)",
+                restorationKey: requestQuery.isEmpty ? "selection.teams.\(account.id)" : nil,
                 contextMenu: { team in
                     rowMenuItems(
                         copyLabel: "Copy Name",
@@ -65,7 +77,9 @@ struct TeamsScreen: View {
                 detail: { TeamDetailView(team: $0, account: account) { reloadToken += 1 } }
             )
             .sheet(isPresented: $createPresented) {
-                CreateTeamSheet(account: account) { reloadToken += 1 }
+                CreateTeamSheet(account: account) {
+                    reloadToken += 1
+                }
             }
         } else {
             NavigationStack {
@@ -146,12 +160,20 @@ struct TeamMembersList: View {
     @State private var removalError: String?
     @State private var reloadToken = 0
 
+    @State private var requestQuery: [URLQueryItem] = []
+
     var body: some View {
+        screen.nativeListFilters("api_list_all_memberships", query: $requestQuery)
+    }
+
+    private var screen: some View {
         LoadableList(
             title: "Members",
             emptyMessage: "No members",
             loadPage: {
-                try await HackerRankClient(account: account).teamMembersPage(teamID: teamID, after: $0)
+                try await NativeListQuery.page(User.self, client: HackerRankClient(account: account),
+                                               operationID: "api_list_all_memberships", path: ["team_id": teamID],
+                                               query: requestQuery, cursor: $0)
             },
             searchableText: { "\($0.displayName) \($0.email) \($0.role ?? "")" },
             sortOptions: [
@@ -335,6 +357,7 @@ struct TeamDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayed.name)
+        .nativeResourceActions(.team, account: account, path: ["id": team.id, "team_id": team.id], onSaved: onChanged)
         .onChange(of: detailIdentity) { resetForSelectedTeam() }
         .toolbar(id: "teamDetail") {
             ToolbarItem(id: "delete") {

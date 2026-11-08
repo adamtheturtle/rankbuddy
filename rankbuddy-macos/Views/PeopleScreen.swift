@@ -22,7 +22,13 @@ struct PeopleScreen: View {
     @State private var userPendingLock: User?
     @State private var lockError: String?
 
+    @State var requestQuery: [URLQueryItem] = []
+
     var body: some View {
+        screen.nativeListFilters("api_list_all_users", query: $requestQuery)
+    }
+
+    @ViewBuilder private var screen: some View {
         if store.isMergedView {
             mergedList
         } else if let account = store.currentAccount {
@@ -34,9 +40,18 @@ struct PeopleScreen: View {
                 // search query goes to the server (#104), so a name match isn't gated on having
                 // paged that member in; while a facet is active the list auto-pages (bounded by
                 // `searchPageCap`) so the facet still scans most of a large org (#86).
-                loadPage: { try await HackerRankClient(account: account).usersPage(after: $0) },
+                loadPage: { cursor in try await NativeListQuery.page(
+                    User.self,
+                    client: HackerRankClient(account: account),
+                    operationID: "api_list_all_users",
+                    query: requestQuery,
+                    cursor: cursor
+                ) },
                 serverSearch: { query, cursor in
-                    try await HackerRankClient(account: account).searchUsers(query: query, after: cursor)
+                    try await NativeListQuery.page(User.self, client: HackerRankClient(account: account),
+                                                   operationID: "api_search_users",
+                                                   query: requestQuery + [URLQueryItem(name: "search", value: query)],
+                                                   cursor: cursor)
                 },
                 searchableText: { "\($0.displayName) \($0.email) \($0.role ?? "")" },
                 sortOptions: [
@@ -62,7 +77,7 @@ struct PeopleScreen: View {
                 // People is bounded (a few thousand), so allow a deeper auto-load while a facet
                 // filter is active than the default, so the facet scans most of the org (#86).
                 searchPageCap: 40,
-                restorationKey: "selection.users.\(account.id)",
+                restorationKey: requestQuery.isEmpty ? "selection.users.\(account.id)" : nil,
                 contextMenu: { user in
                     var items = rowMenuItems(
                         copyLabel: "Copy Email",
@@ -92,7 +107,9 @@ struct PeopleScreen: View {
                 detail: { PersonDetailView(user: $0, account: account) { reloadToken += 1 } }
             )
             .sheet(isPresented: $createPresented) {
-                CreateUserSheet(account: account) { reloadToken += 1 }
+                CreateUserSheet(account: account) {
+                    reloadToken += 1
+                }
             }
             .confirmationDialog(
                 "Lock user?",
@@ -155,203 +172,6 @@ struct PeopleScreen: View {
     }
 }
 
-/// A sheet that creates an organisation user (#58) — a write flow. Refreshes the list on success.
-struct CreateUserSheet: View {
-    let account: Account
-    var onCreated: () -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var email = ""
-    @State private var firstName = ""
-    @State private var lastName = ""
-    @State private var role = "recruiter"
-    @State private var teams: [Team] = []
-    @State private var selectedTeamID: String?
-    @State private var teamsError: String?
-    @State private var isLoadingTeams = false
-    @State private var isSending = false
-    @State private var errorMessage: String?
-    @State private var mutationTask: Task<Void, Never>?
-
-    private static let roles = organisationUserRoles
-    private static let maxEmailLength = 320
-
-    private var trimmedEmail: String {
-        email.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var trimmedFirstName: String {
-        firstName.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var trimmedLastName: String {
-        lastName.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var isEmailValid: Bool {
-        trimmedEmail.count <= Self.maxEmailLength && EmailValidation.isLikelyValid(trimmedEmail)
-    }
-
-    /// The API requires email, firstname, role, and at least one team on POST /users (it
-    /// rejects the request with HTTP 400 "Parameter … is required" otherwise); the last
-    /// name is genuinely optional.
-    private var canCreate: Bool {
-        isEmailValid && !trimmedFirstName.isEmpty && selectedTeamID != nil && nameValidationIssue == nil
-    }
-
-    private var nameValidationIssue: String? {
-        UserNameValidation.issue(firstName: trimmedFirstName, lastName: trimmedLastName)
-    }
-
-    private var shouldShowEmailValidation: Bool {
-        !trimmedEmail.isEmpty && !isEmailValid
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Email", text: $email)
-                        .textContentType(.emailAddress)
-                        .disableAutocorrection(true)
-                    if shouldShowEmailValidation {
-                        Label(
-                            "Enter a valid email address, for example name@example.com.",
-                            systemImage: "exclamationmark.triangle"
-                        )
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                    }
-                    TextField("First name", text: $firstName)
-                    TextField("Last name (optional)", text: $lastName)
-                    if let nameValidationIssue {
-                        Label(nameValidationIssue, systemImage: "exclamationmark.triangle")
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                    }
-                    Picker("Role", selection: $role) {
-                        ForEach(Self.roles, id: \.self) { Text(DisplayFormat.enumLabel($0)).tag($0) }
-                    }
-                    Picker("Team", selection: $selectedTeamID) {
-                        Text(teams.isEmpty ? "Loading teams…" : "Choose a team").tag(String?.none)
-                        ForEach(teams) { team in
-                            Text(team.name).tag(Optional(team.id))
-                        }
-                    }
-                    if let teamsError {
-                        Label(teamsError, systemImage: "exclamationmark.triangle")
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Button("Retry Teams") {
-                            Task { await loadTeams() }
-                        }
-                        .disabled(isLoadingTeams)
-                    }
-                }
-
-                if let errorMessage {
-                    Section {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.red)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-            .formStyle(.grouped)
-            .navigationTitle("Create User")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        mutationTask?.cancel()
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    if isSending {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Button("Create") { mutationTask = Task { await create() } }
-                            .disabled(!canCreate)
-                            .help(canCreate
-                                ? "Create user"
-                                : "Enter a valid email address, a first name, and a team to create a user")
-                    }
-                }
-            }
-        }
-        // Grow the sheet when the error section appears so the form doesn't have to scroll to
-        // show it (server messages can wrap to a few lines).
-        .frame(width: 440, height: errorMessage == nil ? 360 : 460)
-        .interactiveDismissDisabled(isSending)
-        .onDisappear { mutationTask?.cancel() }
-        .task { await loadTeams() }
-    }
-
-    /// Loads the organisation's complete team collection for the required picker. Cursor-cycle
-    /// and empty-page validation stop malformed pagination without silently truncating large orgs.
-    private func loadTeams() async {
-        guard !isLoadingTeams else { return }
-
-        isLoadingTeams = true
-        defer { isLoadingTeams = false }
-        teamsError = nil
-        let client = HackerRankClient(account: account)
-        var loaded: [Team] = []
-        var cursor: String?
-        var seenCursors: Set<String> = []
-        var seenTeamIDs: Set<String> = []
-        do {
-            repeat {
-                let page = try await client.teamsPage(after: cursor)
-                CreateUserTeamPaging.appendUnique(
-                    page.items,
-                    to: &loaded,
-                    seenIDs: &seenTeamIDs,
-                    id: \.id
-                )
-                cursor = try CreateUserTeamPaging.next(
-                    page.next,
-                    itemCount: page.items.count,
-                    seen: &seenCursors
-                )
-            } while cursor != nil
-            teams = loaded
-            if teams.isEmpty {
-                teamsError = "No teams found. HackerRank requires a team to create a user."
-            }
-        } catch {
-            // A failed follow-up page keeps the teams already loaded — the picker is still
-            // usable; only surface the error when there is nothing to choose from.
-            teams = loaded
-            teamsError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
-    }
-
-    private func create() async {
-        guard canCreate else { return }
-
-        isSending = true
-        errorMessage = nil
-        defer { isSending = false }
-        guard let selectedTeamID else { return }
-
-        do {
-            try await HackerRankClient(account: account).createUser(
-                email: trimmedEmail,
-                firstName: trimmedFirstName,
-                role: role,
-                teamIDs: [selectedTeamID],
-                lastName: trimmedLastName
-            )
-            onCreated()
-            dismiss()
-        } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
-    }
-}
-
 extension User {
     /// The user's full name, or their email when no name is set. `nonisolated` so the
     /// nonisolated `DetailWindowValue.windowTitle` can use it — it's pure computation.
@@ -364,7 +184,6 @@ extension User {
     }
 }
 
-/// One row in the people list.
 struct PersonRow: View {
     let user: User
 

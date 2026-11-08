@@ -16,14 +16,26 @@ struct QuestionsScreen: View {
     @State private var reloadToken = 0
     @State private var createPresented = false
 
+    @State var requestQuery: [URLQueryItem] = []
+
     var body: some View {
+        screen.nativeListFilters("api_list_all_questions", query: $requestQuery)
+    }
+
+    @ViewBuilder private var screen: some View {
         if store.isMergedView {
             mergedList
         } else if let account = store.currentAccount {
             LoadableList(
                 title: "Questions",
                 emptyMessage: "No questions",
-                loadPage: { try await HackerRankClient(account: account).questionsPage(after: $0) },
+                loadPage: { cursor in try await NativeListQuery.page(
+                    Question.self,
+                    client: HackerRankClient(account: account),
+                    operationID: "api_list_all_questions",
+                    query: requestQuery,
+                    cursor: cursor
+                ) },
                 searchableText: { "\($0.name) \($0.type) \($0.tags?.joined(separator: " ") ?? "")" },
                 sortOptions: [
                     SortOption("Name", systemImage: "textformat", kind: .text) {
@@ -42,7 +54,7 @@ struct QuestionsScreen: View {
                                    return lhs > rhs
                                })
                 ],
-                restorationKey: "selection.questions.\(account.id)",
+                restorationKey: requestQuery.isEmpty ? "selection.questions.\(account.id)" : nil,
                 contextMenu: { question in
                     rowMenuItems(
                         copyLabel: "Copy Name",
@@ -112,7 +124,9 @@ struct QuestionsScreen: View {
                 }
             )
             .sheet(isPresented: $createPresented) {
-                NewQuestionSheet(account: account) { reloadToken += 1 }
+                NewQuestionSheet(account: account) {
+                    reloadToken += 1
+                }
             }
         } else {
             NavigationStack {
@@ -134,7 +148,8 @@ struct QuestionsScreen: View {
     /// Loads one merged page of questions across every configured account (#17).
     private func loadMergedQuestions(_ cursor: String?) async throws -> Page<AccountScoped<Question>> {
         try await MergedLoader.page(accounts: store.accounts, cursor: cursor) {
-            try await HackerRankClient(account: $0).questionsPage(after: $1)
+            try await NativeListQuery.page(Question.self, client: HackerRankClient(account: $0),
+                                           operationID: "api_list_all_questions", query: requestQuery, cursor: $1)
         }
     }
 
