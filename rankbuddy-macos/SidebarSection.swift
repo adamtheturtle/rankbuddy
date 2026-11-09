@@ -36,7 +36,7 @@ nonisolated enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
         case .templates: "Templates"
         case .people: "People"
         case .teams: "Teams"
-        case .candidates: "Find Candidates"
+        case .candidates: "Candidates"
         case .auditLogs: "Audit Logs"
         case .atsInvitations: "ATS Invitations"
         case .provisioning: "Provisioning"
