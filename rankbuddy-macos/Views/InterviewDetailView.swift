@@ -224,7 +224,13 @@ struct InterviewDetailView: View {
             webURL: URL.remoteWebURL(from: interview.url)
         )
         .windowToolbar(id: "interviewDetail") {
-            DetailLinkToolbarContent(url: URL.remoteWebURL(from: interview.url), noun: "interview")
+            DetailLinkToolbarContent(
+                url: URL.remoteWebURL(from: interview.url), noun: "interview",
+                favorite: owningAccount.map {
+                    FavoriteRef(accountID: $0.id.uuidString, collection: .interviews,
+                                itemID: interview.id, title: displayTitle)
+                }
+            )
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Interview: \(displayTitle)") {
                     InterviewReport(data: reportData)

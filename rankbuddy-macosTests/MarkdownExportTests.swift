@@ -178,7 +178,7 @@ struct MarkdownExportTests {
         #expect(revealed.contains("- **Access password:** secret"))
     }
 
-    @Test func `question export includes rich detail while respecting answer reveal`() throws {
+    @Test func `question documents include confidential detail only for interviewers`() throws {
         let question = try JSONDecoder().decode(
             Question.self,
             from: Data(#"{"id":"q1","name":"SQL","type":"mcq","status":"active"}"#.utf8)
@@ -198,15 +198,49 @@ struct MarkdownExportTests {
         let revealed = MarkdownExport.question(QuestionReportData(
             question: question,
             detail: detail,
-            includeCorrectAnswer: true
+            audience: .interviewer
         ))
 
         #expect(hidden.contains("- **Option 1:** JOIN"))
-        #expect(hidden.contains("## Internal notes\nUse joins."))
+        #expect(!hidden.contains("Use joins."))
+        #expect(!hidden.contains("## Internal notes"))
         #expect(!hidden.contains("correct"))
         #expect(revealed.contains("- **Option 1:** JOIN \\(correct\\)"))
         #expect(revealed.contains("## Correct answer\nJOIN"))
+        #expect(revealed.contains("## Internal notes\nUse joins."))
         #expect(revealed.contains("- **Option 2:** SELECT & PROJECT"))
         #expect(!revealed.contains("<b>"))
+    }
+
+    @Test func `candidate report data omits internal metadata and AI instructions`() throws {
+        let question = try JSONDecoder().decode(Question.self, from: Data(#"""
+        {"id":"q1","unique_id":"internal-id","name":"Prompt","type":"fullstack",
+         "problem_statement":"Candidate instructions","status":"draft","owner":"123",
+         "created_at":"2026-05-02T10:00:00Z","tags":["rubric"],"skills":["Secret level"],
+         "custom_system_prompt":"Confidential AI instruction","languages":["python3"]}
+        """#.utf8))
+        let candidate = QuestionReportData(question: question)
+        let interviewer = QuestionReportData(question: question, audience: .interviewer)
+        // The printable view consumes this same projection, rather than the unfiltered question.
+        #expect(candidate.question.uniqueID == nil)
+        #expect(candidate.question.owner == nil)
+        #expect(candidate.question.status == nil)
+        #expect(candidate.question.createdAt == nil)
+        #expect(candidate.question.tags == nil)
+        #expect(candidate.question.skills == nil)
+        #expect(candidate.question.customSystemPrompt == nil)
+        #expect(candidate.question.problemStatement == "Candidate instructions")
+        #expect(candidate.question.languages == ["python3"])
+        let candidateMarkdown = MarkdownExport.question(candidate)
+        let interviewerMarkdown = MarkdownExport.question(interviewer)
+        #expect(candidateMarkdown.contains("Candidate instructions"))
+        #expect(!candidateMarkdown.contains("**Unique ID:**"))
+        #expect(!candidateMarkdown.contains("**Status:**"))
+        #expect(interviewer.question.uniqueID == "internal-id")
+        #expect(interviewer.question.status == "draft")
+        for confidential in ["rubric", "Secret level", "Confidential AI instruction"] {
+            #expect(!candidateMarkdown.contains(confidential))
+            #expect(interviewerMarkdown.contains(confidential))
+        }
     }
 }

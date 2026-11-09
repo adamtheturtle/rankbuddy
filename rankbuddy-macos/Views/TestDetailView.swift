@@ -233,7 +233,9 @@ struct TestDetailView: View {
         .windowToolbar(id: "testDetail") {
             DetailLinkToolbarContent(
                 url: RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: displayedTest.id),
-                noun: "test"
+                noun: "test",
+                favorite: FavoriteRef(accountID: account.id.uuidString, collection: .tests,
+                                      itemID: displayedTest.id, title: displayedTest.name)
             )
             ToolbarItem(id: "edit") {
                 Menu {

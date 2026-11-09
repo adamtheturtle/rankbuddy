@@ -511,11 +511,7 @@ private extension LoadableList {
             if let detailItem {
                 detail(detailItem)
             } else {
-                CompactStateView(
-                    title: "No Selection",
-                    systemImage: "square.righthalf.filled",
-                    message: "Select a row in \(title) to inspect its details."
-                )
+                DetailSelectionPlaceholder(collectionTitle: title)
             }
         }
     }

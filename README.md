@@ -20,6 +20,8 @@ Work with the documented HackerRank API through native screens, with an embedded
 - Cursor-based **Account Activity**, with object and date filters.
 - Per-list **search**, **sorting** (remembered across launches), pull-to-refresh, and loading / empty / error states.
 - Right-click **context menus** to copy a row's primary text or open/copy its web link.
+- Favourite tests, questions, and interviews from their list rows or detail toolbars, including standalone windows.
+- Print or export **candidate** and **interviewer** question copies, with confidential content included only in interviewer copies.
 - A ⌘K **command palette** with fuzzy ranking and full keyboard navigation.
 - A **menu bar extra** for quick section switching.
 
@@ -30,6 +32,7 @@ Work with the documented HackerRank API through native screens, with an embedded
 | ⌘1 / ⌘2 / ⌘3 | Jump to Tests / Questions / Interviews |
 | ⌘K | Open the command palette |
 | ⌘R | Refresh the current list |
+| ⇧⌘K | Reset search and filters in the active list |
 
 ## Demo mode
 

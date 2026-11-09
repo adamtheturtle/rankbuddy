@@ -39,8 +39,12 @@ struct DetailLinkToolbarContent: CustomizableToolbarContent {
     let url: URL?
     /// The noun used in the help / accessibility text (e.g. "test", "interview", "question").
     var noun: String
+    var favorite: FavoriteRef?
 
     var body: some CustomizableToolbarContent {
+        ToolbarItem(id: "favorite", placement: .primaryAction) {
+            DetailFavoriteButton(reference: favorite)
+        }
         if let url {
             ToolbarItem(id: "share", placement: .primaryAction) {
                 ShareLink(item: url) {

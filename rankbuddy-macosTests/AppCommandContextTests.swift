@@ -9,6 +9,35 @@ import Testing
 
 @MainActor
 struct AppCommandContextTests {
+    @Test func `filter reset follows the active list and clears when lists close`() {
+        let context = AppCommandContext()
+        let mainOwner = UUID()
+        let secondOwner = UUID()
+        let recorder = FilterResetRecorder()
+        context.registerListActions(owner: mainOwner, actions: .init(
+            primaryNew: nil, secondaryNew: nil, exportCSV: nil, exportSelectedCSV: nil,
+            refresh: .init(title: "Refresh Main") {},
+            resetFilters: .init(title: "Reset Main") { recorder.owners.append(mainOwner) }
+        ))
+        context.registerListActions(owner: secondOwner, actions: .init(
+            primaryNew: nil, secondaryNew: nil, exportCSV: nil, exportSelectedCSV: nil,
+            refresh: .init(title: "Refresh Second") {},
+            resetFilters: .init(title: "Reset Second") { recorder.owners.append(secondOwner) }
+        ))
+        context.activateListActions(owner: secondOwner)
+        context.resetFilters?.perform()
+        context.deactivateListActions(owner: secondOwner)
+        #expect(context.resetFilters == nil)
+        context.activateListActions(owner: mainOwner)
+        context.resetFilters?.perform()
+        context.activateListActions(owner: secondOwner)
+        context.clearListActions(owner: mainOwner)
+        context.resetFilters?.perform()
+        #expect(recorder.owners == [secondOwner, mainOwner, secondOwner])
+        context.clearListActions(owner: secondOwner)
+        #expect(context.resetFilters == nil)
+    }
+
     @Test func `removing one detail owner restores the previous commands`() {
         let context = AppCommandContext()
         let mainOwner = UUID()
@@ -73,4 +102,8 @@ struct AppCommandContextTests {
         context.activateDetailActions(owner: windowOwner)
         #expect(context.print?.title == "Print Window")
     }
+}
+
+@MainActor private final class FilterResetRecorder {
+    var owners: [UUID] = []
 }

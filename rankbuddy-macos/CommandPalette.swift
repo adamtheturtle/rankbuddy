@@ -308,6 +308,8 @@ struct AppCommands: Commands {
                 detailPaneHidden.toggle()
             }
             .keyboardShortcut("d", modifiers: [.command, .control])
+            CommandActionButton(action: commandContext.resetFilters, fallbackTitle: "Reset Filters")
+                .keyboardShortcut("k", modifiers: [.command, .shift])
         }
 
         CommandMenu("Go") {

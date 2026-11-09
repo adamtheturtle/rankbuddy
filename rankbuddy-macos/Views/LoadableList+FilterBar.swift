@@ -87,15 +87,16 @@ extension LoadableList {
                 }
 
                 if hasActiveFilters {
-                    Button(role: .destructive) {
+                    Button {
                         clearAllFilters()
                     } label: {
-                        Label("Clear", systemImage: "xmark.circle.fill")
+                        Label("Reset", systemImage: "arrow.counterclockwise")
                             .labelStyle(.titleAndIcon)
                     }
                     .buttonStyle(.borderless)
                     .controlSize(.small)
-                    .help("Clear all filters")
+                    .help("Reset search and filters (⇧⌘K)")
+                    .accessibilityLabel("Reset filters")
                 }
             }
             .font(.callout)
@@ -104,6 +105,8 @@ extension LoadableList {
             // Leading-align against the window edge, matching PadBuddy's filter bar; without this
             // the flow centres a partly-filled row in the column, which reads as unpolished (#109).
             .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(filterAccessibilitySummary)
             .alert("Save Search", isPresented: $isNamingSearch) {
                 TextField("Name", text: $newSearchName)
                     .onChange(of: newSearchName) {
@@ -123,6 +126,23 @@ extension LoadableList {
     }
 
     // MARK: - Facet chip (PadBuddy's capsule vocabulary)
+
+    private var filterAccessibilitySummary: String {
+        var active: [String] = []
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            active.append("Search: \(query)")
+        }
+        if let dateRange {
+            active.append("\(dateFilterLabel): \(DisplayFormat.enumLabel(dateRange))")
+        }
+        for facet in facets {
+            let values = selectedFacets[facet.id] ?? []
+            if !values.isEmpty {
+                active.append("\(facet.label): \(values.sorted().formatted())")
+            }
+        }
+        return active.isEmpty ? "Filters, none active" : "Active filters: \(active.formatted())"
+    }
 
     private func facetChip(_ facet: ListFacet<Item>) -> some View {
         let options = ListQuery.facetOptions(facet, in: items)

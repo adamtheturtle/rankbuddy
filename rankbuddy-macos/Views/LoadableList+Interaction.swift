@@ -227,7 +227,10 @@ extension LoadableList {
                 secondaryNew: secondaryMenuAction,
                 exportCSV: exportCSV,
                 exportSelectedCSV: exportSelectedCSV,
-                refresh: refresh
+                refresh: refresh,
+                resetFilters: AppCommandContext.Action(
+                    title: "Reset Filters", isEnabled: { hasActiveFilters }, perform: clearAllFilters
+                )
             )
         )
     }

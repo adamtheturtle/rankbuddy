@@ -41,6 +41,7 @@ struct QuestionDetailView: View {
     @State private var customStubPresented = false
     @State private var commandOwner = UUID()
     @State var selectedPane: QuestionDetailPane = .overview
+    @State var documentAction: QuestionDocumentAction?
 
     init(question: Question, account: Account? = nil, onChanged: @escaping () -> Void = {}) {
         self.question = question
@@ -59,10 +60,6 @@ struct QuestionDetailView: View {
     /// The freshest copy of the question: saved edits overlay the detail metadata, then the list row.
     var displayed: Question {
         editOverlay.applying(to: detailQuestion ?? question)
-    }
-
-    private var reportData: QuestionReportData {
-        QuestionReportData(question: displayed, detail: detail, includeCorrectAnswer: answerRevealed)
     }
 
     /// Editing needs a single owning account, so the merged view stays read-only.
@@ -155,17 +152,20 @@ struct QuestionDetailView: View {
                 url: owningAccount.flatMap {
                     RankBuddyUserActivity.webURL(base: $0.baseURL, collection: .questions, itemID: question.id)
                 },
-                noun: "question"
+                noun: "question",
+                favorite: owningAccount.map {
+                    FavoriteRef(accountID: $0.id.uuidString, collection: .questions,
+                                itemID: question.id, title: displayed.name)
+                }
             )
             ToolbarItem(id: "print") {
-                PrintReportButton(jobTitle: "Question: \(displayed.name)") {
-                    QuestionReport(data: reportData)
-                }
+                Button("Print", systemImage: "printer") { documentAction = .print }
+                    .help("Print a candidate or interviewer copy")
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "exportMarkdown") {
-                let snapshot = reportData
-                MarkdownExportButton(suggestedName: snapshot.question.name) { MarkdownExport.question(snapshot) }
+                Button("Export as Markdown", systemImage: "doc.richtext") { documentAction = .exportMarkdown }
+                    .help("Export a candidate or interviewer copy")
             }
             .defaultCustomization(.hidden)
             ToolbarItem(id: "delete") {
@@ -178,6 +178,15 @@ struct QuestionDetailView: View {
                 .disabled(owningAccount == nil || isDeletingQuestion)
             }
             .defaultCustomization(.hidden)
+        }
+        .confirmationDialog(documentAction?.title ?? "Choose Document Audience",
+                            isPresented: documentAudiencePresented, titleVisibility: .visible) {
+            documentAudienceButtons
+        } message: {
+            Text("""
+            Candidate copies include the prompt and options. \
+            Interviewer copies also include internal notes, answers and AI instructions.
+            """)
         }
         .confirmationDialog("Delete “\(displayed.name)”?", isPresented: $deletePresented, titleVisibility: .visible) {
             Button("Delete Question", role: .destructive) {
@@ -355,14 +364,10 @@ extension QuestionDetailView {
         commandContext.registerDetailActions(
             owner: commandOwner,
             print: AppCommandContext.Action(title: "Print Question…") {
-                printReport(QuestionReport(data: reportData), jobTitle: "Question: \(displayed.name)")
+                documentAction = .print
             },
             exportMarkdown: AppCommandContext.Action(title: "Export Question as Markdown…") {
-                let snapshot = reportData
-                MarkdownExport.save(
-                    { MarkdownExport.question(snapshot) },
-                    suggestedName: snapshot.question.name
-                )
+                documentAction = .exportMarkdown
             }
         )
     }
