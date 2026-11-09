@@ -13,8 +13,8 @@ import SwiftUI
 /// appearance (and when the account changes) and pages in more on demand.
 struct AccountActivityView: View {
     @Environment(AccountStore.self) private var store
+    @Environment(\.openWindow) private var openWindow
 
-    @State private var selectedAccountID: Account.ID?
     @State private var entries: [AuditLogEntry] = []
     @State private var nextCursor: String?
     @State private var phase: Phase = .loading
@@ -38,9 +38,17 @@ struct AccountActivityView: View {
     }
 
     var body: some View {
-        if let account = activityAccount {
+        if store.isMergedView {
+            ContentUnavailableView {
+                Label("Choose an Account", systemImage: "person.crop.circle")
+            } description: {
+                Text("Select one account at the bottom of the main window’s sidebar to see its activity.")
+            } actions: {
+                Button("Show Main Window") { openWindow(id: WindowID.main) }
+            }
+        } else if let account = activityAccount {
             VStack(spacing: 0) {
-                accountPicker(selectedAccount: account)
+                accountHeader(account)
                 AccountActivityFilters(sourceType: $sourceType, dateRange: $dateRange,
                                        isLoading: phase == .loading || isLoadingMore) {
                     Task { await reload(account: account) }
@@ -48,7 +56,7 @@ struct AccountActivityView: View {
                 Divider()
                 stateView(account: account)
             }
-            .task(id: account.id) { await reload(account: account) }
+            .task(id: account) { await reload(account: account) }
             .toolbar {
                 ToolbarItem {
                     Button {
@@ -67,45 +75,25 @@ struct AccountActivityView: View {
                 }
             )
         } else {
-            ContentUnavailableView(
-                "No Account",
-                systemImage: "person.crop.circle.badge.questionmark",
-                description: Text("Add an account to see its activity.")
-            )
+            NoAccountView()
         }
     }
 
     private var activityAccount: Account? {
-        if let selectedAccountID,
-           let selected = store.accounts.first(where: { $0.id == selectedAccountID }) {
-            return selected
-        }
-        return store.currentAccount ?? store.accounts.first
+        store.isMergedView ? nil : store.currentAccount
     }
 
-    private func accountPicker(selectedAccount: Account) -> some View {
+    private func accountHeader(_ account: Account) -> some View {
         HStack {
-            Label("Showing activity for", systemImage: selectedAccount.displayIcon)
+            Label("Showing activity for", systemImage: account.displayIcon)
                 .foregroundStyle(.secondary)
-            Picker(
-                "Account",
-                selection: Binding(
-                    get: { selectedAccount.id },
-                    set: { selectedAccountID = $0 }
-                )
-            ) {
-                ForEach(store.accounts) { account in
-                    Text(account.label).tag(account.id)
-                }
-            }
-            .labelsHidden()
-            .fixedSize()
+            Text(account.label).fontWeight(.medium)
             Spacer()
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(.bar)
-        .accessibilityElement(children: .contain)
+        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder

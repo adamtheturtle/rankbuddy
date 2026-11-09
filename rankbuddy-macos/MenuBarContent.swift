@@ -128,8 +128,7 @@ struct MenuBarContent: View {
 
                 ForEach(store.accounts) { account in
                     Button {
-                        store.showAllAccounts = false
-                        store.currentAccountID = account.id
+                        store.selectAccount(account.id)
                     } label: {
                         if !store.isMergedView, account.id == store.currentAccount?.id {
                             Label(account.label, systemImage: "checkmark")

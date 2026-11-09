@@ -72,7 +72,7 @@ struct AccountsSettingsView: View {
     private var sidebar: some View {
         List(selection: sidebarSelection) {
             ForEach(store.accounts) { account in
-                AccountRow(account: account, isCurrent: account.id == store.currentAccountID)
+                AccountRow(account: account, isCurrent: !store.isMergedView && account.id == store.currentAccount?.id)
                     .tag(account.id)
             }
         }
@@ -203,12 +203,12 @@ struct AccountsSettingsView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if account.id == store.currentAccountID {
+            if !store.isMergedView, account.id == store.currentAccount?.id {
                 Label("Current", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.tint)
                     .labelStyle(.titleAndIcon)
             } else {
-                Button("Use This Account") { store.currentAccountID = account.id }
+                Button("Use This Account") { store.selectAccount(account.id) }
             }
         }
         .padding(.horizontal, 16)

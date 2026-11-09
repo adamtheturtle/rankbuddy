@@ -299,3 +299,29 @@ struct AccountStoreTests {
         #expect(!store.isMergedView)
     }
 }
+
+@MainActor
+struct AccountSelectionTests {
+    @Test(arguments: [false, true])
+    func `selecting one account exits All Accounts including the remembered account`(remembered: Bool) {
+        let first = Account(label: "Work", token: "t1")
+        let second = Account(label: "EU", token: "t2")
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [first, second])
+        store.showAllAccounts = true
+        let selected = remembered ? first : second
+        store.selectAccount(selected.id)
+        #expect(!store.isMergedView)
+        #expect(store.currentAccount?.id == selected.id)
+    }
+
+    @Test func `selecting a removed account leaves the global scope unchanged`() {
+        let store = AccountStore.rankBuddy(isTesting: true, seed: [
+            Account(label: "Work", token: "t1"), Account(label: "EU", token: "t2")
+        ])
+        store.showAllAccounts = true
+        let current = store.currentAccountID
+        store.selectAccount(UUID())
+        #expect(store.isMergedView)
+        #expect(store.currentAccountID == current)
+    }
+}
