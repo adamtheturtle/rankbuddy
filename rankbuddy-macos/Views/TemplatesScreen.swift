@@ -27,12 +27,36 @@ struct TemplatesScreen: View {
                 }
             }
         }
+        .windowToolbar(id: "templateScope") {
+            ToolbarItem(id: "templateKind") {
+                Menu("Template Type", systemImage: "doc.on.doc") {
+                    Picker("Template Type", selection: $kind) {
+                        ForEach(TemplateKind.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.inline)
+                }
+                .help("Template Type: \(kind.title)")
+                .accessibilityIdentifier("template-kind")
+            }
+            ToolbarItem(id: "templateOwnership") {
+                if kind == .interview {
+                    Menu("Ownership", systemImage: "person.crop.circle") {
+                        Picker("Ownership", selection: $ownership) {
+                            ForEach(TemplateOwnership.allCases) { Text($0.title).tag($0) }
+                        }
+                        .pickerStyle(.inline)
+                    }
+                    .help("Template Ownership: \(ownership.title)")
+                    .accessibilityIdentifier("template-ownership")
+                }
+            }
+        }
         // Rebuild loaders and details when scope, credentials or filters change.
         .id(Scope(accountVersions: (store.isMergedView ? store.accounts : store.currentAccount.map { [$0] } ?? [])
                 .map(\.hashValue),
             kind: kind, ownership: ownership, merged: store.isMergedView))
         .nativeListFilters(kind == .interview ? "api_list_all_interview_templates" : "api_list_all_invite_templates",
-                           title: kind == .interview ? "Interview Templates" : "Assessment Templates",
+                           title: kind.title,
                            query: $requestQuery)
         .sheet(item: $creationAccount) { account in
             TemplateEditorSheet(account: account) {
@@ -50,35 +74,20 @@ struct TemplatesScreen: View {
         let merged: Bool
     }
 
-    private var controls: some View {
-        HStack {
-            if kind == .interview {
-                if store.isMergedView {
-                    Menu("New Template", systemImage: "plus") {
-                        ForEach(store.accounts) { account in
-                            Button(account.label) { beginCreation(account) }
-                        }
+    @ViewBuilder private var creationControl: some View {
+        if kind == .interview {
+            if store.isMergedView {
+                Menu("New Template", systemImage: "plus") {
+                    ForEach(store.accounts) { account in
+                        Button(account.label) { beginCreation(account) }
                     }
-                } else if let account = store.currentAccount {
-                    Button("New Template", systemImage: "plus") { beginCreation(account) }
-                        .help("Create an interview template")
-                        .accessibilityIdentifier("new-template")
                 }
-            }
-            Picker("Template Type", selection: $kind) {
-                ForEach(TemplateKind.allCases) { Text($0.title).tag($0) }
-            }
-            .accessibilityIdentifier("template-kind")
-            .accessibilityLabel("Template Type")
-            if kind == .interview {
-                Picker("Ownership", selection: $ownership) {
-                    ForEach(TemplateOwnership.allCases) { Text($0.title).tag($0) }
-                }
-                .accessibilityIdentifier("template-ownership")
-                .accessibilityLabel("Template Ownership")
+            } else if let account = store.currentAccount {
+                Button("New Template", systemImage: "plus") { beginCreation(account) }
+                    .help("Create an interview template")
+                    .accessibilityIdentifier("new-template")
             }
         }
-        .pickerStyle(.menu)
     }
 
     private func accountList(_ account: Account) -> some View {
@@ -103,7 +112,7 @@ struct TemplatesScreen: View {
             restorationKey: requestQuery.isEmpty
                 ? TemplateLibrary.cacheKey(accountID: account.id, kind: kind, ownership: ownership) : nil,
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.title) },
-            accessoryToolbar: { AnyView(controls) },
+            accessoryToolbar: kind == .interview ? { AnyView(creationControl) } : nil,
             primaryMenuAction: kind == .interview ? .init(title: "New Template…", perform: {
                 beginCreation(account)
             }) : nil,
@@ -138,7 +147,7 @@ struct TemplatesScreen: View {
                 SortOption("Account", systemImage: "person.crop.circle", kind: .text, by: AccountScoped.byAccountLabel)
             ],
             contextMenu: { rowMenuItems(copyLabel: "Copy Name", copyText: $0.item.title) },
-            accessoryToolbar: { AnyView(controls) },
+            accessoryToolbar: kind == .interview ? { AnyView(creationControl) } : nil,
             reloadToken: reloadToken,
             row: { MergedRow(title: $0.item.title, subtitle: $0.item.subtitle, account: $0.account) },
             detail: {
