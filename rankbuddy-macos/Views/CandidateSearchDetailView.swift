@@ -112,6 +112,9 @@ private struct CandidateSearchFact: View {
                 Text(value).multilineTextAlignment(.trailing)
             }
             .accessibilityElement(children: .combine)
+            .accessibilityLabel(label)
+            .accessibilityValue(value)
+            .accessibilityAddTraits(.isStaticText)
         }
     }
 }
