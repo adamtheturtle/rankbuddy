@@ -16,20 +16,38 @@ struct TemplatesScreen: View {
     @State private var requestQuery: [URLQueryItem] = []
 
     var body: some View {
-        VStack(spacing: 0) {
-            if !store.accounts.isEmpty {
-                scopeControls
-                Divider()
+        Group {
+            if store.isMergedView {
+                mergedList
+            } else if let account = store.currentAccount {
+                accountList(account)
+            } else {
+                NavigationStack {
+                    NoAccountView().navigationTitle("Templates")
+                }
             }
-            Group {
-                if store.isMergedView {
-                    mergedList
-                } else if let account = store.currentAccount {
-                    accountList(account)
-                } else {
-                    NavigationStack {
-                        NoAccountView().navigationTitle("Templates")
+        }
+        .windowToolbar(id: "templateScope") {
+            ToolbarItem(id: "templateKind") {
+                Menu("Template Type", systemImage: "doc.on.doc") {
+                    Picker("Template Type", selection: $kind) {
+                        ForEach(TemplateKind.allCases) { Text($0.title).tag($0) }
                     }
+                    .pickerStyle(.inline)
+                }
+                .help("Template Type: \(kind.title)")
+                .accessibilityIdentifier("template-kind")
+            }
+            ToolbarItem(id: "templateOwnership") {
+                if kind == .interview {
+                    Menu("Ownership", systemImage: "person.crop.circle") {
+                        Picker("Ownership", selection: $ownership) {
+                            ForEach(TemplateOwnership.allCases) { Text($0.title).tag($0) }
+                        }
+                        .pickerStyle(.inline)
+                    }
+                    .help("Template Ownership: \(ownership.title)")
+                    .accessibilityIdentifier("template-ownership")
                 }
             }
         }
@@ -38,7 +56,7 @@ struct TemplatesScreen: View {
                 .map(\.hashValue),
             kind: kind, ownership: ownership, merged: store.isMergedView))
         .nativeListFilters(kind == .interview ? "api_list_all_interview_templates" : "api_list_all_invite_templates",
-                           title: kind == .interview ? "Interview Templates" : "Assessment Templates",
+                           title: kind.title,
                            query: $requestQuery)
         .sheet(item: $creationAccount) { account in
             TemplateEditorSheet(account: account) {
@@ -54,32 +72,6 @@ struct TemplatesScreen: View {
         let kind: TemplateKind
         let ownership: TemplateOwnership
         let merged: Bool
-    }
-
-    private var scopeControls: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 20) { scopePickers }.fixedSize(horizontal: true, vertical: false)
-            VStack(alignment: .leading, spacing: 8) { scopePickers }
-        }
-        .pickerStyle(.menu)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16).padding(.vertical, 10)
-        .background(.bar)
-    }
-
-    @ViewBuilder private var scopePickers: some View {
-        Picker("Template Type", selection: $kind) {
-            ForEach(TemplateKind.allCases) { Text($0.title).tag($0) }
-        }
-        .accessibilityIdentifier("template-kind")
-        .accessibilityLabel("Template Type")
-        if kind == .interview {
-            Picker("Ownership", selection: $ownership) {
-                ForEach(TemplateOwnership.allCases) { Text($0.title).tag($0) }
-            }
-            .accessibilityIdentifier("template-ownership")
-            .accessibilityLabel("Template Ownership")
-        }
     }
 
     @ViewBuilder private var creationControl: some View {
