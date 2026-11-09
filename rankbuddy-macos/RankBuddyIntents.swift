@@ -40,7 +40,7 @@ enum RankBuddySectionOption: String, AppEnum {
             .templates: "Templates",
             .people: "People",
             .teams: "Teams",
-            .candidates: "Find Candidates",
+            .candidates: "Candidates",
             .auditLogs: "Audit Logs",
             .atsInvitations: "ATS Invitations",
             .provisioning: "Provisioning"

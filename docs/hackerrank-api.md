@@ -11,7 +11,7 @@ The native screens cover the published operations and request options:
 - Tests, candidates, questions, interviews, people, and teams expose resource actions and settings in their detail toolbar.
 - Templates have a **New Template** action, initial question selection, settings, deletion, and explicit sharing controls.
   Invitation-email templates are a separate read-only API resource.
-- **Find Candidates** searches across tests; per-test search remains available in each assessment’s candidate list.
+- **Candidates** searches across tests; per-test search remains available in each assessment’s candidate list.
 - **Audit Logs** supports offset and cursor pagination, with all published filters.
 - **ATS Invitations** has separate assessment and interview workflows.
 - **Provisioning** manages SCIM users and groups with the account’s separate provisioning credential.

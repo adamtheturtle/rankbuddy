@@ -15,7 +15,7 @@ Work with the documented HackerRank API through native screens, with an embedded
 - **Templates** with creation, settings, question selection, deletion, and sharing with people, teams, or the organisation.
 - **Audit Logs** with offset and cursor pagination, **ATS Invitations**, and **Provisioning** for SCIM users and groups.
 - Native editors and filters for the documented request options, including nested settings, callbacks, permissions, and accommodations.
-- An account-wide **Find Candidates** destination, alongside each test’s candidate list.
+- An account-wide **Candidates** destination, alongside each test’s candidate list.
 - An embedded **MCP server**, with read tools by default and explicit write access in Settings.
 - Cursor-based **Account Activity**, with object and date filters.
 - Per-list **search**, **sorting** (remembered across launches), pull-to-refresh, and loading / empty / error states.

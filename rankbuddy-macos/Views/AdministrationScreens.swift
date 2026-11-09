@@ -15,7 +15,7 @@ struct AdministrationScreen: View {
             case .audit: "Audit Logs"
             case .ats: "ATS Invitations"
             case .provisioning: "Provisioning"
-            case .candidates: "Find Candidates"
+            case .candidates: "Candidates"
             }
         }
     }
@@ -82,7 +82,7 @@ struct AdministrationScreen: View {
         case .audit: AuditLogsScreen(account: account, cursorBased: cursorBased)
         case .ats: ATSInvitationsScreen(account: account, interview: interview)
         case .provisioning: ProvisioningScreen(account: account, groups: groups)
-        case .candidates: BusinessCollectionView(account: account, kind: .candidates, title: "Find Candidates")
+        case .candidates: BusinessCollectionView(account: account, kind: .candidates, title: "Candidates")
         }
     }
 }
@@ -227,13 +227,7 @@ struct BusinessCollectionView: View {
         GeometryReader { geometry in
             HSplitView {
                 List(model.records, selection: $selected) { record in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(kind.isAudit ? record.auditTitle : record.title)
-                            .font(.callout.weight(.medium)).lineLimit(2)
-                        if kind.isAudit, let date = record.auditDate {
-                            Text(date).font(.caption).foregroundStyle(.secondary)
-                        }
-                    }.padding(.vertical, 4).tag(record)
+                    recordRow(record)
                 }.frame(minWidth: 260, idealWidth: 360, maxWidth: .infinity, maxHeight: .infinity)
                 recordDetails
                     .frame(minWidth: 320, idealWidth: 500, maxWidth: .infinity, maxHeight: .infinity)
@@ -242,12 +236,35 @@ struct BusinessCollectionView: View {
         }
     }
 
+    private func recordRow(_ record: NativeBusinessRecord) -> some View {
+        let candidate = CandidateSearchPresentation(value: record.value)
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(kind == .candidates ? candidate.title : kind.isAudit ? record.auditTitle : record.title)
+                .font(.callout.weight(.medium)).lineLimit(2)
+            if kind == .candidates, let subtitle = candidate.subtitle {
+                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            } else if kind.isAudit, let date = record.auditDate {
+                Text(date).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4).tag(record)
+        .accessibilityElement(children: .combine)
+    }
+
     @ViewBuilder private var recordDetails: some View {
         if let selected {
-            BusinessRecordDetail(account: account, kind: kind, record: selected) { Task { await load() } }
-                .id(selected.id)
+            if kind == .candidates {
+                CandidateSearchDetailView(record: selected).id(selected.id)
+            } else {
+                BusinessRecordDetail(account: account, kind: kind, record: selected) { Task { await load() } }
+                    .id(selected.id)
+            }
         } else {
-            ContentUnavailableView("Select a Record", systemImage: "doc.text.magnifyingglass")
+            if kind == .candidates {
+                DetailSelectionPlaceholder(collectionTitle: "Candidates")
+            } else {
+                ContentUnavailableView("Select a Record", systemImage: "doc.text.magnifyingglass")
+            }
         }
     }
 

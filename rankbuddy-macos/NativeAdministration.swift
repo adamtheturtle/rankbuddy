@@ -104,7 +104,8 @@ final class NativeBusinessCollection {
             let items = fields["Resources"]?.array ?? fields["data"]?.array ?? payload.array
             var new: [NativeBusinessRecord] = []
             for (index, item) in items.enumerated() {
-                let id = item.object["id"]?.text ?? "\(records.count + index)"
+                let id = (kind == .candidates ? CandidateSearchPresentation(value: item).identifier : nil)
+                    ?? item.object["id"]?.text ?? "\(records.count + index)"
                 new.append(NativeBusinessRecord(id: id, value: item))
             }
             records = ListPageMerge.merge(records, with: new)
