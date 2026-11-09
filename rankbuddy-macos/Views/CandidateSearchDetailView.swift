@@ -42,7 +42,6 @@ struct CandidateSearchDetailView: View {
             }
             .padding(20).frame(maxWidth: .infinity, alignment: .leading)
         }
-        .textSelection(.enabled)
     }
 
     private var profile: some View {
@@ -109,7 +108,7 @@ private struct CandidateSearchFact: View {
             HStack(alignment: .firstTextBaseline, spacing: 16) {
                 Text(label).foregroundStyle(.secondary)
                 Spacer(minLength: 8)
-                Text(value).multilineTextAlignment(.trailing)
+                Text(value).multilineTextAlignment(.trailing).textSelection(.enabled)
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(label)
