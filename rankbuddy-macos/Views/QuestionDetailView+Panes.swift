@@ -22,6 +22,7 @@ extension QuestionDetailView {
                     OptionalRow("Skills", DisplayFormat.list(displayed.skills))
                 }
             }
+            .labeledContentStyle(QuestionPropertyStyle())
 
             if !canEdit, let tags = displayed.tags, !tags.isEmpty {
                 QuestionDetailSection("Tags") {
@@ -171,5 +172,24 @@ struct QuestionDetailSection<Content: View>: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Align metadata values in a second column, stacking each pair when the pane gets narrow.
+private struct QuestionPropertyStyle: LabeledContentStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 16) {
+                configuration.label.foregroundStyle(.secondary)
+                    .frame(width: 200, alignment: .leading)
+                configuration.content.frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .frame(minWidth: 420)
+            VStack(alignment: .leading, spacing: 6) {
+                configuration.label.foregroundStyle(.secondary)
+                configuration.content.frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .accessibilityElement(children: .contain)
     }
 }
