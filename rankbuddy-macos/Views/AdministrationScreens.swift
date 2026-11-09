@@ -22,34 +22,35 @@ struct AdministrationScreen: View {
 
     let destination: Destination
     @Environment(AccountStore.self) private var store
-    @State private var accountID: UUID?
     @State private var cursorBased = true
     @State private var interview = false
     @State private var groups = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            if !store.accounts.isEmpty {
-                HStack(spacing: 20) {
-                    Picker("Account", selection: $accountID) {
-                        ForEach(store.accounts) { Text($0.label).tag(Optional($0.id)) }
-                    }.fixedSize()
-                    Spacer(minLength: 16)
-                    modePicker
+        Group {
+            if store.isMergedView {
+                ContentUnavailableView("Choose an Account", systemImage: "person.crop.circle",
+                                       description: Text("Select one account at the bottom of the sidebar "
+                                           + "to use \(destination.title)."))
+            } else if let account = store.currentAccount {
+                VStack(spacing: 0) {
+                    if destination != .candidates {
+                        HStack {
+                            modePicker
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20).padding(.vertical, 12).background(.bar)
+                        Divider()
+                    }
+                    content(account).id(account)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .padding(.horizontal, 20).padding(.vertical, 12).background(.bar)
-                Divider()
-            }
-            if let account = store.accounts.first(where: { $0.id == accountID }) {
-                content(account).id(account)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 NoAccountView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .navigationTitle(destination.title)
-        .onAppear { accountID = store.currentAccountID ?? store.accounts.first?.id }
     }
 
     @ViewBuilder private var modePicker: some View {
