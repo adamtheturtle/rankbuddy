@@ -98,14 +98,18 @@ struct QuestionDetailView: View {
     }
 
     var body: some View {
-        Form {
-            InspectorHeader(title: displayed.name, badges: displayed.inspectorBadges, onRename: renameAction)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                InspectorHeader(title: displayed.name, badges: displayed.inspectorBadges, onRename: renameAction)
+                Divider()
 
-            detailLoadStatus
+                detailLoadStatus
 
-            selectedPaneContent
+                selectedPaneContent
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .formStyle(.grouped)
         .safeAreaInset(edge: .top, spacing: 0) {
             QuestionDetailPaneBar(panes: availablePanes, selection: selectedPane) { pane in
                 selectedPane = pane
@@ -226,11 +230,9 @@ struct QuestionDetailView: View {
 
     @ViewBuilder private var detailLoadStatus: some View {
         if isDetailLoading {
-            Section {
-                ProgressView("Loading question details…")
-            }
+            ProgressView("Loading question details…")
         } else if let detailError {
-            Section {
+            VStack(alignment: .leading, spacing: 8) {
                 Label(detailError, systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.red)
                 Button("Retry Details") {
@@ -264,7 +266,7 @@ extension QuestionDetailView {
     /// endpoint, so testcases can be added and bulk-deleted but not listed; per-testcase
     /// delete/update stay with the MCP tools, which take explicit testcase ids.
     var codingSection: some View {
-        Section("Testcases & code stubs") {
+        QuestionDetailSection("Testcases & code stubs") {
             Button {
                 addTestcasePresented = true
             } label: {
