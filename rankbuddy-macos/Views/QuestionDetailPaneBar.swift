@@ -71,9 +71,9 @@ struct QuestionDetailPaneBar: View {
         }
     }
 
-    private func sectionChip(_ pane: QuestionDetailPane) -> some View {
+    @ViewBuilder private func sectionChip(_ pane: QuestionDetailPane) -> some View {
         let isSelected = selection == pane
-        return Button {
+        let chip = Button {
             select(pane)
         } label: {
             Label {
@@ -88,11 +88,17 @@ struct QuestionDetailPaneBar: View {
             .contentShape(.rect(cornerRadius: 12))
         }
         .buttonStyle(.plain)
-        .glassEffect(isSelected ? .regular.tint(.accentColor.opacity(0.24)) : .regular.interactive(),
-                     in: .rect(cornerRadius: 12))
         .help(pane.label)
         .accessibilityLabel(pane.label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+
+        if #available(macOS 26.0, *) {
+            chip.glassEffect(isSelected ? .regular.tint(.accentColor.opacity(0.24)) : .regular.interactive(),
+                             in: .rect(cornerRadius: 12))
+        } else {
+            chip.background(isSelected ? Color.accentColor : Color.primary.opacity(0.06),
+                            in: .rect(cornerRadius: 12))
+        }
     }
 
     private var selectionBinding: Binding<QuestionDetailPane> {
