@@ -35,9 +35,9 @@ struct QuestionDetailPaneBar: View {
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            sectionPicker.pickerStyle(.segmented).labelsHidden()
+            sectionPicker(compact: true).pickerStyle(.segmented).labelsHidden()
                 .fixedSize(horizontal: true, vertical: false)
-            sectionPicker.pickerStyle(.menu).labelsHidden()
+            sectionPicker(compact: false).pickerStyle(.menu).labelsHidden()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityLabel("Question detail section")
         }
@@ -48,10 +48,12 @@ struct QuestionDetailPaneBar: View {
         .overlay(alignment: .bottom) { Divider() }
     }
 
-    private var sectionPicker: some View {
+    private func sectionPicker(compact: Bool) -> some View {
         Picker("Question detail section", selection: selectionBinding) {
             ForEach(panes) { pane in
-                Text(pane.label).tag(pane)
+                Text(compact && pane == .guidelines ? "Guidelines" : pane.label)
+                    .accessibilityLabel(pane.label)
+                    .tag(pane)
             }
         }
     }
