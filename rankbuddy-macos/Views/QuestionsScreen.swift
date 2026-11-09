@@ -118,6 +118,7 @@ struct QuestionsScreen: View {
                     ])
                 },
                 rowDate: { DisplayFormat.parseDate($0.createdAt) },
+                showsDetailDivider: true,
                 row: { QuestionRow(question: $0) },
                 detail: {
                     QuestionDetailView(question: $0, account: account) { reloadToken += 1 }
@@ -191,6 +192,7 @@ struct QuestionsScreen: View {
                 ])
             },
             rowDate: { DisplayFormat.parseDate($0.item.createdAt) },
+            showsDetailDivider: true,
             row: {
                 MergedRow(title: $0.item.name, subtitle: DisplayFormat.enumLabel($0.item.type), account: $0.account)
             },
