@@ -161,9 +161,6 @@ struct RankBuddyApp: App {
                 .environment(\.openURL, browserOpenURLAction)
                 .preferredColorScheme(appearance.colorScheme)
         }
-        .commands {
-            AccountActivityCommands()
-        }
 
         // The MCP tool-call activity log in its own window (mirroring PadBuddy), opened from
         // Settings ▸ MCP. A single unique window, like the others.

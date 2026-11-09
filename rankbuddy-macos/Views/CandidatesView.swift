@@ -25,7 +25,7 @@ struct CandidatesList: View {
     @State private var requestQuery: [URLQueryItem] = []
 
     var body: some View {
-        screen.nativeListFilters("api_list_all_candidates", query: $requestQuery)
+        screen.nativeListFilters("api_list_all_candidates", title: "Candidates", query: $requestQuery)
     }
 
     private var screen: some View {

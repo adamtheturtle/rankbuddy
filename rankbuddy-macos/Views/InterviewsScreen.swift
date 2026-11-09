@@ -22,7 +22,7 @@ struct InterviewsScreen: View {
     @State var requestQuery: [URLQueryItem] = []
 
     var body: some View {
-        screen.nativeListFilters("api_list_all_interviews", query: $requestQuery)
+        screen.nativeListFilters("api_list_all_interviews", title: "Interviews", query: $requestQuery)
     }
 
     @ViewBuilder private var screen: some View {

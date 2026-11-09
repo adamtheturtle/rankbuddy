@@ -22,7 +22,7 @@ struct TestsScreen: View {
     @State var requestQuery: [URLQueryItem] = []
 
     var body: some View {
-        screen.nativeListFilters("api_list_all_tests", query: $requestQuery)
+        screen.nativeListFilters("api_list_all_tests", title: "Tests", query: $requestQuery)
     }
 
     @ViewBuilder private var screen: some View {
@@ -67,7 +67,7 @@ struct TestsScreen: View {
                     ListFacet("library", "Library", systemImage: "books.vertical") { $0.libraryFilterValues },
                     ListFacet("role", "Role", systemImage: "person.text.rectangle") { $0.roleFilterValues },
                     ListFacet("skill", "Skill", systemImage: "target") { $0.skillFilterValues },
-                    ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.typeFilterValues },
+                    ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.presentationTypes },
                     ListFacet(
                         "state",
                         "State",
@@ -214,7 +214,7 @@ struct TestsScreen: View {
                 ListFacet("library", "Library", systemImage: "books.vertical") { $0.item.libraryFilterValues },
                 ListFacet("role", "Role", systemImage: "person.text.rectangle") { $0.item.roleFilterValues },
                 ListFacet("skill", "Skill", systemImage: "target") { $0.item.skillFilterValues },
-                ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.item.typeFilterValues },
+                ListFacet("type", "Type", systemImage: "square.grid.2x2") { $0.item.presentationTypes },
                 ListFacet(
                     "state",
                     "State",

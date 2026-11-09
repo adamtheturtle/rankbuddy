@@ -92,7 +92,7 @@ struct TestDetailView: View {
                     OptionalRow("Library", DisplayFormat.list(displayedTest.libraryFilterValues))
                     OptionalRow("Role", DisplayFormat.list(displayedTest.roleFilterValues))
                     OptionalRow("Skills", DisplayFormat.list(displayedTest.skillFilterValues))
-                    OptionalRow("Type", DisplayFormat.list(displayedTest.typeFilterValues))
+                    OptionalRow("Type", DisplayFormat.list(displayedTest.presentationTypes))
                     OptionalRow("Languages", DisplayFormat.languages(displayedTest.languages))
                     OptionalRow(
                         "Proctoring",
@@ -135,8 +135,8 @@ struct TestDetailView: View {
 
                 if let sections = displayedTest.sections, !sections.isEmpty {
                     Section("Sections") {
-                        ForEach(sections) { section in
-                            LabeledContent(section.displayName) {
+                        ForEach(Array(sections.enumerated()), id: \.element.id) { index, section in
+                            LabeledContent(section.presentationTitle(index: index)) {
                                 if let count = section.questionCount {
                                     Text("\(count) question\(count == 1 ? "" : "s")")
                                 }

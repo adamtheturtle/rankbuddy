@@ -106,11 +106,10 @@ func rowMenuItems(
     return items
 }
 
-/// Minimum metrics for `FastList` rows, matching PadBuddy so RankBuddy's lists share the same
-/// comfortable row height instead of sizing tightly to a row's content (which read as squished).
+/// A compact baseline; multiline titles and accessibility text can still make rows taller.
 enum FastListRowMetrics {
     /// Baseline hosted-row height for the AppKit `FastList` backend.
-    static let macHeight: CGFloat = 64
+    static let macHeight: CGFloat = 56
 }
 
 extension View {
@@ -131,7 +130,8 @@ extension View {
 
     func listRowTitleStyle(fullText: String) -> some View {
         font(.callout.weight(.medium))
-            .lineLimit(1)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
             .truncationMode(.tail).help(fullText).accessibilityLabel(fullText)
     }
 
@@ -191,30 +191,26 @@ struct FavoriteStarButton: View {
 }
 
 /// A right-aligned relative date ("2 months ago") in an adaptive trailing column for a list
-/// row. Reserves a minimum width even when the date is missing, so
-/// stars and titles stay vertically aligned across rows whether or not a row has a date.
+/// row. Missing dates leave the available width to the row title.
 struct RowDateLabel: View {
     let date: Date?
 
-    static let minimumColumnWidth: CGFloat = 60, maximumColumnWidth: CGFloat = 160
+    static let minimumColumnWidth: CGFloat = 60, maximumColumnWidth: CGFloat = 110
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { _ in
-            Group {
-                if let date {
-                    let labels = RelativeDateLabel.labels(for: date)
-                    Text(labels.relative)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .help(labels.tooltip)
-                        .accessibilityLabel(labels.tooltip)
-                } else {
-                    Color.clear
-                }
+            if let date {
+                let labels = RelativeDateLabel.labels(for: date)
+                Text(labels.relative)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .help(labels.tooltip)
+                    .accessibilityLabel(labels.tooltip)
+                    .frame(minWidth: Self.minimumColumnWidth, maxWidth: Self.maximumColumnWidth, alignment: .trailing)
             }
-            .frame(minWidth: Self.minimumColumnWidth, maxWidth: Self.maximumColumnWidth, alignment: .trailing)
         }
+        .fixedSize(horizontal: true, vertical: false)
     }
 }
 

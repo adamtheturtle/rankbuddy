@@ -114,6 +114,7 @@ enum DisplayFormat {
         ("cpp14", "C++14"),
         ("cpp17", "C++17"),
         ("cpp20", "C++20"),
+        ("cpp23", "C++23"),
         ("csharp", "C#"),
         ("dart", "Dart"),
         ("erlang", "Erlang"),
@@ -124,6 +125,8 @@ enum DisplayFormat {
         ("java8", "Java 8"),
         ("java11", "Java 11"),
         ("java15", "Java 15"),
+        ("java17", "Java 17"),
+        ("java21", "Java 21"),
         ("javascript", "JavaScript"),
         ("kotlin", "Kotlin"),
         ("objectivec", "Objective-C"),
@@ -159,6 +162,15 @@ enum DisplayFormat {
 
         if let name = hackerRankLanguageNames[key] ?? hackerRankLanguageNames[compactKey] {
             return name
+        }
+
+        for (prefix, name) in [("cplusplus", "C++"), ("cpp", "C++"), ("java", "Java "),
+                               ("csharp", "C# "), ("swift", "Swift "), ("kotlin", "Kotlin ")]
+            where compactKey.hasPrefix(prefix) {
+            let version = compactKey.dropFirst(prefix.count)
+            if !version.isEmpty, version.allSatisfy(\.isNumber) {
+                return name + version
+            }
         }
 
         return code.languageDisplayName

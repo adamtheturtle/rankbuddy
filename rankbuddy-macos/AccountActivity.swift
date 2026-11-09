@@ -303,20 +303,6 @@ extension FocusedValues {
     }
 }
 
-struct AccountActivityCommands: Commands {
-    @FocusedValue(\.accountActivityRefresh) private var refresh
-
-    var body: some Commands {
-        CommandMenu("Go") {
-            Button("Refresh Account Activity") {
-                refresh?.perform()
-            }
-            .keyboardShortcut("r", modifiers: .command)
-            .disabled(refresh?.isEnabled != true)
-        }
-    }
-}
-
 /// One row in the account activity feed (#106): the change summary, who made it, when, and which
 /// fields changed.
 struct AuditLogRow: View {
