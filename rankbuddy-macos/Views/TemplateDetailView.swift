@@ -153,6 +153,9 @@ struct TemplateDetailView: View {
                 Text("Questions")
                 Spacer()
                 Button("Edit Questions", systemImage: "pencil") { editQuestionsPresented = true }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
+                    .controlSize(.small)
                     .disabled(isLoading || displayed.editorAccess != true || displayed.apiID.flatMap(Int.init) == nil)
                     .help(displayed.editorAccess == false ? "This template is read-only" : "Add or remove questions")
             }
