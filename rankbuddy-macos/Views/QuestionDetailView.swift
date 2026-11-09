@@ -99,7 +99,11 @@ struct QuestionDetailView: View {
 
     var body: some View {
         Form {
-            InspectorHeader(title: displayed.name, badges: displayed.inspectorBadges, onRename: renameAction)
+            VStack(alignment: .leading, spacing: 18) {
+                InspectorHeader(title: displayed.name, badges: displayed.inspectorBadges, onRename: renameAction)
+                Divider()
+            }
+            .listRowBackground(Color.clear)
 
             detailLoadStatus
 

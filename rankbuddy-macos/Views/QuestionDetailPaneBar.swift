@@ -25,37 +25,74 @@ nonisolated enum QuestionDetailPane: String, CaseIterable, Identifiable {
         case .coding: "Coding"
         }
     }
+
+    var systemImage: String {
+        switch self {
+        case .overview: "info.circle"
+        case .content: "text.alignleft"
+        case .guidelines: "list.bullet.rectangle"
+        case .answer: "checkmark.seal"
+        case .coding: "chevron.left.forwardslash.chevron.right"
+        }
+    }
 }
 
-/// Native segmented tabs when they fit; an explicit section menu in narrower detail panes.
+/// PadBuddy-style section chips stay pinned and scroll horizontally in narrow detail panes.
 struct QuestionDetailPaneBar: View {
     let panes: [QuestionDetailPane]
     let selection: QuestionDetailPane
     let select: (QuestionDetailPane) -> Void
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            sectionPicker(compact: true).pickerStyle(.segmented).labelsHidden()
-                .fixedSize(horizontal: true, vertical: false)
-            sectionPicker(compact: false).pickerStyle(.menu).labelsHidden()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityLabel("Question detail section")
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.bar)
-        .overlay(alignment: .bottom) { Divider() }
-    }
-
-    private func sectionPicker(compact: Bool) -> some View {
-        Picker("Question detail section", selection: selectionBinding) {
-            ForEach(panes) { pane in
-                Text(compact && pane == .guidelines ? "Guidelines" : pane.label)
-                    .accessibilityLabel(pane.label)
-                    .tag(pane)
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(panes) { pane in
+                        sectionChip(pane).id(pane)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
+            }
+            .onChange(of: selection, initial: true) { _, pane in
+                proxy.scrollTo(pane, anchor: .center)
             }
         }
+        .background(.bar)
+        .overlay(alignment: .bottom) { Divider() }
+        // Preserve native exclusive selection and keyboard navigation for assistive technology.
+        .accessibilityRepresentation {
+            Picker("Question detail section", selection: selectionBinding) {
+                ForEach(panes) { pane in
+                    Text(pane.label).tag(pane)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    private func sectionChip(_ pane: QuestionDetailPane) -> some View {
+        let isSelected = selection == pane
+        return Button {
+            select(pane)
+        } label: {
+            Label {
+                Text(pane.label).lineLimit(1)
+            } icon: {
+                Image(systemName: pane.systemImage).accessibilityHidden(true)
+            }
+            .font(.callout.weight(isSelected ? .semibold : .medium))
+            .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.78))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .contentShape(.rect(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .glassEffect(isSelected ? .regular.tint(.accentColor.opacity(0.24)) : .regular.interactive(),
+                     in: .rect(cornerRadius: 12))
+        .help(pane.label)
+        .accessibilityLabel(pane.label)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var selectionBinding: Binding<QuestionDetailPane> {
