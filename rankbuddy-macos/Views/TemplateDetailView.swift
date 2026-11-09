@@ -62,10 +62,16 @@ struct TemplateDetailView: View {
                 }
                 if displayed.kind == .invitation {
                     Section("Subject") {
-                        Text(displayed.subject ?? "No subject")
+                        if let subject = displayed.subject,
+                           !subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            Text(subject)
+                        } else {
+                            Text("No subject").foregroundStyle(.secondary)
+                        }
                     }
                     Section("Email Body") {
-                        if let content = displayed.content, !content.isEmpty {
+                        if let content = displayed.content,
+                           !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             HTMLText(html: content)
                         } else {
                             Text("No email body").foregroundStyle(.secondary)
