@@ -11,20 +11,30 @@ nonisolated struct QuestionDetailRequestIdentity: Hashable {
     let questionID: String
 }
 
-/// A question plus the rich fields currently available in its inspector.
+/// The intended reader determines whether confidential question fields belong in the document.
+nonisolated enum QuestionDocumentAudience {
+    case candidate
+    case interviewer
+}
+
+/// Shared, audience-filtered data for both Markdown and printable question documents.
 nonisolated struct QuestionReportData {
     let question: Question
     let options: [String]
     let correctAnswer: String?
     let internalNotes: String?
 
-    init(question: Question, detail: QuestionDetail? = nil, includeCorrectAnswer: Bool = false) {
-        self.question = question
+    init(question: Question, detail: QuestionDetail? = nil, audience: QuestionDocumentAudience = .candidate) {
+        self.question = audience == .interviewer ? question : Question(
+            id: question.id, type: question.type, name: question.name,
+            languages: question.languages, problemStatement: question.problemStatement,
+            recommendedDuration: question.recommendedDuration, maxScore: question.maxScore
+        )
         options = detail?.options ?? []
-        correctAnswer = includeCorrectAnswer
+        correctAnswer = audience == .interviewer
             ? Self.correctAnswerText(from: detail?.answer, options: options)
             : nil
-        internalNotes = detail?.internalNotes
+        internalNotes = audience == .interviewer ? detail?.internalNotes : nil
     }
 
     static func correctAnswerText(from answer: QuestionAnswer?, options: [String]) -> String? {

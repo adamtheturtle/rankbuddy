@@ -329,6 +329,9 @@ struct QuestionReport: View {
             if let notes = data.internalNotes, !notes.isEmpty {
                 PrintSection(title: "Internal notes") { PrintHTMLText(html: notes) }
             }
+            if let prompt = question.customSystemPrompt, !prompt.isEmpty {
+                PrintSection(title: "AI system prompt") { Text(prompt) }
+            }
         }
     }
 }

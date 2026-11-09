@@ -207,6 +207,7 @@ enum MarkdownExport {
             }),
             textSection("Correct answer", report.correctAnswer.map(plainText(fromHTML:))),
             textSection("Internal notes", report.internalNotes.map(plainText(fromHTML:))),
+            textSection("AI system prompt", question.customSystemPrompt),
             textSection("Tags", question.tags.flatMap { $0.isEmpty ? nil : $0.joined(separator: ", ") }),
             textSection("Problem statement", question.problemStatement.map(plainText(fromHTML:)))
         ])

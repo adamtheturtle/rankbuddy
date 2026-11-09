@@ -288,9 +288,8 @@ struct AppCommands: Commands {
             if let secondaryNew = commandContext.secondaryNew {
                 CommandActionButton(action: secondaryNew, fallbackTitle: "New RankBuddy Item…")
             }
-        }
-
-        CommandGroup(after: .saveItem) {
+            // A non-document app has no Save group to anchor exports to.
+            Divider()
             CommandActionButton(action: commandContext.exportCSV, fallbackTitle: "Export CSV…")
             CommandActionButton(action: commandContext.exportSelectedCSV, fallbackTitle: "Export Selected CSV…")
             CommandActionButton(action: commandContext.exportMarkdown, fallbackTitle: "Export as Markdown…")
@@ -308,6 +307,8 @@ struct AppCommands: Commands {
                 detailPaneHidden.toggle()
             }
             .keyboardShortcut("d", modifiers: [.command, .control])
+            CommandActionButton(action: commandContext.resetFilters, fallbackTitle: "Reset Filters")
+                .keyboardShortcut("k", modifiers: [.command, .shift])
         }
 
         CommandMenu("Go") {
