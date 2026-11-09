@@ -148,6 +148,8 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
     /// active), matching PadBuddy's rows. `nil` (the default) hides the column, so lists with no
     /// meaningful per-row date are unchanged.
     var rowDate: ((Item) -> Date?)?
+    /// An explicit native separator for inspector-style detail panes.
+    var showsDetailDivider = false
     @ViewBuilder let row: (Item) -> Row
     @ViewBuilder let detail: (Item) -> Detail
 
@@ -251,9 +253,7 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
                 .frame(minWidth: 300, idealWidth: 380, maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(nsColor: .textBackgroundColor))
             if !detailPaneHidden {
-                detailColumn
-                    .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.regularMaterial)
+                detailPane
             }
         }
     }
@@ -490,6 +490,22 @@ struct LoadableList<Item: Identifiable & Hashable & Sendable & Codable, Row: Vie
 }
 
 private extension LoadableList {
+    var detailPane: some View {
+        detailColumn
+            .frame(minWidth: 320, idealWidth: 460, maxWidth: .infinity, maxHeight: .infinity)
+            .background(.regularMaterial)
+            .overlay { detailDivider }
+    }
+
+    @ViewBuilder var detailDivider: some View {
+        if showsDetailDivider {
+            HStack(spacing: 0) {
+                Divider()
+                Spacer(minLength: 0)
+            }.allowsHitTesting(false).accessibilityHidden(true)
+        }
+    }
+
     var detailColumn: some View {
         NavigationStack {
             if let detailItem {
