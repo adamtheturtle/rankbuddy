@@ -85,7 +85,7 @@ final class AccountDataRecovery {
 
 extension AccountStore {
     /// Select one saved account and leave the combined scope, even if its id was remembered.
-    func selectAccount(_ id: Account.ID) {
+    func selectAccount(_ id: UUID) {
         guard accounts.contains(where: { $0.id == id }) else { return }
 
         showAllAccounts = false
