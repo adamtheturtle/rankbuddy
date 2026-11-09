@@ -15,20 +15,23 @@ struct AppCommandContextTests {
         let secondOwner = UUID()
         let recorder = FilterResetRecorder()
         context.registerListActions(owner: mainOwner, actions: .init(
-            primaryNew: nil, secondaryNew: nil, exportCSV: nil, exportSelectedCSV: nil,
+            primaryNew: nil, secondaryNew: nil, exportCSV: .init(title: "Export Main") {}, exportSelectedCSV: nil,
             refresh: .init(title: "Refresh Main") {},
             resetFilters: .init(title: "Reset Main") { recorder.owners.append(mainOwner) }
         ))
         context.registerListActions(owner: secondOwner, actions: .init(
-            primaryNew: nil, secondaryNew: nil, exportCSV: nil, exportSelectedCSV: nil,
+            primaryNew: nil, secondaryNew: nil, exportCSV: .init(title: "Export Second") {}, exportSelectedCSV: nil,
             refresh: .init(title: "Refresh Second") {},
             resetFilters: .init(title: "Reset Second") { recorder.owners.append(secondOwner) }
         ))
         context.activateListActions(owner: secondOwner)
+        #expect(context.exportCSV?.title == "Export Second")
         context.resetFilters?.perform()
         context.deactivateListActions(owner: secondOwner)
         #expect(context.resetFilters == nil)
+        #expect(context.exportCSV == nil)
         context.activateListActions(owner: mainOwner)
+        #expect(context.exportCSV?.title == "Export Main")
         context.resetFilters?.perform()
         context.activateListActions(owner: secondOwner)
         context.clearListActions(owner: mainOwner)
@@ -36,6 +39,7 @@ struct AppCommandContextTests {
         #expect(recorder.owners == [secondOwner, mainOwner, secondOwner])
         context.clearListActions(owner: secondOwner)
         #expect(context.resetFilters == nil)
+        #expect(context.exportCSV == nil)
     }
 
     @Test func `removing one detail owner restores the previous commands`() {

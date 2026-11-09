@@ -288,9 +288,8 @@ struct AppCommands: Commands {
             if let secondaryNew = commandContext.secondaryNew {
                 CommandActionButton(action: secondaryNew, fallbackTitle: "New RankBuddy Item…")
             }
-        }
-
-        CommandGroup(after: .saveItem) {
+            // A non-document app has no Save group to anchor exports to.
+            Divider()
             CommandActionButton(action: commandContext.exportCSV, fallbackTitle: "Export CSV…")
             CommandActionButton(action: commandContext.exportSelectedCSV, fallbackTitle: "Export Selected CSV…")
             CommandActionButton(action: commandContext.exportMarkdown, fallbackTitle: "Export as Markdown…")

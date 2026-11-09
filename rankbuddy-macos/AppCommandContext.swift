@@ -87,12 +87,13 @@ final class AppCommandContext {
     }
 
     private func applyTopListRegistration() {
+        let activeActions = listRegistrations.last(where: { activeListOwners.contains($0.owner) })?.actions
         primaryNew = listRegistrations.last?.actions.primaryNew
         secondaryNew = listRegistrations.last?.actions.secondaryNew
-        exportCSV = listRegistrations.last?.actions.exportCSV
-        exportSelectedCSV = listRegistrations.last?.actions.exportSelectedCSV
+        exportCSV = activeActions?.exportCSV
+        exportSelectedCSV = activeActions?.exportSelectedCSV
         refresh = listRegistrations.last?.actions.refresh
-        resetFilters = listRegistrations.last(where: { activeListOwners.contains($0.owner) })?.actions.resetFilters
+        resetFilters = activeActions?.resetFilters
     }
 
     func registerDetailActions(owner: UUID, print: Action, exportMarkdown: Action) {
