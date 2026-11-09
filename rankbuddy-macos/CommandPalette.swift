@@ -87,7 +87,7 @@ enum RankBuddyPalette {
         ) { openSettings() })
 
         for account in store.accounts {
-            let isCurrent = account.id == store.currentAccountID
+            let isCurrent = !store.isMergedView && account.id == store.currentAccount?.id
             results.append(PaletteResult(
                 id: "account.\(account.id)",
                 title: account.label,
@@ -97,8 +97,7 @@ enum RankBuddyPalette {
                 searchText: "\(account.label) account \(account.baseURL.host() ?? "")",
                 showsOnlyWhenSearching: true
             ) {
-                store.showAllAccounts = false
-                store.currentAccountID = account.id
+                store.selectAccount(account.id)
             })
         }
 

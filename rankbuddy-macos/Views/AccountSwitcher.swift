@@ -43,8 +43,7 @@ struct AccountSwitcher: View {
 
             ForEach(store.accounts) { account in
                 Button {
-                    store.showAllAccounts = false
-                    store.currentAccountID = account.id
+                    store.selectAccount(account.id)
                 } label: {
                     accountMenuLabel(for: account)
                 }

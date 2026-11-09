@@ -84,6 +84,14 @@ final class AccountDataRecovery {
 }
 
 extension AccountStore {
+    /// Select one saved account and leave the combined scope, even if its id was remembered.
+    func selectAccount(_ id: UUID) {
+        guard accounts.contains(where: { $0.id == id }) else { return }
+
+        showAllAccounts = false
+        currentAccountID = id
+    }
+
     /// Where the current account's id is persisted. Shared so out-of-store callers (the macOS
     /// Service, #46) can resolve "the current account" without a store reference.
     static let currentIDDefaultsKey = "rankbuddy.currentAccountID"
