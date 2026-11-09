@@ -111,8 +111,8 @@ private struct CandidateSearchFact: View {
                 Text(value).multilineTextAlignment(.trailing).textSelection(.enabled)
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel(label)
-            .accessibilityValue(value)
+            .accessibilityLabel("\(label): \(value)")
+            .accessibilityIdentifier("candidate-fact-\(label)")
             .accessibilityAddTraits(.isStaticText)
         }
     }
