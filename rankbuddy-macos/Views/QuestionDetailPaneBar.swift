@@ -82,7 +82,7 @@ struct QuestionDetailPaneBar: View {
                 Image(systemName: pane.systemImage).accessibilityHidden(true)
             }
             .font(.callout.weight(isSelected ? .semibold : .medium))
-            .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.78))
+            .foregroundStyle(isSelected ? Color.primary : Color.primary.opacity(0.78))
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .contentShape(.rect(cornerRadius: 12))
@@ -96,7 +96,7 @@ struct QuestionDetailPaneBar: View {
             chip.glassEffect(isSelected ? .regular.tint(.accentColor.opacity(0.24)) : .regular.interactive(),
                              in: .rect(cornerRadius: 12))
         } else {
-            chip.background(isSelected ? Color.accentColor : Color.primary.opacity(0.06),
+            chip.background(isSelected ? Color.accentColor.opacity(0.18) : Color.primary.opacity(0.06),
                             in: .rect(cornerRadius: 12))
         }
     }

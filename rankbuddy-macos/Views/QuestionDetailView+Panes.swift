@@ -10,7 +10,7 @@ extension QuestionDetailView {
     @ViewBuilder var selectedPaneContent: some View {
         switch selectedPane {
         case .overview:
-            Section("Properties") {
+            QuestionDetailSection("Properties") {
                 OptionalRow("Unique ID", displayed.uniqueID)
                 OptionalRow("Created", DisplayFormat.date(displayed.createdAt))
                 if canEdit {
@@ -24,7 +24,7 @@ extension QuestionDetailView {
             }
 
             if !canEdit, let tags = displayed.tags, !tags.isEmpty {
-                Section("Tags") {
+                QuestionDetailSection("Tags") {
                     TagList(tags: tags)
                 }
             }
@@ -38,7 +38,7 @@ extension QuestionDetailView {
         case .guidelines:
             if let notes = detail?.internalNotes,
                !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Section("Interviewer Guidelines") {
+                QuestionDetailSection("Interviewer Guidelines") {
                     HTMLText(html: notes)
                 }
             } else {
@@ -52,7 +52,7 @@ extension QuestionDetailView {
 
         case .answer:
             if let detail, !detail.options.isEmpty {
-                Section("Options") {
+                QuestionDetailSection("Options") {
                     ForEach(Array(detail.options.enumerated()), id: \.offset) { index, option in
                         let optionText = MarkdownExport.plainText(fromHTML: option)
                         Label {
@@ -72,7 +72,7 @@ extension QuestionDetailView {
                 from: detail?.answer,
                 options: detail?.options ?? []
             ), !answerText.isEmpty {
-                Section("Answer") {
+                QuestionDetailSection("Answer") {
                     if answerRevealed {
                         Text(answerText).textSelection(.enabled)
                     } else {
@@ -102,7 +102,10 @@ extension QuestionDetailView {
     }
 
     private var systemPromptSection: some View {
-        Section {
+        QuestionDetailSection("AI system prompt", footer: """
+        Customize the project AI assistant. Up to 15,000 characters. \
+        Clear the text to remove the custom prompt.
+        """) {
             if canEdit {
                 InlineEditableText(
                     text: displayed.customSystemPrompt ?? "",
@@ -118,19 +121,12 @@ extension QuestionDetailView {
             } else if let prompt = displayed.customSystemPrompt, !prompt.isEmpty {
                 Text(prompt).textSelection(.enabled)
             }
-        } header: {
-            Text("AI system prompt")
-        } footer: {
-            Text("""
-            Customize the project AI assistant. Up to 15,000 characters. \
-            Clear the text to remove the custom prompt.
-            """)
         }
     }
 
     @ViewBuilder private var problemStatementSection: some View {
         if canEdit {
-            Section("Problem statement") {
+            QuestionDetailSection("Problem statement") {
                 // Edits work on the raw source; display renders HackerRank's HTML.
                 InlineEditableText(
                     text: problemStatement ?? "",
@@ -141,7 +137,7 @@ extension QuestionDetailView {
                 }
             }
         } else if let statement = problemStatement {
-            Section("Problem statement") {
+            QuestionDetailSection("Problem statement") {
                 HighlightedHTMLText(html: statement)
             }
         } else {
@@ -151,5 +147,29 @@ extension QuestionDetailView {
                 description: Text("This question does not have a problem statement.")
             )
         }
+    }
+}
+
+/// Unboxed detail sections share PadBuddy's heading, content spacing and readable full width.
+struct QuestionDetailSection<Content: View>: View {
+    let title: LocalizedStringKey
+    let footer: LocalizedStringKey?
+    let content: Content
+
+    init(_ title: LocalizedStringKey, footer: LocalizedStringKey? = nil, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.footer = footer
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.headline).accessibilityAddTraits(.isHeader)
+            content
+            if let footer {
+                Text(footer).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
