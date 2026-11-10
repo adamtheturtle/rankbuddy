@@ -59,7 +59,8 @@ Initial requests support user, source type/ID, timestamp range, sort and expansi
 Later requests send only the opaque cursor from the preceding page.
 Cursors expire after inactivity, and refreshing starts a new traversal.
 Object and date filters remain available in Account Activity.
-The **Audit Logs** destination exposes all documented filters and both pagination modes.
+The **Audit Logs** destination uses cursor pagination automatically behind **Load More**.
+Its Filters sheet retains the audit filters and hides the continuation cursor, which the app manages.
 The documented actor filter is `user`.
 
 ## Pagination and contract details

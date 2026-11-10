@@ -22,7 +22,6 @@ struct AdministrationScreen: View {
 
     let destination: Destination
     @Environment(AccountStore.self) private var store
-    @State private var cursorBased = true
     @State private var interview = false
     @State private var groups = false
 
@@ -34,7 +33,7 @@ struct AdministrationScreen: View {
                                            + "to use \(destination.title)."))
             } else if let account = store.currentAccount {
                 VStack(spacing: 0) {
-                    if destination != .candidates {
+                    if destination == .ats || destination == .provisioning {
                         HStack {
                             modePicker
                             Spacer()
@@ -55,12 +54,6 @@ struct AdministrationScreen: View {
 
     @ViewBuilder private var modePicker: some View {
         switch destination {
-        case .audit:
-            Picker("Pagination", selection: $cursorBased) {
-                Text("Cursor").tag(true)
-                Text("Offset").tag(false)
-            }.pickerStyle(.segmented).labelsHidden().frame(width: 220)
-
         case .ats:
             Picker("Invitation", selection: $interview) {
                 Text("Assessment").tag(false)
@@ -73,13 +66,13 @@ struct AdministrationScreen: View {
                 Text("Groups").tag(true)
             }.pickerStyle(.segmented).labelsHidden().frame(width: 220)
 
-        case .candidates: EmptyView()
+        case .audit, .candidates: EmptyView()
         }
     }
 
     @ViewBuilder private func content(_ account: Account) -> some View {
         switch destination {
-        case .audit: AuditLogsScreen(account: account, cursorBased: cursorBased)
+        case .audit: AuditLogsScreen(account: account)
         case .ats: ATSInvitationsScreen(account: account, interview: interview)
         case .provisioning: ProvisioningScreen(account: account, groups: groups)
         case .candidates: BusinessCollectionView(account: account, kind: .candidates, title: "Candidates")
@@ -89,10 +82,8 @@ struct AdministrationScreen: View {
 
 struct AuditLogsScreen: View {
     let account: Account
-    var cursorBased = true
     var body: some View {
-        BusinessCollectionView(account: account, kind: cursorBased ? .auditCursor : .auditOffset, title: "Audit Logs")
-            .id(cursorBased)
+        BusinessCollectionView(account: account, kind: .auditCursor, title: "Audit Logs")
     }
 }
 
@@ -200,7 +191,7 @@ struct BusinessCollectionView: View {
         }
         .sheet(isPresented: $filtersPresented) {
             NativeListFiltersSheet(operationID: kind.operationID, query: $query, collectionTitle: title,
-                                   excludedNames: kind == .candidates ? ["query"] : [])
+                                   excludedNames: kind == .candidates ? ["query"] : kind.isAudit ? ["cursor"] : [])
         }
         .sheet(isPresented: $createPresented) {
             NativeFeatureFormSheet(title: kind == .provisioningUsers ? "New Provisioned User" : "New Provisioned Group",
