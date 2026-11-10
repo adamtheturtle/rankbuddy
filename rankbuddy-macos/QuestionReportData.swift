@@ -23,6 +23,7 @@ nonisolated struct QuestionReportData {
     let options: [String]
     let correctAnswer: String?
     let internalNotes: String?
+    private let correctOptionIndices: Set<Int>
 
     init(question: Question, detail: QuestionDetail? = nil, audience: QuestionDocumentAudience = .candidate) {
         self.question = audience == .interviewer ? question : Question(
@@ -34,11 +35,16 @@ nonisolated struct QuestionReportData {
         correctAnswer = audience == .interviewer
             ? Self.correctAnswerText(from: detail?.answer, options: options)
             : nil
+        correctOptionIndices = audience == .interviewer ? Set(detail?.answer?.indices ?? []) : []
         internalNotes = audience == .interviewer ? detail?.internalNotes : nil
     }
 
     static func correctAnswerText(from answer: QuestionAnswer?, options: [String]) -> String? {
         guard let answer else { return nil }
+
+        if case let .text(text) = answer {
+            return text.isEmpty ? nil : text
+        }
 
         let texts = answer.indices.compactMap { index -> String? in
             guard index > 0, index <= options.count else { return nil }
@@ -50,6 +56,6 @@ nonisolated struct QuestionReportData {
 
     func optionLabel(at index: Int) -> String {
         let option = options[index]
-        return option == correctAnswer ? "\(option) (correct)" : option
+        return correctOptionIndices.contains(index + 1) ? "\(option) (correct)" : option
     }
 }

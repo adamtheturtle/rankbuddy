@@ -32,7 +32,7 @@ extension QuestionDetailView {
 
         case .content:
             problemStatementSection
-            if displayed.type == "fullstack" {
+            if displayed.supportsCustomSystemPrompt {
                 systemPromptSection
             }
 
@@ -59,11 +59,12 @@ extension QuestionDetailView {
                         Label {
                             HTMLText(html: option)
                         } icon: {
-                            Image(systemName: isCorrect(option) ? "checkmark.circle.fill" : "circle")
+                            Image(systemName: isCorrect(at: index) ? "checkmark.circle.fill" : "circle")
                         }
-                        .foregroundStyle(isCorrect(option) ? Color.green : Color.primary)
+                        .foregroundStyle(isCorrect(at: index) ? Color.green : Color.primary)
                         .symbolRenderingMode(.hierarchical)
-                        .accessibilityLabel(isCorrect(option) ? "\(optionText), correct answer" : optionText)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(isCorrect(at: index) ? "\(optionText), correct answer" : optionText)
                         .id(index)
                     }
                 }
@@ -117,7 +118,7 @@ extension QuestionDetailView {
                         editError = issue
                         return false
                     }
-                    return await save(QuestionWriteOptions(customSystemPrompt: newValue))
+                    return await save(QuestionMetadataChanges(customSystemPrompt: newValue))
                 }
             } else if let prompt = displayed.customSystemPrompt, !prompt.isEmpty {
                 Text(prompt).textSelection(.enabled)
@@ -134,7 +135,7 @@ extension QuestionDetailView {
                     placeholder: "Add a problem statement",
                     rendersHTML: true
                 ) { newValue in
-                    await save(QuestionWriteOptions(problemStatement: newValue))
+                    await save(QuestionMetadataChanges(problemStatement: newValue))
                 }
             }
         } else if let statement = problemStatement {
