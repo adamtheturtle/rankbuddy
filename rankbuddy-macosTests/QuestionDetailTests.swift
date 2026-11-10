@@ -50,33 +50,21 @@ struct QuestionDetailTests {
         """#
         let question = try JSONDecoder().decode(Question.self, from: Data(json.utf8))
         let updated = question.applying(
-            name: nil,
-            QuestionWriteOptions(languages: [], tags: [])
+            QuestionMetadataChanges(languages: [], tags: [])
         )
 
         #expect(updated.languages?.isEmpty == true)
         #expect(updated.tags?.isEmpty == true)
     }
 
-    @Test func `explicit scalar updates clear question metadata`() throws {
-        let question = try JSONDecoder().decode(
-            Question.self,
-            from: Data(#"{"id":"q1","type":"code","name":"Two Sum","recommended_duration":30,"max_score":100}"#.utf8)
-        )
+    @Test func `explicit zero duration survives the edit overlay`() {
+        let question = Question(id: "q1", type: "code", name: "Two Sum", recommendedDuration: 30, maxScore: 100)
         var overlay = QuestionEditOverlay()
-        overlay.merge(
-            name: nil,
-            options: QuestionWriteOptions(clearsRecommendedDuration: true)
-        )
-
-        let cleared = overlay.applying(to: question)
-        #expect(cleared.recommendedDuration == nil)
-        #expect(cleared.maxScore == 100)
-
-        overlay.merge(name: nil, options: QuestionWriteOptions(recommendedDuration: 45))
-        let replaced = overlay.applying(to: question)
-        #expect(replaced.recommendedDuration == 45)
-        #expect(replaced.maxScore == 100)
+        overlay.merge(QuestionMetadataChanges(recommendedDuration: 0))
+        #expect(overlay.applying(to: question).recommendedDuration == 0)
+        overlay.merge(QuestionMetadataChanges(name: "Renamed"))
+        #expect(overlay.applying(to: question).recommendedDuration == 0)
+        #expect(overlay.applying(to: question).maxScore == 100)
     }
 
     @Test func `edit overlay preserves newer unedited metadata`() throws {
@@ -89,7 +77,7 @@ struct QuestionDetailTests {
             from: Data(#"{"id":"q1","type":"code","name":"Old","languages":["python"]}"#.utf8)
         )
         var overlay = QuestionEditOverlay()
-        overlay.merge(name: "Renamed", options: QuestionWriteOptions())
+        overlay.merge(QuestionMetadataChanges(name: "Renamed"))
 
         #expect(overlay.applying(to: original).name == "Renamed")
         #expect(overlay.applying(to: refreshed).languages == ["python"])
@@ -99,14 +87,14 @@ struct QuestionDetailTests {
         let original = Question(id: "q1", type: "fullstack", name: "Project", customSystemPrompt: "Old")
         let prompt = "  Give hints.\nDo not solve.  "
         var overlay = QuestionEditOverlay()
-        overlay.merge(name: nil, options: QuestionWriteOptions(customSystemPrompt: prompt))
-        overlay.merge(name: "Renamed", options: QuestionWriteOptions(tags: ["project"]))
+        overlay.merge(QuestionMetadataChanges(customSystemPrompt: prompt))
+        overlay.merge(QuestionMetadataChanges(name: "Renamed", tags: ["project"]))
         #expect(overlay.applying(to: original).customSystemPrompt == prompt)
         let metadata = try JSONDecoder().decode(QuestionDetailMetadata.self, from: Data(
             #"{"custom_system_prompt":"Remote"}"#.utf8
         ))
         #expect(overlay.applying(to: metadata.applying(to: original)).customSystemPrompt == prompt)
-        overlay.merge(name: nil, options: QuestionWriteOptions(customSystemPrompt: ""))
+        overlay.merge(QuestionMetadataChanges(customSystemPrompt: ""))
         #expect(overlay.applying(to: original).customSystemPrompt?.isEmpty == true)
     }
 

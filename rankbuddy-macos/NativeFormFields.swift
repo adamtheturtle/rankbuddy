@@ -76,11 +76,8 @@ enum NativeFormSchema {
                 ])
             ])
         }
-        if operation.id == "api_update_question" {
-            properties["custom_system_prompt"] = .object([
-                "type": .string("string"),
-                "description": .string("Custom system prompt for project questions. Whitespace is preserved.")
-            ])
+        if ["api_create_question", "api_update_question"].contains(operation.id) {
+            properties = questionProperties(properties)
         }
         if operation.scim {
             properties["schemas"] = .object(["type": .string("array"),
@@ -95,6 +92,24 @@ enum NativeFormSchema {
         }
         result["properties"] = .object(properties)
         return .object(result)
+    }
+
+    /// The SDK's question contracts cover project types and text answers missing from the legacy schema.
+    private static func questionProperties(
+        _ properties: [String: HackerRankJSONValue]
+    ) -> [String: HackerRankJSONValue] {
+        var properties = properties
+        var type = properties["type"]?.object ?? [:]
+        type["enum"] = .array(QuestionType.allCases.map { .string($0.rawValue) })
+        properties["type"] = .object(type)
+        var answer = properties["answer"]?.object ?? [:]
+        answer["type"] = .array([.string("integer"), .string("array"), .string("string")])
+        properties["answer"] = .object(answer)
+        properties["custom_system_prompt"] = .object([
+            "type": .string("string"),
+            "description": .string("Custom system prompt for project questions. Whitespace is preserved.")
+        ])
+        return properties
     }
 
     private static var scimPatchOperations: HackerRankJSONValue {

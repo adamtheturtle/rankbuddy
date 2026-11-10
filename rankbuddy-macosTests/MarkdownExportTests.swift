@@ -243,4 +243,52 @@ struct MarkdownExportTests {
             #expect(interviewerMarkdown.contains(confidential))
         }
     }
+
+    @Test(arguments: ["0", "2", "  Keep this answer.\nSecond line.  "])
+    func `text answers remain literal and confidential`(answer: String) throws {
+        let question = Question(id: "text", type: QuestionType.textAnswer.rawValue, name: "Text answer",
+                                customSystemPrompt: "Private system prompt")
+        let data = try JSONSerialization.data(withJSONObject: [
+            "id": "text", "type": "textAns", "name": "Text answer", "answer": answer,
+            "options": [answer, "Other"], "internal_notes": "Private rubric"
+        ])
+        let detail = try JSONDecoder().decode(QuestionDetail.self, from: data)
+        let interviewer = QuestionReportData(question: question, detail: detail, audience: .interviewer)
+        let candidate = QuestionReportData(question: question, detail: detail)
+        #expect(detail.answer == .text(answer))
+        #expect(interviewer.correctAnswer == answer)
+        #expect(interviewer.optionLabel(at: 0) == answer)
+        #expect(interviewer.optionLabel(at: 1) == "Other")
+        let interviewerMarkdown = MarkdownExport.question(interviewer)
+        #expect(interviewerMarkdown.contains(MarkdownExport.textSection(
+            "Correct answer", MarkdownExport.plainText(fromHTML: answer)
+        )))
+        #expect(candidate.correctAnswer == nil)
+        #expect(candidate.internalNotes == nil)
+        #expect(candidate.question.customSystemPrompt == nil)
+        let markdown = MarkdownExport.question(candidate)
+        #expect(!markdown.contains("## Correct answer"))
+        #expect(!markdown.contains("Private rubric"))
+        #expect(!markdown.contains("Private system prompt"))
+    }
+
+    @Test func `numeric multiple answers mark only their selected options`() throws {
+        let question = Question(id: "mcq", type: "multiple_mcq", name: "Choices")
+        let detail = try JSONDecoder().decode(QuestionDetail.self, from: Data(#"""
+        {"id":"mcq","type":"multiple_mcq","name":"Choices","options":["A","B","A, B","A"],"answer":[1,2]}
+        """#.utf8))
+        let interviewer = QuestionReportData(question: question, detail: detail, audience: .interviewer)
+        #expect(interviewer.correctAnswer == "A, B")
+        #expect(interviewer.optionLabel(at: 0) == "A (correct)")
+        #expect(interviewer.optionLabel(at: 1) == "B (correct)")
+        #expect(interviewer.optionLabel(at: 2) == "A, B")
+        #expect(interviewer.optionLabel(at: 3) == "A")
+        let candidate = QuestionReportData(question: question, detail: detail)
+        #expect(candidate.optionLabel(at: 0) == "A")
+        #expect(candidate.optionLabel(at: 1) == "B")
+    }
+
+    @Test func `empty text answers omit the answer section`() {
+        #expect(QuestionReportData.correctAnswerText(from: .text(""), options: []) == nil)
+    }
 }

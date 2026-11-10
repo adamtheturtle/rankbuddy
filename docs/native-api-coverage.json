@@ -985,6 +985,7 @@
       "parameters": [],
       "body_fields": [
         "answer",
+        "custom_system_prompt",
         "internal_notes",
         "languages",
         "languages[]",
@@ -1005,7 +1006,8 @@
           "multiple_mcq",
           "whiteboard",
           "file_upload",
-          "textAns"
+          "textAns",
+          "fullstack"
         ]
       }
     },
@@ -1030,6 +1032,7 @@
       ],
       "body_fields": [
         "answer",
+        "custom_system_prompt",
         "internal_notes",
         "languages",
         "languages[]",
@@ -1050,7 +1053,8 @@
           "multiple_mcq",
           "whiteboard",
           "file_upload",
-          "textAns"
+          "textAns",
+          "fullstack"
         ]
       }
     },

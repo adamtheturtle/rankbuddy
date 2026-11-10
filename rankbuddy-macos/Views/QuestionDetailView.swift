@@ -14,7 +14,7 @@ import SwiftUI
 /// answer — gated behind an explicit reveal — and the author's internal notes. The fetch is
 /// best-effort and skipped in the merged view, where the owning account is ambiguous.
 /// Outside the merged view the title renames in place and the metadata saves per field via
-/// `updateQuestion`; coding questions also gain testcase and code-stub actions (#147).
+/// `updateQuestionMetadata`; coding questions also gain testcase and code-stub actions (#147).
 struct QuestionDetailView: View {
     let question: Question
     let account: Account?
@@ -69,7 +69,7 @@ struct QuestionDetailView: View {
 
     private var availablePanes: [QuestionDetailPane] {
         var panes: [QuestionDetailPane] = [.overview, .content, .guidelines, .answer]
-        if canEdit, displayed.type.lowercased() == "coding" {
+        if canEdit, displayed.knownType == .code {
             panes.append(.coding)
         }
         return panes
@@ -90,7 +90,7 @@ struct QuestionDetailView: View {
         guard canEdit else { return nil }
 
         return { newName in
-            await save(name: newName)
+            await save(QuestionMetadataChanges(name: newName))
         }
     }
 
@@ -305,19 +305,16 @@ extension QuestionDetailView {
     /// value is folded into the row model directly — and nudges the list to refresh.
     @discardableResult
     func save(
-        name: String? = nil,
-        _ options: QuestionWriteOptions = QuestionWriteOptions()
+        _ changes: QuestionMetadataChanges
     ) async -> Bool {
         guard let account = owningAccount else { return false }
 
         do {
-            _ = try await HackerRankClient(account: account).updateQuestion(
+            _ = try await HackerRankClient(account: account).updateQuestionMetadata(
                 questionID: question.id,
-                name: name,
-                type: nil,
-                options: options
+                changes: changes
             )
-            editOverlay.merge(name: name, options: options)
+            editOverlay.merge(changes)
             registerDetailCommands()
             onChanged()
             return true
@@ -351,13 +348,8 @@ extension QuestionDetailView {
 
     /// Whether an option matches the (revealed) correct answer, so it can be ticked in the list.
     /// Only highlights once the answer has been revealed, keeping the answer hidden by default.
-    func isCorrect(_ option: String) -> Bool {
-        guard answerRevealed,
-              let answer = detail?.answer,
-              let options = detail?.options,
-              let index = options.firstIndex(of: option) else { return false }
-
-        return answer.indices.contains(index + 1)
+    func isCorrect(at index: Int) -> Bool {
+        answerRevealed && detail?.answer?.indices.contains(index + 1) == true
     }
 
     private func registerDetailCommands() {

@@ -65,6 +65,10 @@ struct NativeFeatureFormTests {
         if let body = draft.body {
             fill(body)
         }
+        if ["api_create_question", "api_update_question"].contains(operationID) {
+            // This exhaustive fixture includes a custom prompt, which only fullstack supports.
+            draft.body?.children.first { $0.name == "type" }?.text = QuestionType.fullstack.rawValue
+        }
         let request = try draft.request()
         #expect(await draft.submit(client: client, scimToken: "synthetic-provisioning"))
         let sent = try #require(NativeRequestCapture.requests.withLock { $0.last })
@@ -130,6 +134,34 @@ struct NativeFeatureFormTests {
         answer.addEntry()
         answer.entries[0].text = "2"
         #expect(try answer.value() == .array([.int(2)]))
+    }
+
+    @Test(arguments: ["api_create_question", "api_update_question"])
+    func `question forms share SDK types and preserve numeric looking text answers`(operationID: String) throws {
+        let draft = try NativeFeatureFormModel(operationID: operationID, path: ["question_id": "1"])
+        let body = try #require(draft.body)
+        let type = try #require(body.children.first { $0.name == "type" })
+        #expect(type.choices.map(\.text) == QuestionType.allCases.map(\.rawValue))
+        let answer = try #require(body.children.first { $0.name == "answer" })
+        answer.included = true
+        answer.kind = "string"
+        answer.text = "0"
+        #expect(try answer.value() == .string("0"))
+    }
+
+    @Test func `unsupported custom prompts fail before the native form writes`() async throws {
+        let client = try client()
+        let draft = try NativeFeatureFormModel(operationID: "api_update_question", path: ["question_id": "1"])
+        let type = try #require(draft.body?.children.first { $0.name == "type" })
+        type.included = true
+        type.text = QuestionType.code.rawValue
+        let prompt = try #require(draft.body?.children.first { $0.name == "custom_system_prompt" })
+        prompt.included = true
+        prompt.text = "Give hints."
+        #expect(await !draft.submit(client: client, scimToken: nil))
+        #expect(draft.error != nil)
+        #expect(!draft.uncertain)
+        #expect(NativeRequestCapture.requests.withLock { $0.isEmpty })
     }
 
     @Test

@@ -7,28 +7,25 @@ import HackerRankKit
 import SwiftUI
 
 struct QuestionEditOverlay {
-    private(set) var name: String?
-    private(set) var options = QuestionWriteOptions()
+    private(set) var changes = QuestionMetadataChanges()
 
-    mutating func merge(name: String?, options update: QuestionWriteOptions) {
-        self.name = name ?? self.name
-        options = QuestionWriteOptions(
-            languages: update.languages ?? options.languages,
-            problemStatement: update.problemStatement ?? options.problemStatement,
-            recommendedDuration: update.clearsRecommendedDuration
-                ? nil : update.recommendedDuration ?? options.recommendedDuration,
-            internalNotes: update.internalNotes ?? options.internalNotes,
-            tags: update.tags ?? options.tags,
-            mcqOptions: update.mcqOptions ?? options.mcqOptions,
-            answer: update.answer ?? options.answer,
-            clearsRecommendedDuration: update.recommendedDuration == nil
-                ? update.clearsRecommendedDuration || options.clearsRecommendedDuration : false,
-            customSystemPrompt: update.customSystemPrompt ?? options.customSystemPrompt
+    mutating func merge(_ update: QuestionMetadataChanges) {
+        changes = QuestionMetadataChanges(
+            name: update.name ?? changes.name,
+            type: update.type ?? changes.type,
+            internalNotes: update.internalNotes ?? changes.internalNotes,
+            languages: update.languages ?? changes.languages,
+            problemStatement: update.problemStatement ?? changes.problemStatement,
+            recommendedDuration: update.recommendedDuration ?? changes.recommendedDuration,
+            tags: update.tags ?? changes.tags,
+            options: update.options ?? changes.options,
+            answer: update.answer ?? changes.answer,
+            customSystemPrompt: update.customSystemPrompt ?? changes.customSystemPrompt
         )
     }
 
     func applying(to question: Question) -> Question {
-        question.applying(name: name, options)
+        question.applying(changes)
     }
 }
 
@@ -41,20 +38,19 @@ extension QuestionDetailView {
                 return false
             }
 
-            return await save(QuestionWriteOptions(
-                recommendedDuration: newValue,
-                clearsRecommendedDuration: newValue == nil
+            return await save(QuestionMetadataChanges(
+                recommendedDuration: newValue
             ))
         }
         EditableLanguagesRow(value: displayed.languages) { newValue in
-            await save(QuestionWriteOptions(languages: newValue ?? []))
+            await save(QuestionMetadataChanges(languages: newValue ?? []))
         }
         EditableTextRow(
             label: "Tags",
             value: displayed.tags?.joined(separator: ", ") ?? "",
             prompt: "Comma-separated"
         ) { newValue in
-            await save(QuestionWriteOptions(tags: splitList(newValue) ?? []))
+            await save(QuestionMetadataChanges(tags: splitList(newValue) ?? []))
         }
     }
 }
@@ -62,23 +58,22 @@ extension QuestionDetailView {
 extension Question {
     /// A copy with a successful update's fields folded in, so the detail can display the
     /// saved state without a full list refresh (the write echo is only id/name/type).
-    func applying(name: String?, _ options: QuestionWriteOptions) -> Question {
+    func applying(_ changes: QuestionMetadataChanges) -> Question {
         Question(
             id: id,
             uniqueID: uniqueID,
-            type: type,
-            name: name ?? self.name,
+            type: changes.type ?? type,
+            name: changes.name ?? name,
             owner: owner,
             createdAt: createdAt,
             status: status,
-            languages: options.languages ?? languages,
-            problemStatement: options.problemStatement ?? problemStatement,
-            recommendedDuration: options.clearsRecommendedDuration
-                ? nil : options.recommendedDuration ?? recommendedDuration,
-            tags: options.tags ?? tags,
+            languages: changes.languages ?? languages,
+            problemStatement: changes.problemStatement ?? problemStatement,
+            recommendedDuration: changes.recommendedDuration ?? recommendedDuration,
+            tags: changes.tags ?? tags,
             maxScore: maxScore,
             skills: skills,
-            customSystemPrompt: options.customSystemPrompt ?? customSystemPrompt
+            customSystemPrompt: changes.customSystemPrompt ?? customSystemPrompt
         )
     }
 }

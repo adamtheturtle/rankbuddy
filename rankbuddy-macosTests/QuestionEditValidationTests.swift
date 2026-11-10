@@ -21,7 +21,7 @@ struct QuestionEditValidationTests {
     }
 
     @Test func `recommended duration is bounded to one day`() {
-        #expect(QuestionEditValidation.isValidRecommendedDuration(nil))
+        #expect(!QuestionEditValidation.isValidRecommendedDuration(nil))
         #expect(QuestionEditValidation.isValidRecommendedDuration(0))
         #expect(QuestionEditValidation.isValidRecommendedDuration(1440))
         #expect(!QuestionEditValidation.isValidRecommendedDuration(-1))

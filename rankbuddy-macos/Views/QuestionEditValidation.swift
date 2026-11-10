@@ -16,7 +16,7 @@ nonisolated enum QuestionEditValidation {
     static let recommendedDurationRange = 0 ... 1440
 
     static func isValidRecommendedDuration(_ value: Int?) -> Bool {
-        value.map(recommendedDurationRange.contains) ?? true
+        value.map(recommendedDurationRange.contains) ?? false
     }
 }
 
