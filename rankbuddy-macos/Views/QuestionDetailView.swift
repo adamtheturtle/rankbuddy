@@ -94,6 +94,19 @@ struct QuestionDetailView: View {
         }
     }
 
+    private var detailURL: URL? {
+        owningAccount.flatMap {
+            RankBuddyUserActivity.webURL(base: $0.baseURL, collection: .questions, itemID: question.id)
+        }
+    }
+
+    private var favoriteReference: FavoriteRef? {
+        owningAccount.map {
+            FavoriteRef(accountID: $0.id.uuidString, collection: .questions,
+                        itemID: question.id, title: displayed.name)
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -113,10 +126,13 @@ struct QuestionDetailView: View {
             }
         }
         .navigationTitle(displayed.name)
-        .nativeResourceActions(.question, account: owningAccount, path: ["question_id": question.id]) {
-            onChanged()
-            Task { await loadDetail(for: requestIdentity) }
-        }
+        .nativeResourceActions(.question, account: owningAccount, path: ["question_id": question.id],
+                               showsMenu: owningAccount != nil, menuContent: {
+                                   DetailLinkMenuContent(url: detailURL, noun: "question", favorite: favoriteReference)
+                               }, onSaved: {
+                                   onChanged()
+                                   Task { await loadDetail(for: requestIdentity) }
+                               })
         .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
@@ -145,19 +161,9 @@ struct QuestionDetailView: View {
             title: displayed.name,
             account: owningAccount
         )
-        // Share and Open stay in the bar; Print and Markdown export are off the bar by default but
-        // one Customize Toolbar away.
+        // Open and the actions menu stay visible; individual secondary actions are customizable.
         .windowToolbar(id: "questionDetail") {
-            DetailLinkToolbarContent(
-                url: owningAccount.flatMap {
-                    RankBuddyUserActivity.webURL(base: $0.baseURL, collection: .questions, itemID: question.id)
-                },
-                noun: "question",
-                favorite: owningAccount.map {
-                    FavoriteRef(accountID: $0.id.uuidString, collection: .questions,
-                                itemID: question.id, title: displayed.name)
-                }
-            )
+            DetailLinkToolbarContent(url: detailURL, noun: "question", favorite: favoriteReference)
             ToolbarItem(id: "print") {
                 Button("Print", systemImage: "printer") { documentAction = .print }
                     .help("Print a candidate or interviewer copy")

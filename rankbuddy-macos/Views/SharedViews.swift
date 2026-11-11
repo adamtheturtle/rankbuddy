@@ -30,11 +30,8 @@ struct TagList: View {
     }
 }
 
-/// The detail pane's Share + Open-in-browser actions, mirroring PadBuddy's pad-detail toolbar.
-/// Uses PadBuddy's exact icons (`square.and.arrow.up`, `doc.text.image`) and short "Open" title so
-/// the two apps' detail toolbars match, and routes Open through the browser preference (#63). Both
-/// stay on the default toolbar. A `nil` URL (e.g. the merged view, where the owning account is
-/// ambiguous) omits both items, exactly like PadBuddy's `if let url = pad.webURL`.
+/// Open stays visible; sharing and favourites are available in the detail actions menu
+/// and can also be added as individual buttons through Customize Toolbar.
 struct DetailLinkToolbarContent: CustomizableToolbarContent {
     let url: URL?
     /// The noun used in the help / accessibility text (e.g. "test", "interview", "question").
@@ -45,6 +42,7 @@ struct DetailLinkToolbarContent: CustomizableToolbarContent {
         ToolbarItem(id: "favorite", placement: .primaryAction) {
             DetailFavoriteButton(reference: favorite)
         }
+        .defaultCustomization(.hidden)
         if let url {
             ToolbarItem(id: "share", placement: .primaryAction) {
                 ShareLink(item: url) {
@@ -53,6 +51,7 @@ struct DetailLinkToolbarContent: CustomizableToolbarContent {
                 .help("Share \(noun)")
                 .accessibilityLabel("Share \(noun)")
             }
+            .defaultCustomization(.hidden)
             ToolbarItem(id: "open", placement: .primaryAction) {
                 Button {
                     BrowserSettings.open(url)
@@ -63,6 +62,27 @@ struct DetailLinkToolbarContent: CustomizableToolbarContent {
                 }
                 .help("Open the \(noun) in your browser")
                 .accessibilityLabel("Open \(noun)")
+            }
+        }
+    }
+}
+
+/// Secondary link actions shared by detail menus, including standalone windows.
+struct DetailLinkMenuContent: View {
+    let url: URL?
+    let noun: String
+    let favorite: FavoriteRef?
+
+    var body: some View {
+        Section {
+            if favorite != nil {
+                DetailFavoriteButton(reference: favorite)
+            }
+            if let url {
+                ShareLink(item: url) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+                .accessibilityLabel("Share \(noun)")
             }
         }
     }

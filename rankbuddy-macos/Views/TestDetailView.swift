@@ -72,6 +72,29 @@ struct TestDetailView: View {
         )
     }
 
+    private var detailURL: URL? {
+        RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: displayedTest.id)
+    }
+
+    private var favoriteReference: FavoriteRef? {
+        FavoriteRef(accountID: account.id.uuidString, collection: .tests,
+                    itemID: displayedTest.id, title: displayedTest.name)
+    }
+
+    @ViewBuilder private var detailMenuContent: some View {
+        DetailLinkMenuContent(url: detailURL, noun: "test", favorite: favoriteReference)
+        Section {
+            Button("Rename…") { titleEditRequest += 1 }
+            Button("Edit Assessment…", systemImage: "pencil") { editorPresented = true }
+        }
+        Section {
+            Button("Archive", systemImage: "archivebox") { archivePresented = true }
+                .disabled(displayedTest.state?.localizedCaseInsensitiveCompare("archived") == .orderedSame)
+            Button("Delete", systemImage: "trash", role: .destructive) { deletePresented = true }
+                .disabled(isDeleting)
+        }
+    }
+
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { context in
             Form {
@@ -203,10 +226,12 @@ struct TestDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayedTest.name)
-        .nativeResourceActions(.test, account: account, path: ["id": test.id, "test_id": test.id]) {
+        .nativeResourceActions(.test, account: account, path: ["id": test.id, "test_id": test.id], menuContent: {
+            detailMenuContent
+        }, onSaved: {
             onChanged()
             Task { await loadDetail(for: requestIdentity) }
-        }
+        })
         .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
@@ -231,12 +256,7 @@ struct TestDetailView: View {
             account: account
         )
         .windowToolbar(id: "testDetail") {
-            DetailLinkToolbarContent(
-                url: RankBuddyUserActivity.webURL(base: account.baseURL, collection: .tests, itemID: displayedTest.id),
-                noun: "test",
-                favorite: FavoriteRef(accountID: account.id.uuidString, collection: .tests,
-                                      itemID: displayedTest.id, title: displayedTest.name)
-            )
+            DetailLinkToolbarContent(url: detailURL, noun: "test", favorite: favoriteReference)
             ToolbarItem(id: "edit") {
                 Menu {
                     Button("Rename…") { titleEditRequest += 1 }
@@ -246,6 +266,7 @@ struct TestDetailView: View {
                 }
                 .help("Rename or edit this test")
             }
+            .defaultCustomization(.hidden)
             ToolbarItem(id: "archive") {
                 Button {
                     archivePresented = true
@@ -255,6 +276,7 @@ struct TestDetailView: View {
                 .help("Archive this test")
                 .disabled(displayedTest.state?.localizedCaseInsensitiveCompare("archived") == .orderedSame)
             }
+            .defaultCustomization(.hidden)
             ToolbarItem(id: "delete") {
                 Button(role: .destructive) {
                     deletePresented = true
@@ -268,6 +290,7 @@ struct TestDetailView: View {
                 .help("Delete this test")
                 .disabled(isDeleting)
             }
+            .defaultCustomization(.hidden)
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Test: \(displayedTest.name)") {
                     TestReport(data: reportData)

@@ -64,21 +64,28 @@ enum NativeResourceKind: String, CaseIterable {
     }
 }
 
-private struct NativeResourceActionsModifier: ViewModifier {
+private struct NativeResourceActionsModifier<MenuContent: View>: ViewModifier {
     let kind: NativeResourceKind
     let account: Account?
     let path: [String: String]
     let onSaved: () -> Void
+    @ViewBuilder let menuContent: () -> MenuContent
+    let showsMenu: Bool
     @State private var selected: NativeResourceAction?
 
     func body(content: Content) -> some View {
         content
             .toolbar {
-                if account != nil {
+                if showsMenu {
                     ToolbarItem(id: "native-resource-actions", placement: .primaryAction) {
                         Menu("\(kind.rawValue.capitalized) Actions", systemImage: "ellipsis.circle") {
-                            ForEach(kind.actions) { action in
-                                Button(action.title) { selected = action }
+                            menuContent()
+                            if account != nil {
+                                Section {
+                                    ForEach(kind.actions) { action in
+                                        Button(action.title) { selected = action }
+                                    }
+                                }
                             }
                         }
                         .help("Settings and actions")
@@ -98,6 +105,18 @@ private struct NativeResourceActionsModifier: ViewModifier {
 extension View {
     func nativeResourceActions(_ kind: NativeResourceKind, account: Account?, path: [String: String],
                                onSaved: @escaping () -> Void = {}) -> some View {
-        modifier(NativeResourceActionsModifier(kind: kind, account: account, path: path, onSaved: onSaved))
+        modifier(NativeResourceActionsModifier(kind: kind, account: account, path: path, onSaved: onSaved,
+                                               menuContent: { EmptyView() }, showsMenu: account != nil))
+    }
+
+    /// Adds the detail's local actions to the same menu as its HackerRank settings.
+    func nativeResourceActions(
+        _ kind: NativeResourceKind, account: Account?, path: [String: String],
+        showsMenu: Bool = true,
+        @ViewBuilder menuContent: @escaping () -> some View,
+        onSaved: @escaping () -> Void = {}
+    ) -> some View {
+        modifier(NativeResourceActionsModifier(kind: kind, account: account, path: path, onSaved: onSaved,
+                                               menuContent: menuContent, showsMenu: showsMenu))
     }
 }
