@@ -79,7 +79,7 @@ jobs:
           printf 'Checking: %s\n' "${files[@]}"
           shellcheck "${files[@]}"
 
-      - name: Test Developer ID profile validation
+      - name: Test release and analyzer scripts
         run: python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 
   # Swift style gate. Runs on every push/PR (and nightly) so a SwiftLint or
@@ -98,7 +98,10 @@ jobs:
     # SwiftLint parses with is the same one used locally.
     # The pinned SwiftLint binary needs libxml2.so.2 from Ubuntu 24.04.
     # The floating 6.4 tag now uses Ubuntu 26.04 and cannot load that binary.
-    container: swift:6.4-noble
+    container:
+      image: swift:6.4-noble
+      # The inherited resolver failed Ubuntu mirror lookups in the lint job.
+      options: --dns 1.1.1.1 --dns 8.8.8.8
     timeout-minutes: 10
     # Inside a container GitHub runs `run:` steps with `sh` (dash), which rejects
     # the `set -o pipefail` bashism the steps below rely on; the image ships bash,
@@ -192,8 +195,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          # The analyzer ratchets unused imports in files changed by this commit.
-          fetch-depth: 2
+          # Resolve the complete PR base, including changes before the last commit.
+          fetch-depth: 0
 
       - name: Select Xcode
         run: |
@@ -231,6 +234,8 @@ jobs:
           ./swiftlint version
 
       - name: SwiftLint analyzer rules
+        env:
+          SWIFTLINT_ANALYZER_DIFF_BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           SWIFTLINT_BIN="$PWD/swiftlint" \

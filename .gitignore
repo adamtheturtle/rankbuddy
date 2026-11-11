@@ -24,3 +24,9 @@ node_modules/
 
 # Vale styles downloaded by `vale sync`.
 styles/
+
+# Compiler-backed analyzer diagnostics.
+swiftlint-analyzer-findings.json
+
+# Python script-test bytecode.
+__pycache__/
