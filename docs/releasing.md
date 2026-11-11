@@ -57,5 +57,7 @@ The packaging script expands Xcode entitlement placeholders and validates the pr
 It embeds that profile before signing the app, including its team and application identifiers.
 It signs nested Sparkle code before the app, signs the DMG, requires accepted notarization, staples the DMG, and checks both the app and DMG with Gatekeeper.
 
-After notarization, `scripts/generate-appcast.sh` downloads the pinned Sparkle tools, signs the DMG enclosure, and publishes `appcast.xml` beside the DMG.
+After notarization, `scripts/generate-appcast.sh` selects the resolved Sparkle version and verifies its tool archive against a pinned official SHA-256 before extracting it or writing the signing key.
+It validates the tag, archive name, and download destination, signs the DMG enclosure, and publishes `appcast.xml` beside the DMG.
+Preflight and CI check that the resolved tool version is supported and that rejected input or an untrusted archive cannot reach signing.
 Tagged Release builds read the stable `releases/latest/download/appcast.xml` URL; ordinary Debug builds remain updater-free.

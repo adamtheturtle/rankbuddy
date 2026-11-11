@@ -57,7 +57,7 @@ The project uses Xcode's JSON configuration file, `rankbuddy-macos.xcodeproj/pro
 Use Xcode 27.2 or later to work on the project.
 
 - **Preflight:** run `./scripts/preflight.sh` before pushing.
-  It resolves the committed package graph, lints, checks formatting, builds the macOS app, runs the parallel Fast test plan, and checks staged and unstaged patches for whitespace errors.
+  It resolves the committed package graph, lints, checks formatting, validates release and analyzer scripts, builds the macOS app, runs the parallel Fast test plan, and checks staged and unstaged patches for whitespace errors.
   Full logs and result bundles are retained under `.context/`.
 
 - **Build:** open `rankbuddy-macos.xcodeproj` in Xcode and build the `rankbuddy-macos` scheme, or run the project's build via the Xcode tooling.
@@ -70,7 +70,9 @@ Use Xcode 27.2 or later to work on the project.
   ```
 
   Configuration lives in `.swiftformat`, `.swiftlint.yml`, and `.periphery.yml`.
-  Analyzer-only SwiftLint rules run in CI against the compiler log captured from a clean macOS build; listing them in `.swiftlint.yml` alone does not enforce them.
+  Analyzer-only SwiftLint rules run in CI against the compiler log captured from a clean macOS build.
+  Module rules receive the complete shipping module once; import checks receive only individual Swift files changed across the full PR.
+  Set `SWIFTLINT_ANALYZER_DIFF_BASE` to the branch base for a local PR audit, or `SWIFTLINT_ANALYZE_ALL_IMPORTS=1` for a full import audit.
 
 - **Release type-check budget:** Release builds pass `-warn-long-expression-type-checking=250` and `-warn-long-function-bodies=500` to the Swift compiler.
   Because Release treats warnings as errors, expressions taking more than 250 ms or function bodies taking more than 500 ms to type-check fail the build.
