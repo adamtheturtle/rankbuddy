@@ -101,6 +101,17 @@ struct InterviewDetailView: View {
         }
     }
 
+    private var detailURL: URL? {
+        URL.remoteWebURL(from: interview.url)
+    }
+
+    private var favoriteReference: FavoriteRef? {
+        owningAccount.map {
+            FavoriteRef(accountID: $0.id.uuidString, collection: .interviews,
+                        itemID: interview.id, title: displayTitle)
+        }
+    }
+
     var body: some View {
         Form {
             InspectorHeader(title: displayTitle, badges: interview.inspectorBadges, onRename: renameAction)
@@ -208,10 +219,13 @@ struct InterviewDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(displayTitle)
-        .nativeResourceActions(.interview, account: owningAccount, path: ["interview_id": interview.id]) {
-            onChanged()
-            Task { await loadDetail(for: requestIdentity) }
-        }
+        .nativeResourceActions(.interview, account: owningAccount, path: ["interview_id": interview.id],
+                               showsMenu: owningAccount != nil || detailURL != nil, menuContent: {
+                                   DetailLinkMenuContent(url: detailURL, noun: "interview", favorite: favoriteReference)
+                               }, onSaved: {
+                                   onChanged()
+                                   Task { await loadDetail(for: requestIdentity) }
+                               })
         .task(id: requestIdentity) { await loadDetail(for: requestIdentity) }
         .onAppear { registerDetailCommands() }
         .activatesDetailCommands(in: commandContext, owner: commandOwner)
@@ -224,13 +238,7 @@ struct InterviewDetailView: View {
             webURL: URL.remoteWebURL(from: interview.url)
         )
         .windowToolbar(id: "interviewDetail") {
-            DetailLinkToolbarContent(
-                url: URL.remoteWebURL(from: interview.url), noun: "interview",
-                favorite: owningAccount.map {
-                    FavoriteRef(accountID: $0.id.uuidString, collection: .interviews,
-                                itemID: interview.id, title: displayTitle)
-                }
-            )
+            DetailLinkToolbarContent(url: detailURL, noun: "interview", favorite: favoriteReference)
             ToolbarItem(id: "print") {
                 PrintReportButton(jobTitle: "Interview: \(displayTitle)") {
                     InterviewReport(data: reportData)
