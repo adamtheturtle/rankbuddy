@@ -24,8 +24,8 @@ Use the deterministic demo account so review never needs production credentials:
 3. Add an account with the token `demo`.
 4. Browse Tests, Questions, Interviews, People, and Teams.
 
-The demo uses sanitized in-process fixtures and performs no authenticated network requests.
-The `DemoSmokeTests` screenshot methods capture every primary screen in light and dark appearance for store metadata and review.
+The demo uses sanitized in-process fixtures and runs offline.
+The `DemoSmokeTests` screenshot methods capture each primary screen in light and dark appearance for store metadata and review.
 
-RankBuddy declares no tracking or collected-data categories in `PrivacyInfo.xcprivacy`.
+RankBuddy's manifest `PrivacyInfo.xcprivacy` disables tracking and leaves `NSPrivacyCollectedDataTypes` empty.
 Its HTTPS traffic uses exempt operating-system cryptography, recorded by `ITSAppUsesNonExemptEncryption=false`.

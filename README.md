@@ -15,7 +15,7 @@ Work with the documented HackerRank API through native screens, with an embedded
 - **Templates** with creation, settings, question selection, deletion, and sharing with people, teams, or the organisation.
 - **Audit Logs** with offset and cursor pagination, **ATS Invitations**, and **Provisioning** for SCIM users and groups.
 - Native editors and filters for the documented request options, including nested settings, callbacks, permissions, and accommodations.
-- An account-wide **Candidates** destination, alongside each test’s candidate list.
+- An account-wide **Candidates** view and a list of candidates for each test.
 - An embedded **MCP server**, with read tools by default and explicit write access in Settings.
 - Cursor-based **Account Activity**, with object and date filters.
 - Per-list **search**, **sorting** (remembered across launches), pull-to-refresh, and loading / empty / error states.
@@ -69,7 +69,7 @@ Use Xcode 27.2 or later to work on the project.
   periphery scan --strict  # unused code (nightly/manual CI)
   ```
 
-  Configuration lives in `.swiftformat`, `.swiftlint.yml`, and `.periphery.yml`.
+  Configure the checks in `.swiftformat`, `.swiftlint.yml`, and `.periphery.yml`.
   Analyzer-only SwiftLint rules run in CI against the compiler log captured from a clean macOS build.
   Module rules receive the complete shipping module once; import checks receive only individual Swift files changed across the full PR.
   Set `SWIFTLINT_ANALYZER_DIFF_BASE` to the branch base for a local PR audit, or `SWIFTLINT_ANALYZE_ALL_IMPORTS=1` for a full import audit.
