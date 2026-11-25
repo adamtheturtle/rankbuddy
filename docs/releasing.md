@@ -59,5 +59,5 @@ It signs nested Sparkle code before the app, signs the DMG, requires accepted no
 
 After notarization, `scripts/generate-appcast.sh` selects the resolved Sparkle version and verifies its tool archive against a pinned official SHA-256 before extracting it or writing the signing key.
 It validates the tag, archive name, and download destination, signs the DMG enclosure, and publishes `appcast.xml` beside the DMG.
-Preflight and CI check that the resolved tool version is supported and that rejected input or an untrusted archive cannot reach signing.
+Preflight and CI check that the resolved tool version is supported and that signing accepts only validated input and trusted archives.
 Tagged Release builds read the stable `releases/latest/download/appcast.xml` URL; ordinary Debug builds remain updater-free.

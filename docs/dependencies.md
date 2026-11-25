@@ -6,7 +6,7 @@ It is the human-readable counterpart to [`.github/dependabot.yml`](../.github/de
 ## GitHub Actions
 
 - **Automated, grouped, weekly.**
-  Dependabot (`package-ecosystem: github-actions`) opens one grouped PR per week for all action bumps, so the actions used in CI (`actions/checkout`, `actions/cache`, `actions/upload-artifact`, …) stay current — including security fixes — without one-PR-per-action churn.
+  Dependabot (`package-ecosystem: github-actions`) opens one weekly PR grouping updates to CI actions such as `actions/checkout`, `actions/cache`, and `actions/upload-artifact`, including security updates.
 - **Review transitive changes.**
   Action update PRs are reviewed like any other change before merge.
 
@@ -16,7 +16,7 @@ It is the human-readable counterpart to [`.github/dependabot.yml`](../.github/de
   Run `./scripts/bump-swift-package.sh <package> <version>` to update the Xcode package requirement, resolve the graph, and verify the committed `Package.resolved` pin.
   Then review transitive changes and run preflight.
 - **Public dependency access.** [`buddy-kit`](https://github.com/adamtheturtle/buddy-kit) and the other Swift packages resolve over public HTTPS.
-  Package resolution requires no token or deploy key.
+  Packages resolve anonymously.
 - **One downstream tracker per release.**
   Keep individual bugs upstream.
   For an owned package release, dispatch the **Track package release** workflow (or run `scripts/create-package-adoption-issue.sh`) to create one idempotent RankBuddy adoption issue containing the upstream issue checklist.
@@ -31,7 +31,7 @@ RankBuddy intentionally has one `FastList` construction point: `Views/LoadableLi
 Tests, Questions, Interviews, People, Teams, and Candidates configure that app-owned wrapper rather than building package-specific lists themselves.
 The app still needs the macOS recycled `NSTableView` primitive for large, paginated collections.
 
-The package surface used by `LoadableList` falls into these ownership groups:
+The packages used by `LoadableList` are grouped by owner:
 
 - **Retain as platform primitives:** selection binding, recycled hosted rows, double-click and Return activation, native row context menus and drag sessions, scroll-to-row, top-row reporting, and end-of-viewport reporting.
 - **Already app-owned:** row height (`FastListRowMetrics`), favourite state and drag payloads, menu construction (`rowMenuItems`), copy/CSV transfer models, pagination retry/loading UI, scroll persistence, and detail activation.
@@ -43,7 +43,7 @@ New RankBuddy features must be implemented in `LoadableList` or another app-owne
 
 ## Build & lint tool versions
 
-The validation tools are version-pinned in `ci.yml` and must be bumped in lockstep with the local toolchain and the config files they read:
+The validation tools are version-pinned in `ci.yml` and must be updated together with the local toolchain and the config files they read:
 
 | Tool        | Pinned in                                                                    | Keep aligned with               |
 | ----------- | ---------------------------------------------------------------------------- | ------------------------------- |
@@ -83,7 +83,8 @@ permissions:
   contents: read
 ```
 
-No validation job writes to the repository, comments, or publishes artifacts to external services, so none needs more than read access.
+Validation jobs use read-only access.
+They leave the repository, comments, and external services untouched.
 Workflows added later (release, website deploy) must declare the **minimum** additional permissions they require at the job level rather than widening the default for the whole file.
 
 ## HackerRank MCP tools
