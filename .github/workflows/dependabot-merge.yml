@@ -1,24 +1,34 @@
 ---
 
 name: Dependabot auto-merge
-on: pull_request
 
-permissions:
-  contents: write
-  pull-requests: write
+on:
+  pull_request: {}
+
+permissions: {}
 
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Enable auto-merge for Dependabot PRs
         run: |
-          if [[ "$(gh api "repos/$GITHUB_REPOSITORY" --jq .allow_auto_merge)" == true ]]; then
-            gh pr merge --auto --merge "$PR_URL"
-          else
-            echo "Repository auto-merge is disabled; this PR will be merged manually."
+          changed_files=$(gh pr diff "$PR_URL" --name-only)
+          if grep -q '^\.github/workflows/' <<< "$changed_files"; then
+            echo "Workflow updates require a manual merge."
+            exit 0
           fi
+          auto_merge_allowed=$(gh api "repos/$GITHUB_REPOSITORY" --jq .allow_auto_merge)
+          if [[ "$auto_merge_allowed" != true ]]; then
+            echo "Auto-merge is disabled for this repository."
+            exit 0
+          fi
+          gh pr merge --auto --merge --match-head-commit "$PR_HEAD_SHA" "$PR_URL"
         env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
